@@ -12,13 +12,13 @@ import {
 
 import "./App.css";
 
-import Home from "./pages/Home";
-import Showcase from "./pages/Showcase";
-import ShinyDex from "./pages/ShinyDex";
-import Leaderboard from "./pages/Leaderboard";
-import Events from "./pages/Events";
-import Forums from "./pages/Forums";
-import Admin from "./pages/Admin";
+import Home from "./Home";
+import Showcase from "./Showcase";
+import ShinyDex from "./ShinyDex";
+import Leaderboard from "./Leaderboard";
+import Events from "./Events";
+import Forums from "./Forums";
+import Admin from "./Admin";
 
 function App() {
   const [page, setPage] = useState("home");
