@@ -840,3 +840,102 @@ th {
   transform: translateY(-2px);
   border-color: #facc15;
 }
+.admin-section {
+  background: rgba(10, 18, 45, 0.9);
+  border: 1px solid #2647ff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 0 15px rgba(38, 71, 255, 0.25);
+}
+
+.admin-section h2 {
+  margin-top: 0;
+  color: #ffd54f;
+}
+
+.admin-section input,
+.admin-section textarea,
+.admin-section select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #2647ff;
+  background: #0b1435;
+  color: white;
+}
+
+.admin-section textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.admin-section button {
+  background: linear-gradient(
+    135deg,
+    #2647ff,
+    #4c6fff
+  );
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-section button:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+}
+
+.admin-row strong {
+  min-width: 160px;
+}
+
+.shiny-admin-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.shiny-admin-card h3 {
+  margin-top: 0;
+  color: #ffd54f;
+}
+
+.shiny-admin-card a {
+  color: #7aa2ff;
+  text-decoration: none;
+}
+
+.shiny-admin-card a:hover {
+  color: white;
+}
+
+.delete-btn {
+  background: #c62828;
+  margin-top: 10px;
+}
+
+.delete-btn:hover {
+  background: #e53935;
+}
+
+.page h1 {
+  color: #ffd54f;
+}
