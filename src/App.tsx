@@ -9,12 +9,6 @@ import Forums from "./pages/Forums";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 
-import {
-  FaHome,
-  FaStar,
-  FaBook,
-} from "react-icons/fa";
-
 import "./App.css";
 
 export default function App() {

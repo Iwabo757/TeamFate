@@ -94,9 +94,6 @@ export default function ShinyDex() {
             username
           );
 
-          leaderboardMap[username] =
-            (leaderboardMap[username] || 0) +
-            1;
         }
       });
 
