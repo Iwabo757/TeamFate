@@ -1,11 +1,15 @@
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
-  async function signIn() {
-    await supabase.auth.signInWithOAuth({
-      provider: "discord",
-    });
-  }
+async function signIn() {
+  await supabase.auth.signInWithOAuth({
+    provider: "discord",
+    options: {
+      redirectTo:
+        window.location.origin,
+    },
+  });
+}
 
   return (
     <div className="login-page">

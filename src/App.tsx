@@ -41,6 +41,7 @@ export default function App() {
         loadProfile();
       });
 
+
     return () => {
       authListener.subscription.unsubscribe();
     };
