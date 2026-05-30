@@ -32,70 +32,124 @@ export default function App() {
     useState<ProfileData | null>(null);
 
   useEffect(() => {
+    async function checkUser() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      console.log("SESSION:", session);
+      console.log(
+        "ACCESS TOKEN:",
+        session?.access_token
+      );
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      console.log("USER:", user);
+    }
+
+    checkUser();
+  }, []);
+
+  useEffect(() => {
     loadProfile();
 
     const {
       data: authListener,
-    } =
-      supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange(
+      () => {
         loadProfile();
-      });
-
+      }
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-async function loadProfile() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  async function loadProfile() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  console.log("USER:", user);
+    if (!user) {
+      console.log("NO USER");
+      setProfile(null);
+      return;
+    }
 
-  if (!user) {
-    setProfile(null);
-    return;
+    console.log("USER:", user);
+
+    console.log(
+      "METADATA:",
+      user.user_metadata
+    );
+
+    const result = await supabase
+      .from("profiles")
+      .upsert(
+        {
+          id: user.id,
+
+          username:
+            user.user_metadata
+              .preferred_username ||
+            user.user_metadata
+              .global_name ||
+            user.user_metadata
+              .full_name ||
+            user.user_metadata.name ||
+            "Unknown",
+
+          avatar_url:
+            user.user_metadata.avatar_url,
+
+          discord_id:
+            user.user_metadata.provider_id,
+        },
+        {
+          onConflict: "id",
+        }
+      );
+
+    console.log(
+      "UPSERT DATA:",
+      result.data
+    );
+
+    console.log(
+      "UPSERT ERROR:",
+      result.error
+    );
+
+    const profileResult =
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+    console.log(
+      "PROFILE:",
+      profileResult
+    );
+
+    console.log(
+      "PROFILE DATA:",
+      profileResult.data
+    );
+
+    console.log(
+      "PROFILE ERROR:",
+      profileResult.error
+    );
+
+    if (profileResult.data) {
+      setProfile(profileResult.data);
+    }
   }
-
-  const result = await supabase
-    .from("profiles")
-    .upsert({
-      id: user.id,
-      username:
-        user.user_metadata.full_name ||
-        user.user_metadata.name ||
-        "Unknown",
-
-      avatar_url:
-        user.user_metadata.avatar_url,
-
-      discord_id:
-        user.user_metadata.provider_id,
-    });
-
-console.log("UPSERT DATA:", result.data);
-console.log("UPSERT ERROR:", result.error);
-
-  const profileResult = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  console.log(
-    "PROFILE:",
-    profileResult
-  );
-
-console.log("PROFILE DATA:", profileResult.data);
-console.log("PROFILE ERROR:", profileResult.error);
-
-  if (profileResult.data) {
-    setProfile(profileResult.data);
-  }
-}
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -104,9 +158,7 @@ console.log("PROFILE ERROR:", profileResult.error);
 
   return (
     <div className="app">
-
       <header className="topbar">
-
         <div className="logo">
           <div className="logo-main">
             TEAM FATE
@@ -148,16 +200,16 @@ console.log("PROFILE ERROR:", profileResult.error);
         </nav>
 
         <div className="topbar-right">
-
           {profile ? (
             <div className="user-menu">
-
               <Link
                 to="/profile"
                 className="user-button"
               >
                 <img
-                  src={profile.avatar_url}
+                  src={
+                    profile.avatar_url
+                  }
                   alt=""
                   className="nav-avatar"
                 />
@@ -173,7 +225,6 @@ console.log("PROFILE ERROR:", profileResult.error);
               >
                 Logout
               </button>
-
             </div>
           ) : (
             <NavLink
@@ -183,15 +234,11 @@ console.log("PROFILE ERROR:", profileResult.error);
               Login
             </NavLink>
           )}
-
         </div>
-
       </header>
 
       <main className="content">
-
         <Routes>
-
           <Route
             path="/"
             element={<Home />}
@@ -199,7 +246,9 @@ console.log("PROFILE ERROR:", profileResult.error);
 
           <Route
             path="/showcase"
-            element={<ShinyShowcase />}
+            element={
+              <ShinyShowcase />
+            }
           />
 
           <Route
@@ -209,7 +258,9 @@ console.log("PROFILE ERROR:", profileResult.error);
 
           <Route
             path="/board"
-            element={<ShinyBoard />}
+            element={
+              <ShinyBoard />
+            }
           />
 
           <Route
@@ -236,11 +287,8 @@ console.log("PROFILE ERROR:", profileResult.error);
             path="/login"
             element={<Login />}
           />
-
         </Routes>
-
       </main>
-
     </div>
   );
 }
