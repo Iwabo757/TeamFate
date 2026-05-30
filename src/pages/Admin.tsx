@@ -67,10 +67,10 @@ const [
   const [description, setDescription] =
     useState("");
 
-  const [startDate, setStartDate] =
+  const [startTime, setStartTime] =
     useState("");
 
-  const [endDate, setEndDate] =
+  const [endTime, setEndTime] =
     useState("");
 
   const [prize, setPrize] =
@@ -246,30 +246,16 @@ async function deleteShiny(
 }
 
 async function createEvent() {
-  console.log({
-    title,
-    description,
-    startDate,
-    endDate,
-    prize,
-  });
-
-  const { data, error } =
+  const { error } =
     await supabase
       .from("events")
-      .insert([
-        {
-          title,
-          description,
-          start_time: startTate,
-          end_time: endTime,
-          prize,
-        },
-      ])
-      .select();
-
-  console.log("DATA:", data);
-  console.log("ERROR:", error);
+      .insert({
+        title,
+        description,
+        start_time: startTime,
+        end_time: endTime,
+        prize,
+      });
 
   if (error) {
     alert(error.message);
@@ -277,6 +263,13 @@ async function createEvent() {
   }
 
   alert("Event created!");
+
+  setTitle("");
+  setDescription("");
+  setStartTime("");
+  setEndTime("");
+  setPrize("");
+
   loadData();
 }
 
@@ -550,11 +543,17 @@ async function createEvent() {
   }
 />
 
-const [startTime, setStartTime] =
-  useState("");
+<input
+  placeholder="Prize"
+  value={prize}
+  onChange={(e) =>
+    setPrize(e.target.value)
+  }
+/>
 
-const [endTime, setEndTime] =
-  useState("");
+<button onClick={createEvent}>
+  Create Event
+</button>
 
         <input
           placeholder="Prize"
