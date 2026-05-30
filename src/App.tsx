@@ -180,13 +180,17 @@ export default function App() {
             Home
           </NavLink>
 
-          <NavLink to="/showcase">
-            Showcase
-          </NavLink>
+<div className="dropdown">
+  <NavLink to="/dex">
+    Shiny Dex
+  </NavLink>
 
-          <NavLink to="/dex">
-            Shiny Dex
-          </NavLink>
+  <div className="dropdown-content">
+    <NavLink to="/showcase">
+      Showcase
+    </NavLink>
+  </div>
+</div>
 
           <NavLink to="/board">
             Leaderboard

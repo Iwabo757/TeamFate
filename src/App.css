@@ -784,3 +784,34 @@ th {
 .logout-link:hover {
   color: white;
 }
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background: #071b45;
+  border: 1px solid #1f4fff;
+  border-radius: 8px;
+  z-index: 1000;
+}
+
+.dropdown-content a {
+  display: block;
+  padding: 12px;
+  color: white;
+  text-decoration: none;
+}
+
+.dropdown-content a:hover {
+  background: rgba(31, 79, 255, 0.25);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
