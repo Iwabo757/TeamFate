@@ -554,22 +554,6 @@ async function createEvent() {
 <button onClick={createEvent}>
   Create Event
 </button>
-
-        <input
-          placeholder="Prize"
-          value={prize}
-          onChange={(e) =>
-            setPrize(
-              e.target.value
-            )
-          }
-        />
-
-        <button
-          onClick={createEvent}
-        >
-          Create Event
-        </button>
       </section>
 
     </div>
