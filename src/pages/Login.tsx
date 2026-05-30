@@ -8,8 +8,7 @@ export default function Login() {
       await supabase.auth.signInWithOAuth({
         provider: "discord",
         options: {
-          redirectTo:
-            "https://teamfate.vercel.app",
+          redirectTo: window.location.origin,
         },
       });
 
