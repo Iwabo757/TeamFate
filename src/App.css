@@ -939,3 +939,17 @@ th {
 .page h1 {
   color: #ffd54f;
 }
+
+
+.shiny-proof {
+  max-width: 350px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #2647ff;
+  margin-top: 10px;
+}
+
+input[type="file"] {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

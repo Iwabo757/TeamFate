@@ -32,6 +32,11 @@ export default function Admin() {
   const [isAdmin, setIsAdmin] =
     useState(false);
 
+const [
+  screenshotFile,
+  setScreenshotFile,
+] = useState<File | null>(null);
+
   const [users, setUsers] =
     useState<Profile[]>([]);
 
@@ -51,9 +56,6 @@ export default function Admin() {
     useState("");
 
   const [method, setMethod] =
-    useState("");
-
-  const [screenshotUrl, setScreenshotUrl] =
     useState("");
 
   const [notes, setNotes] =
@@ -148,33 +150,98 @@ export default function Admin() {
     loadData();
   }
 
-  async function addShiny() {
+async function addShiny() {
+  let screenshotUrl = "";
+
+  if (screenshotFile) {
+    const fileName =
+      `${Date.now()}-${screenshotFile.name}`;
+
+    const uploadResult =
+      await supabase.storage
+        .from(
+          "shiny-screenshots"
+        )
+        .upload(
+          fileName,
+          screenshotFile
+        );
+
+    if (
+      uploadResult.error
+    ) {
+      alert(
+        uploadResult.error.message
+      );
+      return;
+    }
+
+    screenshotUrl =
+      supabase.storage
+        .from(
+          "shiny-screenshots"
+        )
+        .getPublicUrl(
+          fileName
+        ).data.publicUrl;
+  }
+
+  const { error } =
     await supabase
       .from("shiny_catches")
       .insert({
-        pokemon_id: pokemonId,
-        profile_id: profileId,
-        date_found: dateFound,
+        pokemon_id:
+          pokemonId,
+
+        profile_id:
+          profileId,
+
+        date_found:
+          dateFound,
+
         method,
-        screenshot_url: screenshotUrl,
+
+        screenshot_url:
+          screenshotUrl,
+
         notes,
       });
 
-    setMethod("");
-    setScreenshotUrl("");
-    setNotes("");
-
-    loadData();
+  if (error) {
+    alert(error.message);
+    return;
   }
 
-  async function deleteShiny(id: number) {
-    await supabase
-      .from("shiny_catches")
-      .delete()
-      .eq("id", id);
+alert("Shiny Added!");
 
-    loadData();
+setPokemonId(0);
+setProfileId("");
+setDateFound("");
+setMethod("");
+setNotes("");
+setScreenshotFile(null);
+
+loadData();
+}
+
+async function deleteShiny(
+  id: number
+) {
+  if (
+    !window.confirm(
+      "Delete this shiny record?"
+    )
+  ) {
+    return;
   }
+
+  await supabase
+    .from("shiny_catches")
+    .delete()
+    .eq("id", id);
+
+  loadData();
+}
 
   async function createEvent() {
     await supabase
@@ -316,16 +383,25 @@ export default function Admin() {
           }
         />
 
-        <input
-          placeholder="Screenshot URL"
-          value={screenshotUrl}
-          onChange={(e) =>
-            setScreenshotUrl(
-              e.target.value
-            )
-          }
-        />
+<input
+  type="file"
+  accept="image/*"
+  onChange={(e) => {
+    if (!e.target.files?.[0]) return;
 
+    setScreenshotFile(
+      e.target.files[0]
+    );
+  }}
+/>
+
+{screenshotFile && (
+  <p>
+    Selected:
+    {" "}
+    {screenshotFile.name}
+  </p>
+)}
         <textarea
           placeholder="Notes"
           value={notes}
@@ -395,28 +471,25 @@ export default function Admin() {
             )}
 
             {shiny.screenshot_url && (
-              <a
-                href={
-                  shiny.screenshot_url
-                }
-                target="_blank"
-                rel="noreferrer"
-              >
-                View Screenshot
-              </a>
+<img
+  src={
+    shiny.screenshot_url
+  }
+  alt=""
+  className="shiny-proof"
+/>
             )}
 
             <br />
 
-            <button
-              onClick={() =>
-                deleteShiny(
-                  shiny.id
-                )
-              }
-            >
-              Delete
-            </button>
+<button
+  className="delete-btn"
+  onClick={() =>
+    deleteShiny(shiny.id)
+  }
+>
+  Delete
+</button>
           </div>
         ))}
       </section>
