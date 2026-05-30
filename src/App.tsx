@@ -75,7 +75,8 @@ async function loadProfile() {
         user.user_metadata.provider_id,
     });
 
-  console.log("UPSERT:", result);
+console.log("UPSERT DATA:", result.data);
+console.log("UPSERT ERROR:", result.error);
 
   const profileResult = await supabase
     .from("profiles")
@@ -87,6 +88,9 @@ async function loadProfile() {
     "PROFILE:",
     profileResult
   );
+
+console.log("PROFILE DATA:", profileResult.data);
+console.log("PROFILE ERROR:", profileResult.error);
 
   if (profileResult.data) {
     setProfile(profileResult.data);

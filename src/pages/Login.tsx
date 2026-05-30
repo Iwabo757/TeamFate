@@ -1,15 +1,19 @@
 import { supabase } from "../lib/supabase";
 
 export default function Login() {
-async function signIn() {
-  await supabase.auth.signInWithOAuth({
-    provider: "discord",
-    options: {
-      redirectTo:
-        window.location.origin,
-    },
-  });
-}
+  const signInWithDiscord = async () => {
+    const { data, error } =
+      await supabase.auth.signInWithOAuth({
+        provider: "discord",
+        options: {
+          redirectTo:
+            "https://team-fate.vercel.app",
+        },
+      });
+
+    console.log("OAuth Data:", data);
+    console.log("OAuth Error:", error);
+  };
 
   return (
     <div className="login-page">
@@ -17,7 +21,7 @@ async function signIn() {
 
       <button
         className="discord-btn"
-        onClick={signIn}
+        onClick={signInWithDiscord}
       >
         Login with Discord
       </button>
