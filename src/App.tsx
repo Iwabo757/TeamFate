@@ -38,9 +38,15 @@ export default function App() {
       } = await supabase.auth.getSession();
 
       console.log("SESSION:", session);
+
       console.log(
-        "ACCESS TOKEN:",
-        session?.access_token
+        "URL:",
+        window.location.href
+      );
+
+      console.log(
+        "HASH:",
+        window.location.hash
       );
 
       const {
