@@ -953,19 +953,34 @@ input[type="file"] {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+
 .home-page {
   text-align: center;
 }
 
 .hero {
   text-align: center;
+  margin-bottom: 30px;
 }
 
+.hero h1 {
+  font-size: 56px;
+  margin-bottom: 10px;
+}
 
+.hero p {
+  font-size: 20px;
+  color: var(--muted);
+}
 
 .stats {
   display: flex;
-  justify-content: center;
   flex-wrap: wrap;
   gap: 16px;
+
+  justify-content: center;
+}
+
+.stats .card {
+  text-align: center;
 }
