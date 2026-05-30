@@ -207,6 +207,8 @@ async function addShiny() {
         notes,
       });
 
+console.log("SHINY ERROR:", error);
+
   if (error) {
     alert(error.message);
     return;
@@ -243,25 +245,40 @@ async function deleteShiny(
   loadData();
 }
 
-  async function createEvent() {
+async function createEvent() {
+  console.log({
+    title,
+    description,
+    startDate,
+    endDate,
+    prize,
+  });
+
+  const { data, error } =
     await supabase
       .from("events")
-      .insert({
-        title,
-        description,
-        start_date: startDate,
-        end_date: endDate,
-        prize,
-      });
+      .insert([
+        {
+          title,
+          description,
+          start_date: startDate,
+          end_date: endDate,
+          prize,
+        },
+      ])
+      .select();
 
-    setTitle("");
-    setDescription("");
-    setStartDate("");
-    setEndDate("");
-    setPrize("");
+  console.log("DATA:", data);
+  console.log("ERROR:", error);
 
-    alert("Event created!");
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  alert("Event created!");
+  loadData();
+}
 
   if (!isAdmin) {
     return (
