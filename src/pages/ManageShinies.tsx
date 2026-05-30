@@ -26,16 +26,24 @@ export default function ManageShinies() {
     setShinies(data || []);
   }
 
-  async function deleteShiny(
-    id: string
-  ) {
+async function deleteShiny(
+  id: string
+) {
+  const result =
     await supabase
       .from("shiny_catches")
       .delete()
       .eq("id", id);
 
-    loadShinies();
+  console.log(result);
+
+  if (result.error) {
+    alert(result.error.message);
+    return;
   }
+
+  loadShinies();
+}
 
   return (
     <div className="page">

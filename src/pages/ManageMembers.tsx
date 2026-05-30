@@ -72,33 +72,27 @@ export default function ManageMembers() {
     loadMembers();
   }
 
-  async function deleteMember(
-    id: string
-  ) {
-    const confirmed =
-      window.confirm(
-        "Delete this member and all shiny records?"
-      );
+async function deleteMember(id: string) {
+  if (
+    !window.confirm(
+      "Delete this member?"
+    )
+  )
+    return;
 
-    if (!confirmed) return;
-
+  const { error } =
     await supabase
-      .from("shiny_catches")
-      .delete()
-      .eq("profile_id", id);
-
-    const { error } = await supabase
       .from("profiles")
       .delete()
       .eq("id", id);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    loadMembers();
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  loadMembers();
+}
 
   if (loading) {
     return (
