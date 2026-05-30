@@ -815,3 +815,28 @@ th {
 .dropdown:hover .dropdown-content {
   display: block;
 }
+.members-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(220px, 1fr)
+    );
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.member-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #1f4fff;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.member-card:hover {
+  transform: translateY(-2px);
+  border-color: #facc15;
+}

@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 
 import { supabase } from "./lib/supabase";
-
+import Members from "./pages/Members";
 import Home from "./pages/Home";
 import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
@@ -92,33 +92,37 @@ export default function App() {
       "METADATA:",
       user.user_metadata
     );
+const result = await supabase
+  .from("profiles")
+  .upsert(
+    {
+      id: user.id,
 
-    const result = await supabase
-      .from("profiles")
-      .upsert(
-        {
-          id: user.id,
+      username:
+        user.user_metadata.full_name ||
+        user.user_metadata.name ||
+        "Unknown",
 
-          username:
-            user.user_metadata
-              .preferred_username ||
-            user.user_metadata
-              .global_name ||
-            user.user_metadata
-              .full_name ||
-            user.user_metadata.name ||
-            "Unknown",
+      discord_name:
+        user.user_metadata.name,
 
-          avatar_url:
-            user.user_metadata.avatar_url,
+      avatar_url:
+        user.user_metadata.avatar_url,
 
-          discord_id:
-            user.user_metadata.provider_id,
-        },
-        {
-          onConflict: "id",
-        }
-      );
+      discord_id:
+        user.user_metadata.provider_id,
+
+      role: "member",
+
+      joined_team:
+        new Date()
+          .toISOString()
+          .split("T")[0],
+    },
+    {
+      onConflict: "id",
+    }
+  );
 
     console.log(
       "UPSERT DATA:",
@@ -204,6 +208,9 @@ export default function App() {
             Forums
           </NavLink>
 
+<NavLink to="/members">
+  Members
+</NavLink>
           <NavLink to="/admin">
             Admin
           </NavLink>
@@ -268,7 +275,10 @@ export default function App() {
             path="/dex"
             element={<ShinyDex />}
           />
-
+<Route
+  path="/members"
+  element={<Members />}
+/>
           <Route
             path="/board"
             element={
