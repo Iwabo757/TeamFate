@@ -9,7 +9,7 @@ export default function Login() {
         provider: "discord",
         options: {
           redirectTo:
-            "https://team-fate.vercel.app",
+            "https://teamfate.vercel.app",
         },
       });
 
