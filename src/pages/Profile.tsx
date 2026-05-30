@@ -36,7 +36,10 @@ export default function Profile() {
         className="profile-avatar"
       />
 
-      <h1>{profile.username}</h1>
+<h1>
+  {profile.nickname ||
+    profile.username}
+</h1>
 
       <p>Role: {profile.role}</p>
 

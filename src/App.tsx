@@ -26,6 +26,7 @@ import "./App.css";
 type ProfileData = {
   id: string;
   username: string;
+  nickname?: string;
   avatar_url: string;
   role: string;
 };
@@ -249,13 +250,15 @@ console.log(
     >
       <img
         src={profile.avatar_url}
-        alt={profile.username}
+        alt={profile.nickname ||
+ profile.username}
         className="nav-avatar"
       />
 
       <div className="user-info">
         <span className="username">
-          {profile.username}
+          {profile.nickname ||
+ profile.username}
         </span>
 
         <button
