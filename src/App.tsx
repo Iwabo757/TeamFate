@@ -145,6 +145,10 @@ const result = await supabase
       profileResult.data
     );
 
+console.log(
+  "PROFILE ROLE:",
+  profileResult.data?.role
+);
     console.log(
       "PROFILE ERROR:",
       profileResult.error
