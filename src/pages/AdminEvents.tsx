@@ -57,22 +57,37 @@ export default function AdminEvents() {
     loadEvents();
   }
 
-  async function deleteEvent(id: string) {
+async function deleteEvent(id: string) {
+  if (
+    !window.confirm(
+      "Delete this event?"
+    )
+  ) {
+    return;
+  }
+
+  const { error } =
     await supabase
       .from("events")
       .delete()
       .eq("id", id);
 
-    loadEvents();
+  if (error) {
+    alert(error.message);
+    console.error(error);
+    return;
   }
+
+  loadEvents();
+}
 
   return (
     <div className="page">
 
       <h1>Create Event</h1>
 
-      <div className="card">
-
+<div className="card">
+  <div className="admin-form">
         <input
           placeholder="Title"
           value={title}
@@ -121,14 +136,15 @@ export default function AdminEvents() {
           }
         />
 
-        <button
-          onClick={createEvent}
-        >
-          Create Event
-        </button>
+<button
+  className="submit-btn"
+  onClick={createEvent}
+>
+  Create Event
+</button>
 
       </div>
-
+</div>
       <h2>Existing Events</h2>
 
       {events.map((event) => (
@@ -138,10 +154,26 @@ export default function AdminEvents() {
         >
           <h3>{event.title}</h3>
 
-          <p>
-            {event.description}
-          </p>
+<p>{event.description}</p>
 
+<p>
+  <strong>Starts:</strong>{" "}
+  {new Date(
+    event.start_time
+  ).toLocaleString()}
+</p>
+
+<p>
+  <strong>Ends:</strong>{" "}
+  {new Date(
+    event.end_time
+  ).toLocaleString()}
+</p>
+
+<p>
+  <strong>Prize:</strong>{" "}
+  {event.prize}
+</p>
           <button
             className="delete-btn"
             onClick={() =>
