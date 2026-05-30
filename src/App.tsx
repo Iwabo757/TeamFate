@@ -112,12 +112,6 @@ const result = await supabase
       discord_id:
         user.user_metadata.provider_id,
 
-      role: "member",
-
-      joined_team:
-        new Date()
-          .toISOString()
-          .split("T")[0],
     },
     {
       onConflict: "id",
