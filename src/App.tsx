@@ -211,9 +211,12 @@ const result = await supabase
 <NavLink to="/members">
   Members
 </NavLink>
-          <NavLink to="/admin">
-            Admin
-          </NavLink>
+
+{profile?.role === "admin" && (
+  <NavLink to="/admin">
+    Admin
+  </NavLink>
+)}
         </nav>
 
         <div className="topbar-right">
@@ -296,10 +299,16 @@ const result = await supabase
             element={<Forums />}
           />
 
-          <Route
-            path="/admin"
-            element={<Admin />}
-          />
+<Route
+  path="/admin"
+  element={
+    profile?.role === "admin" ? (
+      <Admin />
+    ) : (
+      <h1>Access Denied</h1>
+    )
+  }
+/>
 
           <Route
             path="/profile"
