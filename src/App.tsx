@@ -14,10 +14,13 @@ import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
 import Events from "./pages/Events";
 import Forums from "./pages/Forums";
-import Admin from "./pages/Admin";
+import AdminEvents from "./pages/AdminEvents";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
-
+import AdminDashboard from "./pages/AdminDashboard";
+import AddShiny from "./pages/AddShiny";
+import ManageShinies from "./pages/ManageShinies";
+import ManageMembers from "./pages/ManageMembers";
 import "./App.css";
 
 type ProfileData = {
@@ -211,13 +214,35 @@ console.log(
 </NavLink>
 
 {profile?.role === "admin" && (
-  <NavLink to="/admin">
-    Admin
-  </NavLink>
+<div className="dropdown">
+  <span>Admin ▼</span>
+
+  <div className="dropdown-menu">
+    <Link to="/admin">
+      Dashboard
+    </Link>
+
+    <Link to="/admin/events">
+      Create Event
+    </Link>
+
+    <Link to="/admin/shinies/add">
+      Add Shiny
+    </Link>
+
+    <Link to="/admin/shinies">
+      Manage Shinies
+    </Link>
+
+    <Link to="/admin/members">
+      Manage Members
+    </Link>
+  </div>
+</div>
 )}
         </nav>
 
-        <div className="topbar-right">
+<div className="topbar-right">
           {profile ? (
   <div className="user-menu">
     <Link
@@ -299,13 +324,27 @@ console.log(
 
 <Route
   path="/admin"
-  element={
-    profile?.role === "admin" ? (
-      <Admin />
-    ) : (
-      <h1>Access Denied</h1>
-    )
-  }
+  element={<AdminDashboard />}
+/>
+
+<Route
+  path="/admin/events"
+  element={<AdminEvents />}
+/>
+
+<Route
+  path="/admin/shinies/add"
+  element={<AddShiny />}
+/>
+
+<Route
+  path="/admin/shinies"
+  element={<ManageShinies />}
+/>
+
+<Route
+  path="/admin/members"
+  element={<ManageMembers />}
 />
 
           <Route
