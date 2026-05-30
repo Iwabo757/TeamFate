@@ -5,25 +5,29 @@ type Event = {
   id: string;
   title: string;
   description: string;
-  start_time: string;
-  end_time: string;
+  start_time: string | null;
+  end_time: string | null;
   prize: string;
 };
 
 export default function Events() {
-  const [events, setEvents] =
-    useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadEvents();
   }, []);
 
   async function loadEvents() {
-    const { data, error } =
-      await supabase
-        .from("events")
-        .select("*")
-        .order("start_time");
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .order("start_time", {
+        ascending: true,
+      });
+
+    console.log("EVENT DATA:", data);
+    console.log("EVENT ERROR:", error);
 
     if (error) {
       console.error(error);
@@ -31,26 +35,35 @@ export default function Events() {
     }
 
     setEvents(data || []);
+    setLoading(false);
   }
 
-  const formatDate = (
-    value: string
-  ) =>
-    new Date(value).toLocaleString(
+  function formatDate(
+    value: string | null
+  ) {
+    if (!value) return "Not Set";
+
+    return new Date(value).toLocaleString(
       undefined,
       {
         dateStyle: "long",
         timeStyle: "short",
       }
     );
+  }
 
   return (
     <div className="page">
       <h1>📅 Events</h1>
 
-      {events.length === 0 && (
-        <p>No active events.</p>
+      {loading && (
+        <p>Loading events...</p>
       )}
+
+      {!loading &&
+        events.length === 0 && (
+          <p>No active events.</p>
+        )}
 
       {events.map((event) => (
         <div
