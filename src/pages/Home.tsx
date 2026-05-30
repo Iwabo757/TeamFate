@@ -1,12 +1,20 @@
 import RecentFinds from "../components/RecentFinds";
+
 export default function Home() {
   return (
-    <>
+    <div className="home-page">
+
       <div className="hero">
         <h1>TEAM FATE</h1>
-        <p>The ultimate PokeMMO shiny hunting community.</p>
+
+        <p>
+          The ultimate PokeMMO shiny hunting
+          community.
+        </p>
       </div>
-<RecentFinds />
+
+      <RecentFinds />
+
       <div className="stats">
         <div className="card">
           <h2>Members</h2>
@@ -23,6 +31,7 @@ export default function Home() {
           <span>9521</span>
         </div>
       </div>
-    </>
+
+    </div>
   );
 }

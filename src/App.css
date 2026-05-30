@@ -953,3 +953,19 @@ input[type="file"] {
   margin-top: 10px;
   margin-bottom: 10px;
 }
+.home-page {
+  text-align: center;
+}
+
+.hero {
+  text-align: center;
+}
+
+
+
+.stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}

@@ -261,8 +261,8 @@ async function createEvent() {
         {
           title,
           description,
-          start_date: startDate,
-          end_date: endDate,
+          start_time: startTate,
+          end_time: endTime,
           prize,
         },
       ])
@@ -534,25 +534,27 @@ async function createEvent() {
           }
         />
 
-        <input
-          type="date"
-          value={startDate}
-          onChange={(e) =>
-            setStartDate(
-              e.target.value
-            )
-          }
-        />
+<input
+  type="datetime-local"
+  value={startTime}
+  onChange={(e) =>
+    setStartTime(e.target.value)
+  }
+/>
 
-        <input
-          type="date"
-          value={endDate}
-          onChange={(e) =>
-            setEndDate(
-              e.target.value
-            )
-          }
-        />
+<input
+  type="datetime-local"
+  value={endTime}
+  onChange={(e) =>
+    setEndTime(e.target.value)
+  }
+/>
+
+const [startTime, setStartTime] =
+  useState("");
+
+const [endTime, setEndTime] =
+  useState("");
 
         <input
           placeholder="Prize"
