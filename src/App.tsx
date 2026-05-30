@@ -13,11 +13,6 @@ import {
   FaHome,
   FaStar,
   FaBook,
-  FaTrophy,
-  FaCalendarAlt,
-  FaComments,
-  FaUserShield,
-  FaSignInAlt,
 } from "react-icons/fa";
 
 import "./App.css";

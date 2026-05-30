@@ -10,16 +10,8 @@ type DexPokemon = {
   owners: string[];
 };
 
-type LeaderboardEntry = {
-  username: string;
-  count: number;
-};
-
 export default function ShinyDex() {
   const [pokemon, setPokemon] = useState<DexPokemon[]>([]);
-  const [leaderboard, setLeaderboard] = useState<
-    LeaderboardEntry[]
-  >([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -85,11 +77,6 @@ export default function ShinyDex() {
         string[]
       > = {};
 
-      const leaderboardMap: Record<
-        string,
-        number
-      > = {};
-
       catchData?.forEach((entry: any) => {
         const pokemonId = Number(
           entry.pokemon_id
@@ -112,18 +99,6 @@ export default function ShinyDex() {
             1;
         }
       });
-
-      const leaderboardData =
-        Object.entries(leaderboardMap)
-          .map(([username, count]) => ({
-            username,
-            count,
-          }))
-          .sort(
-            (a, b) => b.count - a.count
-          );
-
-      setLeaderboard(leaderboardData);
 
       const caughtIds = new Set(
         catchData?.map((c: any) =>

@@ -7,13 +7,7 @@ type DexCardProps = {
   onClick: () => void;
 };
 
-type CatchInfo = {
-  owner: string;
-  date_found: string;
-  method: string | null;
-  notes: string | null;
-  screenshot_url: string | null;
-};
+
 export default function DexCard({
   id,
   name,
