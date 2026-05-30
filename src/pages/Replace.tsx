@@ -18,7 +18,7 @@ import ShinyDex from "./ShinyDex";
 import Leaderboard from "./Leaderboard";
 import Events from "./Events";
 import Forums from "./Forums";
-import Admin from "./Admin";
+import AdminDashboard from "./AdminDashboard";
 
 function App() {
   const [page, setPage] = useState("home");
@@ -41,7 +41,7 @@ function App() {
         return <Forums />;
 
       case "admin":
-        return <Admin />;
+        return <AdminDashboard />;
 
       default:
         return <Home />;
