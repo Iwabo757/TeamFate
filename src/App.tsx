@@ -207,39 +207,42 @@ export default function App() {
 
         <div className="topbar-right">
           {profile ? (
-            <div className="user-menu">
-              <Link
-                to="/profile"
-                className="user-button"
-              >
-                <img
-                  src={
-                    profile.avatar_url
-                  }
-                  alt=""
-                  className="nav-avatar"
-                />
+  <div className="user-menu">
+    <Link
+      to="/profile"
+      className="user-button"
+    >
+      <img
+        src={profile.avatar_url}
+        alt={profile.username}
+        className="nav-avatar"
+      />
 
-                <span>
-                  {profile.username}
-                </span>
-              </Link>
+      <div className="user-info">
+        <span className="username">
+          {profile.username}
+        </span>
 
-              <button
-                className="logout-btn"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <NavLink
-              to="/login"
-              className="login-btn"
-            >
-              Login
-            </NavLink>
-          )}
+        <button
+          className="logout-link"
+          onClick={(e) => {
+            e.preventDefault();
+            handleLogout();
+          }}
+        >
+          Logout
+        </button>
+      </div>
+    </Link>
+  </div>
+) : (
+  <NavLink
+    to="/login"
+    className="login-btn"
+  >
+    Login
+  </NavLink>
+)}
         </div>
       </header>
 

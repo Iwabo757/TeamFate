@@ -189,7 +189,7 @@ export default function ShinyDex() {
   <h1>📖 Team Shiny Dex</h1>
 
   <div className="fate-banner">
-    ⭐ One Wish. One Fate ⭐
+    ⭐Montly Bounty Here ⭐
   </div>
 
   <p>

@@ -736,3 +736,51 @@ th {
 
   font-weight: 700;
 }
+
+.user-menu {
+  display: flex;
+  align-items: center;
+}
+
+.user-button {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-decoration: none;
+  color: white;
+}
+
+.nav-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #1f4fff;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.username {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: white;
+}
+
+.logout-link {
+  background: none;
+  border: none;
+  color: #7db4ff;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.logout-link:hover {
+  color: white;
+}
