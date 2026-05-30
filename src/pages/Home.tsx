@@ -1,3 +1,4 @@
+import RecentFinds from "../components/RecentFinds";
 export default function Home() {
   return (
     <>
@@ -5,7 +6,7 @@ export default function Home() {
         <h1>TEAM FATE</h1>
         <p>The ultimate PokeMMO shiny hunting community.</p>
       </div>
-
+<RecentFinds />
       <div className="stats">
         <div className="card">
           <h2>Members</h2>

@@ -1,88 +1,103 @@
+import { Routes, Route, NavLink } from "react-router-dom";
+import ShinyDetails from "./pages/ShinyDetails";
+import Home from "./pages/Home";
+import ShinyShowcase from "./pages/Showcase";
+import ShinyDex from "./pages/ShinyDex";
+import ShinyBoard from "./pages/Leaderboard";
+import Events from "./pages/Events";
+import Forums from "./pages/Forums";
+import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+
 import {
-  Home,
-  Sparkles,
-  BookOpen,
-  Trophy,
-  Calendar,
-  Users,
-  Shield,
-} from "lucide-react";
+  FaHome,
+  FaStar,
+  FaBook,
+  FaTrophy,
+  FaCalendarAlt,
+  FaComments,
+  FaUserShield,
+  FaSignInAlt,
+} from "react-icons/fa";
 
 import "./App.css";
 
-function App() {
+export default function App() {
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <h1>TEAM FATE</h1>
-        <p>PokeMMO Community</p>
+   
+      <div className="app">
 
-        <nav>
-          <a href="#">
-            <Home size={20} />
-            Home
-          </a>
+<header className="topbar">
+  <div className="logo">
+    <div className="logo-main">TEAM FATE</div>
+    <div className="logo-sub">One Wish. One Fate</div>
+  </div>
 
-          <a href="#">
-            <Sparkles size={20} />
-            Shiny Showcase
-          </a>
+  <nav className="nav-links">
+    <NavLink to="/">Home</NavLink>
+    <NavLink to="/showcase">Showcase</NavLink>
+    <NavLink to="/dex">ShinyDex</NavLink>
+    <NavLink to="/board">Leaderboard</NavLink>
+    <NavLink to="/events">Events</NavLink>
+    <NavLink to="/forums">Forums</NavLink>
+    <NavLink to="/admin">Admin</NavLink>
+  </nav>
 
-          <a href="#">
-            <BookOpen size={20} />
-            Shiny Dex
-          </a>
+  <div className="topbar-right">
+    <NavLink to="/login" className="login-btn">
+      Login
+    </NavLink>
+  </div>
+</header>
 
-          <a href="#">
-            <Trophy size={20} />
-            Shiny Board
-          </a>
+        <main className="content">
+          <Routes>
+            <Route
+              path="/"
+              element={<Home />}
+            />
 
-          <a href="#">
-            <Calendar size={20} />
-            Events
-          </a>
+            <Route
+              path="/showcase"
+              element={<ShinyShowcase />}
+            />
 
-          <a href="#">
-            <Users size={20} />
-            Forums
-          </a>
+            <Route
+              path="/dex"
+              element={<ShinyDex />}
+            />
 
-          <a href="#">
-            <Shield size={20} />
-            Admin
-          </a>
-        </nav>
-      </aside>
+            <Route
+              path="/board"
+              element={<ShinyBoard />}
+            />
+<Route
+  path="/showcase/:id"
+  element={<ShinyDetails />}
+/>
+            <Route
+              path="/events"
+              element={<Events />}
+            />
 
-      <main className="content">
-        <section className="hero">
-          <h1>TEAM FATE</h1>
+            <Route
+              path="/forums"
+              element={<Forums />}
+            />
 
-          <p>
-            The ultimate PokeMMO shiny hunting community.
-          </p>
-        </section>
+            <Route
+              path="/admin"
+              element={<Admin />}
+            />
 
-        <section className="stats">
-          <div className="card">
-            <h2>Members</h2>
-            <span>155</span>
-          </div>
+            <Route
+              path="/login"
+              element={<Login />}
+            />
+          </Routes>
+        </main>
 
-          <div className="card">
-            <h2>Team Shinies</h2>
-            <span>2144</span>
-          </div>
-
-          <div className="card">
-            <h2>Guild Points</h2>
-            <span>9521</span>
-          </div>
-        </section>
-      </main>
-    </div>
+      </div>
+ 
   );
 }
-
-export default App;
