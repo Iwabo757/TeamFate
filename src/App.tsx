@@ -101,11 +101,25 @@ const result = await supabase
     {
       id: user.id,
 
+await supabase
+  .from("profiles")
+  .upsert(
+    {
+      id: user.id,
       username:
-        user.user_metadata.full_name ||
-        user.user_metadata.name ||
-        "Unknown",
-
+        user.user_metadata.name,
+      discord_name:
+        user.user_metadata.name,
+      avatar_url:
+        user.user_metadata.avatar_url,
+      discord_id:
+        user.user_metadata.provider_id,
+    },
+    {
+      onConflict: "id",
+      ignoreDuplicates: false,
+    }
+  );
       discord_name:
         user.user_metadata.name,
 

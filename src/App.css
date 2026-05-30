@@ -1077,3 +1077,50 @@ input[type="file"] {
 .dropdown:hover .dropdown-menu {
   display: block;
 }
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(320px, 1fr)
+  );
+  gap: 20px;
+}
+
+.admin-card {
+  background: rgba(0, 15, 60, 0.9);
+  border: 1px solid #2457ff;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.member-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto;
+}
+
+.admin-card input,
+.admin-card select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.delete-btn {
+  background: #c62828;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #e53935;
+}

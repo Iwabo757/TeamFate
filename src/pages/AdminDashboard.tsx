@@ -6,33 +6,35 @@ export default function AdminDashboard() {
       <h1>Admin Panel</h1>
 
       <div className="admin-grid">
+
         <Link
           to="/admin/events"
           className="admin-card"
         >
-          Create Event
+          📅 Create Events
         </Link>
 
         <Link
           to="/admin/shinies/add"
           className="admin-card"
         >
-          Add Shiny
+          ✨ Add Shiny
         </Link>
 
         <Link
           to="/admin/shinies"
           className="admin-card"
         >
-          Manage Shinies
+          📖 Manage Shinies
         </Link>
 
         <Link
           to="/admin/members"
           className="admin-card"
         >
-          Manage Members
+          👥 Manage Members
         </Link>
+
       </div>
     </div>
   );
