@@ -51,12 +51,14 @@ async function loadProfile() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  console.log("USER:", user);
+
   if (!user) {
     setProfile(null);
     return;
   }
 
-  await supabase
+  const result = await supabase
     .from("profiles")
     .upsert({
       id: user.id,
@@ -72,14 +74,21 @@ async function loadProfile() {
         user.user_metadata.provider_id,
     });
 
-  const { data } = await supabase
+  console.log("UPSERT:", result);
+
+  const profileResult = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (data) {
-    setProfile(data);
+  console.log(
+    "PROFILE:",
+    profileResult
+  );
+
+  if (profileResult.data) {
+    setProfile(profileResult.data);
   }
 }
 
