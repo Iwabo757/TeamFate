@@ -2,6 +2,8 @@ import { supabase } from "../lib/supabase";
 
 export default function Login() {
   const signInWithDiscord = async () => {
+    console.log("Discord button clicked");
+
     const { data, error } =
       await supabase.auth.signInWithOAuth({
         provider: "discord",
