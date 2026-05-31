@@ -28,8 +28,8 @@ export default function Members() {
       if (error) throw error;
 
       setMembers(data || []);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }
