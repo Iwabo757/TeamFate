@@ -1272,55 +1272,71 @@ input[type="file"] {
     transform: translateY(0);
   }
 }
-.homepage-rotator {
-  height: 340px;
-  min-height: 340px;
-  max-height: 340px;
 
-  overflow: hidden;
-
-  display: flex;
-  align-items: stretch;
-}
-
-.homepage-rotator > * {
-  width: 100%;
-  height: 100%;
-}
-
-.recent-finds,
-.upcoming-events {
-  height: 100%;
-  min-height: 100%;
-  box-sizing: border-box;
-}
-.empty-panel {
-  height: 220px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  font-size: 1.5rem;
-  color: #b8c7e8;
-}
 .home-ticker {
-  height: 160px;
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto 30px;
 
+  min-height: 170px;
+
   display: flex;
   align-items: center;
-  gap: 20px;
+  justify-content: center;
 
-  padding: 20px;
+  gap: 24px;
 
-  background: rgba(0,0,40,.9);
-  border: 1px solid #2d4f8f;
+  padding: 25px;
+
+  background: linear-gradient(
+    180deg,
+    #08142d,
+    #061127
+  );
+
+  border: 1px solid #1e3a5f;
   border-radius: 18px;
+
+  animation: fadeIn .4s ease;
 }
+
 .ticker-sprite {
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
+
   image-rendering: pixelated;
+
+  filter:
+    drop-shadow(
+      0 0 12px
+      rgba(255,213,74,.5)
+    );
+}
+
+.ticker-content {
+  text-align: left;
+}
+
+.ticker-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.ticker-subtitle {
+  color: #9fb2c8;
+  font-size: 1rem;
+}
+
+.ticker-event {
+  text-align: center;
+}
+
+.ticker-event h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.ticker-event p {
+  margin: 4px 0;
+  color: #c8d4e7;
 }

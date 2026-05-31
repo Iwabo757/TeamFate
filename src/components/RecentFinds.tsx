@@ -6,7 +6,19 @@ type RecentCatch = {
   pokemon_name: string;
   username: string;
   date_found: string;
+  pokemon_id: number;
 };
+
+const formatted =
+  catches?.map((c) => ({
+    id: c.id,
+    pokemon_id: c.pokemon_id,
+    pokemon_name:
+      pokemonMap[c.pokemon_id] || "Unknown",
+    username:
+      profileMap[c.profile_id] || "Unknown",
+    date_found: c.date_found,
+  })) || [];
 
 export default function RecentFinds() {
   const [finds, setFinds] = useState<RecentCatch[]>([]);
