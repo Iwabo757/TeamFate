@@ -53,12 +53,11 @@ export default function ShinyDex() {
 
       if (catchError) throw catchError;
 
-      const {
-        data: profileData,
-        error: profileError,
-      } = await supabase
-        .from("profiles")
-        .select("id, username");
+const {
+  data: profileData,
+} = await supabase
+  .from("profiles")
+  .select("id, username, nickname");
 
       if (profileError) throw profileError;
 
@@ -68,8 +67,9 @@ export default function ShinyDex() {
       > = {};
 
       profileData?.forEach((profile: any) => {
-        profileMap[profile.id] =
-          profile.username;
+profileMap[profile.id] =
+  profile.nickname ||
+  profile.username;
       });
 
       const ownershipMap: Record<

@@ -4,9 +4,9 @@ import { supabase } from "../lib/supabase";
 type Member = {
   id: string;
   username: string;
+  nickname: string;
   avatar_url: string;
   role: string;
-  shiny_count: number;
 };
 
 export default function Members() {
@@ -56,15 +56,24 @@ export default function Members() {
               className="member-avatar"
             />
 
-            <h3>{member.username}</h3>
+            <h3>
+  {member.nickname || member.username}
+</h3>
 
             <p>
               Role: {member.role || "member"}
             </p>
 
+const { data } = await supabase
+  .from("profiles")
+  .select(`
+    *,
+    shiny_catches(id)
+  `);
             <p>
-              Shinies: {member.shiny_count || 0}
-            </p>
+  Shinies: {member.shiny_catches?.length || 0}
+</p>
+
           </div>
         ))}
       </div>
