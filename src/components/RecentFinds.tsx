@@ -3,12 +3,11 @@ import { supabase } from "../lib/supabase";
 
 type RecentCatch = {
   id: string;
+  pokemon_id: number;
   pokemon_name: string;
   username: string;
   date_found: string;
-  pokemon_id: number;
 };
-
 
 export default function RecentFinds() {
   const [finds, setFinds] = useState<RecentCatch[]>([]);
@@ -18,74 +17,97 @@ export default function RecentFinds() {
   }, []);
 
   async function loadRecentFinds() {
-    const { data: catches } = await supabase
-      .from("shiny_catches")
-      .select("*")
-      .order("date_found", { ascending: false })
-      .limit(10);
+    try {
+      const { data: catches } = await supabase
+        .from("shiny_catches")
+        .select("*")
+        .order("date_found", { ascending: false })
+        .limit(10);
 
-const formatted =
-  catches?.map((c) => ({
-    id: c.id,
-    pokemon_id: c.pokemon_id,
-    pokemon_name:
-      pokemonMap[c.pokemon_id] || "Unknown",
-    username:
-      profileMap[c.profile_id] || "Unknown",
-    date_found: c.date_found,
-  })) || [];
+      const { data: pokemon } = await supabase
+        .from("pokemon")
+        .select("id,name");
 
-    const { data: pokemon } = await supabase
-      .from("pokemon")
-      .select("id,name");
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id,nickname");
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id,username");
+      const pokemonMap: Record<number, string> = {};
 
-    const pokemonMap: Record<number, string> = {};
-    pokemon?.forEach((p) => {
-      pokemonMap[p.id] = p.name;
-    });
+      pokemon?.forEach((p: any) => {
+        pokemonMap[p.id] = p.name;
+      });
 
-    const profileMap: Record<string, string> = {};
-    profiles?.forEach((p) => {
-      profileMap[p.id] = p.username;
-    });
+      const profileMap: Record<string, string> = {};
 
-    const formatted =
-      catches?.map((c) => ({
-        id: c.id,
-        pokemon_name:
-          pokemonMap[c.pokemon_id] || "Unknown",
-        username:
-          profileMap[c.profile_id] || "Unknown",
-        date_found: c.date_found,
-      })) || [];
+      profiles?.forEach((p: any) => {
+        profileMap[p.id] =
+          p.nickname || "Unknown";
+      });
 
-    setFinds(formatted);
+      const recentFinds: RecentCatch[] =
+        catches?.map((c: any) => ({
+          id: c.id,
+          pokemon_id: c.pokemon_id,
+          pokemon_name:
+            pokemonMap[c.pokemon_id] ||
+            "Unknown",
+          username:
+            profileMap[c.profile_id] ||
+            "Unknown",
+          date_found: c.date_found,
+        })) || [];
+
+      setFinds(recentFinds);
+    } catch (error) {
+      console.error(
+        "Error loading finds:",
+        error
+      );
+    }
   }
 
   return (
     <div className="recent-finds">
       <h2>Recent Finds</h2>
 
-      {finds.map((find) => (
-        <div
-          key={find.id}
-          className="recent-find"
-        >
-          <strong>{find.username}</strong>
-          {" found "}
-          <strong>
-            Shiny {find.pokemon_name}
-          </strong>
+      {finds.length === 0 ? (
+        <p>No shiny finds yet.</p>
+      ) : (
+        finds.map((find) => (
+          <div
+            key={find.id}
+            className="recent-find"
+          >
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${find.pokemon_id}.png`}
+              alt={find.pokemon_name}
+              style={{
+                width: "64px",
+                height: "64px",
+                imageRendering:
+                  "pixelated",
+              }}
+            />
 
-          <div className="find-date">
-            {find.date_found}
+            <div>
+              <strong>
+                {find.username}
+              </strong>{" "}
+              found{" "}
+              <strong>
+                Shiny {find.pokemon_name}
+              </strong>
+
+              <div className="find-date">
+                {new Date(
+                  find.date_found
+                ).toLocaleDateString()}
+              </div>
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
     </div>
   );
 }
