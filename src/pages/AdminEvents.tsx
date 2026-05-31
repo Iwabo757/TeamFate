@@ -1,21 +1,30 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+type ContentBlock = {
+  type: "text" | "image";
+  content: string;
+  file?: File;
+};
+
 export default function AdminEvents() {
   const [events, setEvents] = useState<any[]>([]);
 
   const [title, setTitle] = useState("");
-  const [description, setDescription] =
-    useState("");
+  const [prize, setPrize] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
 
-  const [startTime, setStartTime] =
-    useState("");
+  const [bannerFile, setBannerFile] =
+    useState<File | null>(null);
 
-  const [endTime, setEndTime] =
-    useState("");
-
-  const [prize, setPrize] =
-    useState("");
+  const [blocks, setBlocks] =
+    useState<ContentBlock[]>([
+      {
+        type: "text",
+        content: "",
+      },
+    ]);
 
   useEffect(() => {
     loadEvents();
@@ -32,160 +41,449 @@ export default function AdminEvents() {
     setEvents(data || []);
   }
 
-  async function createEvent() {
-    const { error } = await supabase
-      .from("events")
-      .insert({
-        title,
-        description,
-        start_time: startTime,
-        end_time: endTime,
-        prize,
-      });
+  async function uploadImage(
+    file: File
+  ) {
+    const fileName =
+      `${Date.now()}-${file.name}`;
 
-    if (error) {
-      alert(error.message);
+    const { error } =
+      await supabase.storage
+        .from("event-images")
+        .upload(
+          fileName,
+          file
+        );
+
+    if (error)
+      throw error;
+
+    const { data } =
+      supabase.storage
+        .from("event-images")
+        .getPublicUrl(
+          fileName
+        );
+
+    return data.publicUrl;
+  }
+
+  function addTextBlock() {
+    setBlocks([
+      ...blocks,
+      {
+        type: "text",
+        content: "",
+      },
+    ]);
+  }
+
+  function addImageBlock() {
+    setBlocks([
+      ...blocks,
+      {
+        type: "image",
+        content: "",
+      },
+    ]);
+  }
+
+  function updateBlock(
+    index: number,
+    value: string
+  ) {
+    const copy = [
+      ...blocks,
+    ];
+
+    copy[index].content =
+      value;
+
+    setBlocks(copy);
+  }
+
+  async function createEvent() {
+    try {
+      let bannerUrl = null;
+
+      if (bannerFile) {
+        bannerUrl =
+          await uploadImage(
+            bannerFile
+          );
+      }
+
+      const firstText =
+        blocks.find(
+          (b) =>
+            b.type ===
+            "text"
+        )?.content || "";
+
+      const {
+        data: event,
+        error,
+      } = await supabase
+        .from("events")
+        .insert({
+          title,
+          description:
+            firstText,
+          prize,
+          start_time:
+            startTime,
+          end_time:
+            endTime,
+          banner_url:
+            bannerUrl,
+        })
+        .select()
+        .single();
+
+      if (error)
+        throw error;
+
+      for (
+        let i = 0;
+        i <
+        blocks.length;
+        i++
+      ) {
+        const block =
+          blocks[i];
+
+        let content =
+          block.content;
+
+        if (
+          block.type ===
+            "image" &&
+          block.file
+        ) {
+          content =
+            await uploadImage(
+              block.file
+            );
+        }
+
+        await supabase
+          .from(
+            "event_content_blocks"
+          )
+          .insert({
+            event_id:
+              event.id,
+            block_type:
+              block.type,
+            content,
+            display_order:
+              i,
+          });
+      }
+
+      alert(
+        "Event Created"
+      );
+
+      setTitle("");
+      setPrize("");
+      setStartTime("");
+      setEndTime("");
+      setBannerFile(
+        null
+      );
+
+      setBlocks([
+        {
+          type: "text",
+          content: "",
+        },
+      ]);
+
+      loadEvents();
+
+    } catch (err: any) {
+      alert(
+        err.message
+      );
+    }
+  }
+
+  async function deleteEvent(
+    id: string
+  ) {
+    if (
+      !window.confirm(
+        "Delete Event?"
+      )
+    ) {
       return;
     }
 
-    setTitle("");
-    setDescription("");
-    setStartTime("");
-    setEndTime("");
-    setPrize("");
+    const { error } =
+      await supabase
+        .from("events")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+      alert(
+        error.message
+      );
+      return;
+    }
 
     loadEvents();
   }
 
-async function deleteEvent(id: string) {
-  if (
-    !window.confirm(
-      "Delete this event?"
-    )
-  ) {
-    return;
-  }
-
-  const { error } =
-    await supabase
-      .from("events")
-      .delete()
-      .eq("id", id);
-
-  if (error) {
-    alert(error.message);
-    console.error(error);
-    return;
-  }
-
-  loadEvents();
-}
-
   return (
     <div className="page">
 
-      <h1>Create Event</h1>
+      <h1>
+        Create Event
+      </h1>
 
-<div className="card">
-  <div className="admin-form">
-        <input
-          placeholder="Title"
-          value={title}
-          onChange={(e) =>
-            setTitle(e.target.value)
-          }
-        />
+      <div className="card">
 
-        <textarea
-          placeholder="Description"
-          value={description}
-          onChange={(e) =>
-            setDescription(
-              e.target.value
-            )
-          }
-        />
+        <div className="admin-form">
 
-        <input
-          type="datetime-local"
-          value={startTime}
-          onChange={(e) =>
-            setStartTime(
-              e.target.value
-            )
-          }
-        />
-
-        <input
-          type="datetime-local"
-          value={endTime}
-          onChange={(e) =>
-            setEndTime(
-              e.target.value
-            )
-          }
-        />
-
-        <input
-          placeholder="Prize"
-          value={prize}
-          onChange={(e) =>
-            setPrize(
-              e.target.value
-            )
-          }
-        />
-
-<button
-  className="submit-btn"
-  onClick={createEvent}
->
-  Create Event
-</button>
-
-      </div>
-</div>
-      <h2>Existing Events</h2>
-
-      {events.map((event) => (
-        <div
-          key={event.id}
-          className="card"
-        >
-          <h3>{event.title}</h3>
-
-<p>{event.description}</p>
-
-<p>
-  <strong>Starts:</strong>{" "}
-  {new Date(
-    event.start_time
-  ).toLocaleString()}
-</p>
-
-<p>
-  <strong>Ends:</strong>{" "}
-  {new Date(
-    event.end_time
-  ).toLocaleString()}
-</p>
-
-<p>
-  <strong>Prize:</strong>{" "}
-  {event.prize}
-</p>
-          <button
-            className="delete-btn"
-            onClick={() =>
-              deleteEvent(
-                event.id
+          <input
+            className="dex-search"
+            placeholder="Title"
+            value={title}
+            onChange={(
+              e
+            ) =>
+              setTitle(
+                e.target
+                  .value
               )
             }
+          />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(
+              e
+            ) =>
+              setBannerFile(
+                e.target
+                  .files?.[0] ||
+                  null
+              )
+            }
+          />
+
+          <input
+            type="datetime-local"
+            value={
+              startTime
+            }
+            onChange={(
+              e
+            ) =>
+              setStartTime(
+                e.target
+                  .value
+              )
+            }
+          />
+
+          <input
+            type="datetime-local"
+            value={
+              endTime
+            }
+            onChange={(
+              e
+            ) =>
+              setEndTime(
+                e.target
+                  .value
+              )
+            }
+          />
+
+          <input
+            placeholder="Prize"
+            value={prize}
+            onChange={(
+              e
+            ) =>
+              setPrize(
+                e.target
+                  .value
+              )
+            }
+          />
+
+          <div
+            style={{
+              display:
+                "flex",
+              gap: "10px",
+            }}
           >
-            Delete
+            <button
+              type="button"
+              onClick={
+                addTextBlock
+              }
+            >
+              Add Text
+            </button>
+
+            <button
+              type="button"
+              onClick={
+                addImageBlock
+              }
+            >
+              Add Image
+            </button>
+          </div>
+
+          {blocks.map(
+            (
+              block,
+              index
+            ) => (
+              <div
+                key={
+                  index
+                }
+              >
+                {block.type ===
+                "text" ? (
+                  <textarea
+                    placeholder="Text Block"
+                    value={
+                      block.content
+                    }
+                    onChange={(
+                      e
+                    ) =>
+                      updateBlock(
+                        index,
+                        e
+                          .target
+                          .value
+                      )
+                    }
+                  />
+                ) : (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(
+                      e
+                    ) => {
+                      const
+                        copy =
+                          [
+                            ...blocks,
+                          ];
+
+                      copy[
+                        index
+                      ].file =
+                        e
+                          .target
+                          .files?.[0];
+
+                      setBlocks(
+                        copy
+                      );
+                    }}
+                  />
+                )}
+              </div>
+            )
+          )}
+
+          <button
+            className="submit-btn"
+            onClick={
+              createEvent
+            }
+          >
+            Create Event
           </button>
+
         </div>
-      ))}
+
+      </div>
+
+      <h2>
+        Existing Events
+      </h2>
+
+      {events.map(
+        (event) => (
+          <div
+            key={
+              event.id
+            }
+            className="card"
+          >
+            {event.banner_url && (
+              <img
+                src={
+                  event.banner_url
+                }
+                alt=""
+                style={{
+                  width:
+                    "100%",
+                  borderRadius:
+                    "12px",
+                  marginBottom:
+                    "15px",
+                }}
+              />
+            )}
+
+            <h3>
+              {
+                event.title
+              }
+            </h3>
+
+            <p>
+              Starts:{" "}
+              {new Date(
+                event.start_time
+              ).toLocaleString()}
+            </p>
+
+            <p>
+              Ends:{" "}
+              {new Date(
+                event.end_time
+              ).toLocaleString()}
+            </p>
+
+            <p>
+              Prize:{" "}
+              {
+                event.prize
+              }
+            </p>
+
+            <button
+              className="delete-btn"
+              onClick={() =>
+                deleteEvent(
+                  event.id
+                )
+              }
+            >
+              Delete
+            </button>
+          </div>
+        )
+      )}
 
     </div>
   );
