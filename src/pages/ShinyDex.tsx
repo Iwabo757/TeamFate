@@ -7,7 +7,12 @@ type DexPokemon = {
   name: string;
   region?: string;
   caught: boolean;
-  owners: string[];
+
+  owners: Record<string, number>;
+
+  screenshots: string[];
+
+  totalCopies: number;
 };
 
 export default function ShinyDex() {
@@ -72,21 +77,42 @@ profileData?.forEach((profile: any) => {
     profile.username;
 });
 
-const ownershipMap: Record<number, string[]> = {};
+const ownershipMap: Record<
+  number,
+  Record<string, number>
+> = {};
+
+const screenshotMap: Record<
+  number,
+  string[]
+> = {};
 
 catchData?.forEach((entry: any) => {
-  const pokemonId = Number(entry.pokemon_id);
+  const pokemonId =
+    Number(entry.pokemon_id);
 
-  const trainerName =
+  const trainer =
     profileMap[entry.profile_id];
 
+  if (!trainer) return;
+
   if (!ownershipMap[pokemonId]) {
-    ownershipMap[pokemonId] = [];
+    ownershipMap[pokemonId] = {};
   }
 
-  if (trainerName) {
-    ownershipMap[pokemonId].push(
-      trainerName
+  ownershipMap[pokemonId][trainer] =
+    (ownershipMap[pokemonId][trainer] || 0)
+    + 1;
+
+  if (
+    entry.screenshot_url
+  ) {
+    if (!screenshotMap[pokemonId]) {
+      screenshotMap[pokemonId] = [];
+    }
+
+    screenshotMap[pokemonId].push(
+      entry.screenshot_url
     );
   }
 });
@@ -106,10 +132,25 @@ catchData?.forEach((entry: any) => {
             caught: caughtIds.has(
               Number(poke.id)
             ),
-            owners:
-              ownershipMap[
-                Number(poke.id)
-              ] || [],
+owners:
+  ownershipMap[
+    Number(poke.id)
+  ] || {},
+
+screenshots:
+  screenshotMap[
+    Number(poke.id)
+  ] || [],
+
+totalCopies:
+  Object.values(
+    ownershipMap[
+      Number(poke.id)
+    ] || {}
+  ).reduce(
+    (a, b) => a + b,
+    0
+  ),
           })
         );
 
@@ -131,11 +172,14 @@ catchData?.forEach((entry: any) => {
           ? poke.name
               .toLowerCase()
               .includes(searchText)
-          : poke.owners.some((owner) =>
-              owner
-                .toLowerCase()
-                .includes(searchText)
-            );
+          :
+ Object.keys(
+  poke.owners
+).some((owner) =>
+  owner
+    .toLowerCase()
+    .includes(searchText)
+);
 
       const matchesFilter =
         filter === "all"
@@ -368,18 +412,19 @@ catchData?.forEach((entry: any) => {
                 <div className="detail-card">
                   <h3>Owners</h3>
 
-                  {selectedPokemon.owners
-                    .length > 0 ? (
-                    selectedPokemon.owners.map(
-                      (owner) => (
-                        <div
-                          key={owner}
-                          className="owner-row"
-                        >
-                          👤 {owner}
-                        </div>
-                      )
-                    )
+                  {Object.keys(selectedPokemon.owners).length > 0 ? (
+Object.entries(
+  selectedPokemon.owners
+).map(
+  ([name, count]) => (
+    <div
+      key={name}
+      className="owner-row"
+    >
+      👤 {name} x{count}
+    </div>
+  )
+)
                   ) : (
                     <p>
                       No owners yet
@@ -393,20 +438,29 @@ catchData?.forEach((entry: any) => {
                   <p>
                     Copies:
                     {" "}
-                    {
-                      selectedPokemon
-                        .owners.length
-                    }
+                    {selectedPokemon.totalCopies}
                   </p>
                 </div>
 
                 <div className="detail-card">
                   <h3>Gallery</h3>
 
-                  <p>
-                    No screenshots
-                    uploaded yet.
-                  </p>
+                  {selectedPokemon.screenshots.length > 0 ? (
+  <div className="gallery-grid">
+    {selectedPokemon.screenshots.map(
+      (url, index) => (
+        <img
+          key={index}
+          src={url}
+          alt={`Screenshot ${index + 1}`}
+          className="gallery-image"
+        />
+      )
+    )}
+  </div>
+) : (
+  <p>No screenshots uploaded yet.</p>
+)}
                 </div>
 
               </div>
