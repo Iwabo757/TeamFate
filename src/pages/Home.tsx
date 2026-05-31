@@ -1,37 +1,139 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import RecentFinds from "../components/RecentFinds";
+import UpcomingEvents from "../components/UpcomingEvents";
 
 export default function Home() {
+  const [memberCount, setMemberCount] = useState(0);
+  const [shinyCount, setShinyCount] = useState(0);
+
+  const [topHunter, setTopHunter] = useState({
+    name: "None",
+    count: 0,
+  });
+
+  const [activePanel, setActivePanel] = useState<
+    "finds" | "events"
+  >("finds");
+
+  useEffect(() => {
+    loadStats();
+
+    const interval = setInterval(() => {
+      setActivePanel((prev) =>
+        prev === "finds"
+          ? "events"
+          : "finds"
+      );
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  async function loadStats() {
+    try {
+      const { count: members } =
+        await supabase
+          .from("profiles")
+          .select("*", {
+            count: "exact",
+            head: true,
+          });
+
+      setMemberCount(members || 0);
+
+      const { count: shinies } =
+        await supabase
+          .from("shiny_catches")
+          .select("*", {
+            count: "exact",
+            head: true,
+          });
+
+      setShinyCount(shinies || 0);
+
+      const { data: catches } =
+        await supabase
+          .from("shiny_catches")
+          .select(`
+            profile_id,
+            profiles (
+              nickname
+            )
+          `);
+
+      const totals: Record<
+        string,
+        number
+      > = {};
+
+      catches?.forEach((entry: any) => {
+        const name =
+          entry.profiles?.nickname ||
+          "Unknown";
+
+        totals[name] =
+          (totals[name] || 0) + 1;
+      });
+
+      const leader =
+        Object.entries(totals)
+          .sort(
+            (a, b) =>
+              b[1] - a[1]
+          )[0];
+
+      if (leader) {
+        setTopHunter({
+          name: leader[0],
+          count: leader[1],
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   return (
     <div className="home-page">
-
       <div className="hero">
         <h1>TEAM FATE</h1>
 
         <p>
-          The ultimate PokeMMO shiny hunting
-          community.
+          The ultimate PokeMMO shiny
+          hunting community.
         </p>
       </div>
 
-      <RecentFinds />
+      {activePanel === "finds" ? (
+        <RecentFinds />
+      ) : (
+        <UpcomingEvents />
+      )}
 
       <div className="stats">
         <div className="card">
           <h2>Members</h2>
-          <span>155</span>
+          <span>{memberCount}</span>
         </div>
 
         <div className="card">
           <h2>Team Shinies</h2>
-          <span>2144</span>
+          <span>{shinyCount}</span>
         </div>
 
         <div className="card">
-          <h2>Guild Points</h2>
-          <span>9521</span>
+          <h2>Top Hunter</h2>
+
+          <span>
+            {topHunter.name}
+          </span>
+
+          <small>
+            {topHunter.count} shinies
+          </small>
         </div>
       </div>
-
     </div>
   );
 }
