@@ -3,10 +3,9 @@ type DexCardProps = {
   id: number;
   name: string;
   caught: boolean;
-  owners: string[];
+  owners: Record<string, number>;
   onClick: () => void;
 };
-
 
 export default function DexCard({
   id,
@@ -15,7 +14,6 @@ export default function DexCard({
   owners,
   onClick,
 }: DexCardProps) {
-
   return (
     <div
       className="dex-entry"
@@ -36,18 +34,25 @@ export default function DexCard({
 
         {caught ? (
           <>
-            <p>Owned By:</p>
+            <div>Owned By:</div>
 
-            {owners.map((owner) => (
-              <div key={owner}>
-                {owner}
-              </div>
-            ))}
+            <div className="owner-preview">
+              {Object.entries(owners).map(
+                ([owner, count]) => (
+                  <div key={owner}>
+                    {owner} x{count}
+                  </div>
+                )
+              )}
+            </div>
           </>
         ) : (
           <p>Not Yet Obtained</p>
         )}
       </div>
+    </div>
+  );
+}
     </div>
   );
 }
