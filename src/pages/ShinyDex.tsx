@@ -449,12 +449,13 @@ Object.entries(
   <div className="gallery-grid">
     {selectedPokemon.screenshots.map(
       (url, index) => (
-        <img
-          key={index}
-          src={url}
-          alt={`Screenshot ${index + 1}`}
-          className="gallery-image"
-        />
+<img
+  key={index}
+  src={url}
+  alt={`Screenshot ${index + 1}`}
+  className="gallery-image"
+  onClick={() => window.open(url, "_blank")}
+/>
       )
     )}
   </div>

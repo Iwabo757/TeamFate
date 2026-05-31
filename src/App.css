@@ -1229,3 +1229,24 @@ input[type="file"] {
   border-radius: 12px;
   margin: 15px 0;
 }
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.gallery-image {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+
+  border-radius: 8px;
+  border: 1px solid #2f5eff;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.gallery-image:hover {
+  transform: scale(1.05);
+}
