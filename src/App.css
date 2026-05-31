@@ -586,30 +586,20 @@ th {
 ========================= */
 
 .pokemon-modal {
-  width: 850px;
+  width: 1200px;
+  max-width: 95vw;
 
-  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
 
-  background:
-    linear-gradient(
-      180deg,
-      #10203c,
-      #081225
-    );
-
-  border:
-    2px solid
-    rgba(255,213,74,.25);
+  background: linear-gradient(
+    180deg,
+    #10203c,
+    #081225
+  );
 
   border-radius: 16px;
-
   padding: 25px;
-
-  position: relative;
-
-  box-shadow:
-    0 0 40px
-    rgba(255,213,74,.12);
 }
 
 .modal-header {
@@ -1229,10 +1219,14 @@ input[type="file"] {
   border-radius: 12px;
   margin: 15px 0;
 }
+
 .gallery-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .gallery-image {
