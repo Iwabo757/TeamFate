@@ -4,9 +4,10 @@ import { supabase } from "../lib/supabase";
 type Member = {
   id: string;
   username: string;
-  nickname: string;
-  avatar_url: string;
+  nickname: string | null;
+  avatar_url: string | null;
   role: string;
+  shiny_count: number;
 };
 
 export default function Members() {
@@ -18,18 +19,20 @@ export default function Members() {
   }, []);
 
   async function loadMembers() {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("username");
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("nickname", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      return;
+      if (error) throw error;
+
+      setMembers(data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    setMembers(data || []);
-    setLoading(false);
   }
 
   if (loading) {
@@ -37,12 +40,10 @@ export default function Members() {
   }
 
   return (
-    <div>
+    <div className="members-page">
       <h1>👥 Team Fate Members</h1>
 
-      <p>
-        Current Members: {members.length}
-      </p>
+      <p>Current Members: {members.length}</p>
 
       <div className="members-grid">
         {members.map((member) => (
@@ -51,29 +52,26 @@ export default function Members() {
             className="member-card"
           >
             <img
-              src={member.avatar_url}
+              src={
+                member.avatar_url ||
+                "https://cdn.discordapp.com/embed/avatars/0.png"
+              }
               alt={member.username}
               className="member-avatar"
             />
 
             <h3>
-  {member.nickname || member.username}
-</h3>
+              {member.nickname ||
+                member.username}
+            </h3>
 
             <p>
               Role: {member.role || "member"}
             </p>
 
-const { data } = await supabase
-  .from("profiles")
-  .select(`
-    *,
-    shiny_catches(id)
-  `);
             <p>
-  Shinies: {member.shiny_catches?.length || 0}
-</p>
-
+              Shinies: {member.shiny_count ?? 0}
+            </p>
           </div>
         ))}
       </div>

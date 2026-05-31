@@ -55,47 +55,41 @@ export default function ShinyDex() {
 
 const {
   data: profileData,
+  error: profileError,
 } = await supabase
   .from("profiles")
   .select("id, username, nickname");
 
-      if (profileError) throw profileError;
+if (profileError) {
+  throw profileError;
+}
 
-      const profileMap: Record<
-        string,
-        string
-      > = {};
+const profileMap: Record<string, string> = {};
 
-      profileData?.forEach((profile: any) => {
-profileMap[profile.id] =
-  profile.nickname ||
-  profile.username;
-      });
+profileData?.forEach((profile: any) => {
+  profileMap[profile.id] =
+    profile.nickname ||
+    profile.username;
+});
 
-      const ownershipMap: Record<
-        number,
-        string[]
-      > = {};
+const ownershipMap: Record<number, string[]> = {};
 
-      catchData?.forEach((entry: any) => {
-        const pokemonId = Number(
-          entry.pokemon_id
-        );
+catchData?.forEach((entry: any) => {
+  const pokemonId = Number(entry.pokemon_id);
 
-        const username =
-          profileMap[entry.profile_id];
+  const trainerName =
+    profileMap[entry.profile_id];
 
-        if (!ownershipMap[pokemonId]) {
-          ownershipMap[pokemonId] = [];
-        }
+  if (!ownershipMap[pokemonId]) {
+    ownershipMap[pokemonId] = [];
+  }
 
-        if (username) {
-          ownershipMap[pokemonId].push(
-            username
-          );
-
-        }
-      });
+  if (trainerName) {
+    ownershipMap[pokemonId].push(
+      trainerName
+    );
+  }
+});
 
       const caughtIds = new Set(
         catchData?.map((c: any) =>
