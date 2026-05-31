@@ -1272,3 +1272,35 @@ input[type="file"] {
     transform: translateY(0);
   }
 }
+.homepage-rotator {
+  height: 340px;
+  min-height: 340px;
+  max-height: 340px;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: stretch;
+}
+
+.homepage-rotator > * {
+  width: 100%;
+  height: 100%;
+}
+
+.recent-finds,
+.upcoming-events {
+  height: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+.empty-panel {
+  height: 220px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  font-size: 1.5rem;
+  color: #b8c7e8;
+}

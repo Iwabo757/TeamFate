@@ -12,23 +12,26 @@ export default function Home() {
     count: 0,
   });
 
-  const [activePanel, setActivePanel] = useState<
-    "finds" | "events"
-  >("finds");
+const [index, setIndex] = useState(0);
 
-  useEffect(() => {
+useEffect(() => {
+  loadStats();
+
+  const rotateTimer = setInterval(() => {
+    setIndex((prev) => (prev + 1) % 2);
+  }, 10000);
+
+  const refreshTimer = setInterval(() => {
     loadStats();
+  }, 30000);
 
-    const interval = setInterval(() => {
-      setActivePanel((prev) =>
-        prev === "finds"
-          ? "events"
-          : "finds"
-      );
-    }, 10000);
+  return () => {
+    clearInterval(rotateTimer);
+    clearInterval(refreshTimer);
+  };
+}, []);
 
-    return () => clearInterval(interval);
-  }, []);
+
 
   async function loadStats() {
     try {
@@ -106,13 +109,12 @@ export default function Home() {
       </div>
 
 <div className="homepage-rotator">
-  {activePanel === "finds" ? (
+  {index === 0 ? (
     <RecentFinds />
   ) : (
     <UpcomingEvents />
   )}
 </div>
-
 
       <div className="stats">
         <div className="card">

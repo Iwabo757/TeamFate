@@ -52,7 +52,9 @@ export default function UpcomingEvents() {
       {loading ? (
         <p>Loading events...</p>
       ) : events.length === 0 ? (
-        <p>No upcoming events.</p>
+        <div className="empty-panel">
+  No Upcoming Events Scheduled
+</div>
       ) : (
         events.map((event) => (
           <div
