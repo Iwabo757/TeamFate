@@ -9,16 +9,6 @@ type RecentCatch = {
   pokemon_id: number;
 };
 
-const formatted =
-  catches?.map((c) => ({
-    id: c.id,
-    pokemon_id: c.pokemon_id,
-    pokemon_name:
-      pokemonMap[c.pokemon_id] || "Unknown",
-    username:
-      profileMap[c.profile_id] || "Unknown",
-    date_found: c.date_found,
-  })) || [];
 
 export default function RecentFinds() {
   const [finds, setFinds] = useState<RecentCatch[]>([]);
@@ -33,6 +23,17 @@ export default function RecentFinds() {
       .select("*")
       .order("date_found", { ascending: false })
       .limit(10);
+
+const formatted =
+  catches?.map((c) => ({
+    id: c.id,
+    pokemon_id: c.pokemon_id,
+    pokemon_name:
+      pokemonMap[c.pokemon_id] || "Unknown",
+    username:
+      profileMap[c.profile_id] || "Unknown",
+    date_found: c.date_found,
+  })) || [];
 
     const { data: pokemon } = await supabase
       .from("pokemon")
