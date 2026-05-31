@@ -121,6 +121,11 @@ export default function Home() {
         </div>
 
 <div className="card">
+  <h2>Team Shinies</h2>
+  <span>{shinyCount}</span>
+</div>
+
+<div className="card">
   <h2>Top Shiny Trainer</h2>
 
   <div className="leader-name">
