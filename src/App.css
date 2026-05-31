@@ -1296,7 +1296,7 @@ input[type="file"] {
   border: 1px solid #1e3a5f;
   border-radius: 18px;
 
-  animation: fadeTicker 2s linear infinite;
+  animation: fadeTicker 8s linear infinite;
 }
 
 @keyframes fadeTicker {
