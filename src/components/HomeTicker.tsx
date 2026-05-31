@@ -78,6 +78,14 @@ export default function HomeTicker() {
         start: e.start_time,
       })) || [];
 
+
+console.log("Shiny Items:", shinyItems);
+console.log("Event Items:", eventItems);
+console.log(
+  "Total Items:",
+  [...shinyItems, ...eventItems]
+);
+
     setItems([
       ...shinyItems,
       ...eventItems,
