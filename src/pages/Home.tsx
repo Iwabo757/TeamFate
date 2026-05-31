@@ -105,11 +105,14 @@ export default function Home() {
         </p>
       </div>
 
-      {activePanel === "finds" ? (
-        <RecentFinds />
-      ) : (
-        <UpcomingEvents />
-      )}
+<div className="homepage-rotator">
+  {activePanel === "finds" ? (
+    <RecentFinds />
+  ) : (
+    <UpcomingEvents />
+  )}
+</div>
+
 
       <div className="stats">
         <div className="card">
@@ -117,22 +120,17 @@ export default function Home() {
           <span>{memberCount}</span>
         </div>
 
-        <div className="card">
-          <h2>Team Shinies</h2>
-          <span>{shinyCount}</span>
-        </div>
+<div className="card">
+  <h2>Top Shiny Trainer</h2>
 
-        <div className="card">
-          <h2>Top Hunter</h2>
+  <div className="leader-name">
+    {topHunter.name}
+  </div>
 
-          <span>
-            {topHunter.name}
-          </span>
-
-          <small>
-            {topHunter.count} shinies
-          </small>
-        </div>
+  <div className="leader-count">
+    {topHunter.count} Shinies
+  </div>
+</div>
       </div>
     </div>
   );
