@@ -45,13 +45,42 @@ export default function AddShiny() {
     const fileName =
       `${Date.now()}-${imageFile.name}`;
 
-    const { error } = await supabase
+    console.log(
+      "Uploading screenshot:",
+      fileName
+    );
+
+    const result = await supabase
       .storage
       .from("shiny-screenshots")
-      .upload(fileName, imageFile);
+      .upload(
+        fileName,
+        imageFile,
+        {
+          upsert: false,
+        }
+      );
 
-    if (error) {
-      throw error;
+    console.log(
+      "UPLOAD RESULT",
+      result
+    );
+
+    if (result.error) {
+      console.error(
+        "UPLOAD ERROR",
+        result.error
+      );
+
+      alert(
+        JSON.stringify(
+          result.error,
+          null,
+          2
+        )
+      );
+
+      throw result.error;
     }
 
     const { data } = supabase
@@ -64,6 +93,22 @@ export default function AddShiny() {
 
   async function addShiny() {
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      console.log(
+        "CURRENT USER",
+        user
+      );
+
+      if (!user) {
+        alert(
+          "No authenticated user found."
+        );
+        return;
+      }
+
       if (
         !pokemonId ||
         !profileId ||
@@ -84,26 +129,53 @@ export default function AddShiny() {
           await uploadScreenshot();
       }
 
-      const { error } = await supabase
-        .from("shiny_catches")
-        .insert({
-          pokemon_id:
-            Number(pokemonId),
-          profile_id:
-            profileId,
-          date_found:
-            dateFound,
-          method,
-          notes,
-          screenshot_url:
-            screenshotUrl,
-        });
+      const insertResult =
+        await supabase
+          .from(
+            "shiny_catches"
+          )
+          .insert({
+            pokemon_id:
+              Number(
+                pokemonId
+              ),
+            profile_id:
+              profileId,
+            date_found:
+              dateFound,
+            method,
+            notes,
+            screenshot_url:
+              screenshotUrl,
+          });
 
-      if (error) {
-        throw error;
+      console.log(
+        "INSERT RESULT",
+        insertResult
+      );
+
+      if (
+        insertResult.error
+      ) {
+        console.error(
+          "INSERT ERROR",
+          insertResult.error
+        );
+
+        alert(
+          JSON.stringify(
+            insertResult.error,
+            null,
+            2
+          )
+        );
+
+        throw insertResult.error;
       }
 
-      alert("Shiny added!");
+      alert(
+        "Shiny added successfully!"
+      );
 
       setPokemonId("");
       setProfileId("");
@@ -114,7 +186,15 @@ export default function AddShiny() {
       setPreviewUrl("");
 
     } catch (err: any) {
-      alert(err.message);
+      console.error(
+        "ADD SHINY ERROR",
+        err
+      );
+
+      alert(
+        err?.message ||
+          "Unknown error"
+      );
     } finally {
       setLoading(false);
     }
@@ -129,20 +209,20 @@ export default function AddShiny() {
     if (!file) return;
 
     setImageFile(file);
-    setPreviewUrl(
-      URL.createObjectURL(file)
-    );
+
+    const url =
+      URL.createObjectURL(file);
+
+    setPreviewUrl(url);
   }
 
   return (
     <div className="page">
-
       <h1 className="page-title">
         Add Shiny
       </h1>
 
       <div className="card">
-
         <div className="admin-form">
 
           <select
@@ -157,16 +237,18 @@ export default function AddShiny() {
               Select Pokémon
             </option>
 
-            {pokemon.map((p) => (
-              <option
-                key={p.id}
-                value={p.id}
-              >
-                {p.name}
-                {" • "}
-                {p.region}
-              </option>
-            ))}
+            {pokemon.map(
+              (p) => (
+                <option
+                  key={p.id}
+                  value={p.id}
+                >
+                  {p.name}
+                  {" • "}
+                  {p.region}
+                </option>
+              )
+            )}
           </select>
 
           <select
@@ -181,15 +263,17 @@ export default function AddShiny() {
               Select Member
             </option>
 
-            {profiles.map((p) => (
-              <option
-                key={p.id}
-                value={p.id}
-              >
-                {p.nickname ||
-                  p.username}
-              </option>
-            ))}
+            {profiles.map(
+              (p) => (
+                <option
+                  key={p.id}
+                  value={p.id}
+                >
+                  {p.nickname ||
+                    p.username}
+                </option>
+              )
+            )}
           </select>
 
           <input
@@ -214,31 +298,31 @@ export default function AddShiny() {
               Select Method
             </option>
 
-            <option>
+            <option value="Horde">
               Horde
             </option>
 
-            <option>
+            <option value="Single Encounter">
               Single Encounter
             </option>
 
-            <option>
+            <option value="Egg">
               Egg
             </option>
 
-            <option>
+            <option value="Fishing">
               Fishing
             </option>
 
-            <option>
+            <option value="Safari">
               Safari
             </option>
 
-            <option>
+            <option value="Gift">
               Gift
             </option>
 
-            <option>
+            <option value="Other">
               Other
             </option>
           </select>
@@ -272,9 +356,13 @@ export default function AddShiny() {
               src={previewUrl}
               alt="Preview"
               style={{
-                width: "100%",
-                maxWidth: "500px",
+                width:
+                  "100%",
+                maxWidth:
+                  "600px",
                 borderRadius:
+                  "12px",
+                marginTop:
                   "12px",
               }}
             />
@@ -291,9 +379,7 @@ export default function AddShiny() {
           </button>
 
         </div>
-
       </div>
-
     </div>
   );
 }
