@@ -130,12 +130,9 @@ export default function AdminEvents() {
           description:
             firstText,
           prize,
-          start_time:
-            startTime,
-          end_time:
-            endTime,
-          banner_url:
-            bannerUrl,
+          start_time: new Date(startTime).toISOString(),
+          end_time: new Date(endTime).toISOString(),
+          banner_url: bannerUrl,
         })
         .select()
         .single();
@@ -450,19 +447,27 @@ export default function AdminEvents() {
               }
             </h3>
 
-            <p>
-              Starts:{" "}
-              {new Date(
-                event.start_time
-              ).toLocaleString()}
-            </p>
+<p>
+  Starts:{" "}
+  {new Date(event.start_time).toLocaleString(
+    undefined,
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }
+  )}
+</p>
 
-            <p>
-              Ends:{" "}
-              {new Date(
-                event.end_time
-              ).toLocaleString()}
-            </p>
+<p>
+  Ends:{" "}
+  {new Date(event.end_time).toLocaleString(
+    undefined,
+    {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }
+  )}
+</p>
 
             <p>
               Prize:{" "}
