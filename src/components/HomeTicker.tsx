@@ -86,10 +86,22 @@ console.log(
   [...shinyItems, ...eventItems]
 );
 
-    setItems([
-      ...shinyItems,
-      ...eventItems,
-    ]);
+const merged = [];
+
+const max = Math.max(
+  shinyItems.length,
+  eventItems.length
+);
+
+for (let i = 0; i < max; i++) {
+  if (shinyItems[i])
+    merged.push(shinyItems[i]);
+
+  if (eventItems[i])
+    merged.push(eventItems[i]);
+}
+
+setItems(merged);
   }
 
   if (!items.length) {
