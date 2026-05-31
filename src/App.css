@@ -1304,3 +1304,23 @@ input[type="file"] {
   font-size: 1.5rem;
   color: #b8c7e8;
 }
+.home-ticker {
+  height: 160px;
+  max-width: 1100px;
+  margin: 0 auto 30px;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+
+  padding: 20px;
+
+  background: rgba(0,0,40,.9);
+  border: 1px solid #2d4f8f;
+  border-radius: 18px;
+}
+.ticker-sprite {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}

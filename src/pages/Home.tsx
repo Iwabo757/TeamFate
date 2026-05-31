@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import RecentFinds from "../components/RecentFinds";
-import UpcomingEvents from "../components/UpcomingEvents";
+import HomeTicker from "../components/HomeTicker";
 
 export default function Home() {
   const [memberCount, setMemberCount] = useState(0);
+
   const [shinyCount, setShinyCount] = useState(0);
 
   const [topHunter, setTopHunter] = useState({
@@ -12,63 +12,46 @@ export default function Home() {
     count: 0,
   });
 
-const [index, setIndex] = useState(0);
-
-useEffect(() => {
-  loadStats();
-
-  const rotateTimer = setInterval(() => {
-    setIndex((prev) => (prev + 1) % 2);
-  }, 10000);
-
-  const refreshTimer = setInterval(() => {
+  useEffect(() => {
     loadStats();
-  }, 30000);
 
-  return () => {
-    clearInterval(rotateTimer);
-    clearInterval(refreshTimer);
-  };
-}, []);
+    const refreshTimer = setInterval(() => {
+      loadStats();
+    }, 30000);
 
-
+    return () => clearInterval(refreshTimer);
+  }, []);
 
   async function loadStats() {
     try {
-      const { count: members } =
-        await supabase
-          .from("profiles")
-          .select("*", {
-            count: "exact",
-            head: true,
-          });
+      const { count: members } = await supabase
+        .from("profiles")
+        .select("*", {
+          count: "exact",
+          head: true,
+        });
 
       setMemberCount(members || 0);
 
-      const { count: shinies } =
-        await supabase
-          .from("shiny_catches")
-          .select("*", {
-            count: "exact",
-            head: true,
-          });
+      const { count: shinies } = await supabase
+        .from("shiny_catches")
+        .select("*", {
+          count: "exact",
+          head: true,
+        });
 
       setShinyCount(shinies || 0);
 
-      const { data: catches } =
-        await supabase
-          .from("shiny_catches")
-          .select(`
-            profile_id,
-            profiles (
-              nickname
-            )
-          `);
+      const { data: catches } = await supabase
+        .from("shiny_catches")
+        .select(`
+          profile_id,
+          profiles (
+            nickname
+          )
+        `);
 
-      const totals: Record<
-        string,
-        number
-      > = {};
+      const totals: Record<string, number> = {};
 
       catches?.forEach((entry: any) => {
         const name =
@@ -79,12 +62,8 @@ useEffect(() => {
           (totals[name] || 0) + 1;
       });
 
-      const leader =
-        Object.entries(totals)
-          .sort(
-            (a, b) =>
-              b[1] - a[1]
-          )[0];
+      const leader = Object.entries(totals)
+        .sort((a, b) => b[1] - a[1])[0];
 
       if (leader) {
         setTopHunter({
@@ -108,13 +87,7 @@ useEffect(() => {
         </p>
       </div>
 
-<div className="homepage-rotator">
-  {index === 0 ? (
-    <RecentFinds />
-  ) : (
-    <UpcomingEvents />
-  )}
-</div>
+      <HomeTicker />
 
       <div className="stats">
         <div className="card">
@@ -122,22 +95,22 @@ useEffect(() => {
           <span>{memberCount}</span>
         </div>
 
-<div className="card">
-  <h2>Team Shinies</h2>
-  <span>{shinyCount}</span>
-</div>
+        <div className="card">
+          <h2>Team Shinies</h2>
+          <span>{shinyCount}</span>
+        </div>
 
-<div className="card">
-  <h2>Top Shiny Trainer</h2>
+        <div className="card">
+          <h2>Top Shiny Trainer</h2>
 
-  <div className="leader-name">
-    {topHunter.name}
-  </div>
+          <div className="leader-name">
+            {topHunter.name}
+          </div>
 
-  <div className="leader-count">
-    {topHunter.count} Shinies
-  </div>
-</div>
+          <div className="leader-count">
+            {topHunter.count} Shinies
+          </div>
+        </div>
       </div>
     </div>
   );
