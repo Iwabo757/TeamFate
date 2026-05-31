@@ -1,4 +1,3 @@
-
 type DexCardProps = {
   id: number;
   name: string;
@@ -50,9 +49,6 @@ export default function DexCard({
           <p>Not Yet Obtained</p>
         )}
       </div>
-    </div>
-  );
-}
     </div>
   );
 }
