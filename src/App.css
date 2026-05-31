@@ -1274,12 +1274,29 @@ input[type="file"] {
 }
 
 .home-ticker {
-  min-height: 220px;
+  max-width: 1400px;
+  margin: 0 auto 30px;
+
+  min-height: 170px;
+
   display: flex;
   align-items: center;
   justify-content: center;
 
-  animation: fadeTicker 8s linear infinite;
+  gap: 24px;
+
+  padding: 25px;
+
+  background: linear-gradient(
+    180deg,
+    #08142d,
+    #061127
+  );
+
+  border: 1px solid #1e3a5f;
+  border-radius: 18px;
+
+  animation: fadeTicker 2s linear infinite;
 }
 
 @keyframes fadeTicker {
@@ -1303,13 +1320,6 @@ input[type="file"] {
     transform: translateY(-15px);
   }
 }
-
-  border: 1px solid #1e3a5f;
-  border-radius: 18px;
-
-  animation: fadeIn .4s ease;
-}
-
 .ticker-sprite {
   width: 120px;
   height: 120px;
