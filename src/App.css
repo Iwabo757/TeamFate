@@ -330,60 +330,63 @@ a {
   min-width: 250px;
 }
 
-/* =========================================
+/* =========================
    DEX GRID
-========================================= */
+========================= */
 
 .dex-grid {
   display: grid;
 
   grid-template-columns:
-    repeat(auto-fill, minmax(60px, 1fr));
+    repeat(
+      auto-fill,
+      minmax(95px, 95px)
+    );
 
-  gap: 10px;
+  gap: 8px;
 
-  margin-top: 20px;
+  padding: 20px;
+
+  justify-content: center;
 }
 
 .dex-entry {
   position: relative;
 
-  width: 140px;
-  height: 140px;
+  width: 95px;
+  height: 95px;
 
   display: flex;
   justify-content: center;
   align-items: center;
 
-  border-radius: 18px;
+  border-radius: 12px;
 
   transition: 0.2s ease;
-}
-.dex-entry.caught {
-  border: 2px solid #16ff72;
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(22,255,114,.08),
-      rgba(22,255,114,.03)
-    );
-
-  box-shadow:
-    0 0 12px
-    rgba(22,255,114,.15);
+    rgba(10,20,40,.25);
 }
 
-.dex-entry.missing {
+/* CAUGHT */
+
+.dex-entry.caught {
   border: 2px solid #ffd54a;
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255,213,74,.08),
-      rgba(255,213,74,.03)
-    );
+  box-shadow:
+    0 0 8px
+    rgba(255,213,74,.25);
 }
+
+/* MISSING */
+
+.dex-entry.missing {
+  border: 2px solid #4b5563;
+
+  box-shadow: none;
+}
+
+/* SPRITES */
 
 .dex-sprite {
   width: 72px;
@@ -394,45 +397,41 @@ a {
   transition: 0.15s ease;
 }
 
-.dex-sprite:hover {
-  transform: scale(1.5);
-
-  filter:
-    drop-shadow(
-      0 0 8px
-      rgba(255,213,74,.6)
-    );
-}
 .dex-sprite.missing {
   filter: grayscale(100%);
-  opacity: 0.25;
+  opacity: 0.35;
 }
 
-/* =========================================
-   TOOLTIP
-========================================= */
+.dex-entry:hover {
+  transform: scale(1.05);
+  z-index: 20;
+}
+
+.dex-entry:hover .dex-sprite {
+  transform: scale(1.15);
+}
+
+/* TOOLTIP */
 
 .dex-tooltip {
   display: none;
 
   position: absolute;
 
-  bottom: 70px;
+  bottom: 110px;
   left: 50%;
 
   transform: translateX(-50%);
 
-  background: var(--panel);
+  background: #08142d;
 
-  border: 1px solid var(--border);
+  border: 1px solid #1e3a5f;
 
   border-radius: 10px;
 
   min-width: 180px;
 
   padding: 10px;
-
-  text-align: center;
 
   z-index: 999;
 }
