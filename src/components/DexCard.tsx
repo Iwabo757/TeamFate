@@ -15,7 +15,9 @@ export default function DexCard({
 }: DexCardProps) {
   return (
     <div
-      className="dex-entry"
+      className={`dex-entry ${
+        caught ? "caught" : "missing"
+      }`}
       onClick={onClick}
     >
       <img

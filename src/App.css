@@ -348,14 +348,46 @@ a {
 .dex-entry {
   position: relative;
 
+  width: 140px;
+  height: 140px;
+
   display: flex;
   justify-content: center;
   align-items: center;
+
+  border-radius: 18px;
+
+  transition: 0.2s ease;
+}
+.dex-entry.caught {
+  border: 2px solid #16ff72;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(22,255,114,.08),
+      rgba(22,255,114,.03)
+    );
+
+  box-shadow:
+    0 0 12px
+    rgba(22,255,114,.15);
+}
+
+.dex-entry.missing {
+  border: 2px solid #ffd54a;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,213,74,.08),
+      rgba(255,213,74,.03)
+    );
 }
 
 .dex-sprite {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
 
   image-rendering: pixelated;
 
