@@ -4,7 +4,6 @@ import { supabase } from "../lib/supabase";
 type Shiny = {
   id: string;
   pokemon_id: number;
-  pokemon_name: string;
   owner: string;
 };
 
@@ -24,17 +23,30 @@ export default function Showcase() {
 
   async function loadShowcase() {
     try {
-      const { data, error } = await supabase
-        .from("shiny_catches")
-        .select(`
-          id,
-          pokemon_id,
-          pokemon_name,
-          profiles (
-            nickname,
-            username
-          )
-        `);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, nickname, username");
+
+      const profileMap: Record<
+        string,
+        string
+      > = {};
+
+      profiles?.forEach((profile: any) => {
+        profileMap[profile.id] =
+          profile.nickname ||
+          profile.username ||
+          "Unknown";
+      });
+
+      const { data: catches, error } =
+        await supabase
+          .from("shiny_catches")
+          .select(`
+            id,
+            pokemon_id,
+            profile_id
+          `);
 
       if (error) throw error;
 
@@ -43,10 +55,9 @@ export default function Showcase() {
         Shiny[]
       > = {};
 
-      data?.forEach((shiny: any) => {
+      catches?.forEach((shiny: any) => {
         const owner =
-          shiny.profiles?.nickname ||
-          shiny.profiles?.username ||
+          profileMap[shiny.profile_id] ||
           "Unknown";
 
         if (!groups[owner]) {
@@ -56,7 +67,6 @@ export default function Showcase() {
         groups[owner].push({
           id: shiny.id,
           pokemon_id: shiny.pokemon_id,
-          pokemon_name: shiny.pokemon_name,
           owner,
         });
       });
@@ -76,7 +86,11 @@ export default function Showcase() {
     );
 
   if (loading) {
-    return <h2>Loading Showcase...</h2>;
+    return (
+      <div className="showcase-loading">
+        Loading Showcase...
+      </div>
+    );
   }
 
   return (
@@ -103,18 +117,21 @@ export default function Showcase() {
 
             <div className="showcase-sprites">
               {shinies.map((shiny) => (
-                <img
+                <div
                   key={shiny.id}
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
-                  alt={shiny.pokemon_name}
-                  title={shiny.pokemon_name}
-                  className="showcase-sprite"
+                  className="showcase-card"
                   onClick={() =>
                     setSelectedPokemon(
                       shiny
                     )
                   }
-                />
+                >
+                  <img
+                    src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
+                    alt={`#${shiny.pokemon_id}`}
+                    className="showcase-sprite"
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -145,7 +162,10 @@ export default function Showcase() {
 
             <div className="modal-header">
               <h2>
-                {selectedPokemon.pokemon_name}
+                Pokémon #
+                {
+                  selectedPokemon.pokemon_id
+                }
               </h2>
 
               <span className="status-badge">
@@ -158,24 +178,12 @@ export default function Showcase() {
               <div className="modal-left">
                 <img
                   src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`}
-                  alt={
-                    selectedPokemon.pokemon_name
-                  }
+                  alt="Pokemon"
                   className="modal-sprite"
                 />
               </div>
 
               <div className="modal-right">
-
-                <div className="detail-card">
-                  <h3>Pokémon</h3>
-
-                  <p>
-                    {
-                      selectedPokemon.pokemon_name
-                    }
-                  </p>
-                </div>
 
                 <div className="detail-card">
                   <h3>Owner</h3>
@@ -201,6 +209,7 @@ export default function Showcase() {
               </div>
 
             </div>
+
           </div>
         </div>
       )}
