@@ -35,6 +35,9 @@ export default function App() {
   const [profile, setProfile] =
     useState<ProfileData | null>(null);
 
+const [mobileOpen, setMobileOpen] =
+  useState(false);
+
   useEffect(() => {
     async function checkUser() {
       const {
@@ -179,20 +182,31 @@ console.log(
           </div>
         </div>
 
+          <button
+            className="mobile-menu-btn"
+            onClick={() =>
+              setMobileOpen(!mobileOpen)
+            }
+          >
+            ☰
+          </button>
+
         <nav className="nav-links">
           <NavLink to="/">
             Home
           </NavLink>
 
 <div className="dropdown">
-  <NavLink to="/dex">
-    Shiny Dex
-  </NavLink>
+  <span>Shiny Dex ▼</span>
 
   <div className="dropdown-content">
-    <NavLink to="/showcase">
-      Showcase
-    </NavLink>
+    <Link to="/shinydex">
+      Team Shiny Dex
+    </Link>
+
+    <Link to="/showcase">
+      Shiny Showcase
+    </Link>
   </div>
 </div>
 
@@ -240,6 +254,37 @@ console.log(
 </div>
 )}
         </nav>
+
+{mobileOpen && (
+  <div className="mobile-nav">
+    <Link to="/">Home</Link>
+
+    <Link to="/shinydex">
+      Team Shiny Dex
+    </Link>
+
+    <Link to="/showcase">
+      Shiny Showcase
+    </Link>
+
+    <Link to="/board">
+      Leaderboard
+    </Link>
+
+    <Link to="/events">
+      Events
+    </Link>
+
+    <Link to="/forums">
+      Forums
+    </Link>
+
+    <Link to="/members">
+      Members
+    </Link>
+  </div>
+)}
+
 
 <div className="topbar-right">
           {profile ? (
@@ -299,7 +344,7 @@ console.log(
           />
 
           <Route
-            path="/dex"
+            path="/shinydex"
             element={<ShinyDex />}
           />
 <Route

@@ -459,43 +459,6 @@ th {
   text-align: left;
 }
 
-/* =========================================
-   MOBILE
-========================================= */
-
-@media (max-width: 1000px) {
-  .topbar {
-    flex-wrap: wrap;
-    height: auto;
-    gap: 15px;
-    padding: 15px;
-  }
-
-  .nav-links {
-    width: 100%;
-    overflow-x: auto;
-  }
-
-  .content {
-    padding: 20px;
-  }
-
-  .hero h1,
-  .dex-header h1 {
-    font-size: 32px;
-  }
-
-  .dex-grid {
-    grid-template-columns:
-      repeat(auto-fill, minmax(50px, 1fr));
-  }
-
-  .dex-sprite {
-    width: 44px;
-    height: 44px;
-  }
-}
-
 /* =========================
    REGION STATS
 ========================= */
@@ -1391,4 +1354,112 @@ input[type="file"] {
 .ticker-event p {
   margin: 4px 0;
   color: #c8d4e7;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+
+.mobile-menu-btn {
+  display: none;
+
+  background: none;
+  border: none;
+
+  color: white;
+
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.mobile-nav {
+  position: absolute;
+
+  top: 72px;
+  left: 0;
+  right: 0;
+
+  background: #081225;
+
+  border-top: 1px solid
+    rgba(255,213,74,.2);
+
+  display: flex;
+  flex-direction: column;
+
+  z-index: 1000;
+}
+
+.mobile-nav a {
+  padding: 15px 20px;
+  border-bottom: 1px solid
+    rgba(255,255,255,.05);
+}
+
+@media (max-width: 900px) {
+
+  .topbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    height: auto;
+    padding: 12px 16px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+    font-size: 2rem;
+    background: none;
+    border: none;
+    color: white;
+  }
+
+  .logo-main {
+    font-size: 2rem;
+  }
+
+  .logo-sub {
+    font-size: .85rem;
+  }
+
+  .topbar-right {
+    width: 100%;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .mobile-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    background: #081225;
+
+    display: flex;
+    flex-direction: column;
+
+    z-index: 9999;
+
+    border-top:
+      1px solid rgba(255,213,74,.2);
+  }
+
+  .mobile-nav a {
+    padding: 16px;
+    border-bottom:
+      1px solid rgba(255,255,255,.08);
+  }
+
+  .nav-avatar {
+    width: 40px;
+    height: 40px;
+  }
 }
