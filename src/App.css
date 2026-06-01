@@ -1463,3 +1463,110 @@ input[type="file"] {
     height: 40px;
   }
 }
+
+/* =========================================
+   Shiny Showcase
+========================================= */
+
+.showcase-page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.showcase-member {
+  border-bottom: 1px solid
+    rgba(255,255,255,.12);
+
+  padding-bottom: 30px;
+}
+
+.showcase-member h2 {
+  text-align: center;
+
+  color: white;
+
+  margin-bottom: 20px;
+
+  font-size: 1.8rem;
+}
+
+.showcase-sprites {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  justify-content: center;
+}
+
+.showcase-sprites img {
+  width: 72px;
+  height: 72px;
+
+  image-rendering: pixelated;
+
+  cursor: pointer;
+
+  transition: .15s;
+}
+
+.showcase-sprites img:hover {
+  transform: scale(1.15);
+}
+.showcase-page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.showcase-member {
+  padding-bottom: 30px;
+  border-bottom: 1px solid
+    rgba(255,255,255,.08);
+}
+
+.showcase-member h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.showcase-sprites {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.showcase-sprite {
+  width: 72px;
+  height: 72px;
+
+  image-rendering: pixelated;
+
+  cursor: pointer;
+
+  transition: .15s;
+}
+
+.showcase-sprite:hover {
+  transform: scale(1.18);
+
+  filter:
+    drop-shadow(
+      0 0 10px
+      rgba(255,213,74,.6)
+    );
+}
+
+@media (max-width: 900px) {
+  .showcase-sprite {
+    width: 56px;
+    height: 56px;
+  }
+
+  .showcase-member h2 {
+    font-size: 1.2rem;
+  }
+}
