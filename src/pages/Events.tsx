@@ -276,227 +276,127 @@ function getProfile(
         )}
       </div>
 
-      {selectedEvent && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setSelectedEvent(null)
-          }
-        >
-          <div
-            className="event-modal"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-         <button
-  className="close-btn"
-  onClick={() =>
-    setSelectedEvent(null)
-  }
->
-  ×
-</button>
-
-{new Date(
-  selectedEvent.end_time
-) <= new Date() ? (
-  <>
-    <img
-      src={getPreviewImage(
-        selectedEvent
-      )}
-      className="results-banner"
-      alt=""
-    />
-
-    <h2
-      style={{
-        textAlign: "center",
-        marginBottom: "20px",
-      }}
+{selectedEvent && (
+  <div
+    className="modal-overlay"
+    onClick={() =>
+      setSelectedEvent(null)
+    }
+  >
+    <div
+      className="event-modal"
+      onClick={(e) =>
+        e.stopPropagation()
+      }
     >
-      🏆 {selectedEvent.title} Results
-    </h2>
-
-    <div className="event-results">
-
-      {selectedEvent.second_place &&
-        getProfile(
-          selectedEvent.second_place
-        ) && (
-          <div className="winner-card second">
-            <img
-              src={
-                getProfile(
-                  selectedEvent.second_place
-                )?.avatar_url
-              }
-              alt=""
-            />
-            <div className="winner-medal">
-              🥈
-            </div>
-            <h3>2nd Place</h3>
-            <p>
-              {
-                getProfile(
-                  selectedEvent.second_place
-                )?.nickname
-              }
-            </p>
-          </div>
-      )}
-
-      {selectedEvent.first_place &&
-        getProfile(
-          selectedEvent.first_place
-        ) && (
-          <div className="winner-card first champion">
-            <img
-              src={
-                getProfile(
-                  selectedEvent.first_place
-                )?.avatar_url
-              }
-              alt=""
-            />
-            <div className="winner-medal">
-              👑
-            </div>
-            <h3>Champion</h3>
-            <p>
-              {
-                getProfile(
-                  selectedEvent.first_place
-                )?.nickname
-              }
-            </p>
-          </div>
-      )}
-
-      {selectedEvent.third_place &&
-        getProfile(
-          selectedEvent.third_place
-        ) && (
-          <div className="winner-card third">
-            <img
-              src={
-                getProfile(
-                  selectedEvent.third_place
-                )?.avatar_url
-              }
-              alt=""
-            />
-            <div className="winner-medal">
-              🥉
-            </div>
-            <h3>3rd Place</h3>
-            <p>
-              {
-                getProfile(
-                  selectedEvent.third_place
-                )?.nickname
-              }
-            </p>
-          </div>
-      )}
-
-      {selectedEvent.fourth_place &&
-        getProfile(
-          selectedEvent.fourth_place
-        ) && (
-          <div className="winner-card fourth">
-            <img
-              src={
-                getProfile(
-                  selectedEvent.fourth_place
-                )?.avatar_url
-              }
-              alt=""
-            />
-            <div className="winner-medal">
-              🏅
-            </div>
-            <h3>4th Place</h3>
-            <p>
-              {
-                getProfile(
-                  selectedEvent.fourth_place
-                )?.nickname
-              }
-            </p>
-          </div>
-      )}
-
-    </div>
-  </>
-) : (
-  <>
-    <h2>{selectedEvent.title}</h2>
-
-    <p>
-      <strong>Starts:</strong>{" "}
-      {formatDate(
-        selectedEvent.start_time
-      )}
-    </p>
-
-    <p>
-      <strong>Ends:</strong>{" "}
-      {formatDate(
-        selectedEvent.end_time
-      )}
-    </p>
-
-    <p>
-      <strong>Prize:</strong>{" "}
-      {selectedEvent.prize}
-    </p>
-
-    <hr />
-
-    {blocks[
-      selectedEvent.id
-    ]?.map((block) => (
-      <div
-        key={block.id}
-        style={{
-          marginBottom: "20px",
-        }}
+      <button
+        className="close-btn"
+        onClick={() =>
+          setSelectedEvent(null)
+        }
       >
-        {block.block_type ===
-        "text" ? (
-          <div
+        ×
+      </button>
+
+      {new Date(
+        selectedEvent.end_time
+      ) <= new Date() ? (
+        <>
+          <img
+            src={getPreviewImage(
+              selectedEvent
+            )}
+            className="results-banner"
+            alt=""
+          />
+
+          <h2
             style={{
-              whiteSpace:
-                "pre-wrap",
-              lineHeight: 1.7,
+              textAlign: "center",
+              marginBottom: "20px",
             }}
           >
-            {block.content}
+            🏆 {selectedEvent.title} Results
+          </h2>
+
+          <div className="event-results">
+            {/* winners here */}
           </div>
-        ) : (
-          <img
-            src={block.content}
-            alt=""
-            style={{
-              width: "100%",
-              borderRadius:
-                "12px",
-            }}
-          />
-        )}
-      </div>
-    ))}
-  </>
-)}
-                </div>
-              )
+        </>
+      ) : (
+        <>
+          <h2>
+            {selectedEvent.title}
+          </h2>
+
+          <p>
+            <strong>
+              Starts:
+            </strong>{" "}
+            {formatDate(
+              selectedEvent.start_time
             )}
-          </div>
-        </div>
+          </p>
+
+          <p>
+            <strong>
+              Ends:
+            </strong>{" "}
+            {formatDate(
+              selectedEvent.end_time
+            )}
+          </p>
+
+          <p>
+            <strong>
+              Prize:
+            </strong>{" "}
+            {selectedEvent.prize}
+          </p>
+
+          <hr />
+
+          {blocks[
+            selectedEvent.id
+          ]?.map(
+            (block) => (
+              <div
+                key={block.id}
+                style={{
+                  marginBottom:
+                    "20px",
+                }}
+              >
+                {block.block_type ===
+                "text" ? (
+                  <div
+                    style={{
+                      whiteSpace:
+                        "pre-wrap",
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {block.content}
+                  </div>
+                ) : (
+                  <img
+                    src={
+                      block.content
+                    }
+                    alt=""
+                    style={{
+                      width:
+                        "100%",
+                      borderRadius:
+                        "12px",
+                    }}
+                  />
+                )}
+              </div>
+            )
+          )}
+        </>
       )}
     </div>
-  );
-}
+  </div>
+)}
