@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function EventDashboard() {
   return (
     <div className="page">
@@ -12,14 +14,14 @@ export default function EventDashboard() {
         </Link>
 
         <Link
-          to="/admin/events/current"
+          to="/admin/current-events"
           className="admin-card"
         >
           Current Events
         </Link>
 
         <Link
-          to="/admin/events/past"
+          to="/admin/past-events"
           className="admin-card"
         >
           Past Events

@@ -23,6 +23,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AddShiny from "./pages/AddShiny";
 import ManageShinies from "./pages/ManageShinies";
 import ManageMembers from "./pages/ManageMembers";
+import EventDashboard from "./pages/EventDashboard";
 import "./App.css";
 
 type ProfileData = {
@@ -512,23 +513,23 @@ console.log(
 />
 
 <Route
-  path="/admin/events/create"
-  element={<AdminEvents />}
-/>
-
-<Route
   path="/admin/events"
   element={<EventDashboard />}
 />
 
 <Route
-  path="/admin/events/current"
+  path="/admin/current-events"
   element={<AdminCurrentEvents />}
 />
 
 <Route
-  path="/admin/events/past"
+  path="/admin/past-events"
   element={<AdminPastEvents />}
+/>
+
+<Route
+  path="/admin/events/create"
+  element={<AdminEvents />}
 />
 
 <Route
