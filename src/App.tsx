@@ -287,7 +287,7 @@ console.log(
       Admin Dashboard
     </Link>
 
-    <Link to="/admin/shines">
+    <Link to="/admin/shiny-dashboard">
       Shiny Dashboard
     </Link>
 
@@ -396,7 +396,7 @@ console.log(
           </Link>
 
           <Link
-            to="/admin/shinies/add"
+            to="/admin/shiny-dashboard"
             onClick={() =>
               setMobileOpen(false)
             }

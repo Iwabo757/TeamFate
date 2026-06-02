@@ -13,10 +13,9 @@ export default function ShinyDashboard() {
         >
           <div>
             <h2>➕ Add Shiny</h2>
-
             <p>
-              Add a shiny directly to
-              the Team Faté Shiny Dex.
+              Add a shiny directly to the
+              Team Faté Shiny Dex.
             </p>
           </div>
         </Link>
@@ -27,7 +26,6 @@ export default function ShinyDashboard() {
         >
           <div>
             <h2>✨ Manage Shinies</h2>
-
             <p>
               Edit and remove shiny
               records.
@@ -41,7 +39,6 @@ export default function ShinyDashboard() {
         >
           <div>
             <h2>📥 Submissions</h2>
-
             <p>
               Review member shiny
               submissions and approve
