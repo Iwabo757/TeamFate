@@ -224,6 +224,19 @@ groups[trainer] = {
     );
   }
 
+const filterOptions: [
+  FilterType,
+  string
+][] = [
+  ["week", "Week"],
+  ["month", "Month"],
+  ["3months", "3 Months"],
+  ["6months", "6 Months"],
+  ["1year", "1 Year"],
+  ["2years", "2 Years"],
+  ["all", "All Time"],
+];
+
   const champion =
     leaderboard[0];
 
@@ -241,32 +254,24 @@ groups[trainer] = {
         </p>
       </div>
 
-      <div className="leaderboard-filters">
-    {[
-  ["week", "Week"],
-  ["month", "Month"],
-  ["3months", "3 Months"],
-  ["6months", "6 Months"],
-  ["1year", "1 Year"],
-  ["2years", "2 Years"],
-  ["all", "All Time"],
-].map(([value, label]) => (
-  <button
-    key={value}
-    onClick={() =>
-      setFilter(value)
-    }
-    className={`leader-filter ${
-      filter === value
-        ? "active"
-        : ""
-    }`}
-  >
-    {label}
-  </button>
-))}
-
-
+<div className="leaderboard-filters">
+  {filterOptions.map(
+    ([value, label]) => (
+      <button
+        key={value}
+        onClick={() =>
+          setFilter(value)
+        }
+        className={`leader-filter ${
+          filter === value
+            ? "active"
+            : ""
+        }`}
+      >
+        {label}
+      </button>
+    )
+  )}
 </div>
 
 {champion && (
