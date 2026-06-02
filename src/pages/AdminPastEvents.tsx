@@ -18,17 +18,22 @@ type EventPost = {
   end_time: string;
   banner_url: string | null;
 
-first_place_points?: number;
-first_place_prize?: string;
+  first_place?: string;
+  second_place?: string;
+  third_place?: string;
+  fourth_place?: string;
 
-second_place_points?: number;
-second_place_prize?: string;
+  first_place_points?: number;
+  first_place_prize?: string;
 
-third_place_points?: number;
-third_place_prize?: string;
+  second_place_points?: number;
+  second_place_prize?: string;
 
-fourth_place_points?: number;
-fourth_place_prize?: string;
+  third_place_points?: number;
+  third_place_prize?: string;
+
+  fourth_place_points?: number;
+  fourth_place_prize?: string;
 };
 
 export default function AdminPastEvents() {
@@ -386,25 +391,46 @@ const payload = {
       
 <button
   className="edit-btn"
-  onClick={() => {
-    setEditingEvent(event);
+onClick={() => {
+  setEditingEvent(event);
 
-    setFirstPlace(
-      event.first_place || ""
-    );
+  setFirstPlace(event.first_place || "");
+  setSecondPlace(event.second_place || "");
+  setThirdPlace(event.third_place || "");
+  setFourthPlace(event.fourth_place || "");
 
-    setSecondPlace(
-      event.second_place || ""
-    );
+  setFirstPlacePoints(
+    String(event.first_place_points || "")
+  );
 
-    setThirdPlace(
-      event.third_place || ""
-    );
+  setFirstPlacePrize(
+    event.first_place_prize || ""
+  );
 
-    setFourthPlace(
-      event.fourth_place || ""
-    );
-  }}
+  setSecondPlacePoints(
+    String(event.second_place_points || "")
+  );
+
+  setSecondPlacePrize(
+    event.second_place_prize || ""
+  );
+
+  setThirdPlacePoints(
+    String(event.third_place_points || "")
+  );
+
+  setThirdPlacePrize(
+    event.third_place_prize || ""
+  );
+
+  setFourthPlacePoints(
+    String(event.fourth_place_points || "")
+  );
+
+  setFourthPlacePrize(
+    event.fourth_place_prize || ""
+  );
+}}
 >
   Edit Winners
 </button>
@@ -547,225 +573,190 @@ const payload = {
       <h2 className="winner-title">
   🏆 Edit Event Winners
 </h2>
-setFirstPlacePoints(
-  String(event.first_place_points || "")
-);
 
-setFirstPlacePrize(
-  event.first_place_prize || ""
-);
-
-setSecondPlacePoints(
-  String(event.second_place_points || "")
-);
-
-setSecondPlacePrize(
-  event.second_place_prize || ""
-);
-
-setThirdPlacePoints(
-  String(event.third_place_points || "")
-);
-
-setThirdPlacePrize(
-  event.third_place_prize || ""
-);
-
-setFourthPlacePoints(
-  String(event.fourth_place_points || "")
-);
-
-setFourthPlacePrize(
-  event.fourth_place_prize || ""
-);
 <div className="winner-editor">
-<select
-  className="dex-select"
-  value={firstPlace}
-  onChange={(e) =>
-    setFirstPlace(e.target.value)
-  }
->
-<input
-  type="number"
-  className="dex-select"
-  placeholder="Points"
-  value={firstPlacePoints}
-  onChange={(e) =>
-    setFirstPlacePoints(
-      e.target.value
-    )
-  }
-/>
-<input
-  type="text"
-  className="dex-select"
-  placeholder="Prize Won"
-  value={firstPlacePrize}
-  onChange={(e) =>
-    setFirstPlacePrize(
-      e.target.value
-    )
-  }
-/>
-  <option value="">
-    1st Place
-  </option>
 
-  {members.map(
-    (member) => (
+  {/* 1st */}
+  <select
+    className="dex-select"
+    value={firstPlace}
+    onChange={(e) =>
+      setFirstPlace(e.target.value)
+    }
+  >
+    <option value="">1st Place</option>
+    {members.map((member) => (
       <option
         key={member.id}
         value={member.id}
       >
         {member.nickname}
       </option>
-    )
-  )}
-</select>
+    ))}
+  </select>
 
-<select
-  className="dex-select"
-  value={secondPlace}
-  onChange={(e) =>
-    setSecondPlace(e.target.value)
-  }
->
-<input
-  type="number"
-  className="dex-select"
-  placeholder="Points"
-  value={secondPlacePoints}
-  onChange={(e) =>
-    setSecondPlacePoints(
-      e.target.value
-    )
-  }
-/>
-<input
-  type="text"
-  className="dex-select"
-  placeholder="Prize Won"
-  value={secondPlacePrize}
-  onChange={(e) =>
-    setSecondPlacePrize(
-      e.target.value
-    )
-  }
-/>
-  <option value="">
-    2nd Place
-  </option>
+  <input
+    type="number"
+    className="dex-select"
+    placeholder="Points"
+    value={firstPlacePoints}
+    onChange={(e) =>
+      setFirstPlacePoints(
+        e.target.value
+      )
+    }
+  />
 
-  {members.map(
-    (member) => (
+  <input
+    type="text"
+    className="dex-select"
+    placeholder="Prize Won"
+    value={firstPlacePrize}
+    onChange={(e) =>
+      setFirstPlacePrize(
+        e.target.value
+      )
+    }
+  />
+
+  {/* 2nd */}
+  <select
+    className="dex-select"
+    value={secondPlace}
+    onChange={(e) =>
+      setSecondPlace(e.target.value)
+    }
+  >
+    <option value="">2nd Place</option>
+    {members.map((member) => (
       <option
         key={member.id}
         value={member.id}
       >
         {member.nickname}
       </option>
-    )
-  )}
-</select>
+    ))}
+  </select>
 
-<select
-  className="dex-select"
-  value={thirdPlace}
-  onChange={(e) =>
-    setThirdPlace(e.target.value)
-  }
->
-<input
-  type="number"
-  className="dex-select"
-  placeholder="Points"
-  value={thirdPlacePoints}
-  onChange={(e) =>
-    setThirdPlacePoints(
-      e.target.value
-    )
-  }
-/>
-<input
-  type="text"
-  className="dex-select"
-  placeholder="Prize Won"
-  value={thirdPlacePrize}
-  onChange={(e) =>
-    setThirdPlacePrize(
-      e.target.value
-    )
-  }
-/>
-  <option value="">
-    3rd Place
-  </option>
+  <input
+    type="number"
+    className="dex-select"
+    placeholder="Points"
+    value={secondPlacePoints}
+    onChange={(e) =>
+      setSecondPlacePoints(
+        e.target.value
+      )
+    }
+  />
 
-  {members.map(
-    (member) => (
+  <input
+    type="text"
+    className="dex-select"
+    placeholder="Prize Won"
+    value={secondPlacePrize}
+    onChange={(e) =>
+      setSecondPlacePrize(
+        e.target.value
+      )
+    }
+  />
+
+  {/* 3rd */}
+  <select
+    className="dex-select"
+    value={thirdPlace}
+    onChange={(e) =>
+      setSecondPlace(e.target.value)
+    }
+  >
+    <option value="">3rd Place</option>
+    {members.map((member) => (
       <option
         key={member.id}
         value={member.id}
       >
         {member.nickname}
       </option>
-    )
-  )}
-</select>
+    ))}
+  </select>
 
-<select
-  className="dex-select"
-  value={fourthPlace}
-  onChange={(e) =>
-    setFourthPlace(e.target.value)
-  }
->
-<input
-  type="number"
-  className="dex-select"
-  placeholder="Points"
-  value={fourthPlacePoints}
-  onChange={(e) =>
-    setFourthPlacePoints(
-      e.target.value
-    )
-  }
-/>
-<input
-  type="text"
-  className="dex-select"
-  placeholder="Prize Won"
-  value={fourthPlacePrize}
-  onChange={(e) =>
-    setFourthPlacePrize(
-      e.target.value
-    )
-  }
-/>
-  <option value="">
-    4th Place
-  </option>
+  <input
+    type="number"
+    className="dex-select"
+    placeholder="Points"
+    value={thirdPlacePoints}
+    onChange={(e) =>
+      setThirdPlacePoints(
+        e.target.value
+      )
+    }
+  />
 
-  {members.map(
-    (member) => (
+  <input
+    type="text"
+    className="dex-select"
+    placeholder="Prize Won"
+    value={thirdPlacePrize}
+    onChange={(e) =>
+      setThirdPlacePrize(
+        e.target.value
+      )
+    }
+  />
+
+  {/* 4th */}
+  <select
+    className="dex-select"
+    value={fourthPlace}
+    onChange={(e) =>
+      setFourthPlace(e.target.value)
+    }
+  >
+    <option value="">4th Place</option>
+    {members.map((member) => (
       <option
         key={member.id}
         value={member.id}
       >
         {member.nickname}
       </option>
-    )
-  )}
+    ))}
+  </select>
 
-</select>
+  <input
+    type="number"
+    className="dex-select"
+    placeholder="Points"
+    value={fourthPlacePoints}
+    onChange={(e) =>
+      setFourthPlacePoints(
+        e.target.value
+      )
+    }
+  />
 
-<button
-  className="save-winners-btn"
-  onClick={saveWinners}
->
-  Save Winners
-</button>
+  <input
+    type="text"
+    className="dex-select"
+    placeholder="Prize Won"
+    value={fourthPlacePrize}
+    onChange={(e) =>
+      setFourthPlacePrize(
+        e.target.value
+      )
+    }
+  />
+
+  {/* 3rd and 4th continue the same way */}
+
+  <button
+    className="save-winners-btn"
+    onClick={saveWinners}
+  >
+    Save Winners
+  </button>
+
 </div>
     </div>
   </div>
