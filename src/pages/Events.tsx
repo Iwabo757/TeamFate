@@ -1,8 +1,14 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 type EventBlock = {
   id: string;
+  event_id: string;
   block_type: "text" | "image";
   content: string;
   display_order: number;
@@ -24,11 +30,26 @@ export default function Events() {
 
   const [blocks, setBlocks] =
     useState<
-      Record<
-        string,
-        EventBlock[]
-      >
+      Record<string, EventBlock[]>
     >({});
+
+const [searchParams] =
+  useSearchParams();
+
+const [view, setView] =
+  useState<"upcoming" | "past">(
+    searchParams.get("view") ===
+      "past"
+      ? "past"
+      : "upcoming"
+  );
+
+  const [
+    selectedEvent,
+    setSelectedEvent,
+  ] = useState<EventPost | null>(
+    null
+  );
 
   useEffect(() => {
     loadEvents();
@@ -39,26 +60,18 @@ export default function Events() {
       await supabase
         .from("events")
         .select("*")
-        .order(
-          "start_time",
-          {
-            ascending:
-              false,
-          }
-        );
+        .order("start_time", {
+          ascending: false,
+        });
 
     if (!data) return;
 
     setEvents(data);
 
     const eventIds =
-      data.map(
-        (e) => e.id
-      );
+      data.map((e) => e.id);
 
-    if (
-      eventIds.length === 0
-    )
+    if (eventIds.length === 0)
       return;
 
     const {
@@ -75,16 +88,14 @@ export default function Events() {
       .order(
         "display_order",
         {
-          ascending:
-            true,
+          ascending: true,
         }
       );
 
-    const grouped:
-      Record<
-        string,
-        EventBlock[]
-      > = {};
+    const grouped: Record<
+      string,
+      EventBlock[]
+    > = {};
 
     blockData?.forEach(
       (block: any) => {
@@ -115,60 +126,162 @@ export default function Events() {
     ).toLocaleString(
       undefined,
       {
-        dateStyle:
-          "long",
-        timeStyle:
-          "short",
+        dateStyle: "long",
+        timeStyle: "short",
       }
     );
   }
 
+  function getPreviewImage(
+    event: EventPost
+  ) {
+    const eventBlocks =
+      blocks[event.id] || [];
+
+    const firstImage =
+      eventBlocks.find(
+        (b) =>
+          b.block_type ===
+          "image"
+      );
+
+    return (
+      firstImage?.content ||
+      event.banner_url ||
+      "/placeholder.png"
+    );
+  }
+
+  const now = new Date();
+
+  const upcomingEvents =
+    events.filter(
+      (event) =>
+        new Date(
+          event.end_time
+        ) > now
+    );
+
+  const pastEvents =
+    events.filter(
+      (event) =>
+        new Date(
+          event.end_time
+        ) <= now
+    );
+
+  const displayedEvents =
+    view === "upcoming"
+      ? upcomingEvents
+      : pastEvents;
+
   return (
     <div className="page">
+      <h1>Team Fate Events</h1>
 
-      <h1>
-        Team Fate Events
-      </h1>
+      <div className="events-tabs">
+        <button
+          className={
+            view === "upcoming"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setView("upcoming")
+          }
+        >
+          Upcoming Events
+        </button>
 
-      {events.length ===
+        <button
+          className={
+            view === "past"
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setView("past")
+          }
+        >
+          Past Events
+        </button>
+      </div>
+
+      {displayedEvents.length ===
         0 && (
         <div className="card">
-          No events found.
+          No {view} events.
         </div>
       )}
 
-      {events.map(
-        (event) => (
-          <div
-            key={event.id}
-            className="card"
-            style={{
-              marginBottom:
-                "30px",
-            }}
-          >
-            {event.banner_url && (
+      <div className="event-grid">
+        {displayedEvents.map(
+          (event) => (
+            <div
+              key={event.id}
+              className="event-card"
+              onClick={() =>
+                setSelectedEvent(
+                  event
+                )
+              }
+            >
               <img
-                src={
-                  event.banner_url
-                }
-                alt={
-                  event.title
-                }
-                style={{
-                  width:
-                    "100%",
-                  borderRadius:
-                    "12px",
-                  marginBottom:
-                    "20px",
-                }}
+                src={getPreviewImage(
+                  event
+                )}
+                alt={event.title}
+                className="event-card-image"
               />
-            )}
+
+              <div className="event-card-content">
+                <h3>
+                  {event.title}
+                </h3>
+
+                <p>
+                  {formatDate(
+                    event.start_time
+                  )}
+                </p>
+
+                <p>
+                  Prize:{" "}
+                  {event.prize}
+                </p>
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      {selectedEvent && (
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setSelectedEvent(null)
+          }
+        >
+          <div
+            className="event-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <button
+              className="close-btn"
+              onClick={() =>
+                setSelectedEvent(
+                  null
+                )
+              }
+            >
+              ×
+            </button>
 
             <h2>
               {
-                event.title
+                selectedEvent.title
               }
             </h2>
 
@@ -177,7 +290,7 @@ export default function Events() {
                 Starts:
               </strong>{" "}
               {formatDate(
-                event.start_time
+                selectedEvent.start_time
               )}
             </p>
 
@@ -186,7 +299,7 @@ export default function Events() {
                 Ends:
               </strong>{" "}
               {formatDate(
-                event.end_time
+                selectedEvent.end_time
               )}
             </p>
 
@@ -195,23 +308,16 @@ export default function Events() {
                 Prize:
               </strong>{" "}
               {
-                event.prize
+                selectedEvent.prize
               }
             </p>
 
-            <hr
-              style={{
-                margin:
-                  "20px 0",
-              }}
-            />
+            <hr />
 
             {blocks[
-              event.id
+              selectedEvent.id
             ]?.map(
-              (
-                block
-              ) => (
+              (block) => (
                 <div
                   key={
                     block.id
@@ -253,9 +359,8 @@ export default function Events() {
               )
             )}
           </div>
-        )
+        </div>
       )}
-
     </div>
   );
 }

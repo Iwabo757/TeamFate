@@ -246,9 +246,19 @@ console.log(
             Leaderboard
           </NavLink>
 
-          <NavLink to="/events">
-            Events
-          </NavLink>
+<div className="dropdown">
+  <span>Events ▼</span>
+
+  <div className="dropdown-content">
+    <Link to="/events">
+      Upcoming Events
+    </Link>
+
+    <Link to="/events?view=past">
+      Past Events
+    </Link>
+  </div>
+</div>
 
           <NavLink to="/forums">
             Forums
