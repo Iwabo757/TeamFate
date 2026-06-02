@@ -1787,3 +1787,139 @@ input[type="file"] {
   margin-bottom: 40px;
   text-align: center;
 }
+
+/* =========================================
+   Event Winner Cards
+========================================= */
+
+.winner-title {
+  text-align: center;
+  color: #ffd54a;
+  margin-bottom: 20px;
+}
+
+.winner-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dex-select {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #2f5fff;
+  background: rgba(0,20,60,.9);
+  color: white;
+  font-size: 16px;
+}
+
+.save-winners-btn {
+  background: #ffd54a;
+  color: #00153b;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.event-results {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.winner-card {
+  background: rgba(0,20,60,.85);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.winner-card img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+}
+
+.winner-card.first {
+  border: 2px solid gold;
+}
+
+.winner-card.second {
+  border: 2px solid silver;
+}
+
+.winner-card.third {
+  border: 2px solid #cd7f32;
+}
+
+.winner-card.fourth {
+  border: 2px solid #4c7fff;
+}
+.results-banner {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 24px;
+}
+
+.event-results {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+.winner-card {
+  background: rgba(0,20,60,.9);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  transition: .2s ease;
+}
+
+.winner-card:hover {
+  transform: translateY(-3px);
+}
+
+.winner-card img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.winner-medal {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.winner-card.first {
+  border: 2px solid gold;
+  box-shadow:
+    0 0 20px rgba(255,215,0,.25);
+}
+
+.winner-card.second {
+  border: 2px solid silver;
+}
+
+.winner-card.third {
+  border: 2px solid #cd7f32;
+}
+
+.winner-card.fourth {
+  border: 2px solid #4c7fff;
+}
+
+.champion {
+  transform: scale(1.05);
+}

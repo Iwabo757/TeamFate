@@ -200,15 +200,45 @@ setMembers(
 async function saveWinners() {
   if (!editingEvent) return;
 
-  await supabase
-    .from("events")
-    .update({
-      first_place: firstPlace || null,
-      second_place: secondPlace || null,
-      third_place: thirdPlace || null,
-      fourth_place: fourthPlace || null,
-    })
-    .eq("id", editingEvent.id);
+  const payload = {
+    first_place:
+      firstPlace || null,
+    second_place:
+      secondPlace || null,
+    third_place:
+      thirdPlace || null,
+    fourth_place:
+      fourthPlace || null,
+  };
+
+  console.log(
+    "SAVING WINNERS:",
+    payload
+  );
+
+  const { error } =
+    await supabase
+      .from("events")
+      .update(payload)
+      .eq(
+        "id",
+        editingEvent.id
+      );
+
+  if (error) {
+    console.error(error);
+
+    alert(
+      "Failed to save winners:\n" +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "Winners saved successfully!"
+  );
 
   await loadEvents();
 
@@ -448,6 +478,7 @@ async function saveWinners() {
           </div>
         </div>
       )}
+
 {editingEvent && (
   <div
     className="modal-overlay"
@@ -461,9 +492,13 @@ async function saveWinners() {
         e.stopPropagation()
       }
     >
-      <h2>Edit Winners</h2>
+      <h2 className="winner-title">
+  🏆 Edit Event Winners
+</h2>
 
+<div className="winner-editor">
 <select
+  className="dex-select"
   value={firstPlace}
   onChange={(e) =>
     setFirstPlace(e.target.value)
@@ -486,6 +521,7 @@ async function saveWinners() {
 </select>
 
 <select
+  className="dex-select"
   value={secondPlace}
   onChange={(e) =>
     setSecondPlace(e.target.value)
@@ -508,6 +544,7 @@ async function saveWinners() {
 </select>
 
 <select
+  className="dex-select"
   value={thirdPlace}
   onChange={(e) =>
     setThirdPlace(e.target.value)
@@ -530,6 +567,7 @@ async function saveWinners() {
 </select>
 
 <select
+  className="dex-select"
   value={fourthPlace}
   onChange={(e) =>
     setFourthPlace(e.target.value)
@@ -553,12 +591,12 @@ async function saveWinners() {
 </select>
 
 <button
-  className="edit-btn"
+  className="save-winners-btn"
   onClick={saveWinners}
 >
   Save Winners
 </button>
-
+</div>
     </div>
   </div>
 )}

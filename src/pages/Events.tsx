@@ -41,6 +41,9 @@ export default function Events() {
 const [searchParams] =
   useSearchParams();
 
+const [profiles, setProfiles] =
+  useState<any[]>([]);
+
 const [view, setView] =
   useState<"upcoming" | "past">(
     searchParams.get("view") ===
@@ -61,6 +64,20 @@ const [view, setView] =
   }, []);
 
   async function loadEvents() {
+
+const { data: profileData } =
+  await supabase
+    .from("profiles")
+    .select(`
+      id,
+      nickname,
+      avatar_url
+    `);
+
+setProfiles(
+  profileData || []
+);
+
     const { data } =
       await supabase
         .from("events")
@@ -139,25 +156,30 @@ const [view, setView] =
     );
   }
 
-  function getPreviewImage(
-    event: EventPost
-  ) {
-    const eventBlocks =
-      blocks[event.id] || [];
+function getPreviewImage(event: EventPost) {
+  const eventBlocks =
+    blocks[event.id] || [];
 
-    const firstImage =
-      eventBlocks.find(
-        (b) =>
-          b.block_type ===
-          "image"
-      );
-
-    return (
-      firstImage?.content ||
-      event.banner_url ||
-      "/placeholder.png"
+  const firstImage =
+    eventBlocks.find(
+      (b) =>
+        b.block_type === "image"
     );
-  }
+
+  return (
+    firstImage?.content ||
+    event.banner_url ||
+    "/placeholder.png"
+  );
+}
+
+function getProfile(
+  profileId?: string
+) {
+  return profiles.find(
+    (p) => p.id === profileId
+  );
+}
 
   const now = new Date();
 
@@ -267,93 +289,208 @@ const [view, setView] =
               e.stopPropagation()
             }
           >
-            <button
-              className="close-btn"
-              onClick={() =>
-                setSelectedEvent(
-                  null
-                )
-              }
-            >
-              ×
-            </button>
+         <button
+  className="close-btn"
+  onClick={() =>
+    setSelectedEvent(null)
+  }
+>
+  ×
+</button>
 
-            <h2>
+{new Date(
+  selectedEvent.end_time
+) <= new Date() ? (
+  <>
+    <img
+      src={getPreviewImage(
+        selectedEvent
+      )}
+      className="results-banner"
+      alt=""
+    />
+
+    <h2
+      style={{
+        textAlign: "center",
+        marginBottom: "20px",
+      }}
+    >
+      🏆 {selectedEvent.title} Results
+    </h2>
+
+    <div className="event-results">
+
+      {selectedEvent.second_place &&
+        getProfile(
+          selectedEvent.second_place
+        ) && (
+          <div className="winner-card second">
+            <img
+              src={
+                getProfile(
+                  selectedEvent.second_place
+                )?.avatar_url
+              }
+              alt=""
+            />
+            <div className="winner-medal">
+              🥈
+            </div>
+            <h3>2nd Place</h3>
+            <p>
               {
-                selectedEvent.title
+                getProfile(
+                  selectedEvent.second_place
+                )?.nickname
               }
-            </h2>
-
-            <p>
-              <strong>
-                Starts:
-              </strong>{" "}
-              {formatDate(
-                selectedEvent.start_time
-              )}
             </p>
+          </div>
+      )}
 
+      {selectedEvent.first_place &&
+        getProfile(
+          selectedEvent.first_place
+        ) && (
+          <div className="winner-card first champion">
+            <img
+              src={
+                getProfile(
+                  selectedEvent.first_place
+                )?.avatar_url
+              }
+              alt=""
+            />
+            <div className="winner-medal">
+              👑
+            </div>
+            <h3>Champion</h3>
             <p>
-              <strong>
-                Ends:
-              </strong>{" "}
-              {formatDate(
-                selectedEvent.end_time
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Prize:
-              </strong>{" "}
               {
-                selectedEvent.prize
+                getProfile(
+                  selectedEvent.first_place
+                )?.nickname
               }
             </p>
+          </div>
+      )}
 
-            <hr />
+      {selectedEvent.third_place &&
+        getProfile(
+          selectedEvent.third_place
+        ) && (
+          <div className="winner-card third">
+            <img
+              src={
+                getProfile(
+                  selectedEvent.third_place
+                )?.avatar_url
+              }
+              alt=""
+            />
+            <div className="winner-medal">
+              🥉
+            </div>
+            <h3>3rd Place</h3>
+            <p>
+              {
+                getProfile(
+                  selectedEvent.third_place
+                )?.nickname
+              }
+            </p>
+          </div>
+      )}
 
-            {blocks[
-              selectedEvent.id
-            ]?.map(
-              (block) => (
-                <div
-                  key={
-                    block.id
-                  }
-                  style={{
-                    marginBottom:
-                      "20px",
-                  }}
-                >
-                  {block.block_type ===
-                  "text" ? (
-                    <div
-                      style={{
-                        whiteSpace:
-                          "pre-wrap",
-                        lineHeight:
-                          1.7,
-                      }}
-                    >
-                      {
-                        block.content
-                      }
-                    </div>
-                  ) : (
-                    <img
-                      src={
-                        block.content
-                      }
-                      alt=""
-                      style={{
-                        width:
-                          "100%",
-                        borderRadius:
-                          "12px",
-                      }}
-                    />
-                  )}
+      {selectedEvent.fourth_place &&
+        getProfile(
+          selectedEvent.fourth_place
+        ) && (
+          <div className="winner-card fourth">
+            <img
+              src={
+                getProfile(
+                  selectedEvent.fourth_place
+                )?.avatar_url
+              }
+              alt=""
+            />
+            <div className="winner-medal">
+              🏅
+            </div>
+            <h3>4th Place</h3>
+            <p>
+              {
+                getProfile(
+                  selectedEvent.fourth_place
+                )?.nickname
+              }
+            </p>
+          </div>
+      )}
+
+    </div>
+  </>
+) : (
+  <>
+    <h2>{selectedEvent.title}</h2>
+
+    <p>
+      <strong>Starts:</strong>{" "}
+      {formatDate(
+        selectedEvent.start_time
+      )}
+    </p>
+
+    <p>
+      <strong>Ends:</strong>{" "}
+      {formatDate(
+        selectedEvent.end_time
+      )}
+    </p>
+
+    <p>
+      <strong>Prize:</strong>{" "}
+      {selectedEvent.prize}
+    </p>
+
+    <hr />
+
+    {blocks[
+      selectedEvent.id
+    ]?.map((block) => (
+      <div
+        key={block.id}
+        style={{
+          marginBottom: "20px",
+        }}
+      >
+        {block.block_type ===
+        "text" ? (
+          <div
+            style={{
+              whiteSpace:
+                "pre-wrap",
+              lineHeight: 1.7,
+            }}
+          >
+            {block.content}
+          </div>
+        ) : (
+          <img
+            src={block.content}
+            alt=""
+            style={{
+              width: "100%",
+              borderRadius:
+                "12px",
+            }}
+          />
+        )}
+      </div>
+    ))}
+  </>
+)}
                 </div>
               )
             )}
