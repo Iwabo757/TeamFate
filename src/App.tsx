@@ -13,7 +13,7 @@ import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
 import Events from "./pages/Events";
-import Forums from "./pages/Forums";
+import Bounty from "./pages/Bounty";
 import AdminEvents from "./pages/AdminEvents";
 import AdminPastEvents from "./pages/AdminPastEvents";
 import AdminCurrentEvents from "./pages/AdminCurrentEvents";
@@ -264,7 +264,7 @@ console.log(
           </NavLink>
 
           <NavLink to="/bounty">
-            Forums 
+            Bounty
           </NavLink>
 
 <NavLink to="/members">
