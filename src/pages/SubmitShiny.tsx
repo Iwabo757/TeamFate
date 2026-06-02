@@ -1,153 +1,302 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function SubmitShiny() {
-  const [pokemonName, setPokemonName] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [region, setRegion] = useState("");
+  const [pokemon, setPokemon] = useState<any[]>([]);
+  const [pokemonId, setPokemonId] = useState("");
+
+  const [dateFound, setDateFound] = useState("");
   const [method, setMethod] = useState("");
-  const [catchDate, setCatchDate] = useState("");
   const [notes, setNotes] = useState("");
-  const [screenshotUrl, setScreenshotUrl] = useState("");
-  const [ivScreenshotUrl, setIvScreenshotUrl] = useState("");
 
-  async function handleSubmit() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const [imageFile, setImageFile] =
+    useState<File | null>(null);
 
-    if (!user) {
-      alert("Please login.");
-      return;
+  const [previewUrl, setPreviewUrl] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  useEffect(() => {
+    loadPokemon();
+  }, []);
+
+  async function loadPokemon() {
+    const result = await supabase
+      .from("pokemon")
+      .select("*")
+      .order("name");
+
+    setPokemon(result.data || []);
+  }
+
+  async function uploadScreenshot() {
+    if (!imageFile) return null;
+
+    const fileName =
+      `${Date.now()}-${imageFile.name}`;
+
+    const result = await supabase
+      .storage
+      .from("shiny-screenshots")
+      .upload(fileName, imageFile);
+
+    if (result.error)
+      throw result.error;
+
+    const { data } = supabase
+      .storage
+      .from("shiny-screenshots")
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  }
+
+  async function submitShiny() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("Please login.");
+        return;
+      }
+
+      const profileResult =
+        await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", user.id)
+          .single();
+
+      if (!profileResult.data) {
+        alert("Profile not found.");
+        return;
+      }
+
+      if (
+        !pokemonId ||
+        !dateFound
+      ) {
+        alert(
+          "Please fill out required fields."
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      let screenshotUrl = null;
+
+      if (imageFile) {
+        screenshotUrl =
+          await uploadScreenshot();
+      }
+
+      const result =
+        await supabase
+          .from(
+            "shiny_submissions"
+          )
+          .insert({
+            pokemon_id:
+              Number(
+                pokemonId
+              ),
+
+            profile_id:
+              profileResult
+                .data.id,
+
+            date_found:
+              dateFound,
+
+            method,
+
+            notes,
+
+            screenshot_url:
+              screenshotUrl,
+
+            status:
+              "pending",
+          });
+
+      if (result.error)
+        throw result.error;
+
+      alert(
+        "Submission sent for review!"
+      );
+
+      setPokemonId("");
+      setDateFound("");
+      setMethod("");
+      setNotes("");
+      setImageFile(null);
+      setPreviewUrl("");
+
+    } catch (err: any) {
+      alert(
+        err.message
+      );
+    } finally {
+      setLoading(false);
     }
+  }
 
-    const { error } = await supabase
-      .from("shiny_submissions")
-      .insert({
-        user_id: user.id,
-        pokemon_name: pokemonName,
-        nickname,
-        region,
-        method,
-        catch_date: catchDate,
-        notes,
-        screenshot_url: screenshotUrl,
-        iv_screenshot_url: ivScreenshotUrl,
-        status: "pending",
-      });
+  function handleImageChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      e.target.files?.[0];
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (!file) return;
 
-    alert("Shiny submitted for approval!");
+    setImageFile(file);
 
-    setPokemonName("");
-    setNickname("");
-    setRegion("");
-    setMethod("");
-    setCatchDate("");
-    setNotes("");
-    setScreenshotUrl("");
-    setIvScreenshotUrl("");
+    setPreviewUrl(
+      URL.createObjectURL(file)
+    );
   }
 
   return (
     <div className="page">
-      <h1>✨ Submit Shiny</h1>
+      <h1 className="page-title">
+        Submit Shiny
+      </h1>
 
       <div className="card">
-        <div className="winner-editor">
+        <div className="admin-form">
 
-          <input
-            className="dex-select"
-            placeholder="Pokemon"
-            value={pokemonName}
+          <select
+            value={pokemonId}
             onChange={(e) =>
-              setPokemonName(e.target.value)
+              setPokemonId(
+                e.target.value
+              )
             }
-          />
+          >
+            <option value="">
+              Select Pokémon
+            </option>
+
+            {pokemon.map(
+              (p) => (
+                <option
+                  key={p.id}
+                  value={p.id}
+                >
+                  {p.name}
+                  {" • "}
+                  {p.region}
+                </option>
+              )
+            )}
+          </select>
 
           <input
-            className="dex-select"
-            placeholder="Nickname (optional)"
-            value={nickname}
+            type="date"
+            value={dateFound}
             onChange={(e) =>
-              setNickname(e.target.value)
+              setDateFound(
+                e.target.value
+              )
             }
           />
 
           <select
-            className="dex-select"
-            value={region}
+            value={method}
             onChange={(e) =>
-              setRegion(e.target.value)
+              setMethod(
+                e.target.value
+              )
             }
           >
             <option value="">
-              Select Region
+              Select Method
             </option>
 
-            <option>Kanto</option>
-            <option>Johto</option>
-            <option>Hoenn</option>
-            <option>Sinnoh</option>
-            <option>Unova</option>
+            <option>
+              Horde
+            </option>
+
+            <option>
+              Single Encounter
+            </option>
+
+            <option>
+              Egg
+            </option>
+
+            <option>
+              Fishing
+            </option>
+
+            <option>
+              Safari
+            </option>
+
+            <option>
+              Gift
+            </option>
+
+            <option>
+              Other
+            </option>
           </select>
 
-          <input
-            className="dex-select"
-            placeholder="Method"
-            value={method}
-            onChange={(e) =>
-              setMethod(e.target.value)
-            }
-          />
-
-          <input
-            type="date"
-            className="dex-select"
-            value={catchDate}
-            onChange={(e) =>
-              setCatchDate(e.target.value)
-            }
-          />
-
-          <input
-            className="dex-select"
-            placeholder="Pokemon Screenshot URL"
-            value={screenshotUrl}
-            onChange={(e) =>
-              setScreenshotUrl(e.target.value)
-            }
-          />
-
-          <input
-            className="dex-select"
-            placeholder="IV Screenshot URL"
-            value={ivScreenshotUrl}
-            onChange={(e) =>
-              setIvScreenshotUrl(e.target.value)
-            }
-          />
-
           <textarea
-            className="dex-select"
-            rows={4}
             placeholder="Notes"
             value={notes}
             onChange={(e) =>
-              setNotes(e.target.value)
+              setNotes(
+                e.target.value
+              )
             }
           />
 
+          <label>
+            Screenshot
+          </label>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={
+              handleImageChange
+            }
+          />
+
+          {previewUrl && (
+            <img
+              src={previewUrl}
+              alt=""
+              style={{
+                width:
+                  "100%",
+                maxWidth:
+                  "600px",
+                borderRadius:
+                  "12px",
+              }}
+            />
+          )}
+
           <button
-            className="save-winners-btn"
-            onClick={handleSubmit}
+            className="submit-btn"
+            disabled={loading}
+            onClick={
+              submitShiny
+            }
           >
-            Submit Shiny
+            {loading
+              ? "Uploading..."
+              : "Submit Shiny"}
           </button>
+
         </div>
       </div>
     </div>

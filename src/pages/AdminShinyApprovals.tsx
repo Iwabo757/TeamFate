@@ -5,109 +5,128 @@ import {
 
 import { supabase } from "../lib/supabase";
 
-type Submission = {
-  id: string;
-  pokemon_name: string;
-  nickname?: string;
-  region?: string;
-  method?: string;
-  catch_date?: string;
-  notes?: string;
-  screenshot_url?: string;
-  iv_screenshot_url?: string;
-  status: string;
-  user_id: string;
-};
-
 export default function AdminShinyApprovals() {
-  const [submissions, setSubmissions] =
-    useState<Submission[]>([]);
+  const [
+    submissions,
+    setSubmissions,
+  ] = useState<any[]>([]);
 
   useEffect(() => {
     loadSubmissions();
   }, []);
 
   async function loadSubmissions() {
-    const { data } = await supabase
-      .from("shiny_submissions")
-      .select("*")
-      .eq("status", "pending")
-      .order("created_at", {
-        ascending: false,
-      });
+    const result =
+      await supabase
+        .from(
+          "shiny_submissions"
+        )
+        .select(`
+          *,
+          pokemon:pokemon_id(*),
+          profile:profile_id(*)
+        `)
+        .eq(
+          "status",
+          "pending"
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false,
+          }
+        );
 
-    setSubmissions(data || []);
+    setSubmissions(
+      result.data || []
+    );
   }
 
   async function approve(
-    submission: Submission
+    submission: any
   ) {
-    const { error } =
+    const insert =
       await supabase
-        .from("shinies")
+        .from(
+          "shiny_catches"
+        )
         .insert({
-          pokemon_name:
-            submission.pokemon_name,
+          pokemon_id:
+            submission.pokemon_id,
 
-          nickname:
-            submission.nickname,
+          profile_id:
+            submission.profile_id,
 
-          region:
-            submission.region,
+          date_found:
+            submission.date_found,
 
           method:
             submission.method,
-
-          catch_date:
-            submission.catch_date,
 
           notes:
             submission.notes,
 
           screenshot_url:
             submission.screenshot_url,
-
-          user_id:
-            submission.user_id,
         });
 
-    if (error) {
-      alert(error.message);
+    if (insert.error) {
+      alert(
+        insert.error
+          .message
+      );
       return;
     }
 
     await supabase
-      .from("shiny_submissions")
+      .from(
+        "shiny_submissions"
+      )
       .update({
-        status: "approved",
+        status:
+          "approved",
       })
-      .eq("id", submission.id);
+      .eq(
+        "id",
+        submission.id
+      );
 
     loadSubmissions();
   }
 
   async function reject(
-    submissionId: string
+    id: string
   ) {
     await supabase
-      .from("shiny_submissions")
+      .from(
+        "shiny_submissions"
+      )
       .update({
-        status: "rejected",
+        status:
+          "rejected",
       })
-      .eq("id", submissionId);
+      .eq("id", id);
 
     loadSubmissions();
   }
 
   return (
     <div className="page">
-      <h1>✨ Shiny Approvals</h1>
+      <h1 className="page-title">
+        Shiny Approvals
+      </h1>
 
       <div className="event-grid">
+
         {submissions.map(
-          (submission) => (
+          (
+            submission
+          ) => (
             <div
-              key={submission.id}
+              key={
+                submission.id
+              }
               className="event-card"
             >
               {submission.screenshot_url && (
@@ -121,70 +140,68 @@ export default function AdminShinyApprovals() {
               )}
 
               <div className="event-card-content">
+
                 <h3>
                   {
-                    submission.pokemon_name
+                    submission
+                      .pokemon
+                      ?.name
                   }
                 </h3>
 
                 <p>
-                  Region:{" "}
-                  {submission.region}
-                </p>
-
-                <p>
-                  Method:{" "}
-                  {submission.method}
-                </p>
-
-                <p>
-                  Date:{" "}
+                  Trainer:
+                  {" "}
                   {
-                    submission.catch_date
+                    submission
+                      .profile
+                      ?.nickname
                   }
                 </p>
 
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "10px",
-                    marginTop: "10px",
-                  }}
-                >
-                  <button
-                    className="save-winners-btn"
-                    onClick={() =>
-                      approve(
-                        submission
-                      )
-                    }
-                  >
-                    Approve
-                  </button>
+                <p>
+                  Method:
+                  {" "}
+                  {
+                    submission.method
+                  }
+                </p>
 
-                  <button
-                    className="delete-btn"
-                    onClick={() =>
-                      reject(
-                        submission.id
-                      )
-                    }
-                  >
-                    Reject
-                  </button>
-                </div>
+                <p>
+                  Date:
+                  {" "}
+                  {
+                    submission.date_found
+                  }
+                </p>
+
+                <button
+                  className="save-winners-btn"
+                  onClick={() =>
+                    approve(
+                      submission
+                    )
+                  }
+                >
+                  Approve
+                </button>
+
+                <button
+                  className="delete-btn"
+                  onClick={() =>
+                    reject(
+                      submission.id
+                    )
+                  }
+                >
+                  Reject
+                </button>
+
               </div>
             </div>
           )
         )}
 
-        {submissions.length ===
-          0 && (
-          <div className="card">
-            No pending shiny
-            submissions.
-          </div>
-        )}
       </div>
     </div>
   );
