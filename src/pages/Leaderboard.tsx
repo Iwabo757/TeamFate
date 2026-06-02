@@ -11,6 +11,7 @@ type ShinyCatch = {
 type LeaderboardEntry = {
   trainer: string;
   count: number;
+  avatar?: string;
   shinies: ShinyCatch[];
 };
 
@@ -18,8 +19,17 @@ export default function Leaderboard() {
   const [loading, setLoading] =
     useState(true);
 
-  const [filter, setFilter] =
-    useState("all");
+type FilterType =
+  | "week"
+  | "month"
+  | "3months"
+  | "6months"
+  | "1year"
+  | "2years"
+  | "all";
+
+const [filter, setFilter] =
+  useState<FilterType>("all");
 
   const [leaderboard, setLeaderboard] =
     useState<LeaderboardEntry[]>([]);
@@ -80,28 +90,36 @@ export default function Leaderboard() {
     setLoading(true);
 
     try {
-      const { data: profiles } =
-        await supabase
-          .from("profiles")
-          .select(
-            "id,nickname,username"
-          );
+const { data: profiles } =
+  await supabase
+    .from("profiles")
+    .select(
+      "id,nickname,username,avatar_url"
+    );
 
-      const profileMap: Record<
-        string,
-        string
-      > = {};
+const profileMap: Record<
+  string,
+  {
+    name: string;
+    avatar?: string;
+  }
+> = {};
 
-      profiles?.forEach(
-        (profile: any) => {
-          profileMap[
-            profile.id
-          ] =
-            profile.nickname ||
-            profile.username ||
-            "Unknown";
-        }
-      );
+profiles?.forEach(
+  (profile: any) => {
+    profileMap[
+      profile.id
+    ] = {
+      name:
+        profile.nickname ||
+        profile.username ||
+        "Unknown",
+
+      avatar:
+        profile.avatar_url,
+    };
+  }
+);
 
       const { data: catches } =
         await supabase
@@ -139,21 +157,27 @@ export default function Leaderboard() {
 
       filtered.forEach(
         (catchData: any) => {
-          const trainer =
-            profileMap[
-              catchData.profile_id
-            ] || "Unknown";
+
+const trainerInfo =
+  profileMap[
+    catchData.profile_id
+  ] || {
+    name: "Unknown",
+  };
+
+const trainer =
+  trainerInfo.name;
 
           if (
             !groups[trainer]
           ) {
-            groups[
-              trainer
-            ] = {
-              trainer,
-              count: 0,
-              shinies: [],
-            };
+groups[trainer] = {
+  trainer,
+  avatar:
+    trainerInfo.avatar,
+  count: 0,
+  shinies: [],
+};
           }
 
           groups[
@@ -218,135 +242,60 @@ export default function Leaderboard() {
       </div>
 
       <div className="leaderboard-filters">
-        <button
-          onClick={() =>
-            setFilter(
-              "week"
-            )
-          }
-          className={
-            filter === "week"
-              ? "active"
-              : ""
-          }
-        >
-          Week
-        </button>
+    {[
+  ["week", "Week"],
+  ["month", "Month"],
+  ["3months", "3 Months"],
+  ["6months", "6 Months"],
+  ["1year", "1 Year"],
+  ["2years", "2 Years"],
+  ["all", "All Time"],
+].map(([value, label]) => (
+  <button
+    key={value}
+    onClick={() =>
+      setFilter(value)
+    }
+    className={`leader-filter ${
+      filter === value
+        ? "active"
+        : ""
+    }`}
+  >
+    {label}
+  </button>
+))}
 
-        <button
-          onClick={() =>
-            setFilter(
-              "month"
-            )
-          }
-          className={
-            filter === "month"
-              ? "active"
-              : ""
-          }
-        >
-          Month
-        </button>
 
-        <button
-          onClick={() =>
-            setFilter(
-              "3months"
-            )
-          }
-          className={
-            filter ===
-            "3months"
-              ? "active"
-              : ""
-          }
-        >
-          3 Months
-        </button>
+</div>
 
-        <button
-          onClick={() =>
-            setFilter(
-              "6months"
-            )
-          }
-          className={
-            filter ===
-            "6months"
-              ? "active"
-              : ""
-          }
-        >
-          6 Months
-        </button>
+{champion && (
+  <div className="leaderboard-champion">
+<h2>
+  👑 Current Champion
+</h2>
 
-        <button
-          onClick={() =>
-            setFilter(
-              "1year"
-            )
-          }
-          className={
-            filter ===
-            "1year"
-              ? "active"
-              : ""
-          }
-        >
-          1 Year
-        </button>
+{champion.avatar && (
+  <img
+    src={champion.avatar}
+    alt={champion.trainer}
+    className="champion-avatar"
+  />
+)}
 
-        <button
-          onClick={() =>
-            setFilter(
-              "2years"
-            )
-          }
-          className={
-            filter ===
-            "2years"
-              ? "active"
-              : ""
-          }
-        >
-          2 Years
-        </button>
+<div className="champion-name">
+  {champion.trainer}
+</div>
 
-        <button
-          onClick={() =>
-            setFilter(
-              "all"
-            )
-          }
-          className={
-            filter === "all"
-              ? "active"
-              : ""
-          }
-        >
-          All Time
-        </button>
-      </div>
+<div className="champion-count">
+  {champion.count} Shinies
+</div>
 
-      {champion && (
-        <div className="champion-card">
-          <h2>
-            👑 Current
-            Champion
-          </h2>
-
-          <div className="champion-name">
-            {
-              champion.trainer
-            }
-          </div>
-
-          <div className="champion-count">
-            {
-              champion.count
-            }{" "}
-            Shinies
-          </div>
+<div className="champion-period">
+  {filter === "all"
+    ? "All Time Champion"
+    : `${filter} Champion`}
+</div>
         </div>
       )}
 
@@ -361,18 +310,19 @@ export default function Leaderboard() {
             }
             className="showcase-member"
           >
-            <h2>
-              #
-              {index + 1}{" "}
-              {
-                entry.trainer
-              }{" "}
-              (
-              {
-                entry.count
-              }
-              )
-            </h2>
+<div className="leaderboard-user-header">
+  {entry.avatar && (
+    <img
+      src={entry.avatar}
+      alt={entry.trainer}
+      className="leaderboard-user-avatar"
+    />
+  )}
+
+  <h2>
+    #{index + 1} {entry.trainer} ({entry.count})
+  </h2>
+</div>
 
             <div className="showcase-sprites">
               {entry.shinies.map(

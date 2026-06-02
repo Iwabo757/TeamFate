@@ -1696,3 +1696,94 @@ input[type="file"] {
 .delete-btn {
   background: #c62828;
 }
+
+/* =========================================
+   Leaderboard Cards
+========================================= */
+
+.leaderboard-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin: 30px 0;
+}
+
+.leader-filter {
+  background: rgba(0, 20, 60, 0.9);
+  border: 1px solid #2f5fff;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.leader-filter:hover {
+  transform: translateY(-2px);
+}
+
+.leader-filter.active {
+  background: #ffd54a;
+  color: #00153b;
+  border-color: #ffd54a;
+}
+
+.leaderboard-champion {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 40px auto;
+  padding: 30px;
+  border-radius: 20px;
+  background: rgba(0, 20, 60, 0.85);
+  border: 1px solid #2f5fff;
+}
+
+.champion-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 20px auto;
+  display: block;
+  border: 3px solid gold;
+}
+
+.champion-name {
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.champion-count {
+  color: gold;
+  font-size: 1.3rem;
+  margin-top: 10px;
+}
+.leaderboard-user-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.leaderboard-user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid gold;
+}
+
+.champion-period {
+  margin-top: 10px;
+  color: #8db8ff;
+  font-size: 14px;
+}
+
+.showcase-member {
+  margin-bottom: 40px;
+  text-align: center;
+}
