@@ -254,6 +254,70 @@ const regionStats = {
     total: 156,
   },
 };
+const regionStats: Record<
+  string,
+  {
+    caught: number;
+    total: number;
+  }
+> = {
+  National: {
+    caught: pokemon.filter(
+      (p) => p.caught
+    ).length,
+    total: 649,
+  },
+
+  Kanto: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 1 &&
+        p.id <= 151
+    ).length,
+    total: 151,
+  },
+
+  Johto: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 152 &&
+        p.id <= 251
+    ).length,
+    total: 100,
+  },
+
+  Hoenn: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 252 &&
+        p.id <= 386
+    ).length,
+    total: 135,
+  },
+
+  Sinnoh: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 387 &&
+        p.id <= 493
+    ).length,
+    total: 107,
+  },
+
+  Unova: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 494 &&
+        p.id <= 649
+    ).length,
+    total: 156,
+  },
+};
     return (
       matchesSearch &&
       matchesFilter &&
@@ -353,27 +417,27 @@ const completionPercent =
 </div>
 
 <div className="region-grid">
-  {Object.entries(regionStats).map(
-    ([region, stats]) => (
-      <div
-        key={region}
-        className={`region-card ${
-          selectedRegion === region
-            ? "active-region"
-            : ""
-        }`}
-        onClick={() =>
-          setSelectedRegion(region)
-        }
-      >
-        <h3>{region}</h3>
+  {Object.entries(
+    regionStats
+  ).map(([region, stats]) => (
+    <div
+      key={region}
+      className={`region-card ${
+        selectedRegion === region
+          ? "active-region"
+          : ""
+      }`}
+      onClick={() =>
+        setSelectedRegion(region)
+      }
+    >
+      <h3>{region}</h3>
 
-        <span className="region-count">
-          {stats.caught} / {stats.total}
-        </span>
-      </div>
-    )
-  )}
+      <span className="region-count">
+        {stats.caught} / {stats.total}
+      </span>
+    </div>
+  ))}
 </div>
 
 
