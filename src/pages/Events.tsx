@@ -23,10 +23,17 @@ type EventPost = {
   end_time: string;
   banner_url: string | null;
 
-  first_place?: string;
-  second_place?: string;
-  third_place?: string;
-  fourth_place?: string;
+first_place_points?: number;
+first_place_prize?: string;
+
+second_place_points?: number;
+second_place_prize?: string;
+
+third_place_points?: number;
+third_place_prize?: string;
+
+fourth_place_points?: number;
+fourth_place_prize?: string;
 };
 
 export default function Events() {
@@ -323,58 +330,122 @@ function getProfile(
 
   {selectedEvent.first_place &&
     getProfile(selectedEvent.first_place) && (
-      <div className="winner-card first">
-        <h3>👑 Champion</h3>
-        <p>
-          {
-            getProfile(
-              selectedEvent.first_place
-            )?.nickname
-          }
-        </p>
-      </div>
+<div className="winner-card first">
+
+  <img
+    src={profile.avatar_url}
+    className="winner-avatar"
+  />
+
+  <div className="winner-medal">
+    👑
+  </div>
+
+  <h3>Champion</h3>
+
+  <div className="winner-name">
+    {profile.nickname}
+  </div>
+
+  <div className="winner-points">
+    {selectedEvent.first_place_points}
+    pts
+  </div>
+
+  <div className="winner-prize">
+    🎁 {
+      selectedEvent.first_place_prize
+    }
+  </div>
+
+</div>
   )}
 
   {selectedEvent.second_place &&
     getProfile(selectedEvent.second_place) && (
       <div className="winner-card second">
-        <h3>🥈 2nd Place</h3>
-        <p>
-          {
-            getProfile(
-              selectedEvent.second_place
-            )?.nickname
-          }
-        </p>
-      </div>
+  <img
+    src={profile.avatar_url}
+    className="winner-avatar"
+  />
+
+  <div className="winner-medal">
+    🥈
+  </div>
+        <h3>2nd Place</h3>
+  <div className="winner-name">
+    {profile.nickname}
+  </div>
+
+  <div className="winner-points">
+    {selectedEvent.second_place_points}
+    pts
+  </div>
+
+  <div className="winner-prize">
+    🎁 {
+      selectedEvent.second_place_prize
+    }
+  </div>
+</div>
   )}
 
   {selectedEvent.third_place &&
     getProfile(selectedEvent.third_place) && (
       <div className="winner-card third">
-        <h3>🥉 3rd Place</h3>
-        <p>
-          {
-            getProfile(
-              selectedEvent.third_place
-            )?.nickname
-          }
-        </p>
-      </div>
+  <img
+    src={profile.avatar_url}
+    className="winner-avatar"
+  />
+
+  <div className="winner-medal">
+    🥉
+  </div>
+        <h3>3rd Place</h3>
+  <div className="winner-name">
+    {profile.nickname}
+  </div>
+
+  <div className="winner-points">
+    {selectedEvent.third_place_points}
+    pts
+  </div>
+
+  <div className="winner-prize">
+    🎁 {
+      selectedEvent.third_place_prize
+    }
+  </div>
+</div>
   )}
 
   {selectedEvent.fourth_place &&
     getProfile(selectedEvent.fourth_place) && (
       <div className="winner-card fourth">
-        <h3>🏅 4th Place</h3>
-        <p>
-          {
-            getProfile(
-              selectedEvent.fourth_place
-            )?.nickname
-          }
-        </p>
-      </div>
+  <img
+    src={profile.avatar_url}
+    className="winner-avatar"
+  />
+
+  <div className="winner-medal">
+    🏅 
+  </div>
+        <h3>4th Place</h3>
+  <div className="winner-name">
+    {profile.nickname}
+  </div>
+
+  <div className="winner-points">
+    {selectedEvent.fourth_place_points}
+    pts
+  </div>
+
+  <div className="winner-prize">
+    🎁 {
+      selectedEvent.fourth_place_prize
+    }
+  </div>
+</div>
   )}
 
 </div>

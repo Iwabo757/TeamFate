@@ -1789,7 +1789,7 @@ input[type="file"] {
 }
 
 /* =========================================
-   Event Winner Cards
+   Event Winners / Trophy Room
 ========================================= */
 
 .winner-title {
@@ -1798,10 +1798,17 @@ input[type="file"] {
   margin-bottom: 20px;
 }
 
+/* ---------- Admin Winner Editor ---------- */
+
 .winner-editor {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+}
+
+.winner-entry {
+  display: grid;
+  gap: 10px;
 }
 
 .dex-select {
@@ -1809,58 +1816,28 @@ input[type="file"] {
   padding: 14px;
   border-radius: 12px;
   border: 1px solid #2f5fff;
-  background: rgba(0,20,60,.9);
+  background: rgba(0, 20, 60, 0.9);
   color: white;
   font-size: 16px;
 }
 
 .save-winners-btn {
-  background: #ffd54a;
-  color: #00153b;
+  padding: 14px;
   border: none;
   border-radius: 12px;
-  padding: 14px;
+  background: #ffd54a;
+  color: #00153b;
   font-weight: 700;
   cursor: pointer;
-}
-.event-results {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
+  transition: 0.2s ease;
 }
 
-.winner-card {
-  background: rgba(0,20,60,.85);
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
+.save-winners-btn:hover {
+  transform: translateY(-2px);
 }
 
-.winner-card img {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 10px;
-}
+/* ---------- Results Banner ---------- */
 
-.winner-card.first {
-  border: 2px solid gold;
-}
-
-.winner-card.second {
-  border: 2px solid silver;
-}
-
-.winner-card.third {
-  border: 2px solid #cd7f32;
-}
-
-.winner-card.fourth {
-  border: 2px solid #4c7fff;
-}
 .results-banner {
   width: 100%;
   max-height: 260px;
@@ -1869,43 +1846,34 @@ input[type="file"] {
   margin-bottom: 24px;
 }
 
+/* ---------- Trophy Room Grid ---------- */
+
 .event-results {
   display: grid;
   grid-template-columns:
-    repeat(auto-fit, minmax(220px, 1fr));
+    repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
+  margin-top: 20px;
   align-items: stretch;
 }
 
+/* ---------- Winner Cards ---------- */
+
 .winner-card {
-  background: rgba(0,20,60,.9);
+  background: rgba(0, 20, 60, 0.9);
   border-radius: 16px;
   padding: 20px;
   text-align: center;
-  transition: .2s ease;
+  transition: 0.2s ease;
 }
 
 .winner-card:hover {
-  transform: translateY(-3px);
-}
-
-.winner-card img {
-  width: 110px;
-  height: 110px;
-  object-fit: cover;
-  border-radius: 50%;
-  margin-bottom: 10px;
-}
-
-.winner-medal {
-  font-size: 2rem;
-  margin-bottom: 10px;
+  transform: translateY(-4px);
 }
 
 .winner-card.first {
   border: 2px solid gold;
-  box-shadow:
-    0 0 20px rgba(255,215,0,.25);
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.25);
 }
 
 .winner-card.second {
@@ -1920,6 +1888,46 @@ input[type="file"] {
   border: 2px solid #4c7fff;
 }
 
+/* ---------- Champion Highlight ---------- */
+
 .champion {
   transform: scale(1.05);
+}
+
+/* ---------- Avatar ---------- */
+
+.winner-avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid gold;
+  margin-bottom: 12px;
+}
+
+/* ---------- Text ---------- */
+
+.winner-medal {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.winner-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.winner-points {
+  color: #ffd54a;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.winner-prize {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.95rem;
 }

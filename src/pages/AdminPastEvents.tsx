@@ -18,10 +18,17 @@ type EventPost = {
   end_time: string;
   banner_url: string | null;
 
-  first_place?: string;
-  second_place?: string;
-  third_place?: string;
-  fourth_place?: string;
+first_place_points?: number;
+first_place_prize?: string;
+
+second_place_points?: number;
+second_place_prize?: string;
+
+third_place_points?: number;
+third_place_prize?: string;
+
+fourth_place_points?: number;
+fourth_place_prize?: string;
 };
 
 export default function AdminPastEvents() {
@@ -41,6 +48,9 @@ type Member = {
 const [members, setMembers] =
   useState<Member[]>([]);
 
+
+
+
 const [firstPlace, setFirstPlace] =
   useState("");
 
@@ -52,6 +62,33 @@ const [thirdPlace, setThirdPlace] =
 
 const [fourthPlace, setFourthPlace] =
   useState("");
+const [firstPlacePoints, setFirstPlacePoints] =
+  useState("");
+
+const [firstPlacePrize, setFirstPlacePrize] =
+  useState("");
+
+
+
+const [secondPlacePoints, setSecondPlacePoints] =
+  useState("");
+
+const [secondPlacePrize, setSecondPlacePrize] =
+  useState("");
+
+const [thirdPlacePoints, setThirdPlacePoints] =
+  useState("");
+
+const [thirdPlacePrize, setThirdPlacePrize] =
+  useState("");
+
+const [fourthPlacePoints, setFourthPlacePoints] =
+  useState("");
+
+const [fourthPlacePrize, setFourthPlacePrize] =
+  useState("");
+
+
 
   const [blocks, setBlocks] =
     useState<
@@ -200,16 +237,31 @@ setMembers(
 async function saveWinners() {
   if (!editingEvent) return;
 
-  const payload = {
-    first_place:
-      firstPlace || null,
-    second_place:
-      secondPlace || null,
-    third_place:
-      thirdPlace || null,
-    fourth_place:
-      fourthPlace || null,
-  };
+const payload = {
+  first_place: firstPlace,
+  first_place_points:
+    Number(firstPlacePoints) || 0,
+  first_place_prize:
+    firstPlacePrize,
+
+  second_place: secondPlace,
+  second_place_points:
+    Number(secondPlacePoints) || 0,
+  second_place_prize:
+    secondPlacePrize,
+
+  third_place: thirdPlace,
+  third_place_points:
+    Number(thirdPlacePoints) || 0,
+  third_place_prize:
+    thirdPlacePrize,
+
+  fourth_place: fourthPlace,
+  fourth_place_points:
+    Number(fourthPlacePoints) || 0,
+  fourth_place_prize:
+    fourthPlacePrize,
+};
 
   console.log(
     "SAVING WINNERS:",
@@ -495,7 +547,37 @@ async function saveWinners() {
       <h2 className="winner-title">
   🏆 Edit Event Winners
 </h2>
+setFirstPlacePoints(
+  String(event.first_place_points || "")
+);
 
+setFirstPlacePrize(
+  event.first_place_prize || ""
+);
+
+setSecondPlacePoints(
+  String(event.second_place_points || "")
+);
+
+setSecondPlacePrize(
+  event.second_place_prize || ""
+);
+
+setThirdPlacePoints(
+  String(event.third_place_points || "")
+);
+
+setThirdPlacePrize(
+  event.third_place_prize || ""
+);
+
+setFourthPlacePoints(
+  String(event.fourth_place_points || "")
+);
+
+setFourthPlacePrize(
+  event.fourth_place_prize || ""
+);
 <div className="winner-editor">
 <select
   className="dex-select"
@@ -504,6 +586,28 @@ async function saveWinners() {
     setFirstPlace(e.target.value)
   }
 >
+<input
+  type="number"
+  className="dex-select"
+  placeholder="Points"
+  value={firstPlacePoints}
+  onChange={(e) =>
+    setFirstPlacePoints(
+      e.target.value
+    )
+  }
+/>
+<input
+  type="text"
+  className="dex-select"
+  placeholder="Prize Won"
+  value={firstPlacePrize}
+  onChange={(e) =>
+    setFirstPlacePrize(
+      e.target.value
+    )
+  }
+/>
   <option value="">
     1st Place
   </option>
@@ -527,6 +631,28 @@ async function saveWinners() {
     setSecondPlace(e.target.value)
   }
 >
+<input
+  type="number"
+  className="dex-select"
+  placeholder="Points"
+  value={secondPlacePoints}
+  onChange={(e) =>
+    setSecondPlacePoints(
+      e.target.value
+    )
+  }
+/>
+<input
+  type="text"
+  className="dex-select"
+  placeholder="Prize Won"
+  value={secondPlacePrize}
+  onChange={(e) =>
+    setSecondPlacePrize(
+      e.target.value
+    )
+  }
+/>
   <option value="">
     2nd Place
   </option>
@@ -550,6 +676,28 @@ async function saveWinners() {
     setThirdPlace(e.target.value)
   }
 >
+<input
+  type="number"
+  className="dex-select"
+  placeholder="Points"
+  value={thirdPlacePoints}
+  onChange={(e) =>
+    setThirdPlacePoints(
+      e.target.value
+    )
+  }
+/>
+<input
+  type="text"
+  className="dex-select"
+  placeholder="Prize Won"
+  value={thirdPlacePrize}
+  onChange={(e) =>
+    setThirdPlacePrize(
+      e.target.value
+    )
+  }
+/>
   <option value="">
     3rd Place
   </option>
@@ -573,6 +721,28 @@ async function saveWinners() {
     setFourthPlace(e.target.value)
   }
 >
+<input
+  type="number"
+  className="dex-select"
+  placeholder="Points"
+  value={fourthPlacePoints}
+  onChange={(e) =>
+    setFourthPlacePoints(
+      e.target.value
+    )
+  }
+/>
+<input
+  type="text"
+  className="dex-select"
+  placeholder="Prize Won"
+  value={fourthPlacePrize}
+  onChange={(e) =>
+    setFourthPlacePrize(
+      e.target.value
+    )
+  }
+/>
   <option value="">
     4th Place
   </option>
