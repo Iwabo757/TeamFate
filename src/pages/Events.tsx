@@ -22,6 +22,11 @@ type EventPost = {
   start_time: string;
   end_time: string;
   banner_url: string | null;
+
+  first_place?: string;
+  second_place?: string;
+  third_place?: string;
+  fourth_place?: string;
 };
 
 export default function Events() {
@@ -73,6 +78,8 @@ const [view, setView] =
 
     if (eventIds.length === 0)
       return;
+
+
 
     const {
       data: blockData,

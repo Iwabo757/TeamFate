@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 type EventBlock = {
@@ -18,13 +17,41 @@ type EventPost = {
   start_time: string;
   end_time: string;
   banner_url: string | null;
+
+  first_place?: string;
+  second_place?: string;
+  third_place?: string;
+  fourth_place?: string;
 };
 
 export default function AdminPastEvents() {
-  const navigate = useNavigate();
 
   const [events, setEvents] =
     useState<EventPost[]>([]);
+
+const [editingEvent, setEditingEvent] =
+  useState<EventPost | null>(null);
+
+type Member = {
+  id: string;
+  nickname: string;
+  avatar_url?: string;
+};
+
+const [members, setMembers] =
+  useState<Member[]>([]);
+
+const [firstPlace, setFirstPlace] =
+  useState("");
+
+const [secondPlace, setSecondPlace] =
+  useState("");
+
+const [thirdPlace, setThirdPlace] =
+  useState("");
+
+const [fourthPlace, setFourthPlace] =
+  useState("");
 
   const [blocks, setBlocks] =
     useState<
@@ -54,6 +81,20 @@ export default function AdminPastEvents() {
     if (!data) return;
 
     const now = new Date();
+
+const { data: memberData } =
+  await supabase
+    .from("profiles")
+    .select(`
+      id,
+      nickname,
+      avatar_url
+    `)
+    .order("nickname");
+
+setMembers(
+  memberData || []
+);
 
     const pastEvents =
       data.filter(
@@ -156,6 +197,24 @@ export default function AdminPastEvents() {
     );
   }
 
+async function saveWinners() {
+  if (!editingEvent) return;
+
+  await supabase
+    .from("events")
+    .update({
+      first_place: firstPlace || null,
+      second_place: secondPlace || null,
+      third_place: thirdPlace || null,
+      fourth_place: fourthPlace || null,
+    })
+    .eq("id", editingEvent.id);
+
+  await loadEvents();
+
+  setEditingEvent(null);
+}
+
   async function deleteEvent(
     eventId: string
   ) {
@@ -242,17 +301,31 @@ export default function AdminPastEvents() {
               </div>
 
               <div className="event-admin-actions">
-                <button
-                  className="edit-btn"
-                  onClick={() =>
-                    navigate(
-                      `/admin/events/edit/${event.id}`
-                    )
-                  }
-                >
-                  Edit
-                </button>
+      
+<button
+  className="edit-btn"
+  onClick={() => {
+    setEditingEvent(event);
 
+    setFirstPlace(
+      event.first_place || ""
+    );
+
+    setSecondPlace(
+      event.second_place || ""
+    );
+
+    setThirdPlace(
+      event.third_place || ""
+    );
+
+    setFourthPlace(
+      event.fourth_place || ""
+    );
+  }}
+>
+  Edit Winners
+</button>
                 <button
                   className="delete-btn"
                   onClick={() =>
@@ -375,6 +448,120 @@ export default function AdminPastEvents() {
           </div>
         </div>
       )}
+{editingEvent && (
+  <div
+    className="modal-overlay"
+    onClick={() =>
+      setEditingEvent(null)
+    }
+  >
+    <div
+      className="event-modal"
+      onClick={(e) =>
+        e.stopPropagation()
+      }
+    >
+      <h2>Edit Winners</h2>
+
+<select
+  value={firstPlace}
+  onChange={(e) =>
+    setFirstPlace(e.target.value)
+  }
+>
+  <option value="">
+    1st Place
+  </option>
+
+  {members.map(
+    (member) => (
+      <option
+        key={member.id}
+        value={member.id}
+      >
+        {member.nickname}
+      </option>
+    )
+  )}
+</select>
+
+<select
+  value={secondPlace}
+  onChange={(e) =>
+    setSecondPlace(e.target.value)
+  }
+>
+  <option value="">
+    2nd Place
+  </option>
+
+  {members.map(
+    (member) => (
+      <option
+        key={member.id}
+        value={member.id}
+      >
+        {member.nickname}
+      </option>
+    )
+  )}
+</select>
+
+<select
+  value={thirdPlace}
+  onChange={(e) =>
+    setThirdPlace(e.target.value)
+  }
+>
+  <option value="">
+    3rd Place
+  </option>
+
+  {members.map(
+    (member) => (
+      <option
+        key={member.id}
+        value={member.id}
+      >
+        {member.nickname}
+      </option>
+    )
+  )}
+</select>
+
+<select
+  value={fourthPlace}
+  onChange={(e) =>
+    setFourthPlace(e.target.value)
+  }
+>
+  <option value="">
+    4th Place
+  </option>
+
+  {members.map(
+    (member) => (
+      <option
+        key={member.id}
+        value={member.id}
+      >
+        {member.nickname}
+      </option>
+    )
+  )}
+
+</select>
+
+<button
+  className="edit-btn"
+  onClick={saveWinners}
+>
+  Save Winners
+</button>
+
+    </div>
+  </div>
+)}
     </div>
   );
 }
