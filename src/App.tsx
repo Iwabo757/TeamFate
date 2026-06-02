@@ -263,7 +263,7 @@ console.log(
             Leaderboard 
           </NavLink>
 
-          <NavLink to="/forums">
+          <NavLink to="/bounty">
             Forums 
           </NavLink>
 
@@ -354,12 +354,12 @@ console.log(
       </Link>
 
       <Link
-        to="/forums"
+        to="/bounty"
         onClick={() =>
           setMobileOpen(false)
         }
       >
-        Forums
+        Bounty
       </Link>
 
       <Link
@@ -503,8 +503,8 @@ console.log(
           />
 
           <Route
-            path="/forums"
-            element={<Forums />}
+            path="/bounty"
+            element={<Bounty />}
           />
 
 <Route
