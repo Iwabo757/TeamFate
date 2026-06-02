@@ -1598,3 +1598,17 @@ input[type="file"] {
       rgba(255,213,74,.05)
     );
 }
+.region-card {
+  cursor: pointer;
+  text-align: center;
+}
+
+.region-card h3 {
+  margin-bottom: 8px;
+}
+
+.region-count {
+  display: block;
+  font-size: 1.2rem;
+  color: #aab7d8;
+}

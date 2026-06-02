@@ -213,6 +213,47 @@ const filteredPokemon = pokemon.filter(
         : poke.id >= 494 &&
           poke.id <= 649;
 
+const regionStats = {
+  National: {
+    caught: pokemon.filter((p) => p.caught).length,
+    total: 649,
+  },
+
+  Kanto: {
+    caught: pokemon.filter(
+      (p) => p.caught && p.id >= 1 && p.id <= 151
+    ).length,
+    total: 151,
+  },
+
+  Johto: {
+    caught: pokemon.filter(
+      (p) => p.caught && p.id >= 152 && p.id <= 251
+    ).length,
+    total: 100,
+  },
+
+  Hoenn: {
+    caught: pokemon.filter(
+      (p) => p.caught && p.id >= 252 && p.id <= 386
+    ).length,
+    total: 135,
+  },
+
+  Sinnoh: {
+    caught: pokemon.filter(
+      (p) => p.caught && p.id >= 387 && p.id <= 493
+    ).length,
+    total: 107,
+  },
+
+  Unova: {
+    caught: pokemon.filter(
+      (p) => p.caught && p.id >= 494 && p.id <= 649
+    ).length,
+    total: 156,
+  },
+};
     return (
       matchesSearch &&
       matchesFilter &&
@@ -221,19 +262,69 @@ const filteredPokemon = pokemon.filter(
   }
 );
 
-  const capturedCount =
-    pokemon.filter(
-      (p) => p.caught
-    ).length;
+const regionPokemon =
+  selectedRegion === "National"
+    ? pokemon
+    : pokemon.filter((p) => {
+        if (
+          selectedRegion === "Kanto"
+        )
+          return (
+            p.id >= 1 &&
+            p.id <= 151
+          );
 
-  const completionPercent =
-    pokemon.length
-      ? (
-          (capturedCount /
-            pokemon.length) *
-          100
-        ).toFixed(1)
-      : "0";
+        if (
+          selectedRegion === "Johto"
+        )
+          return (
+            p.id >= 152 &&
+            p.id <= 251
+          );
+
+        if (
+          selectedRegion === "Hoenn"
+        )
+          return (
+            p.id >= 252 &&
+            p.id <= 386
+          );
+
+        if (
+          selectedRegion === "Sinnoh"
+        )
+          return (
+            p.id >= 387 &&
+            p.id <= 493
+          );
+
+        if (
+          selectedRegion === "Unova"
+        )
+          return (
+            p.id >= 494 &&
+            p.id <= 649
+          );
+
+        return true;
+      });
+
+const capturedCount =
+  regionPokemon.filter(
+    (p) => p.caught
+  ).length;
+
+const totalCount =
+  regionPokemon.length;
+
+const completionPercent =
+  totalCount
+    ? (
+        (capturedCount /
+          totalCount) *
+        100
+      ).toFixed(1)
+    : "0";
 
 
   if (loading) {
@@ -250,40 +341,39 @@ const filteredPokemon = pokemon.filter(
     ⭐Montly Bounty Here ⭐
   </div>
 
-  <p>
-    Completion:
-    {" "}
-    {capturedCount}
-    {" / "}
-    {pokemon.length}
-    {" "}
-    ({completionPercent}%)
-  </p>
+<p>
+  {selectedRegion} Completion:
+  {" "}
+  {capturedCount}
+  {" / "}
+  {totalCount}
+  {" "}
+  ({completionPercent}%)
+</p>
 </div>
 
 <div className="region-grid">
-  {[
-    "National",
-    "Kanto",
-    "Johto",
-    "Hoenn",
-    "Sinnoh",
-    "Unova",
-  ].map((region) => (
-    <div
-      key={region}
-      className={`region-card ${
-        selectedRegion === region
-          ? "active-region"
-          : ""
-      }`}
-      onClick={() =>
-        setSelectedRegion(region)
-      }
-    >
-      <h3>{region}</h3>
-    </div>
-  ))}
+  {Object.entries(regionStats).map(
+    ([region, stats]) => (
+      <div
+        key={region}
+        className={`region-card ${
+          selectedRegion === region
+            ? "active-region"
+            : ""
+        }`}
+        onClick={() =>
+          setSelectedRegion(region)
+        }
+      >
+        <h3>{region}</h3>
+
+        <span className="region-count">
+          {stats.caught} / {stats.total}
+        </span>
+      </div>
+    )
+  )}
 </div>
 
 
