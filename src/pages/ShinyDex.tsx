@@ -22,6 +22,9 @@ export default function ShinyDex() {
 
   const [search, setSearch] = useState("");
 
+  const [selectedRegion, setSelectedRegion] =
+    useState("National");
+
   const [searchMode, setSearchMode] = useState<
     "pokemon" | "trainer"
   >("pokemon");
@@ -241,36 +244,81 @@ totalCopies:
   </p>
 </div>
 
-      <div className="region-grid">
-        {regions.map((region) => {
-          const regionMons =
-            pokemon.filter(
-              (p) =>
-                p.region === region
-            );
+<div className="region-grid">
+  {[
+    "National",
+    "Kanto",
+    "Johto",
+    "Hoenn",
+    "Sinnoh",
+    "Unova",
+  ].map((region) => (
+    <div
+      key={region}
+      className={`region-card ${
+        selectedRegion === region
+          ? "active-region"
+          : ""
+      }`}
+      onClick={() =>
+        setSelectedRegion(region)
+      }
+    >
+      <h3>{region}</h3>
+    </div>
+  ))}
+</div>
 
-          const regionCaught =
-            regionMons.filter(
-              (p) => p.caught
-            ).length;
+const filteredPokemon =
+  pokemonList.filter((pokemon) => {
 
-          return (
-            <div
-              key={region}
-              className="region-card"
-            >
-              <h3>{region}</h3>
+    if (
+      selectedRegion === "National"
+    )
+      return true;
 
-              <p>
-                {regionCaught}
-                {" / "}
-                {regionMons.length}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+    if (
+      selectedRegion === "Kanto"
+    )
+      return (
+        pokemon.id >= 1 &&
+        pokemon.id <= 151
+      );
 
+    if (
+      selectedRegion === "Johto"
+    )
+      return (
+        pokemon.id >= 152 &&
+        pokemon.id <= 251
+      );
+
+    if (
+      selectedRegion === "Hoenn"
+    )
+      return (
+        pokemon.id >= 252 &&
+        pokemon.id <= 386
+      );
+
+    if (
+      selectedRegion === "Sinnoh"
+    )
+      return (
+        pokemon.id >= 387 &&
+        pokemon.id <= 493
+      );
+
+    if (
+      selectedRegion === "Unova"
+    )
+      return (
+        pokemon.id >= 494 &&
+        pokemon.id <= 649
+      );
+
+    return true;
+  });
       <div className="dex-controls">
 
         <select

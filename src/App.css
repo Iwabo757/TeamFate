@@ -1571,3 +1571,30 @@ input[type="file"] {
     font-size: 1.2rem;
   }
 }
+
+/* =========================================
+   Region Cards
+========================================= */
+.region-card {
+  cursor: pointer;
+  transition: .2s;
+}
+
+.region-card:hover {
+  transform: translateY(-2px);
+}
+
+.active-region {
+  border: 2px solid #ffd54a;
+
+  box-shadow:
+    0 0 12px
+    rgba(255,213,74,.35);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,213,74,.15),
+      rgba(255,213,74,.05)
+    );
+}
