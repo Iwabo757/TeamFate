@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Routes,
   Route,
@@ -32,11 +32,15 @@ type ProfileData = {
 };
 
 export default function App() {
+
   const [profile, setProfile] =
     useState<ProfileData | null>(null);
 
-const [mobileOpen, setMobileOpen] =
-  useState(false);
+  const [mobileOpen, setMobileOpen] =
+    useState(false);
+
+  const menuRef =
+    useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     async function checkUser() {
@@ -81,6 +85,34 @@ const [mobileOpen, setMobileOpen] =
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+useEffect(() => {
+  function handleClickOutside(
+    event: MouseEvent
+  ) {
+    if (
+      menuRef.current &&
+      !menuRef.current.contains(
+        event.target as Node
+      )
+    ) {
+      setMobileOpen(false);
+    }
+  }
+
+  document.addEventListener(
+    "mousedown",
+    handleClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
+
 
   async function loadProfile() {
     const {
@@ -255,35 +287,129 @@ console.log(
 )}
         </nav>
 
-{mobileOpen && (
-  <div className="mobile-nav">
-    <Link to="/">Home</Link>
 
-    <Link to="/shinydex">
-      Team Shiny Dex
-    </Link>
+<div
+  className="mobile-nav-container"
+  ref={menuRef}
+>
+  {mobileOpen && (
+    <div className="mobile-nav">
 
-    <Link to="/showcase">
-      Shiny Showcase
-    </Link>
+      <Link
+        to="/"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Home
+      </Link>
 
-    <Link to="/board">
-      Leaderboard
-    </Link>
+      <Link
+        to="/shinydex"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Team Shiny Dex
+      </Link>
 
-    <Link to="/events">
-      Events
-    </Link>
+      <Link
+        to="/showcase"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Shiny Showcase
+      </Link>
 
-    <Link to="/forums">
-      Forums
-    </Link>
+      <Link
+        to="/board"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Leaderboard
+      </Link>
 
-    <Link to="/members">
-      Members
-    </Link>
-  </div>
-)}
+      <Link
+        to="/events"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Events
+      </Link>
+
+      <Link
+        to="/forums"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Forums
+      </Link>
+
+      <Link
+        to="/members"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Members
+      </Link>
+
+      {profile?.role ===
+        "admin" && (
+        <>
+          <Link
+            to="/admin"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Admin Dashboard
+          </Link>
+
+          <Link
+            to="/admin/events"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Create Event
+          </Link>
+
+          <Link
+            to="/admin/shinies/add"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Add Shiny
+          </Link>
+
+          <Link
+            to="/admin/shinies"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Manage Shinies
+          </Link>
+
+          <Link
+            to="/admin/members"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Manage Members
+          </Link>
+        </>
+      )}
+    </div>
+  )}
+</div>
 
 
 <div className="topbar-right">
