@@ -24,6 +24,9 @@ import AddShiny from "./pages/AddShiny";
 import ManageShinies from "./pages/ManageShinies";
 import ManageMembers from "./pages/ManageMembers";
 import EventDashboard from "./pages/EventDashboard";
+import SubmitShiny from "./pages/SubmitShiny";
+import AdminShinyApprovals from "./pages/AdminShinyApprovals";
+import ShinyDashboard from "./pages/ShinyDashboard";
 import "./App.css";
 
 type ProfileData = {
@@ -242,6 +245,10 @@ console.log(
     <Link to="/showcase">
       Shiny Showcase
     </Link>
+
+<Link to="/submit-shiny">
+  Submit Shiny
+</Link>
   </div>
 </div>
 
@@ -277,19 +284,15 @@ console.log(
 
   <div className="dropdown-menu">
     <Link to="/admin">
-      Dashboard
+      Admin Dashboard
+    </Link>
+
+    <Link to="/admin/shines">
+      Shiny Dashboard
     </Link>
 
     <Link to="/admin/events">
-      Manage Events
-    </Link>
-
-    <Link to="/admin/shinies/add">
-      Add Shiny
-    </Link>
-
-    <Link to="/admin/shinies">
-      Manage Shinies
+       Manage Events
     </Link>
 
     <Link to="/admin/members">
@@ -333,6 +336,15 @@ console.log(
         }
       >
         Shiny Showcase
+      </Link>
+
+      <Link 
+        to="/submit-shiny"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Submit Shiny
       </Link>
 
       <Link
@@ -384,30 +396,21 @@ console.log(
           </Link>
 
           <Link
+            to="/admin/shinies/add"
+            onClick={() =>
+              setMobileOpen(false)
+            }
+          >
+            Shiny Dashboard
+          </Link>
+
+          <Link
             to="/admin/events"
             onClick={() =>
               setMobileOpen(false)
             }
           >
             Manage Event
-          </Link>
-
-          <Link
-            to="/admin/shinies/add"
-            onClick={() =>
-              setMobileOpen(false)
-            }
-          >
-            Add Shiny
-          </Link>
-
-          <Link
-            to="/admin/shinies"
-            onClick={() =>
-              setMobileOpen(false)
-            }
-          >
-            Manage Shinies
           </Link>
 
           <Link
@@ -545,6 +548,25 @@ console.log(
 <Route
   path="/admin/members"
   element={<ManageMembers />}
+/>
+
+<Route
+  path="/submit-shiny"
+  element={<SubmitShiny />}
+/>
+
+<Route
+  path="/admin/shiny-approvals"
+  element={<AdminShinyApprovals />}
+/>
+
+<Route
+  path="/submit-shiny"
+  element={<SubmitShiny />}
+/>
+<Route
+  path="/admin/shiny-dashboard"
+  element={<ShinyDashboard />}
 />
 
           <Route
