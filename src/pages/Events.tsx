@@ -310,18 +310,74 @@ function getProfile(
             alt=""
           />
 
-          <h2
-            style={{
-              textAlign: "center",
-              marginBottom: "20px",
-            }}
-          >
-            🏆 {selectedEvent.title} Results
-          </h2>
+<h2
+  style={{
+    textAlign: "center",
+    marginBottom: "20px",
+  }}
+>
+  🏆 {selectedEvent.title} Results
+</h2>
 
-          <div className="event-results">
-            {/* winners here */}
-          </div>
+<div className="event-results">
+
+  {selectedEvent.first_place &&
+    getProfile(selectedEvent.first_place) && (
+      <div className="winner-card first">
+        <h3>👑 Champion</h3>
+        <p>
+          {
+            getProfile(
+              selectedEvent.first_place
+            )?.nickname
+          }
+        </p>
+      </div>
+  )}
+
+  {selectedEvent.second_place &&
+    getProfile(selectedEvent.second_place) && (
+      <div className="winner-card second">
+        <h3>🥈 2nd Place</h3>
+        <p>
+          {
+            getProfile(
+              selectedEvent.second_place
+            )?.nickname
+          }
+        </p>
+      </div>
+  )}
+
+  {selectedEvent.third_place &&
+    getProfile(selectedEvent.third_place) && (
+      <div className="winner-card third">
+        <h3>🥉 3rd Place</h3>
+        <p>
+          {
+            getProfile(
+              selectedEvent.third_place
+            )?.nickname
+          }
+        </p>
+      </div>
+  )}
+
+  {selectedEvent.fourth_place &&
+    getProfile(selectedEvent.fourth_place) && (
+      <div className="winner-card fourth">
+        <h3>🏅 4th Place</h3>
+        <p>
+          {
+            getProfile(
+              selectedEvent.fourth_place
+            )?.nickname
+          }
+        </p>
+      </div>
+  )}
+
+</div>
         </>
       ) : (
         <>
