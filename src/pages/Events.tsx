@@ -179,33 +179,25 @@ const [view, setView] =
     <div className="page">
       <h1>Team Fate Events</h1>
 
-      <div className="events-tabs">
-        <button
-          className={
-            view === "upcoming"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            setView("upcoming")
-          }
-        >
-          Upcoming Events
-        </button>
+<div className="leaderboard-filters">
+  <button
+    className={`leader-filter ${
+      view === "upcoming" ? "active" : ""
+    }`}
+    onClick={() => setView("upcoming")}
+  >
+    Upcoming Events
+  </button>
 
-        <button
-          className={
-            view === "past"
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            setView("past")
-          }
-        >
-          Past Events
-        </button>
-      </div>
+  <button
+    className={`leader-filter ${
+      view === "past" ? "active" : ""
+    }`}
+    onClick={() => setView("past")}
+  >
+    Past Events
+  </button>
+</div>
 
       {displayedEvents.length ===
         0 && (
