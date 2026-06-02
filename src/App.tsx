@@ -281,7 +281,7 @@ console.log(
     </Link>
 
     <Link to="/admin/events">
-      Create Event
+      Manage Events
     </Link>
 
     <Link to="/admin/shinies/add">
