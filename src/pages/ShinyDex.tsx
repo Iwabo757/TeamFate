@@ -211,13 +211,6 @@ totalCopies:
         ).toFixed(1)
       : "0";
 
-  const regions = [
-    "Kanto",
-    "Johto",
-    "Hoenn",
-    "Sinnoh",
-    "Unova",
-  ];
 
   if (loading) {
     return <h2>Loading Dex...</h2>;
@@ -269,56 +262,61 @@ totalCopies:
   ))}
 </div>
 
-const filteredPokemon =
-  pokemonList.filter((pokemon) => {
+const filteredPokemon = pokemon.filter(
+  (poke) => {
+    const searchText =
+      search.toLowerCase();
 
-    if (
-      selectedRegion === "National"
-    )
-      return true;
+    const matchesSearch =
+      searchMode === "pokemon"
+        ? poke.name
+            .toLowerCase()
+            .includes(searchText)
+        : Object.keys(
+            poke.owners
+          ).some((owner) =>
+            owner
+              .toLowerCase()
+              .includes(searchText)
+          );
 
-    if (
-      selectedRegion === "Kanto"
-    )
-      return (
-        pokemon.id >= 1 &&
-        pokemon.id <= 151
-      );
+    const matchesFilter =
+      filter === "all"
+        ? true
+        : filter === "caught"
+        ? poke.caught
+        : !poke.caught;
 
-    if (
-      selectedRegion === "Johto"
-    )
-      return (
-        pokemon.id >= 152 &&
-        pokemon.id <= 251
-      );
+    const matchesRegion =
+      selectedRegion ===
+      "National"
+        ? true
+        : selectedRegion ===
+          "Kanto"
+        ? poke.id >= 1 &&
+          poke.id <= 151
+        : selectedRegion ===
+          "Johto"
+        ? poke.id >= 152 &&
+          poke.id <= 251
+        : selectedRegion ===
+          "Hoenn"
+        ? poke.id >= 252 &&
+          poke.id <= 386
+        : selectedRegion ===
+          "Sinnoh"
+        ? poke.id >= 387 &&
+          poke.id <= 493
+        : poke.id >= 494 &&
+          poke.id <= 649;
 
-    if (
-      selectedRegion === "Hoenn"
-    )
-      return (
-        pokemon.id >= 252 &&
-        pokemon.id <= 386
-      );
-
-    if (
-      selectedRegion === "Sinnoh"
-    )
-      return (
-        pokemon.id >= 387 &&
-        pokemon.id <= 493
-      );
-
-    if (
-      selectedRegion === "Unova"
-    )
-      return (
-        pokemon.id >= 494 &&
-        pokemon.id <= 649
-      );
-
-    return true;
-  });
+    return (
+      matchesSearch &&
+      matchesFilter &&
+      matchesRegion
+    );
+  }
+);
       <div className="dex-controls">
 
         <select
