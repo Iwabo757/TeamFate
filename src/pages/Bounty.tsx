@@ -4,10 +4,10 @@ export default function Forums() {
       <h1>Forums</h1>
 
       <div className="card">
-        <p># general</p>
-        <p># shiny-finds</p>
-        <p># events</p>
-        <p># guides</p>
+        <p>Monthly Bouonty</p>
+        <p>comming soon</p>
+        <p>!</p>
+        <p>!</p>
       </div>
     </div>
   );

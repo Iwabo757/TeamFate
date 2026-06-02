@@ -389,7 +389,7 @@ console.log(
               setMobileOpen(false)
             }
           >
-            Create Event
+            Manage Event
           </Link>
 
           <Link
