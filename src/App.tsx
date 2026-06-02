@@ -15,6 +15,8 @@ import ShinyBoard from "./pages/Leaderboard";
 import Events from "./pages/Events";
 import Forums from "./pages/Forums";
 import AdminEvents from "./pages/AdminEvents";
+import AdminPastEvents from "./pages/AdminPastEvents";
+import AdminCurrentEvents from "./pages/AdminCurrentEvents";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -510,8 +512,23 @@ console.log(
 />
 
 <Route
-  path="/admin/events"
+  path="/admin/events/create"
   element={<AdminEvents />}
+/>
+
+<Route
+  path="/admin/events"
+  element={<EventDashboard />}
+/>
+
+<Route
+  path="/admin/events/current"
+  element={<AdminCurrentEvents />}
+/>
+
+<Route
+  path="/admin/events/past"
+  element={<AdminPastEvents />}
 />
 
 <Route
