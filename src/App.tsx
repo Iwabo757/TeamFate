@@ -245,10 +245,6 @@ console.log(
   </div>
 </div>
 
-          <NavLink to="/board">
-            Leaderboard
-          </NavLink>
-
 <div className="dropdown">
   <span>Events ▼</span>
 
@@ -263,8 +259,12 @@ console.log(
   </div>
 </div>
 
+          <NavLink to="/board">
+            Leaderboard 
+          </NavLink>
+
           <NavLink to="/forums">
-            Forums
+            Forums 
           </NavLink>
 
 <NavLink to="/members">
