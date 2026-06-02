@@ -400,3 +400,7 @@ function getProfile(
     </div>
   </div>
 )}
+
+    </div>
+  );
+}
