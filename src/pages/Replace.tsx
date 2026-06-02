@@ -17,7 +17,7 @@ import Showcase from "./Showcase";
 import ShinyDex from "./ShinyDex";
 import Leaderboard from "./Leaderboard";
 import Events from "./Events";
-import Forums from "./Forums";
+import Bounty from "./Bounty";
 import AdminDashboard from "./AdminDashboard";
 
 function App() {
@@ -37,8 +37,8 @@ function App() {
       case "events":
         return <Events />;
 
-      case "forums":
-        return <Forums />;
+      case "bounty":
+        return <Bounty />;
 
       case "admin":
         return <AdminDashboard />;
@@ -80,9 +80,9 @@ function App() {
             Events
           </button>
 
-          <button onClick={() => setPage("forums")}>
+          <button onClick={() => setPage("bounty")}>
             <Users size={20} />
-            Forums
+            Bounty
           </button>
 
           <button onClick={() => setPage("admin")}>
