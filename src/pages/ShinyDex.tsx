@@ -207,16 +207,9 @@ const filteredPokemon = pokemon.filter(
      matchesSearch &&
      matchesFilter &&
      matchesRegion
-   );
-
-const completionPercent =
-  totalCount
-    ? (
-        (capturedCount /
-          totalCount) *
-        100
-      ).toFixed(1)
-    : "0";
+    );
+  }
+);
 
 const regionPokemon =
   selectedRegion === "National"
@@ -269,6 +262,8 @@ const capturedCount =
   regionPokemon.filter(
     (p) => p.caught
   ).length;
+
+
 
 const totalCount =
   regionPokemon.length;
