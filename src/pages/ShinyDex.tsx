@@ -165,37 +165,61 @@ totalCopies:
     }
   }
 
-  const filteredPokemon =
-    pokemon.filter((poke) => {
-      const searchText =
-        search.toLowerCase();
+const filteredPokemon = pokemon.filter(
+  (poke) => {
+    const searchText =
+      search.toLowerCase();
 
-      const matchesSearch =
-        searchMode === "pokemon"
-          ? poke.name
+    const matchesSearch =
+      searchMode === "pokemon"
+        ? poke.name
+            .toLowerCase()
+            .includes(searchText)
+        : Object.keys(
+            poke.owners
+          ).some((owner) =>
+            owner
               .toLowerCase()
               .includes(searchText)
-          :
- Object.keys(
-  poke.owners
-).some((owner) =>
-  owner
-    .toLowerCase()
-    .includes(searchText)
+          );
+
+    const matchesFilter =
+      filter === "all"
+        ? true
+        : filter === "caught"
+        ? poke.caught
+        : !poke.caught;
+
+    const matchesRegion =
+      selectedRegion ===
+      "National"
+        ? true
+        : selectedRegion ===
+          "Kanto"
+        ? poke.id >= 1 &&
+          poke.id <= 151
+        : selectedRegion ===
+          "Johto"
+        ? poke.id >= 152 &&
+          poke.id <= 251
+        : selectedRegion ===
+          "Hoenn"
+        ? poke.id >= 252 &&
+          poke.id <= 386
+        : selectedRegion ===
+          "Sinnoh"
+        ? poke.id >= 387 &&
+          poke.id <= 493
+        : poke.id >= 494 &&
+          poke.id <= 649;
+
+    return (
+      matchesSearch &&
+      matchesFilter &&
+      matchesRegion
+    );
+  }
 );
-
-      const matchesFilter =
-        filter === "all"
-          ? true
-          : filter === "caught"
-          ? poke.caught
-          : !poke.caught;
-
-      return (
-        matchesSearch &&
-        matchesFilter
-      );
-    });
 
   const capturedCount =
     pokemon.filter(
@@ -262,61 +286,7 @@ totalCopies:
   ))}
 </div>
 
-const filteredPokemon = pokemon.filter(
-  (poke) => {
-    const searchText =
-      search.toLowerCase();
 
-    const matchesSearch =
-      searchMode === "pokemon"
-        ? poke.name
-            .toLowerCase()
-            .includes(searchText)
-        : Object.keys(
-            poke.owners
-          ).some((owner) =>
-            owner
-              .toLowerCase()
-              .includes(searchText)
-          );
-
-    const matchesFilter =
-      filter === "all"
-        ? true
-        : filter === "caught"
-        ? poke.caught
-        : !poke.caught;
-
-    const matchesRegion =
-      selectedRegion ===
-      "National"
-        ? true
-        : selectedRegion ===
-          "Kanto"
-        ? poke.id >= 1 &&
-          poke.id <= 151
-        : selectedRegion ===
-          "Johto"
-        ? poke.id >= 152 &&
-          poke.id <= 251
-        : selectedRegion ===
-          "Hoenn"
-        ? poke.id >= 252 &&
-          poke.id <= 386
-        : selectedRegion ===
-          "Sinnoh"
-        ? poke.id >= 387 &&
-          poke.id <= 493
-        : poke.id >= 494 &&
-          poke.id <= 649;
-
-    return (
-      matchesSearch &&
-      matchesFilter &&
-      matchesRegion
-    );
-  }
-);
       <div className="dex-controls">
 
         <select
