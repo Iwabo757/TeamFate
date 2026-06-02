@@ -16,23 +16,16 @@ export default function AdminDashboard() {
 
         <Link
           to="/admin/bounty"
-          className="admin-bounty"
+          className="admin-card"
         >
           Monthly bounty
         </Link>
 
         <Link
-          to="/admin/shinies/add"
+          to="/admin/shiny-dashboard"
           className="admin-card"
         >
-          ✨ Add Shiny
-        </Link>
-
-        <Link
-          to="/admin/shinies"
-          className="admin-card"
-        >
-          📖 Manage Shinies
+          📖 Shiny Dashboard
         </Link>
 
         <Link

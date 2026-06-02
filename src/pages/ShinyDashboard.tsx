@@ -5,36 +5,49 @@ export default function ShinyDashboard() {
     <div className="page">
       <h1>✨ Shiny Dashboard</h1>
 
-      <div className="dashboard-grid">
+      <div className="admin-grid">
 
         <Link
           to="/admin/add-shiny"
-          className="dashboard-card"
+          className="admin-card"
         >
-          <h2>➕ Add Shiny</h2>
-          <p>
-            Add a shiny directly.
-          </p>
+          <div>
+            <h2>➕ Add Shiny</h2>
+
+            <p>
+              Add a shiny directly to
+              the Team Faté Shiny Dex.
+            </p>
+          </div>
         </Link>
 
         <Link
           to="/admin/manage-shinies"
-          className="dashboard-card"
+          className="admin-card"
         >
-          <h2>✨ Manage Shinies</h2>
-          <p>
-            Edit and delete shinies.
-          </p>
+          <div>
+            <h2>✨ Manage Shinies</h2>
+
+            <p>
+              Edit and remove shiny
+              records.
+            </p>
+          </div>
         </Link>
 
         <Link
           to="/admin/shiny-approvals"
-          className="dashboard-card"
+          className="admin-card"
         >
-          <h2>📥 Submissions</h2>
-          <p>
-            Review member submissions.
-          </p>
+          <div>
+            <h2>📥 Submissions</h2>
+
+            <p>
+              Review member shiny
+              submissions and approve
+              them into the dex.
+            </p>
+          </div>
         </Link>
 
       </div>
