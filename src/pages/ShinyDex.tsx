@@ -190,141 +190,33 @@ const filteredPokemon = pokemon.filter(
         ? poke.caught
         : !poke.caught;
 
-    const matchesRegion =
-      selectedRegion ===
-      "National"
-        ? true
-        : selectedRegion ===
-          "Kanto"
-        ? poke.id >= 1 &&
-          poke.id <= 151
-        : selectedRegion ===
-          "Johto"
-        ? poke.id >= 152 &&
-          poke.id <= 251
-        : selectedRegion ===
-          "Hoenn"
-        ? poke.id >= 252 &&
-          poke.id <= 386
-        : selectedRegion ===
-          "Sinnoh"
-        ? poke.id >= 387 &&
-          poke.id <= 493
-        : poke.id >= 494 &&
-          poke.id <= 649;
+   const matchesRegion =
+     selectedRegion === "National"
+       ? true
+       : selectedRegion === "Kanto"
+       ? poke.id >= 1 && poke.id <= 151
+       : selectedRegion === "Johto"
+       ? poke.id >= 152 && poke.id <= 251
+       : selectedRegion === "Hoenn"
+       ? poke.id >= 252 && poke.id <= 386
+       : selectedRegion === "Sinnoh"
+       ? poke.id >= 387 && poke.id <= 493
+       : poke.id >= 494 && poke.id <= 649;
 
-const regionStats = {
-  National: {
-    caught: pokemon.filter((p) => p.caught).length,
-    total: 649,
-  },
+   return (
+     matchesSearch &&
+     matchesFilter &&
+     matchesRegion
+   );
 
-  Kanto: {
-    caught: pokemon.filter(
-      (p) => p.caught && p.id >= 1 && p.id <= 151
-    ).length,
-    total: 151,
-  },
-
-  Johto: {
-    caught: pokemon.filter(
-      (p) => p.caught && p.id >= 152 && p.id <= 251
-    ).length,
-    total: 100,
-  },
-
-  Hoenn: {
-    caught: pokemon.filter(
-      (p) => p.caught && p.id >= 252 && p.id <= 386
-    ).length,
-    total: 135,
-  },
-
-  Sinnoh: {
-    caught: pokemon.filter(
-      (p) => p.caught && p.id >= 387 && p.id <= 493
-    ).length,
-    total: 107,
-  },
-
-  Unova: {
-    caught: pokemon.filter(
-      (p) => p.caught && p.id >= 494 && p.id <= 649
-    ).length,
-    total: 156,
-  },
-};
-const regionStats: Record<
-  string,
-  {
-    caught: number;
-    total: number;
-  }
-> = {
-  National: {
-    caught: pokemon.filter(
-      (p) => p.caught
-    ).length,
-    total: 649,
-  },
-
-  Kanto: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 1 &&
-        p.id <= 151
-    ).length,
-    total: 151,
-  },
-
-  Johto: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 152 &&
-        p.id <= 251
-    ).length,
-    total: 100,
-  },
-
-  Hoenn: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 252 &&
-        p.id <= 386
-    ).length,
-    total: 135,
-  },
-
-  Sinnoh: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 387 &&
-        p.id <= 493
-    ).length,
-    total: 107,
-  },
-
-  Unova: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 494 &&
-        p.id <= 649
-    ).length,
-    total: 156,
-  },
-};
-    return (
-      matchesSearch &&
-      matchesFilter &&
-      matchesRegion
-    );
-  }
-);
+const completionPercent =
+  totalCount
+    ? (
+        (capturedCount /
+          totalCount) *
+        100
+      ).toFixed(1)
+    : "0";
 
 const regionPokemon =
   selectedRegion === "National"
@@ -390,6 +282,70 @@ const completionPercent =
       ).toFixed(1)
     : "0";
 
+const regionStats: Record<
+  string,
+  {
+    caught: number;
+    total: number;
+  }
+> = {
+  National: {
+    caught: pokemon.filter(
+      (p) => p.caught
+    ).length,
+    total: 649,
+  },
+
+  Kanto: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 1 &&
+        p.id <= 151
+    ).length,
+    total: 151,
+  },
+
+  Johto: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 152 &&
+        p.id <= 251
+    ).length,
+    total: 100,
+  },
+
+  Hoenn: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 252 &&
+        p.id <= 386
+    ).length,
+    total: 135,
+  },
+
+  Sinnoh: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 387 &&
+        p.id <= 493
+    ).length,
+    total: 107,
+  },
+
+  Unova: {
+    caught: pokemon.filter(
+      (p) =>
+        p.caught &&
+        p.id >= 494 &&
+        p.id <= 649
+    ).length,
+    total: 156,
+  },
+};
 
   if (loading) {
     return <h2>Loading Dex...</h2>;
