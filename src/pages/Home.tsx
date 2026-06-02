@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <div className="home-page">
       <div className="hero">
-        <h1>TEAM FATE</h1>
+        <h1>Team [Faté]</h1>
 
         <p>
           The ultimate PokeMMO shiny

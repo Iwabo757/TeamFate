@@ -100,7 +100,7 @@ export default function Showcase() {
         <h1>✨ Shiny Showcase</h1>
 
         <p>
-          Every Team Fate member ranked by
+          Every Team [Faté] member ranked by
           total shiny count.
         </p>
       </div>

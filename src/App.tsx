@@ -206,11 +206,11 @@ console.log(
       <header className="topbar">
         <div className="logo">
           <div className="logo-main">
-            TEAM FATE
+            Team [Faté]
           </div>
 
           <div className="logo-sub">
-            ⭐ One Wish. One Fate ⭐
+            ⭐ One Wish. One [Faté] ⭐
           </div>
         </div>
 
