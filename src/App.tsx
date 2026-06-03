@@ -9,24 +9,37 @@ import {
 import { supabase } from "./lib/supabase";
 import Members from "./pages/Members";
 import Home from "./pages/Home";
+
 import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
-import Events from "./pages/Events";
-import Bounty from "./pages/Bounty";
+
+
 import AdminEvents from "./pages/AdminEvents";
 import AdminPastEvents from "./pages/AdminPastEvents";
 import AdminCurrentEvents from "./pages/AdminCurrentEvents";
+import Events from "./pages/Events";
+
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+
 import AdminDashboard from "./pages/AdminDashboard";
-import AddShiny from "./pages/AddShiny";
-import ManageShinies from "./pages/ManageShinies";
+
 import ManageMembers from "./pages/ManageMembers";
 import EventDashboard from "./pages/EventDashboard";
+
 import SubmitShiny from "./pages/SubmitShiny";
 import AdminShinyApprovals from "./pages/AdminShinyApprovals";
 import ShinyDashboard from "./pages/ShinyDashboard";
+import AddShiny from "./pages/AddShiny";
+import ManageShinies from "./pages/ManageShinies";
+
+import Bounties from "./pages/Bounties";
+import AdminBounties from "./pages/AdminBounties";
+import AdminCurrentBounties from "./pages/AdminCurrentBounties";
+import AdminPastBounties from "./pages/AdminPastBounties";
+import BountyDashboard from "./pages/BountyDashboard";
+
 import "./App.css";
 
 type ProfileData = {
@@ -274,12 +287,23 @@ console.log(
   </div>
 </div>
 
+
+<li className="dropdown">
+  <span>Bounty ▼</span>
+
+  <div className="dropdown-content">
+    <Link to="/bounties">
+      Active Bounties
+    </Link>
+
+    <Link to="/bounties?view=past">
+      Completed Bounties
+    </Link>
+  </div>
+</li>
+
           <NavLink to="/board">
             Leaderboard 
-          </NavLink>
-
-          <NavLink to="/bounty">
-            Bounty
           </NavLink>
 
 <NavLink to="/members">
@@ -356,15 +380,6 @@ console.log(
       </Link>
 
       <Link
-        to="/board"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Leaderboard
-      </Link>
-
-      <Link
         to="/events"
         onClick={() =>
           setMobileOpen(false)
@@ -374,13 +389,24 @@ console.log(
       </Link>
 
       <Link
-        to="/bounty"
+        to="/bounties"
         onClick={() =>
           setMobileOpen(false)
         }
       >
-        Bounty
+        Bounties
       </Link>
+
+      <Link
+        to="/board"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Leaderboard
+      </Link>
+
+
 
       <Link
         to="/members"
@@ -513,11 +539,6 @@ console.log(
             element={<Events />}
           />
 
-          <Route
-            path="/bounty"
-            element={<Bounty />}
-          />
-
 <Route
   path="/admin"
   element={<AdminDashboard />}
@@ -576,7 +597,30 @@ console.log(
   path="/admin/shiny-dashboard"
   element={<ShinyDashboard />}
 />
+<Route
+  path="/bounties"
+  element={<Bounties />}
+/>
 
+<Route
+  path="/admin/bounties"
+  element={<AdminBounties />}
+/>
+
+<Route
+  path="/admin/current-bounties"
+  element={<AdminCurrentBounties />}
+/>
+
+<Route
+  path="/admin/past-bounties"
+  element={<AdminPastBounties />}
+/>
+
+<Route
+  path="/admin/bounties/create"
+  element={<AdminBounties />}
+/>
           <Route
             path="/profile"
             element={<Profile />}

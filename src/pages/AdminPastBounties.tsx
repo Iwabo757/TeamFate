@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type EventBlock = {
+type BountyBlock = {
   id: string;
-  event_id: string;
+  bounty_id: string;
   block_type: "text" | "image";
   content: string;
   display_order: number;
 };
 
-type EventPost = {
+type BountyPost = {
   id: string;
   title: string;
   description: string;
@@ -36,13 +36,13 @@ type EventPost = {
   fourth_place_prize?: string;
 };
 
-export default function AdminPastEvents() {
+export default function AdminPastBountys() {
 
-  const [events, setEvents] =
-    useState<EventPost[]>([]);
+  const [bounties, setBountys] =
+    useState<BountyPost[]>([]);
 
-const [editingEvent, setEditingEvent] =
-  useState<EventPost | null>(null);
+const [editingBounty, setEditingBounty] =
+  useState<BountyPost | null>(null);
 
 type Member = {
   id: string;
@@ -97,24 +97,24 @@ const [fourthPlacePrize, setFourthPlacePrize] =
 
   const [blocks, setBlocks] =
     useState<
-      Record<string, EventBlock[]>
+      Record<string, BountyBlock[]>
     >({});
 
   const [
-    selectedEvent,
-    setSelectedEvent,
-  ] = useState<EventPost | null>(
+    selectedBounty,
+    setSelectedBounty,
+  ] = useState<BountyPost | null>(
     null
   );
 
   useEffect(() => {
-    loadEvents();
+    loadBountys();
   }, []);
 
-  async function loadEvents() {
+  async function loadBountys() {
     const { data } =
       await supabase
-        .from("events")
+        .from("bounties")
         .select("*")
         .order("start_time", {
           ascending: false,
@@ -138,7 +138,7 @@ setMembers(
   memberData || []
 );
 
-    const pastEvents =
+    const pastBountys =
       data.filter(
         (event) =>
           new Date(
@@ -146,10 +146,10 @@ setMembers(
           ) <= now
       );
 
-    setEvents(pastEvents);
+    setBountys(pastBountys);
 
     const eventIds =
-      pastEvents.map(
+      pastBountys.map(
         (e) => e.id
       );
 
@@ -162,11 +162,11 @@ setMembers(
       data: blockData,
     } = await supabase
       .from(
-        "event_content_blocks"
+        "bounty_content_blocks"
       )
       .select("*")
       .in(
-        "event_id",
+        "bounty_id",
         eventIds
       )
       .order(
@@ -179,23 +179,23 @@ setMembers(
     const grouped:
       Record<
         string,
-        EventBlock[]
+        BountyBlock[]
       > = {};
 
     blockData?.forEach(
       (block: any) => {
         if (
           !grouped[
-            block.event_id
+            block.bounty_id
           ]
         ) {
           grouped[
-            block.event_id
+            block.bounty_id
           ] = [];
         }
 
         grouped[
-          block.event_id
+          block.bounty_id
         ].push(block);
       }
     );
@@ -220,7 +220,7 @@ setMembers(
   }
 
   function getPreviewImage(
-    event: EventPost
+    event: BountyPost
   ) {
     const eventBlocks =
       blocks[event.id] || [];
@@ -240,7 +240,7 @@ setMembers(
   }
 
 async function saveWinners() {
-  if (!editingEvent) return;
+  if (!editingBounty) return;
 
 const payload = {
   first_place: firstPlace,
@@ -275,11 +275,11 @@ const payload = {
 
   const { error } =
     await supabase
-      .from("events")
+      .from("bounties")
       .update(payload)
       .eq(
         "id",
-        editingEvent.id
+        editingBounty.id
       );
 
   if (error) {
@@ -297,12 +297,12 @@ const payload = {
     "Winners saved successfully!"
   );
 
-  await loadEvents();
+  await loadBountys();
 
-  setEditingEvent(null);
+  setEditingBounty(null);
 }
 
-  async function deleteEvent(
+  async function deleteBounty(
     eventId: string
   ) {
     const confirmed =
@@ -314,35 +314,35 @@ const payload = {
 
     await supabase
       .from(
-        "event_content_blocks"
+        "bounty_content_blocks"
       )
       .delete()
       .eq(
-        "event_id",
+        "bounty_id",
         eventId
       );
 
     await supabase
-      .from("events")
+      .from("bounties")
       .delete()
       .eq("id", eventId);
 
-    loadEvents();
+    loadBountys();
   }
 
   return (
     <div className="page">
-      <h1>Past Events</h1>
+      <h1>Past Bountys</h1>
 
-      {events.length ===
+      {bounties.length ===
         0 && (
         <div className="card">
-          No past events.
+          No past bounties.
         </div>
       )}
 
       <div className="event-grid">
-        {events.map(
+        {bounties.map(
           (event) => (
             <div
               key={event.id}
@@ -350,7 +350,7 @@ const payload = {
             >
               <div
                 onClick={() =>
-                  setSelectedEvent(
+                  setSelectedBounty(
                     event
                   )
                 }
@@ -392,7 +392,7 @@ const payload = {
 <button
   className="edit-btn"
 onClick={() => {
-  setEditingEvent(event);
+  setEditingBounty(event);
 
   setFirstPlace(event.first_place || "");
   setSecondPlace(event.second_place || "");
@@ -437,7 +437,7 @@ onClick={() => {
                 <button
                   className="delete-btn"
                   onClick={() =>
-                    deleteEvent(
+                    deleteBounty(
                       event.id
                     )
                   }
@@ -450,11 +450,11 @@ onClick={() => {
         )}
       </div>
 
-      {selectedEvent && (
+      {selectedBounty && (
         <div
           className="modal-overlay"
           onClick={() =>
-            setSelectedEvent(null)
+            setSelectedBounty(null)
           }
         >
           <div
@@ -466,7 +466,7 @@ onClick={() => {
             <button
               className="close-btn"
               onClick={() =>
-                setSelectedEvent(
+                setSelectedBounty(
                   null
                 )
               }
@@ -476,7 +476,7 @@ onClick={() => {
 
             <h2>
               {
-                selectedEvent.title
+                selectedBounty.title
               }
             </h2>
 
@@ -485,7 +485,7 @@ onClick={() => {
                 Starts:
               </strong>{" "}
               {formatDate(
-                selectedEvent.start_time
+                selectedBounty.start_time
               )}
             </p>
 
@@ -494,7 +494,7 @@ onClick={() => {
                 Ends:
               </strong>{" "}
               {formatDate(
-                selectedEvent.end_time
+                selectedBounty.end_time
               )}
             </p>
 
@@ -503,14 +503,14 @@ onClick={() => {
                 Prize:
               </strong>{" "}
               {
-                selectedEvent.prize
+                selectedBounty.prize
               }
             </p>
 
             <hr />
 
             {blocks[
-              selectedEvent.id
+              selectedBounty.id
             ]?.map(
               (block) => (
                 <div
@@ -557,11 +557,11 @@ onClick={() => {
         </div>
       )}
 
-{editingEvent && (
+{editingBounty && (
   <div
     className="modal-overlay"
     onClick={() =>
-      setEditingEvent(null)
+      setEditingBounty(null)
     }
   >
     <div
@@ -571,7 +571,7 @@ onClick={() => {
       }
     >
       <h2 className="winner-title">
-  🏆 Edit Event Winners
+  🏆 Edit Bounty Winners
 </h2>
 
 <div className="winner-editor">
