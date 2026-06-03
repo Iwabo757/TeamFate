@@ -1144,7 +1144,7 @@ input[type="file"] {
 
   border-radius: 8px;
 
-  z-index: 1000;
+  z-index: 99999;
 }
 
 .dropdown-menu a {
@@ -1556,6 +1556,15 @@ input[type="file"] {
   font-size: 1.8rem;
 }
 
+.showcase-sprites img {
+  width: 96px;
+
+  height: 96px;
+
+  object-fit: contain;
+
+  transition: .2s;
+}
 
 .showcase-sprites img:hover {
   transform: scale(1.15);
@@ -1576,18 +1585,16 @@ input[type="file"] {
 
 .showcase-sprites {
   display: flex;
-  flex-wrap: wrap;
+
   justify-content: center;
-  gap: 12px;
 
-  width: 72px;
-  height: 72px;
+  align-items: center;
 
-  image-rendering: pixelated;
+  gap: 40px;
 
-  cursor: pointer;
+  flex-wrap: wrap;
 
-  transition: .15s;
+  margin-top: 30px;
 }
 
 .showcase-sprite:hover {
@@ -2051,4 +2058,31 @@ textarea:focus {
 
   box-shadow:
     0 0 25px rgba(255,226,122,.15);
+}
+
+/* Navbar always above everything */
+.topbar {
+  position: relative;
+  z-index: 99999;
+}
+
+.dropdown,
+.dropdown-content,
+.dropdown-menu {
+  z-index: 100000;
+}
+
+/* Fix shiny showcase layout */
+.showcase-sprites {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.showcase-sprites img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
 }

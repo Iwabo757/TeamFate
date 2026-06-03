@@ -212,7 +212,7 @@ console.log(
       <header className="topbar">
 <div className="logo">
   <img
-    src="/images/jirachi-logo.png"
+    src="/images/jirachi-logo.jpg"
     alt="Team Fate"
     className="logo-image"
   />
