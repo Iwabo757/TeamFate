@@ -17,7 +17,7 @@ import Showcase from "./Showcase";
 import ShinyDex from "./ShinyDex";
 import Leaderboard from "./Leaderboard";
 import Events from "./Events";
-import Bounty from "./Bounty";
+import Bounty from "./Bounties";
 import AdminDashboard from "./AdminDashboard";
 
 function App() {
