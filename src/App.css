@@ -1351,15 +1351,13 @@ input[type="file"] {
   gap: 24px;
 
   padding: 25px;
+  background: rgba(0, 10, 35, 0.38);
+  backdrop-filter: blur(12px);
 
-  background:
-    rgba(6,15,40,.65);
+  border: 1px solid rgba(120,180,255,.12);
 
-  backdrop-filter:
-    blur(14px);
-
-  border:
-    1px solid rgba(255,213,74,.12);
+  box-shadow:
+    0 0 30px rgba(0,0,0,.25);
   border-radius: 18px;
 
   animation: fadeTicker 8s linear infinite;
