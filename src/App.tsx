@@ -38,7 +38,7 @@ import Bounties from "./pages/Bounties";
 import AdminBounties from "./pages/AdminBounties";
 import AdminCurrentBounties from "./pages/AdminCurrentBounties";
 import AdminPastBounties from "./pages/AdminPastBounties";
-import BountyDashboard from "./pages/BountyDashboard";
+
 
 import "./App.css";
 
