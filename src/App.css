@@ -1,7 +1,14 @@
 /* =========================================
    RESET
 ========================================= */
-
+.hero h1,
+.logo-main,
+.champion-name,
+.winner-name {
+  text-shadow:
+    0 0 10px rgba(255,226,122,.6),
+    0 0 25px rgba(255,226,122,.3);
+}
 * {
   margin: 0;
   padding: 0;
@@ -9,34 +16,38 @@
 }
 
 :root {
-  --bg: #07111f;
-  --panel: #0f172a;
-  --card: #152238;
+  --bg-dark: #050a1c;
+  --bg-card: rgba(8, 20, 55, 0.58);
 
-  --border: #29446b;
+  --gold: #ffe27a;
+  --gold-glow: rgba(255, 226, 122, 0.4);
 
-  --text: #ffffff;
-  --muted: #9fb2c8;
+  --blue: #64cfff;
+  --purple: #a88cff;
 
-  --jirachi-gold: #ffd54a;
-  --jirachi-blue: #64d2ff;
-  --jirachi-white: #fffdf7;
+  --text: #f4f7ff;
+  --muted: #b7c6e6;
 
-  --accent: #ffd54a;
-  --accent-hover: #ffe27a;
+  --border: rgba(255,255,255,.08);
+
+  --radius: 18px;
 }
 
 body {
-  background:
-    radial-gradient(
-      circle at top,
-      #10294a,
-      #07111f 60%
-    );
-
+  margin: 0;
   color: var(--text);
-
   font-family: Inter, Arial, sans-serif;
+
+  background:
+    linear-gradient(
+      rgba(5,10,28,.55),
+      rgba(5,10,28,.85)
+    ),
+    url("/images/jirachi-sky.jpg");
+
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 
   overflow-x: hidden;
 }
@@ -51,15 +62,25 @@ body::before {
 
   background-image:
     radial-gradient(
-      rgba(255,255,255,.8) 1px,
+      rgba(255,255,255,.9) 1px,
       transparent 1px
     );
 
-  background-size: 70px 70px;
+  background-size: 120px 120px;
 
-  opacity: .04;
+  opacity: .12;
 
-  z-index: -1;
+  animation: starsMove 90s linear infinite;
+}
+
+@keyframes starsMove {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-300px);
+  }
 }
 
 a {
@@ -80,27 +101,20 @@ a {
 ========================================= */
 
 .topbar {
-  height: 72px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  z-index: 10000;
-  padding: 0 24px;
-
   background:
     linear-gradient(
       90deg,
-      #081225,
-      #10294a
+      rgba(8,18,37,.92),
+      rgba(16,41,74,.92)
     );
 
-  border-bottom:
-    1px solid
-    rgba(255,213,74,.25);
+  backdrop-filter: blur(18px);
 
-  backdrop-filter: blur(10px);
+  border-bottom:
+    1px solid rgba(255,255,255,.08);
+
+  box-shadow:
+    0 0 30px rgba(100,207,255,.15);
 }
 
 .logo {
@@ -113,7 +127,12 @@ a {
   font-size: 24px;
   font-weight: 800;
 
-  color: white;
+  color: var(--gold);
+
+  text-shadow:
+    0 0 12px rgba(255,226,122,.8),
+    0 0 30px rgba(255,226,122,.45),
+    0 0 60px rgba(255,226,122,.2);
 
   letter-spacing: 2px;
 }
@@ -121,7 +140,7 @@ a {
 .logo-sub {
   font-size: 12px;
 
-  color: var(--jirachi-gold);
+  color: var(--gold);
 
   letter-spacing: 1px;
 }
@@ -208,6 +227,62 @@ a {
   font-size: 18px;
 }
 
+.hero-banner {
+  position: relative;
+
+  height: 500px;
+
+  background:
+    linear-gradient(
+      rgba(5,10,28,.15),
+      rgba(5,10,28,.75)
+    ),
+    url("/images/jirachi-banner.jpg");
+
+  background-size: cover;
+  background-position: center;
+
+  border-radius: 28px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 0 40px rgba(100,207,255,.2);
+}
+
+.hero-overlay {
+  text-align: center;
+  padding: 30px;
+}
+
+.hero-overlay h1 {
+  font-size: 4rem;
+  color: #ffe27a;
+
+  text-shadow:
+    0 0 12px rgba(255,226,122,.8),
+    0 0 30px rgba(255,226,122,.4);
+
+  margin-bottom: 10px;
+}
+
+.hero-overlay p {
+  font-size: 1.4rem;
+  color: white;
+
+  text-shadow:
+    0 0 10px rgba(0,0,0,.8);
+}
+
+h1,
+.logo-main,
+.page-title {
+  color: var(--gold);
+
+  text-shadow:
+    0 0 12px rgba(255,226,122,.6),
+    0 0 28px rgba(255,226,122,.25);
+}
 /* =========================================
    STATS
 ========================================= */
@@ -218,23 +293,41 @@ a {
   gap: 16px;
 }
 
-.card {
+.card,
+.admin-card,
+.member-card,
+.event-card,
+.region-card,
+.leaderboard-card,
+.shiny-card {
   background:
-    linear-gradient(
-      180deg,
-      #10203c,
-      #0f172a
-    );
+    rgba(6,15,40,.58);
+
+  backdrop-filter: blur(14px);
 
   border:
-    1px solid
-    rgba(255,213,74,.15);
+    1px solid rgba(255,255,255,.08);
 
-  border-radius: 14px;
+  border-radius:
+    var(--radius);
 
-  padding: 20px;
+  box-shadow:
+    0 10px 40px rgba(0,0,0,.35);
 
-  min-width: 220px;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
+}
+
+.card:hover,
+.admin-card:hover,
+.member-card:hover,
+.event-card:hover,
+.shiny-card:hover {
+  transform: translateY(-4px);
+
+  box-shadow:
+    0 0 25px rgba(100,207,255,.2);
 }
 
 .card h2 {
@@ -260,7 +353,7 @@ a {
 }
 
 .shiny-card {
-  background: var(--panel);
+  background: var(--bg-card);
 
   border: 1px solid var(--border);
 
@@ -316,7 +409,7 @@ a {
 
 .dex-controls input,
 .dex-controls select {
-  background: var(--panel);
+  background: var(--bg-card);
 
   border: 1px solid var(--border);
 
@@ -472,28 +565,27 @@ th {
 }
 
 .region-card {
-  background:
-    linear-gradient(
-      145deg,
-      #10203c,
-      #0f172a
-    );
+  background: rgba(6,15,40,.58);
 
-  border:
-    1px solid
-    rgba(255,213,74,.2);
+  backdrop-filter: blur(14px);
 
-  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.08);
 
-  padding: 10px 14px;
+  border-radius: 14px;
+
+  padding: 14px;
 
   min-width: 100px;
 
   text-align: center;
+
+  cursor: pointer;
+
+  transition: .2s;
 }
 
 .region-card h3 {
-  color: var(--jirachi-gold);
+  color: var(--gold);
 }
 
 .region-card p {
@@ -587,11 +679,14 @@ th {
   max-height: 90vh;
   overflow-y: auto;
 
-  background: linear-gradient(
-    180deg,
-    #10203c,
-    #081225
-  );
+  background:
+    rgba(6,15,40,.92);
+
+  backdrop-filter:
+    blur(20px);
+
+  border:
+    1px solid rgba(255,213,74,.15);
 
   border-radius: 16px;
   padding: 25px;
@@ -717,7 +812,7 @@ th {
     rgba(255,213,74,.2);
 
   color:
-    var(--jirachi-gold);
+    var(--gold);
 
   font-weight: 700;
 }
@@ -977,51 +1072,38 @@ input[type="file"] {
 .admin-grid {
   display: grid;
   grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(250px, 1fr)
-    );
+    repeat(auto-fit, minmax(320px, 1fr));
 
   gap: 20px;
   margin-top: 30px;
 }
 
 .admin-card {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: rgba(6,15,40,.7);
 
-  min-height: 120px;
+  backdrop-filter: blur(14px);
 
-  background:
-    linear-gradient(
-      145deg,
-      #10203c,
-      #0f172a
-    );
-
-  border:
-    1px solid
-    rgba(255,213,74,.2);
+  border: 1px solid rgba(255,213,74,.15);
 
   border-radius: 14px;
 
-  color: white;
-  font-size: 1.2rem;
-  font-weight: 700;
+  padding: 20px;
 
-  transition: 0.2s;
+  display: flex;
+  flex-direction: column;
+
+  gap: 12px;
+
+  transition: .2s ease;
 }
 
 .admin-card:hover {
   transform: translateY(-3px);
 
-  border-color:
-    var(--jirachi-gold);
+  border-color: var(--gold);
 
   box-shadow:
-    0 0 15px
-    rgba(255,213,74,.25);
+    0 0 15px rgba(255,213,74,.25);
 }
 
 /* =========================
@@ -1063,25 +1145,6 @@ input[type="file"] {
   display: block;
 }
 
-.admin-grid {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(320px, 1fr)
-  );
-  gap: 20px;
-}
-
-.admin-card {
-  background: rgba(0, 15, 60, 0.9);
-  border: 1px solid #2457ff;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .member-avatar {
   width: 96px;
   height: 96px;
@@ -1108,12 +1171,6 @@ input[type="file"] {
 
 .delete-btn:hover {
   background: #e53935;
-}
-.admin-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 800px;
 }
 
 .admin-form input,
@@ -1187,11 +1244,6 @@ input[type="file"] {
   border-radius: 20px;
   padding: 30px;
   margin-bottom: 30px;
-}
-
-.admin-grid {
-  display: grid;
-  gap: 20px;
 }
 
 .event-post {
@@ -1282,13 +1334,14 @@ input[type="file"] {
 
   padding: 25px;
 
-  background: linear-gradient(
-    180deg,
-    #08142d,
-    #061127
-  );
+  background:
+    rgba(6,15,40,.65);
 
-  border: 1px solid #1e3a5f;
+  backdrop-filter:
+    blur(14px);
+
+  border:
+    1px solid rgba(255,213,74,.12);
   border-radius: 18px;
 
   animation: fadeTicker 8s linear infinite;
@@ -1475,13 +1528,6 @@ input[type="file"] {
   gap: 40px;
 }
 
-.showcase-member {
-  border-bottom: 1px solid
-    rgba(255,255,255,.12);
-
-  padding-bottom: 30px;
-}
-
 .showcase-member h2 {
   text-align: center;
 
@@ -1492,34 +1538,11 @@ input[type="file"] {
   font-size: 1.8rem;
 }
 
-.showcase-sprites {
-  display: flex;
-  flex-wrap: wrap;
-
-  gap: 10px;
-
-  justify-content: center;
-}
-
-.showcase-sprites img {
-  width: 72px;
-  height: 72px;
-
-  image-rendering: pixelated;
-
-  cursor: pointer;
-
-  transition: .15s;
-}
 
 .showcase-sprites img:hover {
   transform: scale(1.15);
 }
-.showcase-page {
-  display: flex;
-  flex-direction: column;
-  gap: 40px;
-}
+
 
 .showcase-member {
   padding-bottom: 30px;
@@ -1538,9 +1561,7 @@ input[type="file"] {
   flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
-}
 
-.showcase-sprite {
   width: 72px;
   height: 72px;
 
@@ -1592,11 +1613,13 @@ input[type="file"] {
     rgba(255,213,74,.35);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(255,213,74,.15),
-      rgba(255,213,74,.05)
-    );
+    rgba(6,15,40,.65);
+
+  backdrop-filter:
+    blur(14px);
+
+  border:
+    1px solid rgba(255,213,74,.12);
 }
 .region-card {
   cursor: pointer;
@@ -1665,11 +1688,14 @@ input[type="file"] {
   max-height: 90vh;
   overflow-y: auto;
 
-  background: linear-gradient(
-    180deg,
-    #10203c,
-    #081225
-  );
+  background:
+    rgba(6,15,40,.65);
+
+  backdrop-filter:
+    blur(14px);
+
+  border:
+    1px solid rgba(255,213,74,.12);
 
   border-radius: 16px;
 
@@ -1737,7 +1763,15 @@ input[type="file"] {
   margin: 0 auto 40px auto;
   padding: 30px;
   border-radius: 20px;
-  background: rgba(0, 20, 60, 0.85);
+ background:
+  linear-gradient(
+    rgba(6,15,40,.72),
+    rgba(6,15,40,.9)
+  ),
+  url("/images/starfield.jpg");
+
+background-size: cover;
+background-position: center;
   border: 1px solid #2f5fff;
 }
 
@@ -1930,4 +1964,73 @@ input[type="file"] {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   font-size: 0.95rem;
+}
+
+
+button,
+.btn {
+  background:
+    linear-gradient(
+      135deg,
+      #2a5fff,
+      #5c8dff
+    );
+
+  color: white;
+
+  border: none;
+
+  border-radius: 12px;
+
+  padding: 12px 20px;
+
+  cursor: pointer;
+
+  transition: .2s;
+}
+
+button:hover,
+.btn:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 0 18px rgba(92,141,255,.4);
+}
+
+input,
+select,
+textarea {
+  background:
+    rgba(0,20,60,.85);
+
+  color: white;
+
+  border:
+    1px solid #2f5fff;
+
+  border-radius: 12px;
+
+  padding: 14px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+
+  border-color:
+    var(--gold);
+
+  box-shadow:
+    0 0 15px rgba(255,226,122,.25);
+}
+.admin-card:hover,
+.event-card:hover,
+.member-card:hover,
+.region-card:hover,
+.shiny-card:hover {
+  border-color: rgba(255,226,122,.45);
+
+  box-shadow:
+    0 0 25px rgba(255,226,122,.15);
 }

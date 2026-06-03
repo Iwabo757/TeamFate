@@ -76,15 +76,19 @@ export default function Home() {
     }
   }
 
-  return (
-    <div className="home-page">
-      <div className="hero">
-        <h1>Team [Faté]</h1>
+return (
+  <div className="home-page">
 
-        <p>
-          The ultimate PokeMMO shiny
-          hunting community.
-        </p>
+    <div className="hero-banner">
+<div className="hero-overlay">
+  <h1>One Wish. One Fate.</h1>
+
+  <p>
+    Home of Team Faté's
+    Shiny Dex, Events,
+    Bounties, and Champions.
+  </p>
+</div>
       </div>
 
       <HomeTicker />
