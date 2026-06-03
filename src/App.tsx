@@ -210,15 +210,23 @@ console.log(
   return (
     <div className="app">
       <header className="topbar">
-        <div className="logo">
-          <div className="logo-main">
-            Team [Faté]
-          </div>
+<div className="logo">
+  <img
+    src="/images/jirachi-logo.png"
+    alt="Team Fate"
+    className="logo-image"
+  />
 
-          <div className="logo-sub">
-            ⭐ One Wish. One [Faté] ⭐
-          </div>
-        </div>
+  <div className="logo-text">
+    <div className="logo-main">
+      Team [Faté]
+    </div>
+
+    <div className="logo-sub">
+      ★ One Wish. One [Faté] ★
+    </div>
+  </div>
+</div>
 
           <button
             className="mobile-menu-btn"

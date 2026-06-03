@@ -116,11 +116,29 @@ a {
   box-shadow:
     0 0 30px rgba(100,207,255,.15);
 }
-
 .logo {
   display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-image {
+  width: 72px;
+  height: 72px;
+
+  object-fit: cover;
+
+  border-radius: 14px;
+
+  border: 2px solid rgba(255,226,122,.4);
+
+  box-shadow:
+    0 0 18px rgba(255,226,122,.25);
+}
+
+.logo-text {
+  display: flex;
   flex-direction: column;
-  min-width: 220px;
 }
 
 .logo-main {
