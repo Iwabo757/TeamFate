@@ -333,6 +333,10 @@ function canManageSite(
       Shiny Dashboard
     </Link>
 
+    <Link to="/admin/bounty-dashboard">
+      Bounty Dashboard
+    </Link>
+
     <Link to="/admin/events">
        Manage Events
     </Link>
@@ -440,32 +444,6 @@ function canManageSite(
             Admin Dashboard
           </Link>
 
-          <Link
-            to="/admin/shiny-dashboard"
-            onClick={() =>
-              setMobileOpen(false)
-            }
-          >
-            Shiny Dashboard
-          </Link>
-
-          <Link
-            to="/admin/events"
-            onClick={() =>
-              setMobileOpen(false)
-            }
-          >
-            Manage Event
-          </Link>
-
-          <Link
-            to="/admin/members"
-            onClick={() =>
-              setMobileOpen(false)
-            }
-          >
-            Manage Members
-          </Link>
         </>
       )}
     </div>

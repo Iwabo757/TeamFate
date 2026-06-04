@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useParams } from "react-router-dom";
+
+
 
 type ContentBlock = {
   type: "text" | "image";
@@ -14,7 +17,8 @@ export default function AdminEvents() {
   const [prize, setPrize] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-
+const { id } = useParams();
+const editing = !!id;
   const [bannerFile, setBannerFile] =
     useState<File | null>(null);
 
@@ -26,20 +30,73 @@ export default function AdminEvents() {
       },
     ]);
 
-  useEffect(() => {
-    loadEvents();
-  }, []);
+useEffect(() => {
+  loadEvents();
 
-  async function loadEvents() {
-    const { data } = await supabase
+  if (id) {
+    loadEvent(id);
+  }
+}, [id]);
+
+async function loadEvents() {
+  const { data } =
+    await supabase
       .from("events")
       .select("*")
       .order("created_at", {
         ascending: false,
       });
 
-    setEvents(data || []);
+  setEvents(data || []);
+}
+
+
+async function loadEvent(
+  eventId: string
+) {
+  const { data } =
+    await supabase
+      .from("events")
+      .select("*")
+      .eq("id", eventId)
+      .single();
+
+  if (!data) return;
+
+  setTitle(data.title || "");
+  setPrize(data.prize || "");
+  setStartTime(
+    data.start_time
+      ? data.start_time.slice(0, 16)
+      : ""
+  );
+
+  setEndTime(
+    data.end_time
+      ? data.end_time.slice(0, 16)
+      : ""
+  );
+
+  const { data: blockData } =
+    await supabase
+      .from("event_content_blocks")
+      .select("*")
+      .eq("event_id", eventId)
+      .order("display_order");
+
+  if (blockData?.length) {
+    setBlocks(
+      blockData.map((b) => ({
+        type:
+          b.block_type,
+        content:
+          b.content,
+      }))
+    );
   }
+}
+
+
 
   async function uploadImage(
     file: File
@@ -206,6 +263,94 @@ export default function AdminEvents() {
     }
   }
 
+
+async function saveEvent() {
+  if (!editing) {
+    return createEvent();
+  }
+
+  let bannerUrl;
+
+  if (bannerFile) {
+    bannerUrl =
+      await uploadImage(
+        bannerFile
+      );
+  }
+
+  const { error } =
+    await supabase
+      .from("events")
+      .update({
+        title,
+        prize,
+        banner_url:
+          bannerUrl,
+        start_time:
+          new Date(
+            startTime
+          ).toISOString(),
+        end_time:
+          new Date(
+            endTime
+          ).toISOString(),
+      })
+      .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await supabase
+    .from(
+      "event_content_blocks"
+    )
+    .delete()
+    .eq("event_id", id);
+
+  for (
+    let i = 0;
+    i < blocks.length;
+    i++
+  ) {
+    const block =
+      blocks[i];
+
+    let content =
+      block.content;
+
+    if (
+      block.type ===
+        "image" &&
+      block.file
+    ) {
+      content =
+        await uploadImage(
+          block.file
+        );
+    }
+
+    await supabase
+      .from(
+        "event_content_blocks"
+      )
+      .insert({
+        event_id: id,
+        block_type:
+          block.type,
+        content,
+        display_order:
+          i,
+      });
+  }
+
+  alert(
+    "Event Updated"
+  );
+}
+
+
   async function deleteEvent(
     id: string
   ) {
@@ -236,9 +381,7 @@ export default function AdminEvents() {
   return (
     <div className="page">
 
-      <h1>
-        Create Event
-      </h1>
+
 
       <div className="card">
 
@@ -400,21 +543,23 @@ export default function AdminEvents() {
           )}
 
           <button
-            className="submit-btn"
-            onClick={
-              createEvent
-            }
-          >
-            Create Event
-          </button>
+  className="submit-btn"
+  onClick={saveEvent}
+>
+  {editing
+    ? "Update Event"
+    : "Create Event"}
+</button>
 
         </div>
 
       </div>
 
-      <h2>
-        Existing Events
-      </h2>
+<h1>
+  {editing
+    ? "Edit Event"
+    : "Create Event"}
+</h1>
 
       {events.map(
         (event) => (

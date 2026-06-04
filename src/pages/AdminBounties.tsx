@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useParams } from "react-router-dom";
+
 
 type ContentBlock = {
   type: "text" | "image";
@@ -14,7 +16,8 @@ export default function AdminBountys() {
   const [prize, setPrize] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-
+  const { id } = useParams();
+  const editing = !!id;
   const [bannerFile, setBannerFile] =
     useState<File | null>(null);
 
@@ -26,20 +29,79 @@ export default function AdminBountys() {
       },
     ]);
 
-  useEffect(() => {
-    loadBountys();
-  }, []);
+useEffect(() => {
+  loadBountys();
 
-  async function loadBountys() {
-    const { data } = await supabase
+  if (id) {
+    loadBounty(id);
+  }
+}, [id]);
+
+
+async function loadBountys() {
+  const { data } =
+    await supabase
       .from("bounties")
       .select("*")
       .order("created_at", {
         ascending: false,
       });
 
-    setBountys(data || []);
+  setBountys(data || []);
+}
+
+
+async function loadBounty(
+  bountyId: string
+) {
+  const { data } =
+    await supabase
+      .from("bounties")
+      .select("*")
+      .eq("id", bountyId)
+      .single();
+
+  if (!data) return;
+
+  setTitle(data.title || "");
+  setPrize(data.prize || "");
+
+  setStartTime(
+    data.start_time
+      ? data.start_time.slice(0, 16)
+      : ""
+  );
+
+  setEndTime(
+    data.end_time
+      ? data.end_time.slice(0, 16)
+      : ""
+  );
+
+  const { data: blockData } =
+    await supabase
+      .from(
+        "bounty_content_blocks"
+      )
+      .select("*")
+      .eq(
+        "bounty_id",
+        bountyId
+      )
+      .order("display_order");
+
+  if (blockData?.length) {
+    setBlocks(
+      blockData.map((b) => ({
+        type:
+          b.block_type,
+        content:
+          b.content,
+      }))
+    );
   }
+}
+
 
   async function uploadImage(
     file: File
@@ -206,6 +268,94 @@ export default function AdminBountys() {
     }
   }
 
+
+async function saveBounty() {
+  if (!editing) {
+    return createBounty();
+  }
+
+  let bannerUrl;
+
+  if (bannerFile) {
+    bannerUrl =
+      await uploadImage(
+        bannerFile
+      );
+  }
+
+  const { error } =
+    await supabase
+      .from("bounties")
+      .update({
+        title,
+        prize,
+        banner_url:
+          bannerUrl,
+        start_time:
+          new Date(
+            startTime
+          ).toISOString(),
+        end_time:
+          new Date(
+            endTime
+          ).toISOString(),
+      })
+      .eq("id", id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await supabase
+    .from(
+      "bounty_content_blocks"
+    )
+    .delete()
+    .eq("bounty_id", id);
+
+  for (
+    let i = 0;
+    i < blocks.length;
+    i++
+  ) {
+    const block =
+      blocks[i];
+
+    let content =
+      block.content;
+
+    if (
+      block.type ===
+        "image" &&
+      block.file
+    ) {
+      content =
+        await uploadImage(
+          block.file
+        );
+    }
+
+    await supabase
+      .from(
+        "bounty_content_blocks"
+      )
+      .insert({
+        bounty_id: id,
+        block_type:
+          block.type,
+        content,
+        display_order:
+          i,
+      });
+  }
+
+  alert(
+    "Bounty Updated"
+  );
+}
+
+
   async function deleteBounty(
     id: string
   ) {
@@ -235,10 +385,6 @@ export default function AdminBountys() {
 
   return (
     <div className="page">
-
-      <h1>
-        Create Bounty
-      </h1>
 
       <div className="card">
 
@@ -400,22 +546,23 @@ export default function AdminBountys() {
           )}
 
           <button
-            className="submit-btn"
-            onClick={
-              createBounty
-            }
-          >
-            Create Bounty
-          </button>
+  className="submit-btn"
+  onClick={saveBounty}
+>
+  {editing
+    ? "Update Bounty"
+    : "Create Bounty"}
+</button>
 
         </div>
 
       </div>
 
-      <h2>
-        Existing Bountys
-      </h2>
-
+<h1>
+  {editing
+    ? "Edit Bounty"
+    : "Create Bounty"}
+</h1>
       {bounties.map(
         (event) => (
           <div
