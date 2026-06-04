@@ -272,11 +272,26 @@ function getProfile(
                   {event.title}
                 </h3>
 
-                <p>
-                  {formatDate(
-                    event.start_time
-                  )}
-                </p>
+<div className="event-card-dates">
+  <p>
+    <strong>Starts:</strong>{" "}
+    {formatDate(
+      event.start_time
+    )}
+  </p>
+
+  <p>
+    <strong>Ends:</strong>{" "}
+    {formatDate(
+      event.end_time
+    )}
+  </p>
+
+  <p>
+    <strong>Prize:</strong>{" "}
+    {event.prize}
+  </p>
+</div>
 
                 <p>
                   Prize:{" "}

@@ -1794,7 +1794,16 @@ input[type="file"] {
 .delete-btn {
   background: #c62828;
 }
+.event-card-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
+.event-card-dates p {
+  margin: 0;
+  font-size: 0.95rem;
+}
 /* =========================================
    Leaderboard Cards
 ========================================= */
