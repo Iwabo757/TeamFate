@@ -133,89 +133,84 @@ useEffect(() => {
 }, []);
 
 
-  async function loadProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+async function loadProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    if (!user) {
-      console.log("NO USER");
-      setProfile(null);
-      return;
-    }
+  if (!user) {
+    setProfile(null);
+    return;
+  }
 
-    console.log("USER:", user);
-console.log(
-  "METADATA:",
-  user.user_metadata
-);
+  // Check if profile exists
+  const { data: existing } =
+    await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-const result = await supabase
-  .from("profiles")
-  .upsert(
-    {
-      id: user.id,
+  // First login only
+  if (!existing) {
+    await supabase
+      .from("profiles")
+      .insert({
+        id: user.id,
+        username:
+          user.user_metadata.name,
 
-      username:
-        user.user_metadata.name,
+        discord_name:
+          user.user_metadata.name,
 
-      discord_name:
-        user.user_metadata.name,
+        avatar_url:
+          user.user_metadata.avatar_url,
 
-      avatar_url:
-        user.user_metadata.avatar_url,
+        discord_id:
+          user.user_metadata.provider_id,
 
-      discord_id:
-        user.user_metadata.provider_id,
+        role: "guest",
+      });
+  }
 
-      role: "guest",
-    },
-    {
-      onConflict: "id",
-      ignoreDuplicates: false,
-    }
-  );
+  // Update Discord info but NEVER role
+  await supabase
+    .from("profiles")
+    .upsert(
+      {
+        id: user.id,
 
-    console.log(
-      "UPSERT DATA:",
-      result.data
+        username:
+          user.user_metadata.name,
+
+        discord_name:
+          user.user_metadata.name,
+
+        avatar_url:
+          user.user_metadata.avatar_url,
+
+        discord_id:
+          user.user_metadata.provider_id,
+      },
+      {
+        onConflict: "id",
+      }
     );
 
-    console.log(
-      "UPSERT ERROR:",
-      result.error
-    );
+  const profileResult =
+    await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
 
-    const profileResult =
-      await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-    console.log(
-      "PROFILE:",
-      profileResult
-    );
-
-    console.log(
-      "PROFILE DATA:",
+  if (profileResult.data) {
+    setProfile(
       profileResult.data
     );
-
-console.log(
-  "PROFILE ROLE:",
-  profileResult.data?.role
-);
-    console.log(
-      "PROFILE ERROR:",
-      profileResult.error
-    );
-
-    if (profileResult.data) {
-      setProfile(profileResult.data);
-    }
   }
+}
+
 
 function canManageSite(
   role?: string
