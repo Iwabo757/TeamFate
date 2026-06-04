@@ -38,7 +38,7 @@ import Bounties from "./pages/Bounties";
 import AdminBounties from "./pages/AdminBounties";
 import AdminCurrentBounties from "./pages/AdminCurrentBounties";
 import AdminPastBounties from "./pages/AdminPastBounties";
-
+import BountyDashboard from "./pages/BountytDashboard";
 
 import "./App.css";
 
@@ -621,6 +621,10 @@ console.log(
   path="/admin/bounties/create"
   element={<AdminBounties />}
 />
+<Route
+  path="/admin/bounty-dashboard"
+  element={<BountyDashboard />}
+ />
           <Route
             path="/profile"
             element={<Profile />}
