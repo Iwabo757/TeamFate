@@ -8,7 +8,7 @@ export default function ShinyDashboard() {
       <div className="admin-grid">
 
         <Link
-          to="/admin/add-shiny"
+          to="/admin/addshiny"
           className="admin-card"
         >
           <div>
@@ -21,7 +21,7 @@ export default function ShinyDashboard() {
         </Link>
 
         <Link
-          to="/admin/manage-shinies"
+          to="/admin/manageshinies"
           className="admin-card"
         >
           <div>
@@ -34,7 +34,7 @@ export default function ShinyDashboard() {
         </Link>
 
         <Link
-          to="/admin/shiny-approvals"
+          to="/admin/adminshinyapprovals"
           className="admin-card"
         >
           <div>
