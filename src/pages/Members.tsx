@@ -8,11 +8,18 @@ type Member = {
   avatar_url: string | null;
   role: string;
   shiny_count: number;
+  join_date?: string | null;
 };
 
 export default function Members() {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [members, setMembers] =
+    useState<Member[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [view, setView] =
+    useState<"cards" | "list">("cards");
 
   useEffect(() => {
     loadMembers();
@@ -20,39 +27,74 @@ export default function Members() {
 
   async function loadMembers() {
     try {
-      const { data: profiles, error: profileError } = await supabase
+      const {
+        data: profiles,
+        error: profileError,
+      } = await supabase
         .from("profiles")
         .select("*")
-        .order("nickname", { ascending: true });
+        .order("nickname", {
+          ascending: true,
+        });
 
-      if (profileError) throw profileError;
+      if (profileError)
+        throw profileError;
 
-      const { data: catches, error: catchesError } = await supabase
+      const {
+        data: catches,
+        error: catchesError,
+      } = await supabase
         .from("shiny_catches")
         .select("profile_id");
 
-      if (catchesError) throw catchesError;
+      if (catchesError)
+        throw catchesError;
 
-      const shinyCounts: Record<string, number> = {};
+      const shinyCounts: Record<
+        string,
+        number
+      > = {};
 
-      catches?.forEach((entry) => {
-        shinyCounts[entry.profile_id] =
-          (shinyCounts[entry.profile_id] || 0) + 1;
-      });
+      catches?.forEach(
+        (entry: any) => {
+          shinyCounts[
+            entry.profile_id
+          ] =
+            (shinyCounts[
+              entry.profile_id
+            ] || 0) + 1;
+        }
+      );
 
-      const membersWithCounts: Member[] =
-        (profiles || []).map((profile: any) => ({
-          id: profile.id,
-          username: profile.username,
-          nickname: profile.nickname,
-          avatar_url: profile.avatar_url,
-          role: profile.role,
-          shiny_count: shinyCounts[profile.id] || 0,
-        }));
+      const membersWithCounts =
+        (profiles || []).map(
+          (profile: any) => ({
+            id: profile.id,
+            username:
+              profile.username,
+            nickname:
+              profile.nickname,
+            avatar_url:
+              profile.avatar_url,
+            role:
+              profile.role,
+            join_date:
+              profile.join_date,
+            shiny_count:
+              shinyCounts[
+                profile.id
+              ] || 0,
+          })
+        );
 
-      setMembers(membersWithCounts);
+      setMembers(
+        membersWithCounts
+      );
     } catch (error) {
-      console.error("Failed to load members:", error);
+      console.error(
+        "Failed to load members:",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -61,46 +103,155 @@ export default function Members() {
   if (loading) {
     return (
       <div className="members-page">
-        <h2>Loading members...</h2>
+        <h2>
+          Loading members...
+        </h2>
       </div>
     );
   }
 
   return (
     <div className="members-page">
-      <h1>👥 Team Fate Members</h1>
+      <h1>
+        👥 Team Fate Members
+      </h1>
 
-      <p>Current Members: {members.length}</p>
+      <p>
+        Current Members:{" "}
+        {members.length}
+      </p>
 
-      <div className="members-grid">
-        {members.map((member) => (
-          <div
-            key={member.id}
-            className="member-card"
-          >
-            <img
-              src={
-                member.avatar_url ||
-                "https://cdn.discordapp.com/embed/avatars/0.png"
-              }
-              alt={member.nickname || member.username}
-              className="member-avatar"
-            />
+      <div className="leaderboard-filters">
+        <button
+          className={`leader-filter ${
+            view === "cards"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            setView("cards")
+          }
+        >
+          Member Cards
+        </button>
 
-            <h3>
-              {member.nickname || member.username}
-            </h3>
-
-            <p>
-              Role: {member.role || "member"}
-            </p>
-
-            <p>
-              Shinies: {member.shiny_count}
-            </p>
-          </div>
-        ))}
+        <button
+          className={`leader-filter ${
+            view === "list"
+              ? "active"
+              : ""
+          }`}
+          onClick={() =>
+            setView("list")
+          }
+        >
+          Member List
+        </button>
       </div>
+
+      {view === "cards" ? (
+        <div className="members-grid">
+          {members.map(
+            (member) => (
+              <div
+                key={member.id}
+                className="member-card"
+              >
+                <img
+                  src={
+                    member.avatar_url ||
+                    "https://cdn.discordapp.com/embed/avatars/0.png"
+                  }
+                  alt={
+                    member.nickname ||
+                    member.username
+                  }
+                  className="member-avatar"
+                />
+
+                <h3>
+                  {member.nickname ||
+                    member.username}
+                </h3>
+
+                <p>
+                  Role:{" "}
+                  {member.role ||
+                    "member"}
+                </p>
+
+                <p>
+                  Shinies:{" "}
+                  {
+                    member.shiny_count
+                  }
+                </p>
+
+                <p>
+                  Joined:{" "}
+                  {member.join_date ||
+                    "-"}
+                </p>
+              </div>
+            )
+          )}
+        </div>
+      ) : (
+        <div className="card">
+          <table className="member-table">
+            <thead>
+              <tr>
+                <th>
+                  Nickname
+                </th>
+                <th>
+                  Discord
+                </th>
+                <th>
+                  Join Date
+                </th>
+                <th>
+                  Role
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {members.map(
+                (member) => (
+                  <tr
+                    key={
+                      member.id
+                    }
+                  >
+                    <td>
+                      {member.nickname ||
+                        member.username}
+                    </td>
+
+                    <td>
+                      {
+                        member.username
+                      }
+                    </td>
+
+                    <td>
+                      {member.join_date ||
+                        "-"}
+                    </td>
+
+                    <td>
+                      {
+                        member.role
+                      }
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

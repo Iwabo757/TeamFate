@@ -18,10 +18,50 @@ export default function SubmitShiny() {
   const [loading, setLoading] =
     useState(false);
 
+const [profile, setProfile] =
+  useState<any>(null);
+
   useEffect(() => {
     loadPokemon();
+    loadProfile();
   }, []);
+async function loadProfile() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  if (!user) return;
+
+  const result =
+    await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+  if (result.data) {
+    setProfile(result.data);
+  }
+}
+if (
+  profile?.role === "guest"
+) {
+  return (
+    <div className="page">
+      <div className="card">
+        <h2>
+          Members Only
+        </h2>
+
+        <p>
+          You must be promoted
+          to Member before
+          submitting shinies.
+        </p>
+      </div>
+    </div>
+  );
+}
   async function loadPokemon() {
     const result = await supabase
       .from("pokemon")

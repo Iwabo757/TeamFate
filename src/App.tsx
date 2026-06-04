@@ -167,6 +167,8 @@ const result = await supabase
 
       discord_id:
         user.user_metadata.provider_id,
+
+      role: "guest",
     },
     {
       onConflict: "id",
@@ -214,6 +216,17 @@ console.log(
       setProfile(profileResult.data);
     }
   }
+
+function canManageSite(
+  role?: string
+) {
+  return [
+    "officer",
+    "commander",
+    "leader",
+    "admin",
+  ].includes(role || "");
+}
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -310,7 +323,9 @@ console.log(
   Members
 </NavLink>
 
-{profile?.role === "admin" && (
+{canManageSite(
+  profile?.role
+) && (
 <div className="dropdown">
   <span>Admin ▼</span>
 
@@ -417,8 +432,9 @@ console.log(
         Members
       </Link>
 
-      {profile?.role ===
-        "admin" && (
+      {canManageSite(
+        profile?.role
+      ) && (
         <>
           <Link
             to="/admin"
@@ -625,6 +641,14 @@ console.log(
   path="/admin/bounty-dashboard"
   element={<BountyDashboard />}
  />
+<Route
+  path="/admin/events/edit/:id"
+  element={<AdminEvents />}
+/>
+<Route
+  path="/admin/bounties/edit/:id"
+  element={<AdminBounties />}
+/>
           <Route
             path="/profile"
             element={<Profile />}
