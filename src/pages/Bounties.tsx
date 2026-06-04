@@ -227,7 +227,7 @@ function getProfile(
     }`}
     onClick={() => setView("upcoming")}
   >
-    Upcoming Bountys
+    Active Bountys
   </button>
 
   <button

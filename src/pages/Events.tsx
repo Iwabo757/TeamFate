@@ -227,7 +227,7 @@ function getProfile(
     }`}
     onClick={() => setView("upcoming")}
   >
-    Upcoming Events
+    Current Events
   </button>
 
   <button

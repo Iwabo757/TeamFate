@@ -286,7 +286,7 @@ function canManageSite(
 
   <div className="dropdown-content">
     <Link to="/events">
-      Upcoming Events
+      Current Events
     </Link>
 
     <Link to="/events?view=past">
