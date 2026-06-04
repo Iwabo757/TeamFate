@@ -11,14 +11,14 @@ export default function AdminDashboard() {
           to="/admin/events"
           className="admin-card"
         >
-          📅 Manage Events
+          📅 Event Dashboard
         </Link>
 
         <Link
           to="/admin/bounty-dashboard"
           className="admin-card"
         >
-          Manage Bounties
+          🎯 Bounty Dashboard
         </Link>
 
         <Link
