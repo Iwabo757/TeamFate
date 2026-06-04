@@ -57,20 +57,24 @@ h3 {
   letter-spacing: 1px;
 }
 :root {
-  --bg-dark: #050a1c;
+ 
   --bg-card: rgba(8, 20, 55, 0.58);
+  --bg-dark: #050a1c;
 
-  --#64cfff: #8fd8ff;
-  --#64cfff-glow: rgba(143,216,255,.45);
-
-  --blue: #64cfff;
-  --purple: #a88cff;
+  --fate-blue: #64cfff;
+  --fate-blue-light: #bfe8ff;
 
   --text: #d8ecff;
   --muted: #9fc4e8;
 
-  --border: rgba(255,255,255,.08);
+  --border: rgba(100,207,255,.12);
 
+  --fate-blue-glow: rgba(143,216,255,.45);
+
+  --blue: #64cfff;
+  --purple: #a88cff;
+
+ 
   --radius: 18px;
 }
 body,
@@ -230,7 +234,7 @@ a {
     linear-gradient(
       135deg,
       #64cfff,
-      #ffeb99
+      #9fdfff
     );
 
   color: #081225;
@@ -782,7 +786,7 @@ th {
     linear-gradient(
       135deg,
       #64cfff,
-      #ffeb99
+      #9fdfff
     );
 
   color: #081225;
@@ -1000,7 +1004,7 @@ th {
 
 .admin-section h2 {
   margin-top: 0;
-  color: #ffd54f;
+  color: #bfe8ff;
 }
 
 .admin-section input,
@@ -1064,7 +1068,7 @@ th {
 
 .shiny-admin-card h3 {
   margin-top: 0;
-  color: #ffd54f;
+  color: #bfe8ff;
 }
 
 .shiny-admin-card a {
@@ -1086,7 +1090,7 @@ th {
 }
 
 .page h1 {
-  color: #ffd54f;
+  color: #bfe8ff;
 }
 
 
@@ -1169,7 +1173,7 @@ input[type="file"] {
 .admin-card:hover {
   transform: translateY(-3px);
 
-  border-color: var(--#64cfff);
+  border-color: var(--fate-blue);
 
   box-shadow:
     0 0 15px rgba(100,207,255,.25);
@@ -2109,7 +2113,7 @@ textarea:focus {
   outline: none;
 
   border-color:
-    var(--#64cfff);
+    var(--fate-blue);
 
   box-shadow:
     0 0 15px rgba(100,207,255,.25);
