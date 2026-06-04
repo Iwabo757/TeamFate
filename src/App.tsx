@@ -240,11 +240,11 @@ function canManageSite(
 
   <div className="logo-text">
     <div className="logo-main">
-      Team [Faté]
+      Team Faté
     </div>
 
     <div className="logo-sub">
-      ★ One Wish. One [Faté] ★
+      ★ One Wish. One Faté ★
     </div>
   </div>
 </div>
