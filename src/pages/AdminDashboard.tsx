@@ -15,10 +15,10 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
-          to="/admin/bounties"
+          to="/admin/bounty-dashboard"
           className="admin-card"
         >
-          Monthly bounty
+          Manage Bounties
         </Link>
 
         <Link
