@@ -1,6 +1,12 @@
 /* =========================================
    RESET
 ========================================= */
+@font-face {
+  font-family: "Road Rage";
+  src: url("/fonts/Road_Rage.otf")
+    format("opentype");
+}
+
 .hero h1,
 .logo-main,
 .champion-name,
@@ -14,7 +20,16 @@
   padding: 0;
   box-sizing: border-box;
 }
-
+.logo-main,
+.page h1,
+.page-title,
+h1,
+h2,
+h3 {
+  font-family:
+    "Road Rage",
+    sans-serif;
+}
 :root {
   --bg-dark: #050a1c;
   --bg-card: rgba(8, 20, 55, 0.58);
@@ -32,11 +47,20 @@
 
   --radius: 18px;
 }
-
+body,
+p,
+input,
+textarea,
+select,
+button {
+  font-family:
+    Inter,
+    Arial,
+    sans-serif;
+}
 body {
   margin: 0;
   color: var(--text);
-  font-family: Inter, Arial, sans-serif;
 
   background:
     linear-gradient(
