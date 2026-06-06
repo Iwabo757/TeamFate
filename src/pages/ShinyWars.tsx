@@ -121,7 +121,7 @@ const { data: shinyData } = await supabase
     )
   `);
 
-console.log("SHINY ERROR", shinyError);
+
 console.log("SHINY DATA", shinyData);
 
 const startDate = new Date(warData.start_date);
