@@ -17,7 +17,7 @@ interface ShinyCatch {
 
   pokemon?: {
     name: string;
-    shiny_sprite: string;
+    sprite_url: string;
   };
 }
 
@@ -496,29 +496,21 @@ function memberScore(
 
 <div className="showcase-sprites">
 
-  {memberShinies(
-    member.member_name
-  ).map(
-    (shiny) => (
 
-<img
-  key={shiny.id}
-  src={
-    shiny.pokemon?.shiny_sprite ||
-    shiny.sprite_url
-  }
-  alt={
-    shiny.pokemon?.name ||
-    shiny.pokemon_name
-  }
-  title={
-    shiny.pokemon?.name ||
-    shiny.pokemon_name
-  }
-/>
+{memberShinies(member.member_name).map((shiny) => {
+  console.log("SPRITE", shiny);
 
-    )
-  )}
+  return (
+    <img
+      key={shiny.id}
+      src={
+        shiny.pokemon?.sprite_url ||
+        shiny.sprite_url
+      }
+      alt={shiny.pokemon?.name || shiny.pokemon_name}
+    />
+  );
+})}
 
 </div>
 
@@ -597,7 +589,7 @@ function memberScore(
 <img
   key={shiny.id}
   src={
-    shiny.pokemon?.shiny_sprite ||
+    shiny.pokemon?.sprite_url ||
     shiny.sprite_url
   }
   alt={
