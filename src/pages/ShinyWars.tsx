@@ -127,6 +127,12 @@ startDate.setHours(0,0,0,0);
 const endDate = new Date(warData.end_date);
 endDate.setHours(23,59,59,999);
 
+console.log("WAR START", warData.start_date);
+console.log("WAR END", warData.end_date);
+console.log("SHINY DATES",
+  shinyData?.map(s => s.date_found)
+);
+
 const filteredShinies = (shinyData || []).filter(
   (shiny) => {
     const shinyDate = new Date(shiny.date_found);
