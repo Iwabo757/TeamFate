@@ -12,6 +12,7 @@ interface ShinyCatch {
   member_name: string;
   date_found: string;
   method: string;
+  secret_shiny?: boolean;
 
   pokemon?: {
     name: string;
