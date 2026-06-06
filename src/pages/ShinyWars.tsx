@@ -111,6 +111,7 @@ export default function ShinyWars() {
 
 const {
   data: shinyData,
+  error: shinyError,
 } = await supabase
   .from("shiny_catches")
   .select(`
@@ -120,6 +121,9 @@ const {
       shiny_sprite
     )
   `);
+
+console.log("SHINY ERROR", shinyError);
+console.log("SHINY DATA", shinyData);
 
 const startDate = new Date(warData.start_date);
 startDate.setHours(0,0,0,0);
