@@ -118,7 +118,7 @@ const {
     *,
     pokemon:pokemon_id(
       name,
-      shiny_sprite
+      sprite_url
     )
   `);
 
