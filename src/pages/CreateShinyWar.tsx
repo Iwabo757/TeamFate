@@ -9,8 +9,7 @@ interface Member {
 }
 
 export default function CreateShinyWar() {
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
 
   const [members, setMembers] =
     useState<Member[]>([]);
@@ -18,37 +17,31 @@ export default function CreateShinyWar() {
   const [title, setTitle] =
     useState("");
 
-  const [
-    description,
-    setDescription,
-  ] = useState("");
+  const [description, setDescription] =
+    useState("");
 
-  const [
-    teamOneName,
-    setTeamOneName,
-  ] = useState("Team Jirachi");
+  const [teamOneName, setTeamOneName] =
+    useState("Team Jirachi");
 
-  const [
-    teamTwoName,
-    setTeamTwoName,
-  ] = useState("Team Victini");
+  const [teamTwoName, setTeamTwoName] =
+    useState("Team Victini");
 
-  const [
-    teamOneCaptain,
-    setTeamOneCaptain,
-  ] = useState("");
+  const [teamOneCaptain, setTeamOneCaptain] =
+    useState("");
 
-  const [
-    teamTwoCaptain,
-    setTeamTwoCaptain,
-  ] = useState("");
+  const [teamTwoCaptain, setTeamTwoCaptain] =
+    useState("");
 
-  const [
-    startDate,
-    setStartDate,
-  ] = useState("");
+  const [startDate, setStartDate] =
+    useState("");
 
   const [endDate, setEndDate] =
+    useState("");
+
+  const [teamOneImage, setTeamOneImage] =
+    useState("");
+
+  const [teamTwoImage, setTeamTwoImage] =
     useState("");
 
   useEffect(() => {
@@ -56,19 +49,94 @@ export default function CreateShinyWar() {
   }, []);
 
   async function loadMembers() {
-    const { data } =
-      await supabase
-        .from("profiles")
-        .select(
-          "id,nickname,username"
-        )
-        .order("username");
+    const { data } = await supabase
+      .from("profiles")
+      .select("id,nickname,username")
+      .order("username");
 
     setMembers(data || []);
   }
 
+  async function uploadImage(
+    file: File,
+    folder: string
+  ) {
+    const fileName =
+      `${Date.now()}-${file.name}`;
+
+    const filePath =
+      `${folder}/${fileName}`;
+
+    const { error } =
+      await supabase.storage
+        .from("shinywars")
+        .upload(
+          filePath,
+          file,
+          {
+            upsert: true,
+          }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    const {
+      data: publicUrlData,
+    } = supabase.storage
+      .from("shinywars")
+      .getPublicUrl(
+        filePath
+      );
+
+    return publicUrlData.publicUrl;
+  }
+
+  async function handleTeamOneUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const url =
+        await uploadImage(
+          file,
+          "team-one"
+        );
+
+      setTeamOneImage(url);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  async function handleTeamTwoUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const url =
+        await uploadImage(
+          file,
+          "team-two"
+        );
+
+      setTeamTwoImage(url);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
   async function createWar() {
-    if (!title) {
+    if (!title.trim()) {
       alert(
         "Enter a title"
       );
@@ -89,16 +157,28 @@ export default function CreateShinyWar() {
             teamTwoName,
 
           team_one_captain:
-            teamOneCaptain,
+            teamOneCaptain ||
+            null,
 
           team_two_captain:
-            teamTwoCaptain,
+            teamTwoCaptain ||
+            null,
+
+          team_one_image:
+            teamOneImage,
+
+          team_two_image:
+            teamTwoImage,
 
           start_date:
-            startDate,
+            new Date(
+              startDate
+            ).toISOString(),
 
           end_date:
-            endDate,
+            new Date(
+              endDate
+            ).toISOString(),
 
           active: true,
         })
@@ -121,7 +201,6 @@ export default function CreateShinyWar() {
 
   return (
     <div className="page">
-
       <h1>
         ⚔️ Create Shiny War
       </h1>
@@ -167,6 +246,54 @@ export default function CreateShinyWar() {
           }
           placeholder="Team Two Name"
         />
+
+        <label>
+          Team One Image
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={
+            handleTeamOneUpload
+          }
+        />
+
+        {teamOneImage && (
+          <img
+            src={teamOneImage}
+            alt="Team One"
+            style={{
+              width: "150px",
+              borderRadius:
+                "10px",
+            }}
+          />
+        )}
+
+        <label>
+          Team Two Image
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={
+            handleTeamTwoUpload
+          }
+        />
+
+        {teamTwoImage && (
+          <img
+            src={teamTwoImage}
+            alt="Team Two"
+            style={{
+              width: "150px",
+              borderRadius:
+                "10px",
+            }}
+          />
+        )}
 
         <label>
           Team One Captain
@@ -274,7 +401,6 @@ export default function CreateShinyWar() {
         </button>
 
       </div>
-
     </div>
   );
 }

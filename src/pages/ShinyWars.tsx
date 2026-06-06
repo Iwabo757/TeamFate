@@ -3,7 +3,8 @@ import {
   useState,
 } from "react";
 
-import { supabase } from "../lib/supabase";
+import { supabase }
+from "../lib/supabase";
 
 interface War {
   id: string;
@@ -15,6 +16,10 @@ interface War {
   team_one_name: string;
 
   team_two_name: string;
+
+  team_one_image: string;
+
+  team_two_image: string;
 
   start_date: string;
 
@@ -71,12 +76,13 @@ export default function ShinyWars() {
 
   async function loadWar() {
 
-    const { data: warData } =
-      await supabase
-        .from("shiny_wars")
-        .select("*")
-        .eq("active", true)
-        .single();
+    const {
+      data: warData,
+    } = await supabase
+      .from("shiny_wars")
+      .select("*")
+      .eq("active", true)
+      .single();
 
     if (!warData) {
       setLoading(false);
@@ -86,7 +92,7 @@ export default function ShinyWars() {
     setWar(warData);
 
     const {
-      data: teamData
+      data: teamData,
     } = await supabase
       .from(
         "shiny_war_teams"
@@ -102,7 +108,7 @@ export default function ShinyWars() {
     );
 
     const {
-      data: shinyData
+      data: shinyData,
     } = await supabase
       .from(
         "shiny_catches"
@@ -178,14 +184,15 @@ export default function ShinyWars() {
     );
   }
 
-  if (loading)
+  if (loading) {
     return (
       <div className="page">
         Loading...
       </div>
     );
+  }
 
-  if (!war)
+  if (!war) {
     return (
       <div className="page">
         <h1>
@@ -193,6 +200,7 @@ export default function ShinyWars() {
         </h1>
       </div>
     );
+  }
 
   const teamOne =
     members.filter(
@@ -215,13 +223,27 @@ export default function ShinyWars() {
         {war.title}
       </h1>
 
-      <p>
+      <p className="war-description">
         {war.description}
       </p>
+
+      {/* SCOREBOARD */}
 
       <div className="war-scoreboard">
 
         <div className="war-score-card">
+
+          {war.team_one_image && (
+            <img
+              src={
+                war.team_one_image
+              }
+              alt={
+                war.team_one_name
+              }
+              className="war-team-logo"
+            />
+          )}
 
           <h2>
             ⭐{" "}
@@ -237,7 +259,7 @@ export default function ShinyWars() {
           </h1>
 
           <p>
-            Shinies
+            Total Shinies
           </p>
 
         </div>
@@ -245,13 +267,19 @@ export default function ShinyWars() {
         <div className="war-score-center">
 
           <h2>
+            ⚔️ Shiny War
+          </h2>
+
+          <h3>
             {daysRemaining()}
             d Remaining
-          </h2>
+          </h3>
 
           <p>
             Ends:
-            {" "}
+          </p>
+
+          <p>
             {new Date(
               war.end_date
             ).toLocaleString()}
@@ -260,6 +288,18 @@ export default function ShinyWars() {
         </div>
 
         <div className="war-score-card">
+
+          {war.team_two_image && (
+            <img
+              src={
+                war.team_two_image
+              }
+              alt={
+                war.team_two_name
+              }
+              className="war-team-logo"
+            />
+          )}
 
           <h2>
             🔥{" "}
@@ -275,23 +315,38 @@ export default function ShinyWars() {
           </h1>
 
           <p>
-            Shinies
+            Total Shinies
           </p>
 
         </div>
 
       </div>
 
+      {/* TEAMS */}
+
       <div className="war-columns">
+
+        {/* TEAM ONE */}
 
         <div className="war-column">
 
-          <h2>
-            ⭐{" "}
-            {
-              war.team_one_name
-            }
-          </h2>
+          <div className="war-team-header">
+            <h2>
+              ⭐{" "}
+              {
+                war.team_one_name
+              }
+            </h2>
+
+            <p>
+              {
+                teamScore(
+                  war.team_one_name
+                )
+              }{" "}
+              Shinies
+            </p>
+          </div>
 
           {teamOne.map(
             (member) => (
@@ -337,6 +392,9 @@ export default function ShinyWars() {
                         alt={
                           shiny.pokemon_name
                         }
+                        title={
+                          shiny.pokemon_name
+                        }
                       />
 
                     )
@@ -351,14 +409,27 @@ export default function ShinyWars() {
 
         </div>
 
+        {/* TEAM TWO */}
+
         <div className="war-column">
 
-          <h2>
-            🔥{" "}
-            {
-              war.team_two_name
-            }
-          </h2>
+          <div className="war-team-header">
+            <h2>
+              🔥{" "}
+              {
+                war.team_two_name
+              }
+            </h2>
+
+            <p>
+              {
+                teamScore(
+                  war.team_two_name
+                )
+              }{" "}
+              Shinies
+            </p>
+          </div>
 
           {teamTwo.map(
             (member) => (
@@ -402,6 +473,9 @@ export default function ShinyWars() {
                           shiny.sprite_url
                         }
                         alt={
+                          shiny.pokemon_name
+                        }
+                        title={
                           shiny.pokemon_name
                         }
                       />

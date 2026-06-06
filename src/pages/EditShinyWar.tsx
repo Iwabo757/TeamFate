@@ -17,57 +17,41 @@ interface Member {
 }
 
 export default function EditShinyWar() {
+  const navigate = useNavigate();
+  const { id } = useParams();
 
-  const navigate =
-    useNavigate();
+  const [members, setMembers] =
+    useState<Member[]>([]);
 
-  const { id } =
-    useParams();
-
-  const [members,
-    setMembers] =
-    useState<Member[]>(
-      []
-    );
-
-  const [title,
-    setTitle] =
+  const [title, setTitle] =
     useState("");
 
-  const [
-    description,
-    setDescription
-  ] = useState("");
+  const [description, setDescription] =
+    useState("");
 
-  const [
-    teamOneName,
-    setTeamOneName
-  ] = useState("");
+  const [teamOneName, setTeamOneName] =
+    useState("");
 
-  const [
-    teamTwoName,
-    setTeamTwoName
-  ] = useState("");
+  const [teamTwoName, setTeamTwoName] =
+    useState("");
 
-  const [
-    teamOneCaptain,
-    setTeamOneCaptain
-  ] = useState("");
+  const [teamOneCaptain, setTeamOneCaptain] =
+    useState("");
 
-  const [
-    teamTwoCaptain,
-    setTeamTwoCaptain
-  ] = useState("");
+  const [teamTwoCaptain, setTeamTwoCaptain] =
+    useState("");
 
-  const [
-    startDate,
-    setStartDate
-  ] = useState("");
+  const [teamOneImage, setTeamOneImage] =
+    useState("");
 
-  const [
-    endDate,
-    setEndDate
-  ] = useState("");
+  const [teamTwoImage, setTeamTwoImage] =
+    useState("");
+
+  const [startDate, setStartDate] =
+    useState("");
+
+  const [endDate, setEndDate] =
+    useState("");
 
   useEffect(() => {
     loadMembers();
@@ -78,7 +62,6 @@ export default function EditShinyWar() {
   }, [id]);
 
   async function loadMembers() {
-
     const { data } =
       await supabase
         .from("profiles")
@@ -87,13 +70,10 @@ export default function EditShinyWar() {
         )
         .order("username");
 
-    setMembers(
-      data || []
-    );
+    setMembers(data || []);
   }
 
   async function loadWar() {
-
     const { data } =
       await supabase
         .from("shiny_wars")
@@ -101,51 +81,134 @@ export default function EditShinyWar() {
         .eq("id", id)
         .single();
 
-    if (!data)
-      return;
+    if (!data) return;
 
     setTitle(
       data.title || ""
     );
 
     setDescription(
-      data.description ||
-        ""
+      data.description || ""
     );
 
     setTeamOneName(
-      data.team_one_name
+      data.team_one_name || ""
     );
 
     setTeamTwoName(
-      data.team_two_name
+      data.team_two_name || ""
     );
 
     setTeamOneCaptain(
-      data.team_one_captain ||
-        ""
+      data.team_one_captain || ""
     );
 
     setTeamTwoCaptain(
-      data.team_two_captain ||
-        ""
+      data.team_two_captain || ""
+    );
+
+    setTeamOneImage(
+      data.team_one_image || ""
+    );
+
+    setTeamTwoImage(
+      data.team_two_image || ""
     );
 
     setStartDate(
-      data.start_date
-        ?.slice(0, 16) ||
-        ""
+      data.start_date?.slice(
+        0,
+        16
+      ) || ""
     );
 
     setEndDate(
-      data.end_date
-        ?.slice(0, 16) ||
-        ""
+      data.end_date?.slice(
+        0,
+        16
+      ) || ""
     );
   }
 
-  async function saveWar() {
+  async function uploadImage(
+    file: File,
+    folder: string
+  ) {
+    const fileName =
+      `${Date.now()}-${file.name}`;
 
+    const filePath =
+      `${folder}/${fileName}`;
+
+    const { error } =
+      await supabase.storage
+        .from("shinywars")
+        .upload(
+          filePath,
+          file,
+          {
+            upsert: true,
+          }
+        );
+
+    if (error) {
+      throw error;
+    }
+
+    const {
+      data: publicUrlData,
+    } = supabase.storage
+      .from("shinywars")
+      .getPublicUrl(
+        filePath
+      );
+
+    return publicUrlData.publicUrl;
+  }
+
+  async function handleTeamOneUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const url =
+        await uploadImage(
+          file,
+          "team-one"
+        );
+
+      setTeamOneImage(url);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  async function handleTeamTwoUpload(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const url =
+        await uploadImage(
+          file,
+          "team-two"
+        );
+
+      setTeamTwoImage(url);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  async function saveWar() {
     const { error } =
       await supabase
         .from("shiny_wars")
@@ -161,10 +224,18 @@ export default function EditShinyWar() {
             teamTwoName,
 
           team_one_captain:
-            teamOneCaptain,
+            teamOneCaptain ||
+            null,
 
           team_two_captain:
-            teamTwoCaptain,
+            teamTwoCaptain ||
+            null,
+
+          team_one_image:
+            teamOneImage,
+
+          team_two_image:
+            teamTwoImage,
 
           start_date:
             new Date(
@@ -179,9 +250,7 @@ export default function EditShinyWar() {
         .eq("id", id);
 
     if (error) {
-      alert(
-        error.message
-      );
+      alert(error.message);
       return;
     }
 
@@ -198,7 +267,7 @@ export default function EditShinyWar() {
     <div className="page">
 
       <h1>
-        Edit Shiny War
+        ⚔️ Edit Shiny War
       </h1>
 
       <div className="admin-form">
@@ -210,13 +279,11 @@ export default function EditShinyWar() {
               e.target.value
             )
           }
-          placeholder="Title"
+          placeholder="War Title"
         />
 
         <textarea
-          value={
-            description
-          }
+          value={description}
           onChange={(e) =>
             setDescription(
               e.target.value
@@ -226,9 +293,7 @@ export default function EditShinyWar() {
         />
 
         <input
-          value={
-            teamOneName
-          }
+          value={teamOneName}
           onChange={(e) =>
             setTeamOneName(
               e.target.value
@@ -238,9 +303,7 @@ export default function EditShinyWar() {
         />
 
         <input
-          value={
-            teamTwoName
-          }
+          value={teamTwoName}
           onChange={(e) =>
             setTeamTwoName(
               e.target.value
@@ -248,6 +311,58 @@ export default function EditShinyWar() {
           }
           placeholder="Team Two Name"
         />
+
+        <label>
+          Team One Image
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={
+            handleTeamOneUpload
+          }
+        />
+
+        {teamOneImage && (
+          <img
+            src={teamOneImage}
+            alt="Team One"
+            style={{
+              width: "150px",
+              borderRadius:
+                "10px",
+              marginBottom:
+                "20px",
+            }}
+          />
+        )}
+
+        <label>
+          Team Two Image
+        </label>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={
+            handleTeamTwoUpload
+          }
+        />
+
+        {teamTwoImage && (
+          <img
+            src={teamTwoImage}
+            alt="Team Two"
+            style={{
+              width: "150px",
+              borderRadius:
+                "10px",
+              marginBottom:
+                "20px",
+            }}
+          />
+        )}
 
         <label>
           Team One Captain
@@ -325,9 +440,7 @@ export default function EditShinyWar() {
 
         <input
           type="datetime-local"
-          value={
-            startDate
-          }
+          value={startDate}
           onChange={(e) =>
             setStartDate(
               e.target.value
@@ -341,9 +454,7 @@ export default function EditShinyWar() {
 
         <input
           type="datetime-local"
-          value={
-            endDate
-          }
+          value={endDate}
           onChange={(e) =>
             setEndDate(
               e.target.value
