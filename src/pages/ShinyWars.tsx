@@ -14,6 +14,7 @@ interface ShinyCatch {
   date_found: string;
   method: string;
   secret_shiny?: boolean;
+  pokemon_id: string;
 
   pokemon?: {
     name: string;
@@ -109,14 +110,12 @@ export default function ShinyWars() {
       teamData || []
     );
 
-const {
-  data: shinyData,
-  error: shinyError,
-} = await supabase
+const { data: shinyData } = await supabase
   .from("shiny_catches")
   .select(`
     *,
     pokemon:pokemon_id(
+      id,
       name,
       sprite_url
     )
@@ -501,14 +500,11 @@ function memberScore(
   console.log("SPRITE", shiny);
 
   return (
-    <img
-      key={shiny.id}
-      src={
-        shiny.pokemon?.sprite_url ||
-        shiny.sprite_url
-      }
-      alt={shiny.pokemon?.name || shiny.pokemon_name}
-    />
+<img
+  key={shiny.id}
+  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny.pokemon_id}.png`}
+  alt={String(shiny.pokemon_id)}
+/>
   );
 })}
 
@@ -585,21 +581,10 @@ function memberScore(
                     (
                       shiny
                     ) => (
-
 <img
   key={shiny.id}
-  src={
-    shiny.pokemon?.sprite_url ||
-    shiny.sprite_url
-  }
-  alt={
-    shiny.pokemon?.name ||
-    shiny.pokemon_name
-  }
-  title={
-    shiny.pokemon?.name ||
-    shiny.pokemon_name
-  }
+  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny.pokemon_id}.png`}
+  alt={String(shiny.pokemon_id)}
 />
 
                     )
