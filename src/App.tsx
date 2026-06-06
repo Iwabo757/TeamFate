@@ -6,6 +6,8 @@ import {
   Link,
 } from "react-router-dom";
 
+import { Analytics } from "@vercel/analytics/next"
+
 import { supabase } from "./lib/supabase";
 import Members from "./pages/Members";
 import Home from "./pages/Home";
