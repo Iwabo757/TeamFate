@@ -231,38 +231,34 @@ export default function ShinyWars() {
 
       <div className="war-scoreboard">
 
-        <div className="war-score-card">
+<div
+  className="war-score-card"
+  style={{
+    backgroundImage: war.team_one_image
+      ? `linear-gradient(
+          rgba(0,0,40,.75),
+          rgba(0,0,40,.75)
+        ),
+        url(${war.team_one_image})`
+      : undefined,
+  }}
+>
 
-          {war.team_one_image && (
-            <img
-              src={
-                war.team_one_image
-              }
-              alt={
-                war.team_one_name
-              }
-              className="war-team-logo"
-            />
-          )}
+  <h2>
+    ⭐ {war.team_one_name}
+  </h2>
 
-          <h2>
-            ⭐{" "}
-            {
-              war.team_one_name
-            }
-          </h2>
+  <h1>
+    {teamScore(
+      war.team_one_name
+    )}
+  </h1>
 
-          <h1>
-            {teamScore(
-              war.team_one_name
-            )}
-          </h1>
+  <p>
+    Total Shinies
+  </p>
 
-          <p>
-            Total Shinies
-          </p>
-
-        </div>
+</div>
 
         <div className="war-score-center">
 
@@ -287,38 +283,34 @@ export default function ShinyWars() {
 
         </div>
 
-        <div className="war-score-card">
+<div
+  className="war-score-card"
+  style={{
+    backgroundImage: war.team_two_image
+      ? `linear-gradient(
+          rgba(0,0,40,.75),
+          rgba(0,0,40,.75)
+        ),
+        url(${war.team_two_image})`
+      : undefined,
+  }}
+>
 
-          {war.team_two_image && (
-            <img
-              src={
-                war.team_two_image
-              }
-              alt={
-                war.team_two_name
-              }
-              className="war-team-logo"
-            />
-          )}
+  <h2>
+    🔥 {war.team_two_name}
+  </h2>
 
-          <h2>
-            🔥{" "}
-            {
-              war.team_two_name
-            }
-          </h2>
+  <h1>
+    {teamScore(
+      war.team_two_name
+    )}
+  </h1>
 
-          <h1>
-            {teamScore(
-              war.team_two_name
-            )}
-          </h1>
+  <p>
+    Total Shinies
+  </p>
 
-          <p>
-            Total Shinies
-          </p>
-
-        </div>
+</div>
 
       </div>
 

@@ -188,13 +188,13 @@ const username =
                 }
               </p>
 
-              <p>
-                Date:
-                {" "}
-                {new Date(
-                  shiny.created_at
-                ).toLocaleDateString()}
-              </p>
+<p>
+  Caught:{" "}
+  {new Date(
+    shiny.catch_date
+  ).toLocaleDateString()
+  }
+</p>
 
               <button
                 className="delete-btn"
