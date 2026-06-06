@@ -6,24 +6,19 @@ import {
 import { supabase }
 from "../lib/supabase";
 
-interface War {
+interface ShinyCatch {
   id: string;
+  member_name: string;
+  pokemon_name: string;
+  sprite_url: string;
+  date_found: string;
+  method: string;
+  secret_shiny?: boolean;
 
-  title: string;
-
-  description: string;
-
-  team_one_name: string;
-
-  team_two_name: string;
-
-  team_one_image: string;
-
-  team_two_image: string;
-
-  start_date: string;
-
-  end_date: string;
+  pokemon?: {
+    name: string;
+    shiny_sprite: string;
+  };
 }
 
 interface TeamMember {
@@ -164,12 +159,16 @@ function memberShinies(memberName: string) {
         .trim()
   );
 }
-function catchPoints(method?: string) {
-  switch (
+
+function catchPoints(
+  method?: string
+) {
+  const m =
     method
       ?.toLowerCase()
-      .trim()
-  ) {
+      .trim();
+
+  switch (m) {
     case "5x horde":
     case "×5 horde":
       return 2;
@@ -177,6 +176,9 @@ function catchPoints(method?: string) {
     case "3x horde":
     case "×3 horde":
       return 3;
+
+    case "horde":
+      return 2;
 
     case "fishing":
       return 6;
@@ -200,7 +202,7 @@ function catchPoints(method?: string) {
       return 40;
 
     default:
-      return 0;
+      return 1;
   }
 }
 
@@ -478,18 +480,21 @@ function memberScore(
   ).map(
     (shiny) => (
 
-      <img
-        key={shiny.id}
-        src={
-          shiny.pokemon?.shiny_sprite
-        }
-        alt={
-          shiny.pokemon?.name
-        }
-        title={
-          shiny.pokemon?.name
-        }
-      />
+<img
+  key={shiny.id}
+  src={
+    shiny.pokemon?.shiny_sprite ||
+    shiny.sprite_url
+  }
+  alt={
+    shiny.pokemon?.name ||
+    shiny.pokemon_name
+  }
+  title={
+    shiny.pokemon?.name ||
+    shiny.pokemon_name
+  }
+/>
 
     )
   )}
@@ -571,16 +576,16 @@ function memberScore(
 <img
   key={shiny.id}
   src={
-    shiny.pokemon
-      ?.shiny_sprite
+    shiny.pokemon?.shiny_sprite ||
+    shiny.sprite_url
   }
   alt={
-    shiny.pokemon
-      ?.name
+    shiny.pokemon?.name ||
+    shiny.pokemon_name
   }
   title={
-    shiny.pokemon
-      ?.name
+    shiny.pokemon?.name ||
+    shiny.pokemon_name
   }
 />
 
