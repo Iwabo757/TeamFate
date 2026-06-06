@@ -44,6 +44,15 @@ interface ShinyCatch {
   sprite_url: string;
 
   date_found: string;
+
+  method: string;
+
+  secret_shiny?: boolean;
+
+  pokemon?: {
+    name: string;
+    shiny_sprite: string;
+  };
 }
 
 export default function ShinyWars() {
@@ -134,6 +143,16 @@ const {
     setLoading(false);
   }
 
+function shinyPoints(shiny: ShinyCatch) {
+  let points = catchPoints(shiny.method);
+
+  if (shiny.secret_shiny) {
+    points += 1;
+  }
+
+  return points;
+}
+
 function memberShinies(memberName: string) {
   return catches.filter(
     (c) =>
@@ -145,32 +164,99 @@ function memberShinies(memberName: string) {
         .trim()
   );
 }
-
-  function teamScore(
-    teamName: string
+function catchPoints(method?: string) {
+  switch (
+    method
+      ?.toLowerCase()
+      .trim()
   ) {
+    case "5x horde":
+    case "×5 horde":
+      return 2;
 
-    const teamMembers =
-      members.filter(
-        (m) =>
-          m.team ===
-          teamName
-      );
+    case "3x horde":
+    case "×3 horde":
+      return 3;
 
-return catches.filter(
-  (catchData) =>
-    teamMembers.some(
-      (member) =>
-        member.member_name
-          ?.toLowerCase()
-          .trim() ===
-        catchData.member_name
-          ?.toLowerCase()
-          .trim()
-    )
-).length;
+    case "fishing":
+      return 6;
+
+    case "single":
+      return 8;
+
+    case "fossil":
+      return 12;
+
+    case "egg":
+      return 17;
+
+    case "shalpha":
+      return 20;
+
+    case "wild shalpha":
+      return 35;
+
+    case "legendary":
+      return 40;
+
+    default:
+      return 0;
   }
+}
 
+function teamScore(
+  teamName: string
+) {
+  const teamMembers =
+    members.filter(
+      (m) =>
+        m.team ===
+        teamName
+    );
+
+  return catches
+    .filter(
+      (catchData) =>
+        teamMembers.some(
+          (member) =>
+            member.member_name
+              ?.toLowerCase()
+              .trim() ===
+            catchData.member_name
+              ?.toLowerCase()
+              .trim()
+        )
+    )
+    .reduce(
+      (
+        total,
+        shiny
+      ) =>
+        total +
+        shinyPoints(
+          shiny
+        ),
+      0
+    );
+}
+
+function memberScore(
+  memberName: string
+) {
+  return memberShinies(
+    memberName
+  ).reduce(
+    (
+      total,
+      shiny
+    ) =>
+      total +
+      shinyPoints(
+        shiny
+      ),
+    0
+  );
+}
   function daysRemaining() {
 
     if (!war)
@@ -264,7 +350,7 @@ return catches.filter(
   </h1>
 
   <p>
-    Total Shinies
+    Total Points
   </p>
 
 </div>
@@ -315,9 +401,9 @@ return catches.filter(
     )}
   </h1>
 
-  <p>
-    Total Shinies
-  </p>
+<p>
+  Total Points
+</p>
 
 </div>
 
@@ -339,14 +425,14 @@ return catches.filter(
               }
             </h2>
 
-            <p>
-              {
-                teamScore(
-                  war.team_one_name
-                )
-              }{" "}
-              Shinies
-            </p>
+<p>
+  {
+    teamScore(
+      war.team_one_name
+    )
+  }
+  pts
+</p>
           </div>
 
           {teamOne.map(
@@ -365,14 +451,25 @@ return catches.filter(
                   }
                 </h3>
 
-                <p>
-                  {
-                    memberShinies(
-                      member.member_name
-                    ).length
-                  }{" "}
-                  catches
-                </p>
+<p>
+  {
+    memberScore(
+      member.member_name
+    )
+  }
+  {" "}
+  pts
+</p>
+
+<p>
+  {
+    memberShinies(
+      member.member_name
+    ).length
+  }
+  {" "}
+  shinies
+</p>
 
 <div className="showcase-sprites">
 
@@ -418,14 +515,14 @@ return catches.filter(
               }
             </h2>
 
-            <p>
-              {
-                teamScore(
-                  war.team_two_name
-                )
-              }{" "}
-              Shinies
-            </p>
+<p>
+  {
+    teamScore(
+      war.team_two_name
+    )
+  }{" "}
+  pts
+</p>
           </div>
 
           {teamTwo.map(
@@ -444,14 +541,23 @@ return catches.filter(
                   }
                 </h3>
 
-                <p>
-                  {
-                    memberShinies(
-                      member.member_name
-                    ).length
-                  }{" "}
-                  catches
-                </p>
+<p>
+  {
+    memberScore(
+      member.member_name
+    )
+  }{" "}
+  pts
+</p>
+
+<p>
+  {
+    memberShinies(
+      member.member_name
+    ).length
+  }{" "}
+  shinies
+</p>
 
                 <div className="showcase-sprites">
 
@@ -462,20 +568,21 @@ return catches.filter(
                       shiny
                     ) => (
 
-                      <img
-                        key={
-                          shiny.id
-                        }
-                        src={
-                          shiny.sprite_url
-                        }
-                        alt={
-                          shiny.pokemon_name
-                        }
-                        title={
-                          shiny.pokemon_name
-                        }
-                      />
+<img
+  key={shiny.id}
+  src={
+    shiny.pokemon
+      ?.shiny_sprite
+  }
+  alt={
+    shiny.pokemon
+      ?.name
+  }
+  title={
+    shiny.pokemon
+      ?.name
+  }
+/>
 
                     )
                   )}
