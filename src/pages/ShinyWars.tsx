@@ -165,7 +165,7 @@ function shinyPoints(shiny: ShinyCatch) {
 function memberShinies(memberName: string) {
   return catches.filter(
     (c) =>
-      c.trainer
+      c.member_name
         ?.toLowerCase()
         .trim() ===
       memberName
