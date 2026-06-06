@@ -40,6 +40,8 @@ import AdminCurrentBounties from "./pages/AdminCurrentBounties";
 import AdminPastBounties from "./pages/AdminPastBounties";
 import BountyDashboard from "./pages/BountytDashboard";
 
+import EditHomepage from "./pages/EditHomepage";
+
 import "./App.css";
 
 type ProfileData = {
@@ -621,6 +623,10 @@ function canManageSite(
 <Route
   path="/admin/bounties/edit/:id"
   element={<AdminBounties />}
+/>
+<Route
+  path="/admin/homepage"
+  element={<EditHomepage />}
 />
           <Route
             path="/profile"
