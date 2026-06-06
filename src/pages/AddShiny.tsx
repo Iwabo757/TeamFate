@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
+
 
 export default function AddShiny() {
   const [pokemon, setPokemon] = useState<any[]>([]);
@@ -16,6 +19,9 @@ export default function AddShiny() {
 
   const [previewUrl, setPreviewUrl] =
     useState("");
+
+const [memberName, setMemberName] =
+  useState("");
 
   const [loading, setLoading] =
     useState(false);
@@ -111,7 +117,7 @@ export default function AddShiny() {
 
       if (
         !pokemonId ||
-        !profileId ||
+        !memberName ||
         !dateFound
       ) {
         alert(
@@ -129,25 +135,31 @@ export default function AddShiny() {
           await uploadScreenshot();
       }
 
-      const insertResult =
-        await supabase
-          .from(
-            "shiny_catches"
-          )
-          .insert({
-            pokemon_id:
-              Number(
-                pokemonId
-              ),
-            profile_id:
-              profileId,
-            date_found:
-              dateFound,
-            method,
-            notes,
-            screenshot_url:
-              screenshotUrl,
-          });
+const insertResult =
+  await supabase
+    .from("shiny_catches")
+    .insert({
+      pokemon_id:
+        Number(
+          pokemonId
+        ),
+
+      profile_id:
+        profileId || null,
+
+      member_name:
+        memberName,
+
+      date_found:
+        dateFound,
+
+      method,
+
+      notes,
+
+      screenshot_url:
+        screenshotUrl,
+    });
 
       console.log(
         "INSERT RESULT",
@@ -215,7 +227,61 @@ export default function AddShiny() {
 
     setPreviewUrl(url);
   }
+const selectStyles = {
+  control: (
+    provided: any
+  ) => ({
+    ...provided,
+    background:
+      "#001a66",
+    border:
+      "1px solid #4da6ff",
+    minHeight:
+      "68px",
+  }),
 
+  menu: (
+    provided: any
+  ) => ({
+    ...provided,
+    background:
+      "#001a66",
+  }),
+
+  option: (
+    provided: any,
+    state: any
+  ) => ({
+    ...provided,
+    background:
+      state.isFocused
+        ? "#003399"
+        : "#001a66",
+    color: "white",
+  }),
+
+  singleValue: (
+    provided: any
+  ) => ({
+    ...provided,
+    color: "white",
+  }),
+
+  input: (
+    provided: any
+  ) => ({
+    ...provided,
+    color: "white",
+  }),
+
+  placeholder: (
+    provided: any
+  ) => ({
+    ...provided,
+    color:
+      "#c6d8ff",
+  }),
+};
   return (
     <div className="page">
       <h1 className="page-title">
@@ -225,57 +291,104 @@ export default function AddShiny() {
       <div className="card">
         <div className="admin-form">
 
-          <select
-            value={pokemonId}
-            onChange={(e) =>
-              setPokemonId(
-                e.target.value
-              )
-            }
-          >
-            <option value="">
-              Select Pokémon
-            </option>
+<Select
+  styles={selectStyles}
+  options={pokemon.map(
+    (p) => ({
+      value: p.id,
+      label: `${p.name} • ${p.region}`,
+    })
+  )}
+  value={
+    pokemon
+      .filter(
+        (p) =>
+          String(p.id) ===
+          pokemonId
+      )
+      .map((p) => ({
+        value: p.id,
+        label: `${p.name} • ${p.region}`,
+      }))[0] || null
+  }
+  onChange={(option) =>
+    setPokemonId(
+      String(
+        option?.value || ""
+      )
+    )
+  }
+  placeholder="Search Pokémon..."
+  isSearchable
+/>
+          
+<CreatableSelect
+  styles={selectStyles}
+  options={profiles.map(
+    (p) => ({
+      value: p.id,
+      label:
+        p.nickname ||
+        p.username,
+    })
+  )}
+  value={
+    profileId
+      ? profiles
+          .filter(
+            (p) =>
+              String(p.id) ===
+              profileId
+          )
+          .map((p) => ({
+            value: p.id,
+            label:
+              p.nickname ||
+              p.username,
+          }))[0]
+      : memberName
+      ? {
+          value:
+            memberName,
+          label:
+            memberName,
+        }
+      : null
+  }
+  onChange={(option) => {
+    const selected =
+      profiles.find(
+        (p) =>
+          String(p.id) ===
+          String(option?.value)
+      );
 
-            {pokemon.map(
-              (p) => (
-                <option
-                  key={p.id}
-                  value={p.id}
-                >
-                  {p.name}
-                  {" • "}
-                  {p.region}
-                </option>
-              )
-            )}
-          </select>
+    setProfileId(
+      selected
+        ? String(
+            selected.id
+          )
+        : ""
+    );
 
-          <select
-            value={profileId}
-            onChange={(e) =>
-              setProfileId(
-                e.target.value
-              )
-            }
-          >
-            <option value="">
-              Select Member
-            </option>
+    setMemberName(
+      selected?.nickname ||
+      selected?.username ||
+      option?.label ||
+      ""
+    );
+  }}
+  onCreateOption={(
+    inputValue
+  ) => {
+    setProfileId("");
 
-            {profiles.map(
-              (p) => (
-                <option
-                  key={p.id}
-                  value={p.id}
-                >
-                  {p.nickname ||
-                    p.username}
-                </option>
-              )
-            )}
-          </select>
-
+    setMemberName(
+      inputValue
+    );
+  }}
+  placeholder="Search or type member..."
+/>
           <input
             type="date"
             value={dateFound}
@@ -318,11 +431,11 @@ export default function AddShiny() {
               Safari
             </option>
 
-            <option value="Gift">
+            <option value="Shalpha">
               Gift
             </option>
 
-            <option value="Other">
+            <option value="Event">
               Other
             </option>
           </select>

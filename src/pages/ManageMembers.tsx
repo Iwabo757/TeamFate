@@ -18,6 +18,7 @@ export default function ManageMembers() {
   const [loading, setLoading] =
     useState(true);
 
+
   useEffect(() => {
     loadMembers();
   }, []);
@@ -41,25 +42,39 @@ export default function ManageMembers() {
     setLoading(false);
   }
 
-  async function updateNickname(
-    id: string,
-    nickname: string
-  ) {
-    const { error } =
-      await supabase
-        .from("profiles")
-        .update({
-          nickname,
-        })
-        .eq("id", id);
+async function updateNickname(
+  id: string,
+  nickname: string
+) {
+  const { error } =
+    await supabase
+      .from("profiles")
+      .update({
+        nickname,
+      })
+      .eq("id", id);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    loadMembers();
+  if (error) {
+    alert(error.message);
+    return;
   }
+
+  await supabase
+    .from("shiny_catches")
+    .update({
+      profile_id: id,
+    })
+    .eq(
+      "member_name",
+      nickname
+    )
+    .is(
+      "profile_id",
+      null
+    );
+
+  loadMembers();
+}
 
   async function updateRole(
     id: string,
