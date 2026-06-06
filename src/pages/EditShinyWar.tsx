@@ -1,0 +1,365 @@
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
+import { supabase } from "../lib/supabase";
+
+interface Member {
+  id: string;
+  username: string;
+  nickname: string;
+}
+
+export default function EditShinyWar() {
+
+  const navigate =
+    useNavigate();
+
+  const { id } =
+    useParams();
+
+  const [members,
+    setMembers] =
+    useState<Member[]>(
+      []
+    );
+
+  const [title,
+    setTitle] =
+    useState("");
+
+  const [
+    description,
+    setDescription
+  ] = useState("");
+
+  const [
+    teamOneName,
+    setTeamOneName
+  ] = useState("");
+
+  const [
+    teamTwoName,
+    setTeamTwoName
+  ] = useState("");
+
+  const [
+    teamOneCaptain,
+    setTeamOneCaptain
+  ] = useState("");
+
+  const [
+    teamTwoCaptain,
+    setTeamTwoCaptain
+  ] = useState("");
+
+  const [
+    startDate,
+    setStartDate
+  ] = useState("");
+
+  const [
+    endDate,
+    setEndDate
+  ] = useState("");
+
+  useEffect(() => {
+    loadMembers();
+
+    if (id) {
+      loadWar();
+    }
+  }, [id]);
+
+  async function loadMembers() {
+
+    const { data } =
+      await supabase
+        .from("profiles")
+        .select(
+          "id,username,nickname"
+        )
+        .order("username");
+
+    setMembers(
+      data || []
+    );
+  }
+
+  async function loadWar() {
+
+    const { data } =
+      await supabase
+        .from("shiny_wars")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+    if (!data)
+      return;
+
+    setTitle(
+      data.title || ""
+    );
+
+    setDescription(
+      data.description ||
+        ""
+    );
+
+    setTeamOneName(
+      data.team_one_name
+    );
+
+    setTeamTwoName(
+      data.team_two_name
+    );
+
+    setTeamOneCaptain(
+      data.team_one_captain ||
+        ""
+    );
+
+    setTeamTwoCaptain(
+      data.team_two_captain ||
+        ""
+    );
+
+    setStartDate(
+      data.start_date
+        ?.slice(0, 16) ||
+        ""
+    );
+
+    setEndDate(
+      data.end_date
+        ?.slice(0, 16) ||
+        ""
+    );
+  }
+
+  async function saveWar() {
+
+    const { error } =
+      await supabase
+        .from("shiny_wars")
+        .update({
+          title,
+
+          description,
+
+          team_one_name:
+            teamOneName,
+
+          team_two_name:
+            teamTwoName,
+
+          team_one_captain:
+            teamOneCaptain,
+
+          team_two_captain:
+            teamTwoCaptain,
+
+          start_date:
+            new Date(
+              startDate
+            ).toISOString(),
+
+          end_date:
+            new Date(
+              endDate
+            ).toISOString(),
+        })
+        .eq("id", id);
+
+    if (error) {
+      alert(
+        error.message
+      );
+      return;
+    }
+
+    alert(
+      "Shiny War Updated"
+    );
+
+    navigate(
+      "/admin/shinywars"
+    );
+  }
+
+  return (
+    <div className="page">
+
+      <h1>
+        Edit Shiny War
+      </h1>
+
+      <div className="admin-form">
+
+        <input
+          value={title}
+          onChange={(e) =>
+            setTitle(
+              e.target.value
+            )
+          }
+          placeholder="Title"
+        />
+
+        <textarea
+          value={
+            description
+          }
+          onChange={(e) =>
+            setDescription(
+              e.target.value
+            )
+          }
+          placeholder="Description"
+        />
+
+        <input
+          value={
+            teamOneName
+          }
+          onChange={(e) =>
+            setTeamOneName(
+              e.target.value
+            )
+          }
+          placeholder="Team One Name"
+        />
+
+        <input
+          value={
+            teamTwoName
+          }
+          onChange={(e) =>
+            setTeamTwoName(
+              e.target.value
+            )
+          }
+          placeholder="Team Two Name"
+        />
+
+        <label>
+          Team One Captain
+        </label>
+
+        <select
+          value={
+            teamOneCaptain
+          }
+          onChange={(e) =>
+            setTeamOneCaptain(
+              e.target.value
+            )
+          }
+        >
+          <option value="">
+            Select Captain
+          </option>
+
+          {members.map(
+            (member) => (
+              <option
+                key={
+                  member.id
+                }
+                value={
+                  member.id
+                }
+              >
+                {member.nickname ||
+                  member.username}
+              </option>
+            )
+          )}
+        </select>
+
+        <label>
+          Team Two Captain
+        </label>
+
+        <select
+          value={
+            teamTwoCaptain
+          }
+          onChange={(e) =>
+            setTeamTwoCaptain(
+              e.target.value
+            )
+          }
+        >
+          <option value="">
+            Select Captain
+          </option>
+
+          {members.map(
+            (member) => (
+              <option
+                key={
+                  member.id
+                }
+                value={
+                  member.id
+                }
+              >
+                {member.nickname ||
+                  member.username}
+              </option>
+            )
+          )}
+        </select>
+
+        <label>
+          Start Date
+        </label>
+
+        <input
+          type="datetime-local"
+          value={
+            startDate
+          }
+          onChange={(e) =>
+            setStartDate(
+              e.target.value
+            )
+          }
+        />
+
+        <label>
+          End Date
+        </label>
+
+        <input
+          type="datetime-local"
+          value={
+            endDate
+          }
+          onChange={(e) =>
+            setEndDate(
+              e.target.value
+            )
+          }
+        />
+
+        <button
+          className="submit-btn"
+          onClick={saveWar}
+        >
+          Save Changes
+        </button>
+
+      </div>
+
+    </div>
+  );
+}

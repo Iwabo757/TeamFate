@@ -42,6 +42,13 @@ import BountyDashboard from "./pages/BountytDashboard";
 
 import EditHomepage from "./pages/EditHomepage";
 
+import ShinyWars from "./pages/ShinyWars";
+import ShinyWarHistory from "./pages/ShinyWarHistory";
+import ShinyWarsDashboard from "./pages/ShinyWarsDashboard";
+import CreateShinyWar from "./pages/CreateShinyWar";
+import EditShinyWar from "./pages/EditShinyWar";
+import ManageShinyWarTeams from "./pages/ManageShinyWarTeams";
+
 import "./App.css";
 
 type ProfileData = {
@@ -266,7 +273,7 @@ function canManageSite(
           </NavLink>
 
 <div className="dropdown">
-  <span>Shiny Dex ▼</span>
+  <span>✨ Shiny Dex ▼</span>
 
   <div className="dropdown-content">
     <Link to="/shinydex">
@@ -284,7 +291,7 @@ function canManageSite(
 </div>
 
 <div className="dropdown">
-  <span>Events ▼</span>
+  <span>📅 Events ▼</span>
 
   <div className="dropdown-content">
     <Link to="/events">
@@ -294,12 +301,23 @@ function canManageSite(
     <Link to="/events?view=past">
       Past Events
     </Link>
+    <Link
+      to="/events/shinywars"
+    >
+      ⚔️ Shiny Wars
+    </Link>
+
+    <Link
+      to="/events/shinywars/history"
+    >
+      War History
+    </Link>
   </div>
 </div>
 
 
 <li className="dropdown">
-  <span>Bounty ▼</span>
+  <span>🎯 Bounty ▼</span>
 
   <div className="dropdown-content">
     <Link to="/bounties">
@@ -339,8 +357,15 @@ function canManageSite(
       Bounty Dashboard
     </Link>
 
+    <Link
+      to="/admin/shinywars"
+      className="admin-card"
+    >
+      Shiny Wars Dashboard
+    </Link>
+
     <Link to="/admin/events">
-       Manage Events
+       Events Dashboard
     </Link>
 
     <Link to="/admin/members">
@@ -402,8 +427,17 @@ function canManageSite(
         }
       >
         Events
+
       </Link>
 
+      <Link
+        to="/events/shinywars"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Shiny Wars
+      </Link>
       <Link
         to="/bounties"
         onClick={() =>
@@ -628,6 +662,39 @@ function canManageSite(
   path="/admin/homepage"
   element={<EditHomepage />}
 />
+
+<Route
+  path="/admin/shinywars"
+  element={
+    <ShinyWarsDashboard />
+  }
+/>
+<Route
+  path="/admin/shinywars/create"
+  element={<CreateShinyWar />}
+/>
+
+<Route
+  path="/admin/shinywars/teams/:id"
+  element={
+    <ManageShinyWarTeams />
+  }
+/>
+<Route
+  path="/admin/shinywars/edit/:id"
+  element={<EditShinyWar />}
+/>
+<Route
+  path="/events/shinywars/history"
+  element={
+    <ShinyWarHistory />
+  }
+/>
+<Route
+  path="/events/shinywars"
+  element={<ShinyWars />}
+/>
+
           <Route
             path="/profile"
             element={<Profile />}

@@ -1,0 +1,425 @@
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import { supabase } from "../lib/supabase";
+
+interface War {
+  id: string;
+
+  title: string;
+
+  description: string;
+
+  team_one_name: string;
+
+  team_two_name: string;
+
+  start_date: string;
+
+  end_date: string;
+}
+
+interface TeamMember {
+  id: string;
+
+  member_name: string;
+
+  team: string;
+}
+
+interface ShinyCatch {
+  id: string;
+
+  member_name: string;
+
+  pokemon_name: string;
+
+  sprite_url: string;
+
+  catch_date: string;
+}
+
+export default function ShinyWars() {
+
+  const [war,
+    setWar] =
+    useState<War | null>(
+      null
+    );
+
+  const [members,
+    setMembers] =
+    useState<TeamMember[]>(
+      []
+    );
+
+  const [catches,
+    setCatches] =
+    useState<ShinyCatch[]>(
+      []
+    );
+
+  const [loading,
+    setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    loadWar();
+  }, []);
+
+  async function loadWar() {
+
+    const { data: warData } =
+      await supabase
+        .from("shiny_wars")
+        .select("*")
+        .eq("active", true)
+        .single();
+
+    if (!warData) {
+      setLoading(false);
+      return;
+    }
+
+    setWar(warData);
+
+    const {
+      data: teamData
+    } = await supabase
+      .from(
+        "shiny_war_teams"
+      )
+      .select("*")
+      .eq(
+        "war_id",
+        warData.id
+      );
+
+    setMembers(
+      teamData || []
+    );
+
+    const {
+      data: shinyData
+    } = await supabase
+      .from(
+        "shiny_catches"
+      )
+      .select("*")
+      .gte(
+        "catch_date",
+        warData.start_date
+      )
+      .lte(
+        "catch_date",
+        warData.end_date
+      );
+
+    setCatches(
+      shinyData || []
+    );
+
+    setLoading(false);
+  }
+
+  function memberShinies(
+    memberName: string
+  ) {
+
+    return catches.filter(
+      (c) =>
+        c.member_name ===
+        memberName
+    );
+  }
+
+  function teamScore(
+    teamName: string
+  ) {
+
+    const teamMembers =
+      members.filter(
+        (m) =>
+          m.team ===
+          teamName
+      );
+
+    return catches.filter(
+      (catchData) =>
+        teamMembers.some(
+          (member) =>
+            member.member_name ===
+            catchData.member_name
+        )
+    ).length;
+  }
+
+  function daysRemaining() {
+
+    if (!war)
+      return 0;
+
+    const end =
+      new Date(
+        war.end_date
+      ).getTime();
+
+    const now =
+      Date.now();
+
+    return Math.max(
+      0,
+      Math.ceil(
+        (end - now) /
+          86400000
+      )
+    );
+  }
+
+  if (loading)
+    return (
+      <div className="page">
+        Loading...
+      </div>
+    );
+
+  if (!war)
+    return (
+      <div className="page">
+        <h1>
+          No Active Shiny War
+        </h1>
+      </div>
+    );
+
+  const teamOne =
+    members.filter(
+      (m) =>
+        m.team ===
+        war.team_one_name
+    );
+
+  const teamTwo =
+    members.filter(
+      (m) =>
+        m.team ===
+        war.team_two_name
+    );
+
+  return (
+    <div className="page">
+
+      <h1>
+        {war.title}
+      </h1>
+
+      <p>
+        {war.description}
+      </p>
+
+      <div className="war-scoreboard">
+
+        <div className="war-score-card">
+
+          <h2>
+            ⭐{" "}
+            {
+              war.team_one_name
+            }
+          </h2>
+
+          <h1>
+            {teamScore(
+              war.team_one_name
+            )}
+          </h1>
+
+          <p>
+            Shinies
+          </p>
+
+        </div>
+
+        <div className="war-score-center">
+
+          <h2>
+            {daysRemaining()}
+            d Remaining
+          </h2>
+
+          <p>
+            Ends:
+            {" "}
+            {new Date(
+              war.end_date
+            ).toLocaleString()}
+          </p>
+
+        </div>
+
+        <div className="war-score-card">
+
+          <h2>
+            🔥{" "}
+            {
+              war.team_two_name
+            }
+          </h2>
+
+          <h1>
+            {teamScore(
+              war.team_two_name
+            )}
+          </h1>
+
+          <p>
+            Shinies
+          </p>
+
+        </div>
+
+      </div>
+
+      <div className="war-columns">
+
+        <div className="war-column">
+
+          <h2>
+            ⭐{" "}
+            {
+              war.team_one_name
+            }
+          </h2>
+
+          {teamOne.map(
+            (member) => (
+
+              <div
+                key={
+                  member.id
+                }
+                className="member-war-card"
+              >
+
+                <h3>
+                  {
+                    member.member_name
+                  }
+                </h3>
+
+                <p>
+                  {
+                    memberShinies(
+                      member.member_name
+                    ).length
+                  }{" "}
+                  catches
+                </p>
+
+                <div className="showcase-sprites">
+
+                  {memberShinies(
+                    member.member_name
+                  ).map(
+                    (
+                      shiny
+                    ) => (
+
+                      <img
+                        key={
+                          shiny.id
+                        }
+                        src={
+                          shiny.sprite_url
+                        }
+                        alt={
+                          shiny.pokemon_name
+                        }
+                      />
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+        <div className="war-column">
+
+          <h2>
+            🔥{" "}
+            {
+              war.team_two_name
+            }
+          </h2>
+
+          {teamTwo.map(
+            (member) => (
+
+              <div
+                key={
+                  member.id
+                }
+                className="member-war-card"
+              >
+
+                <h3>
+                  {
+                    member.member_name
+                  }
+                </h3>
+
+                <p>
+                  {
+                    memberShinies(
+                      member.member_name
+                    ).length
+                  }{" "}
+                  catches
+                </p>
+
+                <div className="showcase-sprites">
+
+                  {memberShinies(
+                    member.member_name
+                  ).map(
+                    (
+                      shiny
+                    ) => (
+
+                      <img
+                        key={
+                          shiny.id
+                        }
+                        src={
+                          shiny.sprite_url
+                        }
+                        alt={
+                          shiny.pokemon_name
+                        }
+                      />
+
+                    )
+                  )}
+
+                </div>
+
+              </div>
+
+            )
+          )}
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+}

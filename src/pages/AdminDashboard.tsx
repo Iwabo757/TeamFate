@@ -29,6 +29,13 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          to="/admin/shinywars"
+          className="admin-card"
+        >
+          ⚔️ Shiny Wars Dashboard
+        </Link>
+
+        <Link
           to="/admin/shiny-dashboard"
           className="admin-card"
         >
