@@ -273,11 +273,11 @@ function canManageSite(
           </NavLink>
 
 <div className="dropdown">
-  <span>✨ Shiny Dex ▼</span>
+  <span> Shiny Dex ▼</span>
 
   <div className="dropdown-content">
     <Link to="/shinydex">
-      Team Shiny Dex
+      ✨ Team Shiny Dex
     </Link>
 
     <Link to="/showcase">
@@ -291,11 +291,11 @@ function canManageSite(
 </div>
 
 <div className="dropdown">
-  <span>📅 Events ▼</span>
+  <span>Events ▼</span>
 
   <div className="dropdown-content">
     <Link to="/events">
-      Current Events
+      📅 Current Events
     </Link>
 
     <Link to="/events?view=past">
@@ -317,11 +317,11 @@ function canManageSite(
 
 
 <li className="dropdown">
-  <span>🎯 Bounty ▼</span>
+  <span> Bounty ▼</span>
 
   <div className="dropdown-content">
     <Link to="/bounties">
-      Active Bounties
+      🎯 Active Bounties
     </Link>
 
     <Link to="/bounties?view=past">
