@@ -43,7 +43,7 @@ interface ShinyCatch {
 
   sprite_url: string;
 
-  catch_date: string;
+  date_found: string;
 }
 
 export default function ShinyWars() {
@@ -115,11 +115,11 @@ export default function ShinyWars() {
       )
       .select("*")
       .gte(
-        "catch_date",
+        "date_found",
         warData.start_date
       )
       .lte(
-        "catch_date",
+        "date_found",
         warData.end_date
       );
 
@@ -130,16 +130,17 @@ export default function ShinyWars() {
     setLoading(false);
   }
 
-  function memberShinies(
-    memberName: string
-  ) {
-
-    return catches.filter(
-      (c) =>
-        c.member_name ===
-        memberName
-    );
-  }
+function memberShinies(memberName: string) {
+  return catches.filter(
+    (c) =>
+      c.member_name
+        ?.toLowerCase()
+        .trim() ===
+      memberName
+        ?.toLowerCase()
+        .trim()
+  );
+}
 
   function teamScore(
     teamName: string
@@ -152,14 +153,18 @@ export default function ShinyWars() {
           teamName
       );
 
-    return catches.filter(
-      (catchData) =>
-        teamMembers.some(
-          (member) =>
-            member.member_name ===
-            catchData.member_name
-        )
-    ).length;
+return catches.filter(
+  (catchData) =>
+    teamMembers.some(
+      (member) =>
+        member.member_name
+          ?.toLowerCase()
+          .trim() ===
+        catchData.member_name
+          ?.toLowerCase()
+          .trim()
+    )
+).length;
   }
 
   function daysRemaining() {
