@@ -121,16 +121,18 @@ const {
     )
   `);
 
-const filteredShinies =
-  (shinyData || []).filter(
-    (shiny) =>
-      shiny.date_found >=
-        warData.start_date
-          .slice(0, 10) &&
-      shiny.date_found <=
-        warData.end_date
-          .slice(0, 10)
-  );
+const filteredShinies = (shinyData || []).filter(
+  (shiny) => {
+    const shinyDate = new Date(shiny.date_found);
+    const startDate = new Date(warData.start_date);
+    const endDate = new Date(warData.end_date);
+
+    return (
+      shinyDate >= startDate &&
+      shinyDate <= endDate
+    );
+  }
+);
 const normalizedShinies =
   filteredShinies.map((s: any) => ({
     ...s,
