@@ -161,8 +161,6 @@ function memberShinies(memberName: string) {
         .trim()
   );
 
-  console.log("WAR MEMBERS", teamData);
-  console.log("WAR CATCHES", filteredShinies);
   console.log(
     memberName,
     results
