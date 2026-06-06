@@ -29,27 +29,6 @@ interface TeamMember {
   team: string;
 }
 
-interface ShinyCatch {
-  id: string;
-
-  member_name: string;
-
-  pokemon_name: string;
-
-  sprite_url: string;
-
-  date_found: string;
-
-  method: string;
-
-  secret_shiny?: boolean;
-
-  pokemon?: {
-    name: string;
-    shiny_sprite: string;
-  };
-}
-
 interface War {
   id: string;
 
@@ -140,22 +119,37 @@ const {
       name,
       shiny_sprite
     )
-  `)
-      .gte(
-        "date_found",
-        warData.start_date
-      )
-      .lte(
-        "date_found",
-        warData.end_date
+  `);
+
+const filteredShinies =
+  (shinyData || []).filter(
+    (shiny) => {
+      const found =
+        new Date(
+          shiny.date_found
+        );
+
+      return (
+        found >=
+          new Date(
+            warData.start_date
+          ) &&
+        found <=
+          new Date(
+            warData.end_date
+          )
       );
+    }
+  );
 
-    setCatches(
-      shinyData || []
-    );
+setCatches(
+  filteredShinies
+);
 
-    setLoading(false);
-  }
+console.log(shinyData);
+setLoading(false);
+
+}
 
 function shinyPoints(shiny: ShinyCatch) {
   let points = catchPoints(shiny.method);
