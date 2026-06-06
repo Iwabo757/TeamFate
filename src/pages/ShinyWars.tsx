@@ -162,8 +162,11 @@ function shinyPoints(shiny: ShinyCatch) {
 function memberShinies(memberName: string) {
   return catches.filter(
     (c) =>
-      c.member_name?.toLowerCase().trim() ===
-      memberName?.toLowerCase().trim()
+      JSON.stringify(c)
+        .toLowerCase()
+        .includes(
+          memberName.toLowerCase()
+        )
   );
 }
 
