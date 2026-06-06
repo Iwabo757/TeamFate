@@ -8,6 +8,13 @@ export default function AdminDashboard() {
       <div className="admin-grid">
 
         <Link
+          to="/admin/homepage"
+          className="admin-card"
+        >
+          📅 Edit Welcome Message
+        </Link>
+
+        <Link
           to="/admin/events"
           className="admin-card"
         >

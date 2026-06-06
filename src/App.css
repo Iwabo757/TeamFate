@@ -2202,3 +2202,34 @@ textarea:focus {
   height: 96px;
   object-fit: contain;
 }
+.welcome-card {
+  max-width: 1800px;
+  margin: 0 auto 24px auto;
+
+  background: rgba(0,10,35,.25);
+
+  backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(100,207,255,.15);
+
+  border-radius: 18px;
+
+  padding: 30px;
+
+  text-align: center;
+
+  box-shadow:
+    0 0 20px rgba(100,207,255,.12);
+}
+
+.welcome-card h2 {
+  font-size: 2rem;
+  color: #bfe8ff;
+  margin-bottom: 10px;
+}
+
+.welcome-card p {
+  color: #d8ecff;
+  font-size: 1.1rem;
+  line-height: 1.7;
+}

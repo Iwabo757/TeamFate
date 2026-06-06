@@ -22,6 +22,25 @@ export default function Home() {
     return () => clearInterval(refreshTimer);
   }, []);
 
+const [welcome, setWelcome] = useState({
+  title: "",
+  message: "",
+});
+
+useEffect(() => {
+  loadWelcome();
+}, []);
+
+async function loadWelcome() {
+  const { data } = await supabase
+    .from("homepage_message")
+    .select("*")
+    .single();
+
+  if (data) {
+    setWelcome(data);
+  }
+}
   async function loadStats() {
     try {
       const { count: members } = await supabase
@@ -78,7 +97,10 @@ export default function Home() {
 
 return (
   <div className="home-page">
-
+<div className="welcome-card">
+  <h2>{welcome.title}</h2>
+  <p>{welcome.message}</p>
+</div>
       <HomeTicker />
 
       <div className="stats">
