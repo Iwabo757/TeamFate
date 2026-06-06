@@ -6,7 +6,6 @@ import {
   Link,
 } from "react-router-dom";
 
-import type { AppProps } from 'next/app';
 import { Analytics } from '@vercel/analytics/react';
 
 import { supabase } from "./lib/supabase";
@@ -241,6 +240,7 @@ function canManageSite(
   }
 
   return (
+    <>
     <div className="app">
       <header className="topbar">
 <div className="logo">
