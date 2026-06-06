@@ -50,6 +50,25 @@ interface ShinyCatch {
   };
 }
 
+interface War {
+  id: string;
+
+  title: string;
+
+  description: string;
+
+  team_one_name: string;
+
+  team_two_name: string;
+
+  team_one_image: string;
+
+  team_two_image: string;
+
+  start_date: string;
+
+  end_date: string;
+}
 export default function ShinyWars() {
 
   const [war,
