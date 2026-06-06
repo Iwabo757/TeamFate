@@ -411,16 +411,24 @@ const selectStyles = {
               Select Method
             </option>
 
-            <option value="Horde">
-              Horde
-            </option>
-
             <option value="Single Encounter">
               Single Encounter
             </option>
 
+            <option value="threeHorde">
+              3x Horde
+            </option>
+
+            <option value="Horde">
+              5x Horde
+            </option>
+
             <option value="Egg">
               Egg
+            </option>
+
+            <option value="Fossil">
+              Fossil
             </option>
 
             <option value="Fishing">
@@ -435,8 +443,20 @@ const selectStyles = {
               Gift
             </option>
 
+            <option value="Wild Shalpha">
+              Wild Shalpha
+            </option>
+
+            <option value="Secret Shiny">
+              Secret Shiny
+            </option>
+
+            <option value="Legendary">
+              Legendary
+            </option>
+
             <option value="Event">
-              Other
+              Event
             </option>
           </select>
 

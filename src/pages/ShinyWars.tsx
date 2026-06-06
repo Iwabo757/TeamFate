@@ -107,13 +107,17 @@ export default function ShinyWars() {
       teamData || []
     );
 
-    const {
-      data: shinyData,
-    } = await supabase
-      .from(
-        "shiny_catches"
-      )
-      .select("*")
+const {
+  data: shinyData,
+} = await supabase
+  .from("shiny_catches")
+  .select(`
+    *,
+    pokemon:pokemon_id(
+      name,
+      shiny_sprite
+    )
+  `)
       .gte(
         "date_found",
         warData.start_date
@@ -370,34 +374,30 @@ return catches.filter(
                   catches
                 </p>
 
-                <div className="showcase-sprites">
+<div className="showcase-sprites">
 
-                  {memberShinies(
-                    member.member_name
-                  ).map(
-                    (
-                      shiny
-                    ) => (
+  {memberShinies(
+    member.member_name
+  ).map(
+    (shiny) => (
 
-                      <img
-                        key={
-                          shiny.id
-                        }
-                        src={
-                          shiny.sprite_url
-                        }
-                        alt={
-                          shiny.pokemon_name
-                        }
-                        title={
-                          shiny.pokemon_name
-                        }
-                      />
+      <img
+        key={shiny.id}
+        src={
+          shiny.pokemon?.shiny_sprite
+        }
+        alt={
+          shiny.pokemon?.name
+        }
+        title={
+          shiny.pokemon?.name
+        }
+      />
 
-                    )
-                  )}
+    )
+  )}
 
-                </div>
+</div>
 
               </div>
 
