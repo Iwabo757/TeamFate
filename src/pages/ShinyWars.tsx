@@ -151,7 +151,7 @@ function shinyPoints(shiny: ShinyCatch) {
 }
 
 function memberShinies(memberName: string) {
-  return catches.filter(
+  const results = catches.filter(
     (c) =>
       c.member_name
         ?.toLowerCase()
@@ -160,6 +160,15 @@ function memberShinies(memberName: string) {
         ?.toLowerCase()
         .trim()
   );
+
+  console.log("WAR MEMBERS", teamData);
+  console.log("WAR CATCHES", filteredShinies);
+  console.log(
+    memberName,
+    results
+  );
+
+  return results;
 }
 
 function catchPoints(
