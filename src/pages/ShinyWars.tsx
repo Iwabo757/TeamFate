@@ -131,9 +131,7 @@ const filteredShinies =
         warData.end_date
           .slice(0, 10)
   );
-setCatches(
-  filteredShinies
-);
+setCatches(normalizedShinies);
 
 console.log(shinyData);
 setLoading(false);
@@ -151,23 +149,14 @@ function shinyPoints(shiny: ShinyCatch) {
 }
 
 function memberShinies(memberName: string) {
-  const results = catches.filter(
+  return catches.filter(
     (c) =>
-      c.member_name
-        ?.toLowerCase()
-        .trim() ===
-      memberName
-        ?.toLowerCase()
-        .trim()
+      c.member_name?.toLowerCase().trim() ===
+      memberName?.toLowerCase().trim()
   );
-
-  console.log(
-    memberName,
-    results
-  );
-
-  return results;
 }
+
+
 
 function catchPoints(
   method?: string
@@ -224,6 +213,19 @@ function teamScore(
         m.team ===
         teamName
     );
+return catches
+  .filter(
+    (catchData) =>
+      teamMembers.some(
+        (member) =>
+          member.member_name
+            ?.toLowerCase()
+            .trim() ===
+          catchData.member_name
+            ?.toLowerCase()
+            .trim()
+      )
+  )
 
   return catches
     .filter(
@@ -233,7 +235,7 @@ function teamScore(
             member.member_name
               ?.toLowerCase()
               .trim() ===
-            catchData.member_name
+            catchData.trainer
               ?.toLowerCase()
               .trim()
         )
