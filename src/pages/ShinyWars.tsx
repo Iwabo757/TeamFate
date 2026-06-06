@@ -143,7 +143,8 @@ console.log(normalizedShinies);
 
 setCatches(normalizedShinies);
 
-
+console.log("WAR CATCHES", normalizedShinies);
+console.log("TEAM MEMBERS", teamData);
 console.log(shinyData);
 setLoading(false);
 
@@ -160,17 +161,21 @@ function shinyPoints(shiny: ShinyCatch) {
 }
 
 function memberShinies(memberName: string) {
-  return catches.filter(
+  const results = catches.filter(
     (c) =>
-      JSON.stringify(c)
-        .toLowerCase()
-        .includes(
-          memberName.toLowerCase()
-        )
+      c.member_name?.toLowerCase().trim() ===
+      memberName?.toLowerCase().trim()
   );
+
+  console.log(
+    "COMPARE",
+    memberName,
+    catches.map(c => c.member_name),
+    results
+  );
+
+  return results;
 }
-
-
 
 function catchPoints(
   method?: string
