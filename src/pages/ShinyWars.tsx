@@ -8,19 +8,17 @@ from "../lib/supabase";
 
 interface ShinyCatch {
   id: string;
+  pokemon_id: number;
   member_name: string;
-  pokemon_name: string;
-  sprite_url: string;
   date_found: string;
   method: string;
-  secret_shiny?: boolean;
-  pokemon_id: string;
 
   pokemon?: {
     name: string;
     sprite_url: string;
   };
 }
+
 
 interface TeamMember {
   id: string;
@@ -502,8 +500,11 @@ function memberScore(
   return (
 <img
   key={shiny.id}
-  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny.pokemon_id}.png`}
-  alt={String(shiny.pokemon_id)}
+  src={
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`
+  }
+  alt={shiny.pokemon?.name}
+  title={shiny.pokemon?.name}
 />
   );
 })}
@@ -583,8 +584,11 @@ function memberScore(
                     ) => (
 <img
   key={shiny.id}
-  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${shiny.pokemon_id}.png`}
-  alt={String(shiny.pokemon_id)}
+  src={
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`
+  }
+  alt={shiny.pokemon?.name}
+  title={shiny.pokemon?.name}
 />
 
                     )
