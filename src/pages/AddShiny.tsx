@@ -415,11 +415,11 @@ const selectStyles = {
               Single Encounter
             </option>
 
-            <option value="threeHorde">
+            <option value="x3 Horde">
               3x Horde
             </option>
 
-            <option value="Horde">
+            <option value="x5 Horde">
               5x Horde
             </option>
 
