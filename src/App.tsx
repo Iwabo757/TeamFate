@@ -6,7 +6,8 @@ import {
   Link,
 } from "react-router-dom";
 
-import { Analytics } from "@vercel/analytics/next"
+import type { AppProps } from 'next/app';
+import { Analytics } from '@vercel/analytics/react';
 
 import { supabase } from "./lib/supabase";
 import Members from "./pages/Members";
@@ -709,5 +710,8 @@ function canManageSite(
         </Routes>
       </main>
     </div>
+
+    <Analytics />
+  </>
   );
 }
