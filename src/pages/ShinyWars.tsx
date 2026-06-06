@@ -10,7 +10,6 @@ interface ShinyCatch {
   id: string;
   member_name: string;
   pokemon_name: string;
-  trainer: string;
   sprite_url: string;
   date_found: string;
   method: string;
