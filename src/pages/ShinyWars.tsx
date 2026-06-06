@@ -123,25 +123,14 @@ const {
 
 const filteredShinies =
   (shinyData || []).filter(
-    (shiny) => {
-      const found =
-        new Date(
-          shiny.date_found
-        );
-
-      return (
-        found >=
-          new Date(
-            warData.start_date
-          ) &&
-        found <=
-          new Date(
-            warData.end_date
-          )
-      );
-    }
+    (shiny) =>
+      shiny.date_found >=
+        warData.start_date
+          .slice(0, 10) &&
+      shiny.date_found <=
+        warData.end_date
+          .slice(0, 10)
   );
-
 setCatches(
   filteredShinies
 );
