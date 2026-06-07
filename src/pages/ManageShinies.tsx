@@ -24,6 +24,8 @@ export default function ManageShinies() {
     null
   );
 
+const [editingDate, setEditingDate] =
+  useState<Record<string, string>>({});
   useEffect(() => {
     loadShinies();
   }, []);
@@ -98,7 +100,25 @@ const username =
       result
     );
   }
+async function updateDate(
+  shinyId: string,
+  newDate: string
+) {
+  const { error } =
+    await supabase
+      .from("shiny_catches")
+      .update({
+        date_found: newDate,
+      })
+      .eq("id", shinyId);
 
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  loadShinies();
+}
   async function deleteShiny(
     id: string
   ) {
@@ -189,11 +209,35 @@ const username =
               </p>
 
 <p>
-  Caught:{" "}
-  {new Date(
-    shiny.date_found
-  ).toLocaleDateString()}
+  Caught:
 </p>
+
+<input
+  type="date"
+  value={
+    editingDate[shiny.id] ??
+    shiny.date_found
+  }
+  onChange={(e) =>
+    setEditingDate({
+      ...editingDate,
+      [shiny.id]: e.target.value,
+    })
+  }
+/>
+
+<button
+  className="submit-btn"
+  onClick={() =>
+    updateDate(
+      shiny.id,
+      editingDate[shiny.id] ??
+        shiny.date_found
+    )
+  }
+>
+  Save Date
+</button>
               <button
                 className="delete-btn"
                 onClick={() =>
