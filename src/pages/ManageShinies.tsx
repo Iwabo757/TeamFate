@@ -266,17 +266,11 @@ async function updateShiny(
 />
 
 <button
-  className="submit-btn"
   onClick={() =>
-    updateDate(
-      updateShiny(shiny),
-      shiny.id,
-      editingDate[shiny.id] ??
-        shiny.date_found
-    )
+    updateShiny(shiny)
   }
 >
-  Save Date
+  Save Changes
 </button>
               <button
                 className="delete-btn"
