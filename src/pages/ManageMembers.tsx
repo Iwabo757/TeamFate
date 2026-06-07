@@ -187,6 +187,8 @@ return (
           flexWrap: "wrap",
         }}
       >
+      <div className="leaderboard-filters">
+
         <button
           className="submit-btn"
           onClick={() =>
@@ -213,9 +215,11 @@ return (
         >
           Staff
         </button>
+       </div> 
       </div>
     ) : (
       <>
+      <div className="leaderboard-filters">
         <button
           className="submit-btn"
           style={{
@@ -227,6 +231,7 @@ return (
         >
           ← Back
         </button>
+     </div>
 
 <h2 style={{ marginBottom: "20px" }}>
   {selectedGroup === "guest"
