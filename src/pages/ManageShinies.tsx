@@ -226,25 +226,40 @@ async function updateShiny(
     })
   }
 >
-  <option value="x5 Horde">
-    x5 Horde
+
+  <option value="Single">
+    Single
   </option>
 
   <option value="x3 Horde">
     x3 Horde
   </option>
 
+  <option value="x5 Horde">
+    x5 Horde
+  </option>
+
   <option value="Fishing">
     Fishing
   </option>
 
-  <option value="Single">
-    Single
+  <option value="Egg">
+    Egg
   </option>
 
   <option value="Fossil">
     Fossil
   </option>
+
+  <option value="Legendary">
+    Legendary
+  </option>
+
+  <option value="Sceret Shiny">
+    Sceret Shiny
+  </option>
+
+
 </select>
 
 <p>
