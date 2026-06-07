@@ -1,4 +1,7 @@
 import { useEffect, useState, useRef } from "react";
+import "./index.css";
+import "./App.css";
+
 import {
   Routes,
   Route,
@@ -51,7 +54,7 @@ import CreateShinyWar from "./pages/CreateShinyWar";
 import EditShinyWar from "./pages/EditShinyWar";
 import ManageShinyWarTeams from "./pages/ManageShinyWarTeams";
 
-import "./App.css";
+
 
 type ProfileData = {
   id: string;
