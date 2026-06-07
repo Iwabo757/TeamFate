@@ -18,6 +18,8 @@ export default function ManageMembers() {
   const [loading, setLoading] =
     useState(true);
 
+const [selectedGroup, setSelectedGroup] =
+  useState<string | null>(null);
 
   useEffect(() => {
     loadMembers();
@@ -140,6 +142,26 @@ async function updateNickname(
     loadMembers();
   }
 
+const filteredMembers =
+  selectedGroup === "guest"
+    ? members.filter(
+        (m) => m.role === "guest"
+      )
+    : selectedGroup === "member"
+    ? members.filter(
+        (m) => m.role === "member"
+      )
+    : selectedGroup === "staff"
+    ? members.filter((m) =>
+        [
+          "officer",
+          "commander",
+          "leader",
+          "admin",
+        ].includes(m.role)
+      )
+    : [];
+
   if (loading) {
     return (
       <div className="page">
@@ -151,139 +173,197 @@ async function updateNickname(
     );
   }
 
-  return (
-    <div className="page">
-      <h1>
-        Manage Members
-      </h1>
+return (
+  <div className="page">
+    <h1>Manage Members</h1>
 
-      <div className="admin-grid">
-        {members.map(
-          (member) => (
-            <div
-              key={member.id}
-              className="admin-card"
-            >
-              <img
-                src={
-                  member.avatar_url ||
-                  "https://cdn.discordapp.com/embed/avatars/0.png"
-                }
-                alt={
-                  member.username
-                }
-                className="member-avatar"
-              />
+    {!selectedGroup ? (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: "20px",
+          marginTop: "30px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          className="submit-btn"
+          onClick={() =>
+            setSelectedGroup("guest")
+          }
+        >
+          Guests
+        </button>
 
-              <h3>
-                {member.nickname ||
-                  member.username}
-              </h3>
+        <button
+          className="submit-btn"
+          onClick={() =>
+            setSelectedGroup("member")
+          }
+        >
+          Members
+        </button>
 
-              <p>
-                <strong>
-                  Discord:
-                </strong>{" "}
-                {
-                  member.username
-                }
-              </p>
-
-              <p>
-                <strong>
-                  Role:
-                </strong>{" "}
-                {member.role}
-              </p>
-
-              <input
-                type="text"
-                className="dex-search"
-                defaultValue={
-                  member.nickname ||
-                  member.username
-                }
-                placeholder="Nickname"
-                onBlur={(e) =>
-                  updateNickname(
-                    member.id,
-                    e.target
-                      .value
-                  )
-                }
-              />
-
-              <select
-                className="dex-select"
-                value={
-                  member.role
-                }
-                onChange={(e) =>
-                  updateRole(
-                    member.id,
-                    e.target
-                      .value
-                  )
-                }
-              >
-                <option value="guest">
-                  Guest
-                </option>
-
-                <option value="member">
-                  Member
-                </option>
-
-                <option value="officer">
-                  Officer
-                </option>
-
-                <option value="commander">
-                  Commander
-                </option>
-
-                <option value="leader">
-                  Leader
-                </option>
-
-                <option value="admin">
-                  Admin
-                </option>
-              </select>
-
-              <label>
-                Join Date
-              </label>
-
-              <input
-                type="date"
-                value={
-                  member.join_date ||
-                  ""
-                }
-                onChange={(e) =>
-                  updateJoinDate(
-                    member.id,
-                    e.target
-                      .value
-                  )
-                }
-              />
-
-              <button
-                className="delete-btn"
-                onClick={() =>
-                  deleteMember(
-                    member.id
-                  )
-                }
-              >
-                Delete Member
-              </button>
-            </div>
-          )
-        )}
+        <button
+          className="submit-btn"
+          onClick={() =>
+            setSelectedGroup("staff")
+          }
+        >
+          Staff
+        </button>
       </div>
-    </div>
-  );
+    ) : (
+      <>
+        <button
+          className="submit-btn"
+          style={{
+            marginBottom: "20px",
+          }}
+          onClick={() =>
+            setSelectedGroup(null)
+          }
+        >
+          ← Back
+        </button>
+
+<h2 style={{ marginBottom: "20px" }}>
+  {selectedGroup === "guest"
+    ? "Guests"
+    : selectedGroup === "member"
+    ? "Members"
+    : "Staff"}
+</h2>
+
+        <div className="admin-grid">
+          {filteredMembers.map(
+            (member) => (
+              <div
+                key={member.id}
+                className="admin-card"
+              >
+                <img
+                  src={
+                    member.avatar_url ||
+                    "https://cdn.discordapp.com/embed/avatars/0.png"
+                  }
+                  alt={
+                    member.username
+                  }
+                  className="member-avatar"
+                />
+
+                <h3>
+                  {member.nickname ||
+                    member.username}
+                </h3>
+
+                <p>
+                  <strong>
+                    Discord:
+                  </strong>{" "}
+                  {
+                    member.username
+                  }
+                </p>
+
+                <p>
+                  <strong>
+                    Role:
+                  </strong>{" "}
+                  {
+                    member.role
+                  }
+                </p>
+
+                <input
+                  type="text"
+                  className="dex-search"
+                  defaultValue={
+                    member.nickname ||
+                    member.username
+                  }
+                  placeholder="Nickname"
+                  onBlur={(e) =>
+                    updateNickname(
+                      member.id,
+                      e.target.value
+                    )
+                  }
+                />
+
+                <select
+                  className="dex-select"
+                  value={
+                    member.role
+                  }
+                  onChange={(e) =>
+                    updateRole(
+                      member.id,
+                      e.target.value
+                    )
+                  }
+                >
+                  <option value="guest">
+                    Guest
+                  </option>
+
+                  <option value="member">
+                    Member
+                  </option>
+
+                  <option value="officer">
+                    Officer
+                  </option>
+
+                  <option value="commander">
+                    Commander
+                  </option>
+
+                  <option value="leader">
+                    Leader
+                  </option>
+
+                  <option value="admin">
+                    Admin
+                  </option>
+                </select>
+
+                <label>
+                  Join Date
+                </label>
+
+                <input
+                  type="date"
+                  value={
+                    member.join_date ||
+                    ""
+                  }
+                  onChange={(e) =>
+                    updateJoinDate(
+                      member.id,
+                      e.target.value
+                    )
+                  }
+                />
+
+                <button
+                  className="delete-btn"
+                  onClick={() =>
+                    deleteMember(
+                      member.id
+                    )
+                  }
+                >
+                  Delete Member
+                </button>
+              </div>
+            )
+          )}
+        </div>
+      </>
+    )}
+  </div>
+);
 }
