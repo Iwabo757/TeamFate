@@ -191,11 +191,9 @@ const username =
 <p>
   Caught:{" "}
   {new Date(
-    shiny.catch_date
-  ).toLocaleDateString()
-  }
+    shiny.date_found
+  ).toLocaleDateString()}
 </p>
-
               <button
                 className="delete-btn"
                 onClick={() =>
