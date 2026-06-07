@@ -191,50 +191,40 @@ function memberShinies(memberName: string) {
   return results;
 }
 
-function catchPoints(
-  method?: string
-) {
-  const m =
-    method
-      ?.toLowerCase()
-      .trim();
+function catchPoints(method?: string) {
+  const m = method?.toLowerCase().trim();
 
-  switch (m) {
-    case "5x horde":
-    case "×5 horde":
-      return 2;
+  if (!m) return 1;
 
-    case "3x horde":
-    case "×3 horde":
-      return 3;
+  if (m.includes("5") && m.includes("horde"))
+    return 2;
 
-    case "horde":
-      return 2;
+  if (m.includes("3") && m.includes("horde"))
+    return 3;
 
-    case "fishing":
-      return 6;
+  if (m.includes("fishing"))
+    return 6;
 
-    case "single":
-      return 8;
+  if (m.includes("single"))
+    return 8;
 
-    case "fossil":
-      return 12;
+  if (m.includes("fossil"))
+    return 12;
 
-    case "egg":
-      return 17;
+  if (m.includes("egg"))
+    return 17;
 
-    case "shalpha":
-      return 20;
+  if (m.includes("shalpha"))
+    return 20;
 
-    case "wild shalpha":
-      return 35;
+  if (m.includes("wild shalpha"))
+    return 35;
 
-    case "legendary":
-      return 40;
+  if (m.includes("legendary"))
+    return 40;
 
-  }
+  return 1;
 }
-
 function teamScore(teamName: string) {
   const teamMembers = members.filter(
     (m) => m.team === teamName
