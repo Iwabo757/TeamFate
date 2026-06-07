@@ -232,8 +232,6 @@ function catchPoints(
     case "legendary":
       return 40;
 
-    default:
-      return 1;
   }
 }
 
