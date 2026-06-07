@@ -18,6 +18,9 @@ export default function ManageMembers() {
   const [loading, setLoading] =
     useState(true);
 
+const [memberSearch, setMemberSearch] =
+  useState("");
+
 const [selectedGroup, setSelectedGroup] =
   useState<string | null>(null);
 
@@ -142,7 +145,7 @@ async function updateNickname(
     loadMembers();
   }
 
-const filteredMembers =
+const roleMembers =
   selectedGroup === "guest"
     ? members.filter(
         (m) => m.role === "guest"
@@ -161,6 +164,18 @@ const filteredMembers =
         ].includes(m.role)
       )
     : [];
+
+const filteredMembers =
+  roleMembers.filter((member) =>
+    (
+      member.nickname ||
+      member.username
+    )
+      .toLowerCase()
+      .includes(
+        memberSearch.toLowerCase()
+      )
+  );
 
   if (loading) {
     return (
@@ -217,6 +232,27 @@ return (
     Staff
   </button>
 </div>
+
+{selectedGroup && (
+  <div
+    style={{
+      maxWidth: "500px",
+      margin: "20px auto",
+    }}
+  >
+    <input
+      type="text"
+      className="dex-search"
+      placeholder="Search member..."
+      value={memberSearch}
+      onChange={(e) =>
+        setMemberSearch(
+          e.target.value
+        )
+      }
+    />
+  </div>
+)}
 
 {selectedGroup && (
   <>

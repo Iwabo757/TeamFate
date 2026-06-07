@@ -42,7 +42,8 @@ type BountyPost = {
 };
 
 export default function Bountys() {
-  const [bounties, setBountys] =
+  
+const [bounties, setBountys] =
     useState<BountyPost[]>([]);
 
   const [blocks, setBlocks] =
@@ -75,85 +76,61 @@ const [view, setView] =
     loadBounties();
   }, []);
 
-  async function loadBounties() {
+async function loadBounties() {
+  const now = new Date().toISOString();
 
-const { data: profileData } =
-  await supabase
-    .from("profiles")
-    .select(`
-      id,
-      nickname,
-      avatar_url
-    `);
+  const { data } = await supabase
+    .from("bounties")
+    .select("*")
+    .gte("end_time", now);
 
-setProfiles(
-  profileData || []
-);
+  setBountys(data || []);
 
-    const { data } =
-      await supabase
-        .from("bounties")
-        .select("*")
-        .order("start_time", {
-          ascending: false,
-        });
+  const { data: profileData } =
+    await supabase
+      .from("profiles")
+      .select(`
+        id,
+        nickname,
+        avatar_url
+      `);
 
-    if (!data) return;
+  setProfiles(profileData || []);
 
-    setBountys(data);
+  if (!data) return;
 
-    const eventIds =
-      data.map((e) => e.id);
+  const eventIds =
+    data.map((e) => e.id);
 
-    if (eventIds.length === 0)
-      return;
+  if (eventIds.length === 0)
+    return;
 
-
-
-    const {
-      data: blockData,
-    } = await supabase
-      .from(
-        "bounty_content_blocks"
-      )
+  const { data: blockData } =
+    await supabase
+      .from("bounty_content_blocks")
       .select("*")
-      .in(
-        "bounty_id",
-        eventIds
-      )
-      .order(
-        "display_order",
-        {
-          ascending: true,
-        }
-      );
+      .in("bounty_id", eventIds)
+      .order("display_order", {
+        ascending: true,
+      });
 
-    const grouped: Record<
-      string,
-      BountyBlock[]
-    > = {};
+  const grouped: Record<
+    string,
+    BountyBlock[]
+  > = {};
 
-    blockData?.forEach(
-      (block: any) => {
-        if (
-          !grouped[
-            block.bounty_id
-          ]
-        ) {
-          grouped[
-            block.bounty_id
-          ] = [];
-        }
+  blockData?.forEach((block: any) => {
+    if (!grouped[block.bounty_id]) {
+      grouped[block.bounty_id] = [];
+    }
 
-        grouped[
-          block.bounty_id
-        ].push(block);
-      }
+    grouped[block.bounty_id].push(
+      block
     );
+  });
 
-    setBlocks(grouped);
-  }
-
+  setBlocks(grouped);
+}
   function formatDate(
     value: string
   ) {

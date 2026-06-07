@@ -35,11 +35,46 @@ export default function ShinyDex() {
 
   const [selectedPokemon, setSelectedPokemon] =
     useState<DexPokemon | null>(null);
+const [bounties, setBounties] =
+  useState<any[]>([]);
 
-  useEffect(() => {
-    loadDex();
-  }, []);
+const [currentBounty, setCurrentBounty] =
+  useState(0);
 
+useEffect(() => {
+  loadDex();
+  loadBounties();
+}, []);
+
+useEffect(() => {
+  if (bounties.length <= 1) return;
+
+  const interval = setInterval(() => {
+    setCurrentBounty(
+      (prev) =>
+        (prev + 1) % bounties.length
+    );
+  }, 8000);
+
+  return () =>
+    clearInterval(interval);
+}, [bounties]);
+
+async function loadBounties() {
+  const { data } = await supabase
+    .from("bounties")
+    .select("*");
+
+  setBounties(data || []);
+}
+
+function getPreviewImage(bounty: any) {
+  return (
+    bounty.banner_url ||
+    bounty.image_url ||
+    "/placeholder.png"
+  );
+}
   async function loadDex() {
     try {
       const {
@@ -352,9 +387,17 @@ const regionStats: Record<
 <div className="dex-header">
   <h1>📖 Team Shiny Dex</h1>
 
-  <div className="fate-banner">
-    ⭐Montly Bounty Here ⭐
+{bounties.length > 0 && (
+  <div className="home-ticker">
+    <img
+      src={getPreviewImage(
+        bounties[currentBounty]
+      )}
+      className="event-card-image"
+      alt=""
+    />
   </div>
+)}
 
 <p>
   {selectedRegion} Completion:
