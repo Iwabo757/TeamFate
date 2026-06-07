@@ -375,6 +375,7 @@ h1,
 
 .card,
 .admin-card,
+.welcome-card,
 .member-card,
 .event-card,
 .region-card,
@@ -1377,6 +1378,10 @@ input[type="file"] {
   margin-top: 8px;
 }
 
+
+/* =========================================
+   Rotator
+========================================= */
 .homepage-rotator {
   animation: fadeIn 0.6s ease;
 }
@@ -1396,7 +1401,6 @@ input[type="file"] {
 .home-ticker {
   max-width: 1400px;
   margin: 0 auto 30px;
-
   min-height: 170px;
 
   display: flex;
@@ -1404,24 +1408,23 @@ input[type="file"] {
   justify-content: center;
 
   gap: 24px;
-
   padding: 25px;
+
   background: rgba(0, 10, 35, 0.38);
   backdrop-filter: blur(12px);
 
   border: 1px solid rgba(120,180,255,.12);
 
-  box-shadow:
-    0 0 30px rgba(0,0,0,.25);
+  box-shadow: 0 0 30px rgba(0,0,0,.25);
   border-radius: 18px;
 
-  animation: fadeTicker 8s linear infinite;
+  animation: slideTicker 8s ease forwards;
 }
 
-@keyframes fadeTicker {
+@keyframes slideTicker {
   0% {
     opacity: 0;
-    transform: translateY(15px);
+    transform: translateY(20px);
   }
 
   10% {
@@ -1436,9 +1439,11 @@ input[type="file"] {
 
   100% {
     opacity: 0;
-    transform: translateY(-15px);
+    transform: translateY(-20px);
   }
 }
+
+
 .ticker-sprite {
   width: 120px;
   height: 120px;
@@ -2203,23 +2208,23 @@ textarea:focus {
   object-fit: contain;
 }
 .welcome-card {
-  max-width: 1800px;
-  margin: 0 auto 24px auto;
-
-  background: rgba(0,10,35,.25);
-
+  background: rgba(0, 10, 35, 0.25);
   backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.06);
 
-  border: 1px solid rgba(100,207,255,.15);
+  box-shadow:
+    0 0 20px rgba(0,0,0,.25),
+    inset 0 0 20px rgba(255,255,255,.02);
 
-  border-radius: 18px;
+  border-radius:
+    var(--radius);
 
-  padding: 30px;
+  transition:
+    transform .2s ease,
+    box-shadow .2s ease;
 
   text-align: center;
 
-  box-shadow:
-    0 0 20px rgba(100,207,255,.12);
 }
 
 .welcome-card h2 {

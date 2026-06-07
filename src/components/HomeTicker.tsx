@@ -114,8 +114,11 @@ setItems(merged);
 
   const item = items[current];
 
-  return (
-    <div className="home-ticker">
+return (
+  <div
+    key={current}
+    className="home-ticker"
+  >
       {item.type === "shiny" ? (
         <>
           <img
