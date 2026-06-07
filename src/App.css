@@ -1400,7 +1400,7 @@ input[type="file"] {
 
 .home-ticker {
   max-width: 1400px;
-  margin: 0 auto 30px;
+  margin: 40px auto 30px;
   min-height: 170px;
 
   display: flex;
