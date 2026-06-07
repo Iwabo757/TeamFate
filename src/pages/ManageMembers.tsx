@@ -177,198 +177,169 @@ return (
   <div className="page">
     <h1>Manage Members</h1>
 
-    {!selectedGroup ? (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: "20px",
-          marginTop: "30px",
-          flexWrap: "wrap",
-        }}
-      >
-      <div className="leaderboard-filters">
+<div className="leaderboard-filters">
+  <button
+    className={`leader-filter ${
+      selectedGroup === "guest"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      setSelectedGroup("guest")
+    }
+  >
+    Guests
+  </button>
 
-        <button
-          className="submit-btn"
-          onClick={() =>
-            setSelectedGroup("guest")
-          }
+  <button
+    className={`leader-filter ${
+      selectedGroup === "member"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      setSelectedGroup("member")
+    }
+  >
+    Members
+  </button>
+
+  <button
+    className={`leader-filter ${
+      selectedGroup === "staff"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      setSelectedGroup("staff")
+    }
+  >
+    Staff
+  </button>
+</div>
+
+{selectedGroup && (
+  <>
+    <h2
+      style={{
+        textAlign: "center",
+        marginBottom: "20px",
+      }}
+    >
+      {selectedGroup === "guest"
+        ? "Guests"
+        : selectedGroup === "member"
+        ? "Members"
+        : "Staff"}
+    </h2>
+
+    <div className="admin-grid">
+      {filteredMembers.map((member) => (
+        <div
+          key={member.id}
+          className="admin-card"
         >
-          Guests
-        </button>
+          <img
+            src={
+              member.avatar_url ||
+              "/default-avatar.png"
+            }
+            alt=""
+            className="admin-avatar"
+          />
 
-        <button
-          className="submit-btn"
-          onClick={() =>
-            setSelectedGroup("member")
-          }
-        >
-          Members
-        </button>
+          <h3>
+            {member.nickname ||
+              member.username}
+          </h3>
 
-        <button
-          className="submit-btn"
-          onClick={() =>
-            setSelectedGroup("staff")
-          }
-        >
-          Staff
-        </button>
-       </div> 
-      </div>
-    ) : (
-      <>
-      <div className="leaderboard-filters">
-        <button
-          className="submit-btn"
-          style={{
-            marginBottom: "20px",
-          }}
-          onClick={() =>
-            setSelectedGroup(null)
-          }
-        >
-          ← Back
-        </button>
-     </div>
+          <p>
+            Role: {member.role}
+          </p>
 
-<h2 style={{ marginBottom: "20px" }}>
-  {selectedGroup === "guest"
-    ? "Guests"
-    : selectedGroup === "member"
-    ? "Members"
-    : "Staff"}
-</h2>
+          <p>
+            Discord:{" "}
+            {member.discord_id ||
+              "Not linked"}
+          </p>
 
-        <div className="admin-grid">
-          {filteredMembers.map(
-            (member) => (
-              <div
-                key={member.id}
-                className="admin-card"
-              >
-                <img
-                  src={
-                    member.avatar_url ||
-                    "https://cdn.discordapp.com/embed/avatars/0.png"
-                  }
-                  alt={
-                    member.username
-                  }
-                  className="member-avatar"
-                />
+          <label>Nickname</label>
 
-                <h3>
-                  {member.nickname ||
-                    member.username}
-                </h3>
+          <input
+            type="text"
+            defaultValue={
+              member.nickname || ""
+            }
+            onBlur={(e) =>
+              updateNickname(
+                member.id,
+                e.target.value
+              )
+            }
+          />
 
-                <p>
-                  <strong>
-                    Discord:
-                  </strong>{" "}
-                  {
-                    member.username
-                  }
-                </p>
+          <label>Role</label>
 
-                <p>
-                  <strong>
-                    Role:
-                  </strong>{" "}
-                  {
-                    member.role
-                  }
-                </p>
+          <select
+            value={member.role}
+            onChange={(e) =>
+              updateRole(
+                member.id,
+                e.target.value
+              )
+            }
+          >
+            <option value="guest">
+              Guest
+            </option>
+            <option value="member">
+              Member
+            </option>
+            <option value="officer">
+              Officer
+            </option>
+            <option value="commander">
+              Commander
+            </option>
+            <option value="leader">
+              Leader
+            </option>
+            <option value="admin">
+              Admin
+            </option>
+          </select>
 
-                <input
-                  type="text"
-                  className="dex-search"
-                  defaultValue={
-                    member.nickname ||
-                    member.username
-                  }
-                  placeholder="Nickname"
-                  onBlur={(e) =>
-                    updateNickname(
-                      member.id,
-                      e.target.value
-                    )
-                  }
-                />
+          <label>Join Date</label>
 
-                <select
-                  className="dex-select"
-                  value={
-                    member.role
-                  }
-                  onChange={(e) =>
-                    updateRole(
-                      member.id,
-                      e.target.value
-                    )
-                  }
-                >
-                  <option value="guest">
-                    Guest
-                  </option>
+          <input
+            type="date"
+            value={
+              member.join_date || ""
+            }
+            onChange={(e) =>
+              updateJoinDate(
+                member.id,
+                e.target.value
+              )
+            }
+          />
 
-                  <option value="member">
-                    Member
-                  </option>
-
-                  <option value="officer">
-                    Officer
-                  </option>
-
-                  <option value="commander">
-                    Commander
-                  </option>
-
-                  <option value="leader">
-                    Leader
-                  </option>
-
-                  <option value="admin">
-                    Admin
-                  </option>
-                </select>
-
-                <label>
-                  Join Date
-                </label>
-
-                <input
-                  type="date"
-                  value={
-                    member.join_date ||
-                    ""
-                  }
-                  onChange={(e) =>
-                    updateJoinDate(
-                      member.id,
-                      e.target.value
-                    )
-                  }
-                />
-
-                <button
-                  className="delete-btn"
-                  onClick={() =>
-                    deleteMember(
-                      member.id
-                    )
-                  }
-                >
-                  Delete Member
-                </button>
-              </div>
-            )
-          )}
+          <button
+            className="delete-btn"
+            onClick={() =>
+              deleteMember(
+                member.id
+              )
+            }
+          >
+            Delete Member
+          </button>
         </div>
-      </>
-    )}
+      ))}
+    </div>
+  </>
+)}
+
   </div>
 );
 }
