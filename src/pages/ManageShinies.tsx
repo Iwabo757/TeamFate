@@ -24,6 +24,9 @@ export default function ManageShinies() {
     null
   );
 
+const [editingMethod, setEditingMethod] =
+  useState<Record<string, string>>({});
+
 const [editingDate, setEditingDate] =
   useState<Record<string, string>>({});
   useEffect(() => {
@@ -100,17 +103,24 @@ const username =
       result
     );
   }
-async function updateDate(
-  shinyId: string,
-  newDate: string
+
+
+async function updateShiny(
+  shiny: any
 ) {
   const { error } =
     await supabase
       .from("shiny_catches")
       .update({
-        date_found: newDate,
+        date_found:
+          editingDate[shiny.id] ??
+          shiny.date_found,
+
+        method:
+          editingMethod[shiny.id] ??
+          shiny.method,
       })
-      .eq("id", shinyId);
+      .eq("id", shiny.id);
 
   if (error) {
     alert(error.message);
@@ -119,6 +129,8 @@ async function updateDate(
 
   loadShinies();
 }
+
+
   async function deleteShiny(
     id: string
   ) {
@@ -200,13 +212,40 @@ async function updateDate(
                 }
               </h3>
 
-              <p>
-                Method:
-                {" "}
-                {
-                  shiny.method
-                }
-              </p>
+<p>Method:</p>
+
+<select
+  value={
+    editingMethod[shiny.id] ??
+    shiny.method
+  }
+  onChange={(e) =>
+    setEditingMethod({
+      ...editingMethod,
+      [shiny.id]: e.target.value,
+    })
+  }
+>
+  <option value="x5 Horde">
+    x5 Horde
+  </option>
+
+  <option value="x3 Horde">
+    x3 Horde
+  </option>
+
+  <option value="Fishing">
+    Fishing
+  </option>
+
+  <option value="Single">
+    Single
+  </option>
+
+  <option value="Fossil">
+    Fossil
+  </option>
+</select>
 
 <p>
   Caught:
@@ -230,6 +269,7 @@ async function updateDate(
   className="submit-btn"
   onClick={() =>
     updateDate(
+      updateShiny(shiny),
       shiny.id,
       editingDate[shiny.id] ??
         shiny.date_found
