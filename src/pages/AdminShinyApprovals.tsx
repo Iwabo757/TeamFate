@@ -51,25 +51,23 @@ export default function AdminShinyApprovals() {
         .from(
           "shiny_catches"
         )
-        .insert({
-          pokemon_id:
-            submission.pokemon_id,
+.insert({
+  pokemon_id: submission.pokemon_id,
 
-          profile_id:
-            submission.profile_id,
+  profile_id: submission.profile_id,
 
-          date_found:
-            submission.date_found,
+  member_name:
+    submission.profile?.nickname,
 
-          method:
-            submission.method,
+  date_found: submission.date_found,
 
-          notes:
-            submission.notes,
+  method: submission.method,
 
-          screenshot_url:
-            submission.screenshot_url,
-        });
+  notes: submission.notes,
+
+  screenshot_url:
+    submission.screenshot_url,
+});
 
     if (insert.error) {
       alert(
