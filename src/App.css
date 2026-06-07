@@ -2250,7 +2250,10 @@ textarea:focus {
   margin-bottom: 40px;
   align-items: center;
 }
-
+.war-description {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
 .war-score-card {
   min-height: 320px;
 
