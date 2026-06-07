@@ -259,32 +259,53 @@ if (
               Select Method
             </option>
 
-            <option>
-              Horde
-            </option>
 
-            <option>
+            <option value="Single Encounter">
               Single Encounter
             </option>
 
-            <option>
+            <option value="x3 Horde">
+              3x Horde
+            </option>
+
+            <option value="x5 Horde">
+              5x Horde
+            </option>
+
+            <option value="Egg">
               Egg
             </option>
 
-            <option>
+            <option value="Fossil">
+              Fossil
+            </option>
+
+            <option value="Fishing">
               Fishing
             </option>
 
-            <option>
+            <option value="Safari">
               Safari
             </option>
 
-            <option>
+            <option value="Shalpha">
               Gift
             </option>
 
-            <option>
-              Other
+            <option value="Wild Shalpha">
+              Wild Shalpha
+            </option>
+
+            <option value="Secret Shiny">
+              Secret Shiny
+            </option>
+
+            <option value="Legendary">
+              Legendary
+            </option>
+
+            <option value="Event">
+              Event
             </option>
           </select>
 
