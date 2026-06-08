@@ -65,14 +65,7 @@ type ProfileData = {
   role: string;
 };
 
-export default function App() {
-  return (
-    <div>
-      {/* ... */}
-      <SpeedInsights />
-    </div>
-  );
-}
+
 export default function App() {
 
   const [profile, setProfile] =
@@ -724,6 +717,7 @@ function canManageSite(
     </div>
 
     <Analytics />
+    <SpeedInsights />
   </>
   );
 }
