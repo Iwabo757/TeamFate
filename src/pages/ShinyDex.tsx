@@ -61,20 +61,17 @@ useEffect(() => {
 }, [bounties]);
 
 async function loadBounties() {
+  const now = new Date().toISOString();
+
   const { data } = await supabase
     .from("bounties")
-    .select("*");
+    .select("*")
+    .gte("end_time", now);
 
   setBounties(data || []);
 }
 
-function getPreviewImage(bounty: any) {
-  return (
-    bounty.banner_url ||
-    bounty.image_url ||
-    "/placeholder.png"
-  );
-}
+
   async function loadDex() {
     try {
       const {
@@ -388,13 +385,14 @@ const regionStats: Record<
   <h1>📖 Team Shiny Dex</h1>
 
 {bounties.length > 0 && (
-  <div className="home-ticker">
+  <div
+    key={currentBounty}
+    className="home-ticker bounty-ticker homepage-rotator"
+  >
     <img
-      src={getPreviewImage(
-        bounties[currentBounty]
-      )}
-      className="event-card-image"
+      src={bounties[currentBounty]?.banner_url}
       alt=""
+      className="bounty-ticker-image"
     />
   </div>
 )}
