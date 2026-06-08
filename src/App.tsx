@@ -10,7 +10,8 @@ import {
 } from "react-router-dom";
 
 import { Analytics } from '@vercel/analytics/react';
-
+import { SpeedInsights } from '@vercel/speed-insights/react';
+ 
 import { supabase } from "./lib/supabase";
 import Members from "./pages/Members";
 import Home from "./pages/Home";
@@ -64,6 +65,14 @@ type ProfileData = {
   role: string;
 };
 
+export default function App() {
+  return (
+    <div>
+      {/* ... */}
+      <SpeedInsights />
+    </div>
+  );
+}
 export default function App() {
 
   const [profile, setProfile] =
