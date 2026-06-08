@@ -2323,7 +2323,7 @@ textarea:focus {
 }
 
 .bounty-ticker {
-  height: 220px;
+  height: 180px;
   overflow: hidden;
   padding: 0;
   display: flex;
@@ -2332,8 +2332,8 @@ textarea:focus {
 }
 
 .bounty-ticker-image {
-  width: 45%;
-  height: 45%;
+  width: 100%;
+  height: 180%;
   object-fit: contain;
   display: block;
 }
