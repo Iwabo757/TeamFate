@@ -181,31 +181,47 @@ const currentBountys =
     );
   }
 
-
 async function claimBounty() {
   if (
     !selectedBounty ||
     !claimedBy
-  )
-    return;
-
-  await supabase
-    .from("bounties")
-    .update({
-      claimed: true,
-      claimed_by: claimedBy,
-      claimed_at:
-        new Date().toISOString(),
-    })
-    .eq(
-      "id",
-      selectedBounty.id
+  ) {
+    alert(
+      "Please select a member."
     );
+    return;
+  }
+
+  const { error } =
+    await supabase
+      .from("bounties")
+      .update({
+        claimed: true,
+        claimed_by: claimedBy,
+        claimed_at:
+          new Date().toISOString(),
+      })
+      .eq(
+        "id",
+        selectedBounty.id
+      );
+
+  if (error) {
+    alert(error.message);
+    console.error(error);
+    return;
+  }
+
+  alert(
+    "Bounty claimed!"
+  );
+
+  setClaimModal(false);
+  setSelectedBounty(null);
+  setClaimedBy("");
 
   loadBountys();
-  setClaimModal(false);
 }
-
 
   async function deleteBounty(
     eventId: string
@@ -305,15 +321,21 @@ async function claimBounty() {
                 >
                   Edit
                 </button>
+
+
 <button
   className="save-winners-btn"
-  onClick={() => {
+  onClick={(e) => {
+    e.stopPropagation();
+
     setSelectedBounty(event);
     setClaimModal(true);
   }}
 >
   Claim Bounty
-</button>     <button
+</button>
+
+  <button
                   className="delete-btn"
                   onClick={() =>
                     deleteBounty(
@@ -379,7 +401,7 @@ async function claimBounty() {
   </div>
 )}
 
-      {selectedBounty && (
+      {selectedBounty && !claimModal && (
         <div
           className="modal-overlay"
           onClick={() =>
