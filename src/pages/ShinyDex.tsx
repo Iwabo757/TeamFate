@@ -66,7 +66,8 @@ async function loadBounties() {
   const { data } = await supabase
     .from("bounties")
     .select("*")
-    .gte("end_time", now);
+    .gte("end_time", now)
+    .eq("claimed", false);
 
   setBounties(data || []);
 }
@@ -384,36 +385,37 @@ const regionStats: Record<
 <div className="dex-header">
   <h1>📖 Team Shiny Dex</h1>
 
-<div
-  key={currentBounty}
-  className="home-ticker homepage-rotator"
->
-  <div className="ticker-event">
-    <h2>
-      🎯 {
+{bounties.length > 0 && (
+  <div
+    key={currentBounty}
+    className="home-ticker homepage-rotator"
+  >
+    <img
+      src={
         bounties[currentBounty]
-          ?.title
+          ?.banner_url
       }
-    </h2>
+      alt=""
+      className="ticker-image"
+    />
 
-    <p>
-      Prize: {
-        bounties[currentBounty]
-          ?.prize
-      }
-    </p>
+    <div className="ticker-content">
+      <div className="ticker-title">
+        🎯 {
+          bounties[currentBounty]
+            ?.title
+        }
+      </div>
 
-    <p>
-      Ends:
-      {" "}
-      {new Date(
-        bounties[currentBounty]
-          ?.end_time
-      ).toLocaleDateString()}
-    </p>
+      <div className="ticker-subtitle">
+        Prize: {
+          bounties[currentBounty]
+            ?.prize
+        }
+      </div>
+    </div>
   </div>
-</div>
-
+)}
 
 <p>
   {selectedRegion} Completion:
