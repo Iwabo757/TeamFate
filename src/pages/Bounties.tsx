@@ -29,23 +29,6 @@ claimed_by?: string;
 
 claimed_at?: string;
 
-
-  first_place?: string;
-  second_place?: string;
-  third_place?: string;
-  fourth_place?: string;
-
-  first_place_points?: number;
-  first_place_prize?: string;
-
-  second_place_points?: number;
-  second_place_prize?: string;
-
-  third_place_points?: number;
-  third_place_prize?: string;
-
-  fourth_place_points?: number;
-  fourth_place_prize?: string;
 };
 
 export default function Bountys() {
@@ -84,12 +67,13 @@ const [view, setView] =
   }, []);
 
 async function loadBounties() {
-  const now = new Date().toISOString();
 
-  const { data } = await supabase
-    .from("bounties")
-    .select("*")
-    .gte("end_time", now);
+const { data } = await supabase
+  .from("bounties")
+  .select("*")
+  .order("start_time", {
+    ascending: false,
+  });
 
   setBountys(data || []);
 
@@ -179,21 +163,24 @@ function getProfile(
 
   const now = new Date();
 
-  const upcomingBountys =
-    bounties.filter(
-      (event) =>
-        new Date(
-          event.end_time
-        ) > now
-    );
+const upcomingBountys =
+  bounties.filter(
+    (event) =>
+      new Date(
+        event.end_time
+      ) > now &&
+      !event.claimed
+  );
 
-  const pastBounties =
-    bounties.filter(
-      (event) =>
-        new Date(
-          event.end_time
-        ) <= now
-    );
+const pastBounties =
+  bounties.filter(
+    (event) =>
+      event.claimed ||
+      new Date(
+        event.end_time
+      ) <= now
+  );
+
 
   const displayedBountys =
     view === "upcoming"
@@ -304,9 +291,11 @@ function getProfile(
         ×
       </button>
 
-      {new Date(
-        selectedBounty.end_time
-      ) <= new Date() ? (
+      {selectedBounty.claimed ||
+ new Date(
+   selectedBounty.end_time
+ ) <= new Date() ? (
+
         <>
           <img
             src={getPreviewImage(
@@ -327,156 +316,77 @@ function getProfile(
 
 <div className="event-results">
 
-{(() => {
-  const profile = getProfile(
-    selectedBounty.first_place
-  );
+  {selectedBounty.claimed ? (
+    (() => {
+      const hunter =
+        getProfile(
+          selectedBounty.claimed_by
+        );
 
-  if (!profile) return null;
+      return (
+        <div className="winner-card first">
 
-  return (
-    <div className="winner-card first">
-      <img
-        src={profile.avatar_url}
-        className="winner-avatar"
-      />
+          {hunter && (
+            <img
+              src={
+                hunter.avatar_url
+              }
+              className="winner-avatar"
+            />
+          )}
 
-      <div className="winner-medal">
-        👑
-      </div>
+          <div className="winner-medal">
+            🎯
+          </div>
 
-      <h3>Champion</h3>
+          <h3>
+            Bounty Claimed
+          </h3>
 
-      <div className="winner-name">
-        {profile.nickname}
-      </div>
+          <div className="winner-name">
+            {hunter?.nickname ||
+              "Unknown Hunter"}
+          </div>
 
-      <div className="winner-points">
-        {selectedBounty.first_place_points || 0}
-        pts
-      </div>
+          <div className="winner-prize">
+            🎁 {
+              selectedBounty.prize
+            }
+          </div>
 
-      <div className="winner-prize">
-        🎁 {selectedBounty.first_place_prize}
-      </div>
-    </div>
-  );
-})()}
+          <p>
+            Claimed:
+            {" "}
+            {formatDate(
+              selectedBounty.claimed_at!
+            )}
+          </p>
 
-    
- {(() => {
-  const profile = getProfile(
-    selectedBounty.second_place
-  );
-
-  if (!profile) return null;
-
-  return (
-    <div className="winner-card second">
-      <img
-        src={profile.avatar_url}
-        className="winner-avatar"
-      />
-
-      <div className="winner-medal">
-        🥈
-      </div>
-
-      <h3>2nd Place</h3>
-
-      <div className="winner-name">
-        {profile.nickname}
-      </div>
-
-      <div className="winner-points">
-        {selectedBounty.second_place_points || 0}
-        pts
-      </div>
-
-      <div className="winner-prize">
-        🎁 {selectedBounty.second_place_prize}
-      </div>
-    </div>
-  );
-})()}
-
-
- {(() => {
-  const profile = getProfile(
-    selectedBounty.third_place
-  );
-
-  if (!profile) return null;
-
-  return (
-    <div className="winner-card third">
-      <img
-        src={profile.avatar_url}
-        className="winner-avatar"
-      />
-
-      <div className="winner-medal">
-         🥉
-      </div>
-
-      <h3>3rd Place</h3>
-
-      <div className="winner-name">
-        {profile.nickname}
-      </div>
-
-      <div className="winner-points">
-        {selectedBounty.third_place_points || 0}
-        pts
-      </div>
-
-      <div className="winner-prize">
-        🎁 {selectedBounty.third_place_prize}
-      </div>
-    </div>
-  );
-})()}
-
-
-    
- {(() => {
-  const profile = getProfile(
-    selectedBounty.fourth_place
-  );
-
-  if (!profile) return null;
-
-  return (
+        </div>
+      );
+    })()
+  ) : (
     <div className="winner-card fourth">
-      <img
-        src={profile.avatar_url}
-        className="winner-avatar"
-      />
 
       <div className="winner-medal">
-         🏅 
+        👻
       </div>
 
-      <h3>4th Place</h3>
+      <h3>
+        Bounty Got Away
+      </h3>
 
-      <div className="winner-name">
-        {profile.nickname}
-      </div>
+      <p>
+        Nobody claimed this
+        bounty before it
+        expired.
+      </p>
 
-      <div className="winner-points">
-        {selectedBounty.fourth_place_points || 0}
-        pts
-      </div>
-
-      <div className="winner-prize">
-        🎁 {selectedBounty.fourth_place_prize}
-      </div>
     </div>
-  );
-})()}
-
+  )}
 
 </div>
+
         </>
       ) : (
         <>
