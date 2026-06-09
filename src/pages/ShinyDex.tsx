@@ -387,24 +387,39 @@ const regionStats: Record<
 {bounties.length > 0 && (
 <div
   key={currentBounty}
-  className="home-ticker bounty-ticker homepage-rotator"
+  className="bounty-ticker"
 >
   <img
-    src={bounties[currentBounty]?.banner_url}
+    src={
+      bounties[currentBounty]
+        ?.banner_url
+    }
     alt=""
     className="bounty-ticker-image"
   />
 
   <div className="bounty-overlay">
     <h2>
-      {bounties[currentBounty]?.title}
+      {
+        bounties[currentBounty]
+          ?.title
+      }
     </h2>
 
     <p>
-      {bounties[currentBounty]?.claimed
+      {bounties[currentBounty]
+        ?.claimed
         ? "🎯 Claimed"
-        : "🔥 Active"}
+        : "🔥 Active Bounty"}
     </p>
+
+    <span>
+      Prize:{" "}
+      {
+        bounties[currentBounty]
+          ?.prize
+      }
+    </span>
   </div>
 </div>
 )}
