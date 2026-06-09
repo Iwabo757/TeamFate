@@ -47,7 +47,7 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (bounties.length <= 1) return;
+  if (bounties.length === 0) return;
 
   const interval = setInterval(() => {
     setCurrentBounty(
@@ -69,16 +69,7 @@ async function loadBounties() {
     .gte("end_time", now)
     .eq("claimed", false);
 
-  let bountyData = data || [];
-
-  if (bountyData.length === 1) {
-    bountyData = [
-      bountyData[0],
-      bountyData[0],
-    ];
-  }
-
-  setBounties(bountyData);
+  setBounties(data || []);
 }
 
 
