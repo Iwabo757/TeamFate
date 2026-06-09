@@ -388,7 +388,11 @@ const regionStats: Record<
 {bounties.length > 0 && (
   <div
     key={currentBounty}
-    className="home-ticker homepage-rotator"
+    className={`home-ticker ${
+  bounties.length > 1
+    ? "homepage-rotator"
+    : ""
+}`}
   >
     <img
       src={
