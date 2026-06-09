@@ -18,22 +18,11 @@ type BountyPost = {
   end_time: string;
   banner_url: string | null;
 
-  first_place?: string;
-  second_place?: string;
-  third_place?: string;
-  fourth_place?: string;
+claimed?: boolean;
 
-  first_place_points?: number;
-  first_place_prize?: string;
+claimed_by?: string;
 
-  second_place_points?: number;
-  second_place_prize?: string;
-
-  third_place_points?: number;
-  third_place_prize?: string;
-
-  fourth_place_points?: number;
-  fourth_place_prize?: string;
+claimed_at?: string;
 };
 
 export default function AdminPastBountys() {
@@ -41,8 +30,6 @@ export default function AdminPastBountys() {
   const [bounties, setBountys] =
     useState<BountyPost[]>([]);
 
-const [editingBounty, setEditingBounty] =
-  useState<BountyPost | null>(null);
 
 type Member = {
   id: string;
@@ -54,44 +41,6 @@ const [members, setMembers] =
   useState<Member[]>([]);
 
 
-
-
-const [firstPlace, setFirstPlace] =
-  useState("");
-
-const [secondPlace, setSecondPlace] =
-  useState("");
-
-const [thirdPlace, setThirdPlace] =
-  useState("");
-
-const [fourthPlace, setFourthPlace] =
-  useState("");
-const [firstPlacePoints, setFirstPlacePoints] =
-  useState("");
-
-const [firstPlacePrize, setFirstPlacePrize] =
-  useState("");
-
-
-
-const [secondPlacePoints, setSecondPlacePoints] =
-  useState("");
-
-const [secondPlacePrize, setSecondPlacePrize] =
-  useState("");
-
-const [thirdPlacePoints, setThirdPlacePoints] =
-  useState("");
-
-const [thirdPlacePrize, setThirdPlacePrize] =
-  useState("");
-
-const [fourthPlacePoints, setFourthPlacePoints] =
-  useState("");
-
-const [fourthPlacePrize, setFourthPlacePrize] =
-  useState("");
 
 
 
@@ -138,13 +87,14 @@ setMembers(
   memberData || []
 );
 
-    const pastBountys =
-      data.filter(
-        (event) =>
-          new Date(
-            event.end_time
-          ) <= now
-      );
+const pastBountys =
+  data.filter(
+    (event) =>
+      new Date(
+        event.end_time
+      ) <= now ||
+      event.claimed
+  );
 
     setBountys(pastBountys);
 
@@ -239,68 +189,14 @@ setMembers(
     );
   }
 
-async function saveWinners() {
-  if (!editingBounty) return;
-
-const payload = {
-  first_place: firstPlace,
-  first_place_points:
-    Number(firstPlacePoints) || 0,
-  first_place_prize:
-    firstPlacePrize,
-
-  second_place: secondPlace,
-  second_place_points:
-    Number(secondPlacePoints) || 0,
-  second_place_prize:
-    secondPlacePrize,
-
-  third_place: thirdPlace,
-  third_place_points:
-    Number(thirdPlacePoints) || 0,
-  third_place_prize:
-    thirdPlacePrize,
-
-  fourth_place: fourthPlace,
-  fourth_place_points:
-    Number(fourthPlacePoints) || 0,
-  fourth_place_prize:
-    fourthPlacePrize,
-};
-
-  console.log(
-    "SAVING WINNERS:",
-    payload
+function getMember(
+  profileId?: string
+) {
+  return members.find(
+    (m) => m.id === profileId
   );
-
-  const { error } =
-    await supabase
-      .from("bounties")
-      .update(payload)
-      .eq(
-        "id",
-        editingBounty.id
-      );
-
-  if (error) {
-    console.error(error);
-
-    alert(
-      "Failed to save winners:\n" +
-      error.message
-    );
-
-    return;
-  }
-
-  alert(
-    "Winners saved successfully!"
-  );
-
-  await loadBountys();
-
-  setEditingBounty(null);
 }
+
 
   async function deleteBounty(
     eventId: string
@@ -389,51 +285,6 @@ const payload = {
 
               <div className="event-admin-actions">
       
-<button
-  className="edit-btn"
-onClick={() => {
-  setEditingBounty(event);
-
-  setFirstPlace(event.first_place || "");
-  setSecondPlace(event.second_place || "");
-  setThirdPlace(event.third_place || "");
-  setFourthPlace(event.fourth_place || "");
-
-  setFirstPlacePoints(
-    String(event.first_place_points || "")
-  );
-
-  setFirstPlacePrize(
-    event.first_place_prize || ""
-  );
-
-  setSecondPlacePoints(
-    String(event.second_place_points || "")
-  );
-
-  setSecondPlacePrize(
-    event.second_place_prize || ""
-  );
-
-  setThirdPlacePoints(
-    String(event.third_place_points || "")
-  );
-
-  setThirdPlacePrize(
-    event.third_place_prize || ""
-  );
-
-  setFourthPlacePoints(
-    String(event.fourth_place_points || "")
-  );
-
-  setFourthPlacePrize(
-    event.fourth_place_prize || ""
-  );
-}}
->
-  Edit Winners
-</button>
                 <button
                   className="delete-btn"
                   onClick={() =>
@@ -449,119 +300,11 @@ onClick={() => {
           )
         )}
       </div>
-
-      {selectedBounty && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setSelectedBounty(null)
-          }
-        >
-          <div
-            className="event-modal"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <button
-              className="close-btn"
-              onClick={() =>
-                setSelectedBounty(
-                  null
-                )
-              }
-            >
-              ×
-            </button>
-
-            <h2>
-              {
-                selectedBounty.title
-              }
-            </h2>
-
-            <p>
-              <strong>
-                Starts:
-              </strong>{" "}
-              {formatDate(
-                selectedBounty.start_time
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Ends:
-              </strong>{" "}
-              {formatDate(
-                selectedBounty.end_time
-              )}
-            </p>
-
-            <p>
-              <strong>
-                Prize:
-              </strong>{" "}
-              {
-                selectedBounty.prize
-              }
-            </p>
-
-            <hr />
-
-            {blocks[
-              selectedBounty.id
-            ]?.map(
-              (block) => (
-                <div
-                  key={
-                    block.id
-                  }
-                  style={{
-                    marginBottom:
-                      "20px",
-                  }}
-                >
-                  {block.block_type ===
-                  "text" ? (
-                    <div
-                      style={{
-                        whiteSpace:
-                          "pre-wrap",
-                        lineHeight:
-                          1.7,
-                      }}
-                    >
-                      {
-                        block.content
-                      }
-                    </div>
-                  ) : (
-                    <img
-                      src={
-                        block.content
-                      }
-                      alt=""
-                      style={{
-                        width:
-                          "100%",
-                        borderRadius:
-                          "12px",
-                      }}
-                    />
-                  )}
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
-
-{editingBounty && (
+{selectedBounty && (
   <div
     className="modal-overlay"
     onClick={() =>
-      setEditingBounty(null)
+      setSelectedBounty(null)
     }
   >
     <div
@@ -570,194 +313,127 @@ onClick={() => {
         e.stopPropagation()
       }
     >
-      <h2 className="winner-title">
-  🏆 Edit Bounty Winners
-</h2>
-
-<div className="winner-editor">
-
-  {/* 1st */}
-  <select
-    className="dex-select"
-    value={firstPlace}
-    onChange={(e) =>
-      setFirstPlace(e.target.value)
-    }
-  >
-    <option value="">1st Place</option>
-    {members.map((member) => (
-      <option
-        key={member.id}
-        value={member.id}
+      <button
+        className="close-btn"
+        onClick={() =>
+          setSelectedBounty(null)
+        }
       >
-        {member.nickname}
-      </option>
-    ))}
-  </select>
+        ×
+      </button>
 
-  <input
-    type="number"
-    className="dex-select"
-    placeholder="Points"
-    value={firstPlacePoints}
-    onChange={(e) =>
-      setFirstPlacePoints(
-        e.target.value
-      )
-    }
-  />
+      <img
+        src={getPreviewImage(
+          selectedBounty
+        )}
+        className="results-banner"
+        alt=""
+      />
 
-  <input
-    type="text"
-    className="dex-select"
-    placeholder="Prize Won"
-    value={firstPlacePrize}
-    onChange={(e) =>
-      setFirstPlacePrize(
-        e.target.value
-      )
-    }
-  />
-
-  {/* 2nd */}
-  <select
-    className="dex-select"
-    value={secondPlace}
-    onChange={(e) =>
-      setSecondPlace(e.target.value)
-    }
-  >
-    <option value="">2nd Place</option>
-    {members.map((member) => (
-      <option
-        key={member.id}
-        value={member.id}
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "20px",
+        }}
       >
-        {member.nickname}
-      </option>
-    ))}
-  </select>
+        {selectedBounty.title}
+      </h2>
 
-  <input
-    type="number"
-    className="dex-select"
-    placeholder="Points"
-    value={secondPlacePoints}
-    onChange={(e) =>
-      setSecondPlacePoints(
-        e.target.value
-      )
-    }
-  />
+      {selectedBounty.claimed ? (
+        <div className="winner-card first">
+          <h2>
+            🎯 Bounty Claimed
+          </h2>
 
-  <input
-    type="text"
-    className="dex-select"
-    placeholder="Prize Won"
-    value={secondPlacePrize}
-    onChange={(e) =>
-      setSecondPlacePrize(
-        e.target.value
-      )
-    }
-  />
+          {(() => {
+            const hunter =
+              getMember(
+                selectedBounty.claimed_by
+              );
 
-  {/* 3rd */}
-  <select
-    className="dex-select"
-    value={thirdPlace}
-    onChange={(e) =>
-      setThirdPlace(e.target.value)
-    }
-  >
-    <option value="">3rd Place</option>
-    {members.map((member) => (
-      <option
-        key={member.id}
-        value={member.id}
-      >
-        {member.nickname}
-      </option>
-    ))}
-  </select>
+            if (!hunter)
+              return null;
 
-  <input
-    type="number"
-    className="dex-select"
-    placeholder="Points"
-    value={thirdPlacePoints}
-    onChange={(e) =>
-      setThirdPlacePoints(
-        e.target.value
-      )
-    }
-  />
+            return (
+              <>
+                <img
+                  src={
+                    hunter.avatar_url
+                  }
+                  className="winner-avatar"
+                />
 
-  <input
-    type="text"
-    className="dex-select"
-    placeholder="Prize Won"
-    value={thirdPlacePrize}
-    onChange={(e) =>
-      setThirdPlacePrize(
-        e.target.value
-      )
-    }
-  />
+                <h3>
+                  {
+                    hunter.nickname
+                  }
+                </h3>
 
-  {/* 4th */}
-  <select
-    className="dex-select"
-    value={fourthPlace}
-    onChange={(e) =>
-      setFourthPlace(e.target.value)
-    }
-  >
-    <option value="">4th Place</option>
-    {members.map((member) => (
-      <option
-        key={member.id}
-        value={member.id}
-      >
-        {member.nickname}
-      </option>
-    ))}
-  </select>
+                <p>
+                  Claimed:
+                  {" "}
+                  {formatDate(
+                    selectedBounty.claimed_at!
+                  )}
+                </p>
+              </>
+            );
+          })()}
+        </div>
+      ) : (
+        <div className="winner-card fourth">
+          <h2>
+            👻 Bounty Got Away
+          </h2>
 
-  <input
-    type="number"
-    className="dex-select"
-    placeholder="Points"
-    value={fourthPlacePoints}
-    onChange={(e) =>
-      setFourthPlacePoints(
-        e.target.value
-      )
-    }
-  />
+          <p>
+            Nobody claimed
+            this bounty
+            before it
+            expired.
+          </p>
+        </div>
+      )}
 
-  <input
-    type="text"
-    className="dex-select"
-    placeholder="Prize Won"
-    value={fourthPlacePrize}
-    onChange={(e) =>
-      setFourthPlacePrize(
-        e.target.value
-      )
-    }
-  />
+      <hr />
 
-  {/* 3rd and 4th continue the same way */}
-
-  <button
-    className="save-winners-btn"
-    onClick={saveWinners}
-  >
-    Save Winners
-  </button>
-
-</div>
+      {blocks[
+        selectedBounty.id
+      ]?.map((block) => (
+        <div
+          key={block.id}
+          style={{
+            marginBottom:
+              "20px",
+          }}
+        >
+          {block.block_type ===
+          "text" ? (
+            <div
+              style={{
+                whiteSpace:
+                  "pre-wrap",
+                lineHeight: 1.7,
+              }}
+            >
+              {block.content}
+            </div>
+          ) : (
+            <img
+              src={
+                block.content
+              }
+              alt=""
+              style={{
+                width:
+                  "100%",
+                borderRadius:
+                  "12px",
+              }}
+            />
+          )}
+        </div>
+      ))}
     </div>
   </div>
 )}

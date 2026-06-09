@@ -18,6 +18,9 @@ type BountyPost = {
   start_time: string;
   end_time: string;
   banner_url: string | null;
+claimed?: boolean;
+claimed_by?: string;
+claimed_at?: string;
 };
 
 export default function AdminCurrentBountys() {
@@ -30,6 +33,17 @@ export default function AdminCurrentBountys() {
     useState<
       Record<string, BountyBlock[]>
     >({});
+
+const [members, setMembers] =
+  useState<any[]>([]);
+
+const [claimModal, setClaimModal] =
+  useState(false);
+
+const [claimedBy, setClaimedBy] =
+  useState("");
+
+
 
   const [
     selectedBounty,
@@ -53,15 +67,25 @@ export default function AdminCurrentBountys() {
 
     if (!data) return;
 
+const { data: memberData } =
+  await supabase
+    .from("profiles")
+    .select(`
+      id,
+      nickname,
+      avatar_url
+    `)
+    .order("nickname");
     const now = new Date();
 
-    const currentBountys =
-      data.filter(
-        (event) =>
-          new Date(
-            event.end_time
-          ) > now
-      );
+setMembers(memberData || []);
+
+const currentBountys =
+  data.filter(
+    (event) =>
+      new Date(event.end_time) > now &&
+      !event.claimed
+  );
 
     setBountys(currentBountys);
 
@@ -137,6 +161,7 @@ export default function AdminCurrentBountys() {
   }
 
   function getPreviewImage(
+
     event: BountyPost
   ) {
     const eventBlocks =
@@ -155,6 +180,32 @@ export default function AdminCurrentBountys() {
       "/placeholder.png"
     );
   }
+
+
+async function claimBounty() {
+  if (
+    !selectedBounty ||
+    !claimedBy
+  )
+    return;
+
+  await supabase
+    .from("bounties")
+    .update({
+      claimed: true,
+      claimed_by: claimedBy,
+      claimed_at:
+        new Date().toISOString(),
+    })
+    .eq(
+      "id",
+      selectedBounty.id
+    );
+
+  loadBountys();
+  setClaimModal(false);
+}
+
 
   async function deleteBounty(
     eventId: string
@@ -254,8 +305,15 @@ export default function AdminCurrentBountys() {
                 >
                   Edit
                 </button>
-
-                <button
+<button
+  className="save-winners-btn"
+  onClick={() => {
+    setSelectedBounty(event);
+    setClaimModal(true);
+  }}
+>
+  Claim Bounty
+</button>     <button
                   className="delete-btn"
                   onClick={() =>
                     deleteBounty(
@@ -270,6 +328,56 @@ export default function AdminCurrentBountys() {
           )
         )}
       </div>
+
+{claimModal && (
+  <div
+    className="modal-overlay"
+    onClick={() =>
+      setClaimModal(false)
+    }
+  >
+    <div
+      className="event-modal"
+      onClick={(e) =>
+        e.stopPropagation()
+      }
+    >
+      <h2>
+        Claim Bounty
+      </h2>
+
+      <select
+        className="dex-select"
+        value={claimedBy}
+        onChange={(e) =>
+          setClaimedBy(
+            e.target.value
+          )
+        }
+      >
+        <option value="">
+          Select Member
+        </option>
+
+        {members.map((member) => (
+          <option
+            key={member.id}
+            value={member.id}
+          >
+            {member.nickname}
+          </option>
+        ))}
+      </select>
+
+      <button
+        className="save-winners-btn"
+        onClick={claimBounty}
+      >
+        Claim
+      </button>
+    </div>
+  </div>
+)}
 
       {selectedBounty && (
         <div

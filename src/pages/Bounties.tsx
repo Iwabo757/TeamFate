@@ -23,6 +23,13 @@ type BountyPost = {
   end_time: string;
   banner_url: string | null;
 
+claimed?: boolean;
+
+claimed_by?: string;
+
+claimed_at?: string;
+
+
   first_place?: string;
   second_place?: string;
   third_place?: string;
