@@ -69,7 +69,16 @@ async function loadBounties() {
     .gte("end_time", now)
     .eq("claimed", false);
 
-  setBounties(data || []);
+  let bountyData = data || [];
+
+  if (bountyData.length === 1) {
+    bountyData = [
+      bountyData[0],
+      bountyData[0],
+    ];
+  }
+
+  setBounties(bountyData);
 }
 
 
