@@ -413,7 +413,7 @@ const regionStats: Record<
     </p>
   </div>
 </div>
-}}
+
 
 <p>
   {selectedRegion} Completion:
