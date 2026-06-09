@@ -2346,9 +2346,9 @@ textarea:focus {
 
 .bounty-ticker-image {
   width: 100%;
-  height: 210px;
+  height: 100%;
 
-  object-fit: cover;
+  object-fit: contain;
 
   display: block;
 }
