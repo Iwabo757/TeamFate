@@ -385,16 +385,28 @@ const regionStats: Record<
   <h1>📖 Team Shiny Dex</h1>
 
 {bounties.length > 0 && (
-  <div
-    key={currentBounty}
-    className="home-ticker bounty-ticker homepage-rotator"
-  >
-    <img
-      src={bounties[currentBounty]?.banner_url}
-      alt=""
-      className="bounty-ticker-image"
-    />
+<div
+  key={currentBounty}
+  className="home-ticker bounty-ticker homepage-rotator"
+>
+  <img
+    src={bounties[currentBounty]?.banner_url}
+    alt=""
+    className="bounty-ticker-image"
+  />
+
+  <div className="bounty-overlay">
+    <h2>
+      {bounties[currentBounty]?.title}
+    </h2>
+
+    <p>
+      {bounties[currentBounty]?.claimed
+        ? "🎯 Claimed"
+        : "🔥 Active"}
+    </p>
   </div>
+</div>
 )}
 
 <p>
