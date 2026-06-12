@@ -414,7 +414,9 @@ function canManageSite(
 <Link to="/admin-raids">
   Raid Dashboard
 </Link>
-
+<Link to="/admin-raid-guides">
+  Raid Guides
+</Link>
     <Link to="/admin/members">
       Manage Members
     </Link>

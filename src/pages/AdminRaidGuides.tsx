@@ -27,15 +27,62 @@ export default function AdminRaidGuides() {
     await supabase
       .from("raid_guides")
       .update({
+        raid_name:
+          guide.raid_name,
+
+        guide_name:
+          guide.guide_name,
+
         guide_url:
           guide.guide_url,
 
         notes:
           guide.notes,
+
+        display_order:
+          guide.display_order,
       })
       .eq("id", guide.id);
 
-    alert("Saved");
+    loadGuides();
+  }
+
+  async function deleteGuide(
+    id: number
+  ) {
+    if (
+      !confirm(
+        "Delete guide?"
+      )
+    )
+      return;
+
+    await supabase
+      .from("raid_guides")
+      .delete()
+      .eq("id", id);
+
+    loadGuides();
+  }
+
+  async function createGuide() {
+    await supabase
+      .from("raid_guides")
+      .insert({
+        raid_name:
+          "New Raid",
+
+        guide_name:
+          "New Guide",
+
+        guide_url: "",
+
+        notes: "",
+
+        display_order: 999,
+      });
+
+    loadGuides();
   }
 
   return (
@@ -44,22 +91,74 @@ export default function AdminRaidGuides() {
         Manage Raid Guides
       </h1>
 
+      <button
+        className="save-btn"
+        onClick={
+          createGuide
+        }
+      >
+        Add Guide
+      </button>
+
       {guides.map(
         (guide, index) => (
           <div
             key={guide.id}
             className="admin-card"
+            style={{
+              marginTop:
+                "20px",
+            }}
           >
-            <h3>
-              {
+            <input
+              value={
+                guide.raid_name
+              }
+              placeholder="Raid"
+              onChange={(e) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].raid_name =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <input
+              value={
                 guide.guide_name
               }
-            </h3>
+              placeholder="Guide Name"
+              onChange={(e) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].guide_name =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
 
             <input
               value={
                 guide.guide_url
               }
+              placeholder="Google Doc URL"
               onChange={(e) => {
                 const copy =
                   [
@@ -82,6 +181,7 @@ export default function AdminRaidGuides() {
                 guide.notes ||
                 ""
               }
+              placeholder="Notes"
               onChange={(e) => {
                 const copy =
                   [
@@ -99,16 +199,61 @@ export default function AdminRaidGuides() {
               }}
             />
 
-            <button
-              className="save-btn"
-              onClick={() =>
-                saveGuide(
-                  guide
-                )
+            <input
+              type="number"
+              value={
+                guide.display_order
               }
+              onChange={(e) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].display_order =
+                  Number(
+                    e.target.value
+                  );
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <div
+              style={{
+                display:
+                  "flex",
+                gap: "10px",
+                marginTop:
+                  "10px",
+              }}
             >
-              Save
-            </button>
+              <button
+                className="save-btn"
+                onClick={() =>
+                  saveGuide(
+                    guide
+                  )
+                }
+              >
+                Save
+              </button>
+
+              <button
+                className="delete-btn"
+                onClick={() =>
+                  deleteGuide(
+                    guide.id
+                  )
+                }
+              >
+                Delete
+              </button>
+            </div>
           </div>
         )
       )}

@@ -9,9 +9,35 @@ type Guide = {
   notes: string | null;
 };
 
+function getEmbedUrl(
+  url: string
+) {
+  try {
+    const match =
+      url.match(
+        /\/d\/([^/]+)\//
+      );
+
+    if (!match)
+      return url;
+
+    return `https://docs.google.com/document/d/${match[1]}/preview`;
+  } catch {
+    return url;
+  }
+}
+
 export default function RaidGuides() {
   const [guides, setGuides] =
     useState<Guide[]>([]);
+
+  const [
+    selectedGuide,
+    setSelectedGuide,
+  ] =
+    useState<Guide | null>(
+      null
+    );
 
   useEffect(() => {
     loadGuides();
@@ -56,21 +82,80 @@ export default function RaidGuides() {
                 </p>
               )}
 
-              <a
-                href={
-                  guide.guide_url
+              <button
+                className="save-btn"
+                onClick={() =>
+                  setSelectedGuide(
+                    guide
+                  )
                 }
-                target="_blank"
-                rel="noreferrer"
               >
-                <button className="save-btn">
-                  Open Guide
-                </button>
-              </a>
+                Open Guide
+              </button>
             </div>
           )
         )}
       </div>
+
+      {selectedGuide && (
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setSelectedGuide(
+              null
+            )
+          }
+        >
+          <div
+            className="event-modal"
+            style={{
+              width:
+                "95vw",
+              maxWidth:
+                "1400px",
+              height:
+                "90vh",
+            }}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <button
+              className="close-btn"
+              onClick={() =>
+                setSelectedGuide(
+                  null
+                )
+              }
+            >
+              ×
+            </button>
+
+            <h2>
+              {
+                selectedGuide.guide_name
+              }
+            </h2>
+
+            <iframe
+              title="guide"
+              src={getEmbedUrl(
+                selectedGuide.guide_url
+              )}
+              style={{
+                width:
+                  "100%",
+                height:
+                  "80vh",
+                border:
+                  "none",
+                borderRadius:
+                  "12px",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
