@@ -140,51 +140,32 @@ const filtered =
         Ready Raiders
       </h1>
 
-      <div
-        style={{
-          maxWidth: "300px",
-          margin: "20px auto",
-        }}
-      >
-        <select
-          value={selectedRaid}
-          onChange={(e) =>
-            setSelectedRaid(
-              e.target.value
-            )
-          }
-        >
-          <option>
-            Heatran
-          </option>
-
-          <option>
-            Cresselia
-          </option>
-
-          <option>
-            Meloetta
-          </option>
-
-          <option>
-            Virizion
-          </option>
-
-          <option>
-            Terrakion
-          </option>
-
-          <option>
-            Cobalion
-          </option>
-        </select>
-      </div>
 <div
   style={{
-    maxWidth: "500px",
-    margin: "0 auto 20px",
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "20px",
   }}
 >
+  <select
+    value={selectedRaid}
+    onChange={(e) =>
+      setSelectedRaid(
+        e.target.value
+      )
+    }
+  >
+    <option>Heatran</option>
+    <option>Cresselia</option>
+    <option>Meloetta</option>
+    <option>Virizion</option>
+    <option>Terrakion</option>
+    <option>Cobalion</option>
+  </select>
+
   <input
     type="text"
     className="dex-search"
@@ -195,15 +176,11 @@ const filtered =
         e.target.value
       )
     }
+    style={{
+      maxWidth: "250px",
+    }}
   />
-</div>
 
-<div
-  style={{
-    textAlign: "center",
-    marginBottom: "20px",
-  }}
->
   <select
     value={partFilter}
     onChange={(e) =>
@@ -212,29 +189,12 @@ const filtered =
       )
     }
   >
-    <option>
-      All
-    </option>
-
-    <option>
-      P1
-    </option>
-
-    <option>
-      P2
-    </option>
-
-    <option>
-      P3
-    </option>
-
-    <option>
-      P4
-    </option>
-
-    <option>
-      Any
-    </option>
+    <option>All</option>
+    <option>P1</option>
+    <option>P2</option>
+    <option>P3</option>
+    <option>P4</option>
+    <option>Any</option>
   </select>
 </div>
 
@@ -252,17 +212,18 @@ const filtered =
     }
     alt=""
     style={{
-      width: "100px",
-      height: "100px",
-      objectFit:
-        "contain",
+      width: "70px",
+      height: "70px",
+      objectFit: "contain",
     }}
   />
 
-  <h2>
-    {selectedRaid}
-    {" "}
-    Ready (
+  <h2
+    style={{
+      marginTop: "5px",
+    }}
+  >
+    {selectedRaid} Ready (
     {filtered.length})
   </h2>
 </div>
@@ -282,7 +243,10 @@ const filtered =
           ) => (
             <div
               key={index}
-              className="admin-card"
+className="admin-card"
+style={{
+  padding: "12px",
+}}
             >
               {raider.avatar_url && (
                 <img
@@ -294,11 +258,13 @@ const filtered =
                 />
               )}
 
-              <h3>
-                {
-                  raider.nickname
-                }
-              </h3>
+<h3
+  style={{
+    margin: "8px 0",
+  }}
+>
+  {raider.nickname}
+</h3>
 
               <p>
                 Parts:

@@ -490,6 +490,24 @@ function canManageSite(
       </Link>
 
       <Link
+        to="/raid-overview"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Raid Overview
+      </Link>
+
+      <Link
+        to="/raid-tracker"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        My Raid Status
+      </Link>
+
+      <Link
         to="/board"
         onClick={() =>
           setMobileOpen(false)
