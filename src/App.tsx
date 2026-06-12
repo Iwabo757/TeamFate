@@ -61,6 +61,9 @@ import RaidBuilder from "./pages/RaidBuilder";
 import AdminRaidDashboard from "./pages/AdminRaidDashboard";
 import RaidOverview from "./pages/RaidOverview";
 
+import RaidGuides from "./pages/RaidGuides";
+import AdminRaidGuides from "./pages/AdminRaidGuides";
+
 type ProfileData = {
   id: string;
   username: string;
@@ -363,7 +366,9 @@ function canManageSite(
 <Link to="/raid-builder">
   Raid Builder
 </Link>
-
+<Link to="/raid-guides">
+  Guides
+</Link>
   </div>
 </li>
 
@@ -505,6 +510,16 @@ function canManageSite(
         }
       >
         My Raid Status
+      </Link>
+
+
+      <Link
+        to="/raid-guides"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Raid Guides
       </Link>
 
       <Link
@@ -775,6 +790,17 @@ function canManageSite(
 <Route
   path="/raid-overview"
   element={<RaidOverview />}
+/>
+<Route
+  path="/raid-guides"
+  element={<RaidGuides />}
+/>
+
+<Route
+  path="/admin-raid-guides"
+  element={
+    <AdminRaidGuides />
+  }
 />
           <Route
             path="/profile"
