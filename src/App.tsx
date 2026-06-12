@@ -56,6 +56,7 @@ import EditShinyWar from "./pages/EditShinyWar";
 import ManageShinyWarTeams from "./pages/ManageShinyWarTeams";
 
 import RaidTracker from "./pages/RaidTracker";
+import ReadyRaiders from "./pages/ReadyRaiders";
 import RaidBuilder from "./pages/RaidBuilder";
 import AdminRaidDashboard from "./pages/AdminRaidDashboard";
 import RaidOverview from "./pages/RaidOverview";
@@ -739,7 +740,10 @@ function canManageSite(
   path="/raid-tracker"
   element={<RaidTracker />}
 />
-
+<Route
+  path="/ready-raiders"
+  element={<ReadyRaiders />}
+/>
 <Route
   path="/raid-builder"
   element={<RaidBuilder />}
