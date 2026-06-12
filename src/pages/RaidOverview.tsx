@@ -2,6 +2,29 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+const RAID_SPRITES: Record<
+  string,
+  string
+> = {
+  Heatran:
+    "https://img.pokemondb.net/sprites/home/normal/heatran.png",
+
+  Cresselia:
+    "https://img.pokemondb.net/sprites/home/normal/cresselia.png",
+
+  Meloetta:
+    "https://img.pokemondb.net/sprites/home/normal/meloetta.png",
+
+  Virizion:
+    "https://img.pokemondb.net/sprites/home/normal/virizion.png",
+
+  Terrakion:
+    "https://img.pokemondb.net/sprites/home/normal/terrakion.png",
+
+  Cobalion:
+    "https://img.pokemondb.net/sprites/home/normal/cobalion.png",
+};
+
 interface RaidSummary {
   name: string;
   ready: number;
@@ -175,48 +198,113 @@ export default function RaidOverview() {
         Raid Overview
       </h1>
 
-      <div className="admin-grid">
+<div
+  className="admin-grid"
+  style={{
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "15px",
+  }}
+>
         {raids.map((raid) => (
           <div
             key={raid.name}
             className="admin-card"
           >
-            <h2>
-              {raid.name}
-            </h2>
+<div
+  style={{
+    textAlign: "center",
+    marginBottom: "10px",
+  }}
+>
+  <img
+    src={
+      RAID_SPRITES[
+        raid.name
+      ]
+    }
+    alt={raid.name}
+    style={{
+      width: "90px",
+      height: "90px",
+      objectFit:
+        "contain",
+      marginBottom:
+        "8px",
+    }}
+  />
 
-            <h3>
-              Ready:{" "}
-              {raid.ready}
-            </h3>
+  <h2>
+    {raid.name}
+  </h2>
+</div>
 
-            <div
-              style={{
-                marginTop:
-                  "15px",
-                lineHeight: 1.8,
-              }}
-            >
-              <div>
-                P1: {raid.p1}
-              </div>
+<div
+  style={{
+    textAlign: "center",
+    marginBottom:
+      "10px",
+  }}
+>
+  <span
+    className="rank-badge"
+  >
+    Ready:
+    {" "}
+    {raid.ready}
+  </span>
+</div>
 
-              <div>
-                P2: {raid.p2}
-              </div>
+<div
+  style={{
+    marginTop: "10px",
 
-              <div>
-                P3: {raid.p3}
-              </div>
+    display: "grid",
 
-              <div>
-                P4: {raid.p4}
-              </div>
+    gridTemplateColumns:
+      "repeat(2, 1fr)",
 
-              <div>
-                Any:{" "}
-                {raid.any}
-              </div>
+    gap: "6px",
+
+    textAlign:
+      "center",
+  }}
+>
+            
+<div>
+  P1
+  <br />
+  {raid.p1}
+</div>
+
+<div>
+  P2
+  <br />
+  {raid.p2}
+</div>
+
+<div>
+  P3
+  <br />
+  {raid.p3}
+</div>
+
+<div>
+  P4
+  <br />
+  {raid.p4}
+</div>
+
+<div
+  style={{
+    gridColumn:
+      "span 2",
+  }}
+>
+  Any
+  <br />
+  {raid.any}
+</div>
             </div>
 
             <Link

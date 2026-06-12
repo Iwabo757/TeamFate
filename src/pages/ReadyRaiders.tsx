@@ -8,6 +8,29 @@ type Raider = {
   parts: string[];
 };
 
+const RAID_SPRITES: Record<
+  string,
+  string
+> = {
+  Heatran:
+    "https://img.pokemondb.net/sprites/home/normal/heatran.png",
+
+  Cresselia:
+    "https://img.pokemondb.net/sprites/home/normal/cresselia.png",
+
+  Meloetta:
+    "https://img.pokemondb.net/sprites/home/normal/meloetta.png",
+
+  Virizion:
+    "https://img.pokemondb.net/sprites/home/normal/virizion.png",
+
+  Terrakion:
+    "https://img.pokemondb.net/sprites/home/normal/terrakion.png",
+
+  Cobalion:
+    "https://img.pokemondb.net/sprites/home/normal/cobalion.png",
+};
+
 export default function ReadyRaiders() {
   const [raiders, setRaiders] =
     useState<Raider[]>([]);
@@ -15,6 +38,11 @@ export default function ReadyRaiders() {
   const [selectedRaid, setSelectedRaid] =
     useState("Heatran");
 
+const [search, setSearch] =
+  useState("");
+
+const [partFilter, setPartFilter] =
+  useState("All");
   useEffect(() => {
     loadRaiders();
   }, []);
@@ -79,11 +107,31 @@ export default function ReadyRaiders() {
     setRaiders(ready);
   }
 
-  const filtered =
-    raiders.filter(
+const filtered =
+  raiders
+    .filter(
       (r) =>
         r.raid_name ===
         selectedRaid
+    )
+    .filter((r) =>
+      r.nickname
+        ?.toLowerCase()
+        .includes(
+          search.toLowerCase()
+        )
+    )
+    .filter((r) =>
+      partFilter === "All"
+        ? true
+        : r.parts.includes(
+            partFilter
+          )
+    )
+    .sort((a, b) =>
+      a.nickname.localeCompare(
+        b.nickname
+      )
     );
 
   return (
@@ -131,19 +179,102 @@ export default function ReadyRaiders() {
           </option>
         </select>
       </div>
+<div
+  style={{
+    maxWidth: "500px",
+    margin: "0 auto 20px",
+  }}
+>
+  <input
+    type="text"
+    className="dex-search"
+    placeholder="Search member..."
+    value={search}
+    onChange={(e) =>
+      setSearch(
+        e.target.value
+      )
+    }
+  />
+</div>
 
-      <h2
-        style={{
-          textAlign: "center",
-        }}
-      >
-        {selectedRaid}
-        {" "}
-        Ready (
-        {filtered.length})
-      </h2>
+<div
+  style={{
+    textAlign: "center",
+    marginBottom: "20px",
+  }}
+>
+  <select
+    value={partFilter}
+    onChange={(e) =>
+      setPartFilter(
+        e.target.value
+      )
+    }
+  >
+    <option>
+      All
+    </option>
 
-      <div className="admin-grid">
+    <option>
+      P1
+    </option>
+
+    <option>
+      P2
+    </option>
+
+    <option>
+      P3
+    </option>
+
+    <option>
+      P4
+    </option>
+
+    <option>
+      Any
+    </option>
+  </select>
+</div>
+
+<div
+  style={{
+    textAlign: "center",
+    marginBottom: "20px",
+  }}
+>
+  <img
+    src={
+      RAID_SPRITES[
+        selectedRaid
+      ]
+    }
+    alt=""
+    style={{
+      width: "100px",
+      height: "100px",
+      objectFit:
+        "contain",
+    }}
+  />
+
+  <h2>
+    {selectedRaid}
+    {" "}
+    Ready (
+    {filtered.length})
+  </h2>
+</div>
+
+<div
+  className="admin-grid"
+  style={{
+    gridTemplateColumns:
+      "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "15px",
+  }}
+>
         {filtered.map(
           (
             raider,
@@ -173,11 +304,26 @@ export default function ReadyRaiders() {
                 Parts:
               </p>
 
-              <div>
-                {raider.parts.join(
-                  ", "
-                )}
-              </div>
+<div
+  style={{
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+    justifyContent:
+      "center",
+  }}
+>
+  {raider.parts.map(
+    (part) => (
+      <span
+        key={part}
+        className="rank-badge"
+      >
+        {part}
+      </span>
+    )
+  )}
+</div>
             </div>
           )
         )}

@@ -24,6 +24,29 @@ const PARTS = [
   "N/A",
 ];
 
+const RAID_SPRITES: Record<
+  string,
+  string
+> = {
+  Heatran:
+    "https://img.pokemondb.net/sprites/home/normal/heatran.png",
+
+  Cresselia:
+    "https://img.pokemondb.net/sprites/home/normal/cresselia.png",
+
+  Meloetta:
+    "https://img.pokemondb.net/sprites/home/normal/meloetta.png",
+
+  Virizion:
+    "https://img.pokemondb.net/sprites/home/normal/virizion.png",
+
+  Terrakion:
+    "https://img.pokemondb.net/sprites/home/normal/terrakion.png",
+
+  Cobalion:
+    "https://img.pokemondb.net/sprites/home/normal/cobalion.png",
+};
+
 export default function RaidTracker() {
   const [raids, setRaids] =
     useState<RaidBoss[]>([]);
@@ -238,7 +261,10 @@ export default function RaidTracker() {
         <h1>
           Raid Tracker
         </h1>
-        <p>Loading...</p>
+
+        <p>
+          Loading...
+        </p>
       </div>
     );
   }
@@ -249,7 +275,14 @@ export default function RaidTracker() {
         My Raid Status
       </h1>
 
-      <div className="admin-grid">
+      <div
+        className="admin-grid"
+        style={{
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "15px",
+        }}
+      >
         {raids.map((raid) => {
           const row =
             memberRaids.find(
@@ -265,19 +298,55 @@ export default function RaidTracker() {
             <div
               key={raid.id}
               className="admin-card"
+              style={{
+                padding: "12px",
+                maxWidth:
+                  "300px",
+                margin:
+                  "0 auto",
+              }}
             >
-              <h2>
-                {raid.name}
-              </h2>
+              <div
+                style={{
+                  textAlign:
+                    "center",
+                }}
+              >
+                <img
+                  src={
+                    RAID_SPRITES[
+                      raid.name
+                    ]
+                  }
+                  alt={raid.name}
+                  style={{
+                    width:
+                      "70px",
+                    height:
+                      "70px",
+                    objectFit:
+                      "contain",
+                    marginBottom:
+                      "8px",
+                  }}
+                />
+
+                <h3
+                  style={{
+                    margin: 0,
+                  }}
+                >
+                  {raid.name}
+                </h3>
+              </div>
 
               <p>
-                Status:
-                {" "}
                 <strong>
-                  {getStatus(
-                    row
-                  )}
-                </strong>
+                  Status:
+                </strong>{" "}
+                {getStatus(
+                  row
+                )}
               </p>
 
               <button
@@ -298,36 +367,52 @@ export default function RaidTracker() {
                 Parts
               </h4>
 
-              {PARTS.map(
-                (part) => (
-                  <label
-                    key={part}
-                    style={{
-                      display:
-                        "block",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={
-                        row.parts?.includes(
-                          part
-                        ) ||
-                        false
+              <div
+                style={{
+                  display:
+                    "grid",
+                  gridTemplateColumns:
+                    "repeat(2, 1fr)",
+                  gap: "6px",
+                  marginBottom:
+                    "12px",
+                }}
+              >
+                {PARTS.map(
+                  (part) => (
+                    <label
+                      key={
+                        part
                       }
-                      onChange={() =>
-                        updateParts(
-                          row,
-                          part
-                        )
-                      }
-                    />
+                      style={{
+                        display:
+                          "flex",
+                        alignItems:
+                          "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={
+                          row.parts?.includes(
+                            part
+                          ) ||
+                          false
+                        }
+                        onChange={() =>
+                          updateParts(
+                            row,
+                            part
+                          )
+                        }
+                      />
 
-                    {" "}
-                    {part}
-                  </label>
-                )
-              )}
+                      {part}
+                    </label>
+                  )
+                )}
+              </div>
 
               <hr />
 
