@@ -8,12 +8,14 @@ type RaidBoss = {
 
 type MemberRow = {
   nickname: string;
+
   raids: Record<
     string,
     {
       parts: string[];
-      cooldown_end: string | null;
       tracking_enabled: boolean;
+      weekly_cooldown_end: string | null;
+      recapture_cooldown_end: string | null;
     }
   >;
 };
@@ -51,20 +53,24 @@ export default function AdminRaidDashboard() {
       await supabase
         .from("member_raids")
         .select(`
-          *,
+          parts,
+          tracking_enabled,
+          weekly_cooldown_end,
+          recapture_cooldown_end,
+
           profiles (
             nickname
           ),
+
           raid_bosses (
             name
           )
         `);
 
-    const grouped:
-      Record<
-        string,
-        MemberRow
-      > = {};
+    const grouped: Record<
+      string,
+      MemberRow
+    > = {};
 
     (data || []).forEach(
       (row: any) => {
@@ -91,12 +97,16 @@ export default function AdminRaidDashboard() {
             ?.name
         ] = {
           parts:
-            row.parts ||
-            [],
-          cooldown_end:
-            row.cooldown_end,
+            row.parts || [],
+
           tracking_enabled:
             row.tracking_enabled,
+
+          weekly_cooldown_end:
+            row.weekly_cooldown_end,
+
+          recapture_cooldown_end:
+            row.recapture_cooldown_end,
         };
       }
     );
@@ -111,30 +121,37 @@ export default function AdminRaidDashboard() {
   function getStatus(
     raid: any
   ) {
-    if (
-      !raid?.tracking_enabled
-    ) {
+    if (!raid) {
       return {
-        text: "Opted Out",
-        color: "#888",
+        text: "N/A",
+        color: "#555",
       };
     }
 
     if (
-      raid.cooldown_end &&
+      !raid.tracking_enabled
+    ) {
+      return {
+        text:
+          "Opted Out",
+        color: "#777",
+      };
+    }
+
+    const weeklyReady =
+      !raid.weekly_cooldown_end ||
       new Date(
-        raid.cooldown_end
-      ) > new Date()
-    ) {
-      return {
-        text: "Cooldown",
-        color: "#0b8f4d",
-      };
-    }
+        raid.weekly_cooldown_end
+      ) < new Date();
+
+    const recaptureReady =
+      !raid.recapture_cooldown_end ||
+      new Date(
+        raid.recapture_cooldown_end
+      ) < new Date();
 
     if (
-      raid.parts
-        ?.length === 0
+      raid.parts.length === 0
     ) {
       return {
         text:
@@ -143,9 +160,20 @@ export default function AdminRaidDashboard() {
       };
     }
 
+    if (
+      weeklyReady &&
+      recaptureReady
+    ) {
+      return {
+        text: "Ready",
+        color: "#d9b75d",
+      };
+    }
+
     return {
-      text: "Ready",
-      color: "#d9b75d",
+      text:
+        "Cooldown",
+      color: "#0b8f4d",
     };
   }
 
@@ -228,24 +256,34 @@ export default function AdminRaidDashboard() {
                             style={{
                               background:
                                 status.color,
+
                               borderRadius:
-                                "20px",
+                                "14px",
+
                               padding:
-                                "5px 10px",
+                                "6px",
+
                               color:
                                 "#fff",
+
+                              minWidth:
+                                "120px",
                             }}
                           >
-                            {info?.parts?.join(
-                              ", "
-                            ) ||
-                              "N/A"}
+                            <div>
+                              {info
+                                ?.parts
+                                ?.join(
+                                  ", "
+                                ) ||
+                                "N/A"}
+                            </div>
 
-                            <br />
-
-                            {
-                              status.text
-                            }
+                            <div>
+                              {
+                                status.text
+                              }
+                            </div>
                           </div>
                         </td>
                       );

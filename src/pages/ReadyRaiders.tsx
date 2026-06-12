@@ -28,8 +28,9 @@ export default function ReadyRaiders() {
         .from("member_raids")
         .select(`
           parts,
-          cooldown_end,
           tracking_enabled,
+          weekly_cooldown_end,
+          recapture_cooldown_end,
           profiles (
             nickname,
             avatar_url
@@ -46,22 +47,31 @@ export default function ReadyRaiders() {
     const ready =
       (data || [])
         .filter(
-          (row: any) =>
-            (!row.cooldown_end ||
-              row.cooldown_end <
-                now) &&
-            row.parts?.length > 0
+          (row: any) => {
+            const weeklyReady =
+              !row.weekly_cooldown_end ||
+              row.weekly_cooldown_end <
+                now;
+
+            const recaptureReady =
+              !row.recapture_cooldown_end ||
+              row.recapture_cooldown_end <
+                now;
+
+            return (
+              weeklyReady &&
+              recaptureReady &&
+              row.parts?.length > 0
+            );
+          }
         )
         .map((row: any) => ({
           nickname:
-            row.profiles
-              ?.nickname,
+            row.profiles?.nickname,
           avatar_url:
-            row.profiles
-              ?.avatar_url,
+            row.profiles?.avatar_url,
           raid_name:
-            row.raid_bosses
-              ?.name,
+            row.raid_bosses?.name,
           parts:
             row.parts || [],
         }));
@@ -135,7 +145,10 @@ export default function ReadyRaiders() {
 
       <div className="admin-grid">
         {filtered.map(
-          (raider, index) => (
+          (
+            raider,
+            index
+          ) => (
             <div
               key={index}
               className="admin-card"

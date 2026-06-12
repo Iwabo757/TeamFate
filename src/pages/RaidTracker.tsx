@@ -10,8 +10,9 @@ type MemberRaid = {
   id: number;
   raid_id: number;
   parts: string[];
-  cooldown_end: string | null;
   tracking_enabled: boolean;
+  weekly_cooldown_end: string | null;
+  recapture_cooldown_end: string | null;
 };
 
 const PARTS = [
@@ -30,6 +31,8 @@ export default function RaidTracker() {
   const [memberRaids, setMemberRaids] =
     useState<MemberRaid[]>([]);
 
+  const [loading, setLoading] =
+    useState(true);
 
   useEffect(() => {
     loadData();
@@ -42,14 +45,11 @@ export default function RaidTracker() {
 
     if (!user) return;
 
-
     const { data: raidData } =
       await supabase
         .from("raid_bosses")
         .select("*")
         .order("id");
-
-    setRaids(raidData || []);
 
     const { data: memberData } =
       await supabase
@@ -57,7 +57,12 @@ export default function RaidTracker() {
         .select("*")
         .eq("profile_id", user.id);
 
-    setMemberRaids(memberData || []);
+    setRaids(raidData || []);
+    setMemberRaids(
+      memberData || []
+    );
+
+    setLoading(false);
   }
 
   async function toggleTracking(
@@ -105,13 +110,14 @@ export default function RaidTracker() {
     loadData();
   }
 
-  async function startCooldown(
+  async function startWeeklyCooldown(
     row: MemberRaid
   ) {
-    const cooldownEnd =
+    const end =
       new Date(
         Date.now() +
-          6 *
+          7 *
+            24 *
             60 *
             60 *
             1000
@@ -120,51 +126,94 @@ export default function RaidTracker() {
     await supabase
       .from("member_raids")
       .update({
-        cooldown_end:
-          cooldownEnd.toISOString(),
+        weekly_cooldown_end:
+          end.toISOString(),
       })
       .eq("id", row.id);
 
     loadData();
   }
 
+  async function startRecaptureCooldown(
+    row: MemberRaid
+  ) {
+    const end =
+      new Date(
+        Date.now() +
+          90 *
+            24 *
+            60 *
+            60 *
+            1000
+      );
+
+    await supabase
+      .from("member_raids")
+      .update({
+        recapture_cooldown_end:
+          end.toISOString(),
+      })
+      .eq("id", row.id);
+
+    loadData();
+  }
+
+  function getCountdown(
+    date: string | null
+  ) {
+    if (!date)
+      return "Ready";
+
+    const diff =
+      new Date(date).getTime() -
+      Date.now();
+
+    if (diff <= 0)
+      return "Ready";
+
+    const days =
+      Math.floor(
+        diff /
+          (1000 *
+            60 *
+            60 *
+            24)
+      );
+
+    const hours =
+      Math.floor(
+        (diff %
+          (1000 *
+            60 *
+            60 *
+            24)) /
+          (1000 *
+            60 *
+            60)
+      );
+
+    return `${days}d ${hours}h`;
+  }
+
   function getStatus(
     row: MemberRaid
   ) {
+    const weeklyReady =
+      !row.weekly_cooldown_end ||
+      new Date(
+        row.weekly_cooldown_end
+      ) < new Date();
+
+    const recaptureReady =
+      !row.recapture_cooldown_end ||
+      new Date(
+        row.recapture_cooldown_end
+      ) < new Date();
+
     if (
       !row.tracking_enabled
     ) {
       return "Opted Out";
-    }
-
-    if (
-      row.cooldown_end &&
-      new Date(
-        row.cooldown_end
-      ) > new Date()
-    ) {
-      const diff =
-        new Date(
-          row.cooldown_end
-        ).getTime() -
-        Date.now();
-
-      const hours =
-        Math.floor(
-          diff /
-            (1000 * 60 * 60)
-        );
-
-      const minutes =
-        Math.floor(
-          (diff %
-            (1000 *
-              60 *
-              60)) /
-            (1000 * 60)
-        );
-
-      return `${hours}h ${minutes}m`;
     }
 
     if (
@@ -173,13 +222,31 @@ export default function RaidTracker() {
       return "Not Ready";
     }
 
-    return "Ready";
+    if (
+      weeklyReady &&
+      recaptureReady
+    ) {
+      return "Ready";
+    }
+
+    return "Cooldown";
+  }
+
+  if (loading) {
+    return (
+      <div className="page">
+        <h1>
+          Raid Tracker
+        </h1>
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
     <div className="page">
       <h1>
-        Raid Tracker
+        My Raid Status
       </h1>
 
       <div className="admin-grid">
@@ -262,17 +329,51 @@ export default function RaidTracker() {
                 )
               )}
 
-              <br />
+              <hr />
+
+              <p>
+                Weekly:
+                {" "}
+                <strong>
+                  {getCountdown(
+                    row.weekly_cooldown_end
+                  )}
+                </strong>
+              </p>
 
               <button
                 className="save-btn"
                 onClick={() =>
-                  startCooldown(
+                  startWeeklyCooldown(
                     row
                   )
                 }
               >
-                Start 6 Hour Cooldown
+                Start 7 Day Cooldown
+              </button>
+
+              <br />
+              <br />
+
+              <p>
+                Recapture:
+                {" "}
+                <strong>
+                  {getCountdown(
+                    row.recapture_cooldown_end
+                  )}
+                </strong>
+              </p>
+
+              <button
+                className="save-btn"
+                onClick={() =>
+                  startRecaptureCooldown(
+                    row
+                  )
+                }
+              >
+                Start 90 Day Cooldown
               </button>
             </div>
           );

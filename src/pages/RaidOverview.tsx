@@ -13,9 +13,8 @@ interface RaidSummary {
 }
 
 export default function RaidOverview() {
-  const [raids, setRaids] = useState<
-    RaidSummary[]
-  >([]);
+  const [raids, setRaids] =
+    useState<RaidSummary[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -33,8 +32,9 @@ export default function RaidOverview() {
         .from("member_raids")
         .select(`
           parts,
-          cooldown_end,
           tracking_enabled,
+          weekly_cooldown_end,
+          recapture_cooldown_end,
           raid_bosses (
             name
           )
@@ -75,10 +75,19 @@ export default function RaidOverview() {
           };
         }
 
+        const weeklyReady =
+          !row.weekly_cooldown_end ||
+          row.weekly_cooldown_end <
+            now;
+
+        const recaptureReady =
+          !row.recapture_cooldown_end ||
+          row.recapture_cooldown_end <
+            now;
+
         const isReady =
-          (!row.cooldown_end ||
-            row.cooldown_end <
-              now) &&
+          weeklyReady &&
+          recaptureReady &&
           row.parts?.length > 0;
 
         if (!isReady) return;
@@ -91,46 +100,51 @@ export default function RaidOverview() {
           row.parts.includes(
             "P1"
           )
-        )
+        ) {
           grouped[
             raidName
           ].p1++;
+        }
 
         if (
           row.parts.includes(
             "P2"
           )
-        )
+        ) {
           grouped[
             raidName
           ].p2++;
+        }
 
         if (
           row.parts.includes(
             "P3"
           )
-        )
+        ) {
           grouped[
             raidName
           ].p3++;
+        }
 
         if (
           row.parts.includes(
             "P4"
           )
-        )
+        ) {
           grouped[
             raidName
           ].p4++;
+        }
 
         if (
           row.parts.includes(
             "Any"
           )
-        )
+        ) {
           grouped[
             raidName
           ].any++;
+        }
       }
     );
 
@@ -147,7 +161,10 @@ export default function RaidOverview() {
         <h1>
           Raid Overview
         </h1>
-        <p>Loading...</p>
+
+        <p>
+          Loading...
+        </p>
       </div>
     );
   }
