@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
+
 import { supabase } from "../lib/supabase";
 
 type RaidBoss = {
   id: number;
   name: string;
+};
+
+type RaidGuide = {
+  id: number;
+  raid_name: string;
+  guide_name: string;
+  guide_url: string;
+  notes: string | null;
+  display_order: number;
 };
 
 type MemberRow = {
@@ -19,6 +29,28 @@ type MemberRow = {
     }
   >;
 };
+const RAID_SPRITES: Record<
+  string,
+  string
+> = {
+  Heatran:
+    "https://img.pokemondb.net/sprites/home/normal/heatran.png",
+
+  Cresselia:
+    "https://img.pokemondb.net/sprites/home/normal/cresselia.png",
+
+  Meloetta:
+    "https://img.pokemondb.net/sprites/home/normal/meloetta.png",
+
+  Virizion:
+    "https://img.pokemondb.net/sprites/home/normal/virizion.png",
+
+  Terrakion:
+    "https://img.pokemondb.net/sprites/home/normal/terrakion.png",
+
+  Cobalion:
+    "https://img.pokemondb.net/sprites/home/normal/cobalion.png",
+};
 
 export default function AdminRaidDashboard() {
   const [raids, setRaids] =
@@ -27,6 +59,15 @@ export default function AdminRaidDashboard() {
   const [members, setMembers] =
     useState<MemberRow[]>([]);
 
+const [tab, setTab] =
+  useState<
+    "members" | "guides"
+  >("members");
+
+const [guides, setGuides] =
+  useState<RaidGuide[]>(
+    []
+  );
   useEffect(() => {
     loadData();
 
@@ -48,6 +89,19 @@ export default function AdminRaidDashboard() {
         .order("id");
 
     setRaids(raidData || []);
+
+const {
+  data: guideData,
+} = await supabase
+  .from("raid_guides")
+  .select("*")
+  .order(
+    "display_order"
+  );
+
+setGuides(
+  guideData || []
+);
 
     const { data } =
       await supabase
@@ -176,13 +230,113 @@ export default function AdminRaidDashboard() {
       color: "#0b8f4d",
     };
   }
+async function createGuide() {
+  await supabase
+    .from("raid_guides")
+    .insert({
+      raid_name:
+        "Heatran",
+
+      guide_name:
+        "New Guide",
+
+      guide_url: "",
+
+      notes: "",
+
+      display_order: 999,
+    });
+
+  loadData();
+}
+
+async function saveGuide(
+  guide: RaidGuide
+) {
+  await supabase
+    .from("raid_guides")
+    .update({
+      raid_name:
+        guide.raid_name,
+
+      guide_name:
+        guide.guide_name,
+
+      guide_url:
+        guide.guide_url,
+
+      notes:
+        guide.notes,
+
+      display_order:
+        guide.display_order,
+    })
+    .eq("id", guide.id);
+
+  loadData();
+}
+
+async function deleteGuide(
+  id: number
+) {
+  if (
+    !confirm(
+      "Delete guide?"
+    )
+  )
+    return;
+
+  await supabase
+    .from("raid_guides")
+    .delete()
+    .eq("id", id);
+
+  loadData();
+}
 
   return (
     <div className="page">
-      <h1>
-        Raid Dashboard
-      </h1>
 
+<h1>
+  Raid Dashboard
+</h1>
+
+<div
+  className="leaderboard-filters"
+>
+  <button
+    className={`leader-filter ${
+      tab === "members"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      setTab(
+        "members"
+      )
+    }
+  >
+    Members
+  </button>
+
+  <button
+    className={`leader-filter ${
+      tab === "guides"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      setTab(
+        "guides"
+      )
+    }
+  >
+    Guides
+  </button>
+</div>
+
+{tab ===
+  "members" && (
       <div
         style={{
           overflowX:
@@ -229,6 +383,7 @@ export default function AdminRaidDashboard() {
                       member.nickname
                     }
                   </td>
+
 
                   {raids.map(
                     (
@@ -295,6 +450,198 @@ export default function AdminRaidDashboard() {
           </tbody>
         </table>
       </div>
+)}
+{tab ===
+  "guides" && (
+  <>
+    <button
+      className="save-btn"
+      onClick={
+        createGuide
+      }
+    >
+      Add Guide
+    </button>
+
+    <div
+      className="admin-grid"
+      style={{
+        marginTop:
+          "20px",
+      }}
+    >
+      {guides.map(
+        (
+          guide,
+          index
+        ) => (
+          <div
+            key={
+              guide.id
+            }
+            className="admin-card"
+          >
+            <div
+              style={{
+                textAlign:
+                  "center",
+              }}
+            >
+              <img
+                src={
+                  RAID_SPRITES[
+                    guide
+                      .raid_name
+                  ]
+                }
+                alt=""
+                style={{
+                  width:
+                    "90px",
+                  height:
+                    "90px",
+                  objectFit:
+                    "contain",
+                }}
+              />
+
+              <h2>
+                {
+                  guide.raid_name
+                }
+              </h2>
+            </div>
+
+            <input
+              value={
+                guide.raid_name
+              }
+              onChange={(
+                e
+              ) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].raid_name =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <input
+              value={
+                guide.guide_name
+              }
+              onChange={(
+                e
+              ) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].guide_name =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <input
+              value={
+                guide.guide_url
+              }
+              onChange={(
+                e
+              ) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].guide_url =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <textarea
+              value={
+                guide.notes ||
+                ""
+              }
+              onChange={(
+                e
+              ) => {
+                const copy =
+                  [
+                    ...guides,
+                  ];
+
+                copy[
+                  index
+                ].notes =
+                  e.target.value;
+
+                setGuides(
+                  copy
+                );
+              }}
+            />
+
+            <div
+              style={{
+                display:
+                  "flex",
+                gap: "10px",
+                marginTop:
+                  "10px",
+              }}
+            >
+              <button
+                className="save-btn"
+                onClick={() =>
+                  saveGuide(
+                    guide
+                  )
+                }
+              >
+                Save
+              </button>
+
+              <button
+                className="delete-btn"
+                onClick={() =>
+                  deleteGuide(
+                    guide.id
+                  )
+                }
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  </>
+)}
     </div>
   );
 }

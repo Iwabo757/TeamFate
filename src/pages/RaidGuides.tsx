@@ -1,6 +1,29 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+const RAID_SPRITES: Record<
+  string,
+  string
+> = {
+  Heatran:
+    "https://img.pokemondb.net/sprites/home/normal/heatran.png",
+
+  Cresselia:
+    "https://img.pokemondb.net/sprites/home/normal/cresselia.png",
+
+  Meloetta:
+    "https://img.pokemondb.net/sprites/home/normal/meloetta.png",
+
+  Virizion:
+    "https://img.pokemondb.net/sprites/home/normal/virizion.png",
+
+  Terrakion:
+    "https://img.pokemondb.net/sprites/home/normal/terrakion.png",
+
+  Cobalion:
+    "https://img.pokemondb.net/sprites/home/normal/cobalion.png",
+};
+
 type Guide = {
   id: number;
   raid_name: string;
@@ -68,9 +91,32 @@ export default function RaidGuides() {
               key={guide.id}
               className="admin-card"
             >
-              <h2>
-                {guide.raid_name}
-              </h2>
+<div
+  style={{
+    textAlign: "center",
+  }}
+>
+  <img
+    src={
+      RAID_SPRITES[
+        guide.raid_name
+      ]
+    }
+    alt=""
+    style={{
+      width: "90px",
+      height: "90px",
+      objectFit:
+        "contain",
+      marginBottom:
+        "10px",
+    }}
+  />
+
+  <h2>
+    {guide.raid_name}
+  </h2>
+</div>
 
               <h3>
                 {guide.guide_name}

@@ -62,7 +62,7 @@ import AdminRaidDashboard from "./pages/AdminRaidDashboard";
 import RaidOverview from "./pages/RaidOverview";
 
 import RaidGuides from "./pages/RaidGuides";
-import AdminRaidGuides from "./pages/AdminRaidGuides";
+
 
 type ProfileData = {
   id: string;
@@ -414,9 +414,7 @@ function canManageSite(
 <Link to="/admin-raids">
   Raid Dashboard
 </Link>
-<Link to="/admin-raid-guides">
-  Raid Guides
-</Link>
+
     <Link to="/admin/members">
       Manage Members
     </Link>
@@ -798,12 +796,6 @@ function canManageSite(
   element={<RaidGuides />}
 />
 
-<Route
-  path="/admin-raid-guides"
-  element={
-    <AdminRaidGuides />
-  }
-/>
           <Route
             path="/profile"
             element={<Profile />}
