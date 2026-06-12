@@ -55,7 +55,11 @@ import CreateShinyWar from "./pages/CreateShinyWar";
 import EditShinyWar from "./pages/EditShinyWar";
 import ManageShinyWarTeams from "./pages/ManageShinyWarTeams";
 
-
+import RaidTracker from "./pages/RaidTracker";
+import ReadyRaiders from "./pages/ReadyRaiders";
+import RaidBuilder from "./pages/RaidBuilder";
+import AdminRaidDashboard from "./pages/AdminRaidDashboard";
+import RaidOverview from "./pages/RaidOverview";
 
 type ProfileData = {
   id: string;
@@ -298,6 +302,8 @@ function canManageSite(
   </div>
 </div>
 
+
+
 <div className="dropdown">
   <span>Events ▼</span>
 
@@ -324,6 +330,7 @@ function canManageSite(
 </div>
 
 
+
 <li className="dropdown">
   <span> Bounty ▼</span>
 
@@ -337,6 +344,32 @@ function canManageSite(
     </Link>
   </div>
 </li>
+
+
+
+
+<li className="dropdown">
+  <span> Raids ▼</span>
+
+  <div className="dropdown-content">
+<Link to="/raid-tracker">
+  Raid Tracker
+</Link>
+
+<Link to="/ready-raiders">
+  Ready Raiders
+</Link>
+
+<Link to="/raid-builder">
+  Raid Builder
+</Link>
+
+<Link to="/raid-overview">
+  Raid Overview
+</Link>
+  </div>
+</li>
+
 
           <NavLink to="/board">
             Leaderboard 
@@ -375,6 +408,10 @@ function canManageSite(
     <Link to="/admin/events">
        Events Dashboard
     </Link>
+
+<Link to="/admin-raids">
+  Raid Dashboard
+</Link>
 
     <Link to="/admin/members">
       Manage Members
@@ -702,7 +739,28 @@ function canManageSite(
   path="/events/shinywars"
   element={<ShinyWars />}
 />
-
+<Route
+  path="/raid-tracker"
+  element={<RaidTracker />}
+/>
+<Route
+  path="/ready-raiders"
+  element={<ReadyRaiders />}
+/>
+<Route
+  path="/raid-builder"
+  element={<RaidBuilder />}
+/>
+<Route
+  path="/admin-raids"
+  element={
+    <AdminRaidDashboard />
+  }
+/>
+<Route
+  path="/raid-overview"
+  element={<RaidOverview />}
+/>
           <Route
             path="/profile"
             element={<Profile />}
