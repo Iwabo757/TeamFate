@@ -9,10 +9,25 @@ type RaidBoss = {
 
 type RaidGuide = {
   id: number;
+
+  category: "gym" | "raids";
+
   raid_name: string;
   guide_name: string;
   guide_url: string;
+
   notes: string | null;
+
+  description: string | null;
+
+  money_per_hour: string | null;
+
+  team_cost: string | null;
+
+  difficulty: string | null;
+
+  credits: string | null;
+
   display_order: number;
 };
 
@@ -231,21 +246,31 @@ setGuides(
     };
   }
 async function createGuide() {
-  await supabase
-    .from("raid_guides")
-    .insert({
-      raid_name:
-        "Heatran",
+await supabase
+  .from("raid_guides")
+  .insert({
+    category: "gym",
 
-      guide_name:
-        "New Guide",
+    raid_name: "New Raid",
 
-      guide_url: "",
+    guide_name: "New Guide",
 
-      notes: "",
+    guide_url: "Url",
 
-      display_order: 999,
-    });
+    notes: "",
+
+    description: "",
+
+    money_per_hour: "",
+
+    team_cost: "",
+
+    difficulty: "",
+
+    credits: "",
+
+    display_order: 999,
+  });
 
   loadData();
 }
@@ -267,6 +292,24 @@ async function saveGuide(
 
       notes:
         guide.notes,
+
+description:
+  guide.description,
+
+money_per_hour:
+  guide.money_per_hour,
+
+team_cost:
+  guide.team_cost,
+
+difficulty:
+  guide.difficulty,
+
+credits:
+  guide.credits,
+
+category:
+  guide.category,
 
       display_order:
         guide.display_order,
@@ -334,6 +377,8 @@ async function deleteGuide(
     Guides
   </button>
 </div>
+
+
 
 {tab ===
   "members" && (
@@ -451,14 +496,11 @@ async function deleteGuide(
         </table>
       </div>
 )}
-{tab ===
-  "guides" && (
+{tab === "guides" && (
   <>
     <button
       className="save-btn"
-      onClick={
-        createGuide
-      }
+      onClick={createGuide}
     >
       Add Guide
     </button>
@@ -466,144 +508,415 @@ async function deleteGuide(
     <div
       className="admin-grid"
       style={{
-        marginTop:
-          "20px",
+        marginTop: "20px",
       }}
     >
       {guides.map(
-        (
-          guide,
-          index
-        ) => (
+        (guide, index) => (
           <div
-            key={
-              guide.id
-            }
+            key={guide.id}
             className="admin-card"
           >
-            <div
-              style={{
-                textAlign:
-                  "center",
+            <h3>
+              Guide Setup
+            </h3>
+
+            <label>
+              Category
+            </label>
+
+            <select
+              value={
+                guide.category
+              }
+              onChange={(e) => {
+                const copy =
+                  [...guides];
+
+                copy[
+                  index
+                ].category =
+                  e.target
+                    .value as
+                    | "gym"
+                    | "raids";
+
+                setGuides(
+                  copy
+                );
               }}
             >
-              <img
-                src={
-                  RAID_SPRITES[
-                    guide
-                      .raid_name
-                  ]
-                }
-                alt=""
-                style={{
-                  width:
-                    "90px",
-                  height:
-                    "90px",
-                  objectFit:
-                    "contain",
-                }}
-              />
+              <option value="gym">
+                Gym Rerun
+              </option>
 
-              <h2>
-                {
-                  guide.raid_name
-                }
-              </h2>
-            </div>
+              <option value="raids">
+                Raid Guide
+              </option>
+            </select>
 
-            <input
-              value={
-                guide.raid_name
-              }
-              onChange={(
-                e
-              ) => {
-                const copy =
-                  [
-                    ...guides,
-                  ];
+            {guide.category ===
+            "raids" ? (
+              <>
+                <label>
+                  Raid
+                </label>
 
-                copy[
-                  index
-                ].raid_name =
-                  e.target.value;
+                <select
+                  value={
+                    guide.raid_name
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
 
-                setGuides(
-                  copy
-                );
-              }}
-            />
+                    copy[
+                      index
+                    ].raid_name =
+                      e.target.value;
 
-            <input
-              value={
-                guide.guide_name
-              }
-              onChange={(
-                e
-              ) => {
-                const copy =
-                  [
-                    ...guides,
-                  ];
+                    setGuides(
+                      copy
+                    );
+                  }}
+                >
+                  <option>
+                    Heatran
+                  </option>
 
-                copy[
-                  index
-                ].guide_name =
-                  e.target.value;
+                  <option>
+                    Cresselia
+                  </option>
 
-                setGuides(
-                  copy
-                );
-              }}
-            />
+                  <option>
+                    Meloetta
+                  </option>
 
-            <input
-              value={
-                guide.guide_url
-              }
-              onChange={(
-                e
-              ) => {
-                const copy =
-                  [
-                    ...guides,
-                  ];
+                  <option>
+                    Virizion
+                  </option>
 
-                copy[
-                  index
-                ].guide_url =
-                  e.target.value;
+                  <option>
+                    Terrakion
+                  </option>
 
-                setGuides(
-                  copy
-                );
-              }}
-            />
+                  <option>
+                    Cobalion
+                  </option>
+                </select>
 
-            <textarea
-              value={
-                guide.notes ||
-                ""
-              }
-              onChange={(
-                e
-              ) => {
-                const copy =
-                  [
-                    ...guides,
-                  ];
+                <div
+                  style={{
+                    textAlign:
+                      "center",
+                    margin:
+                      "10px 0",
+                  }}
+                >
+                  <img
+                    src={
+                      RAID_SPRITES[
+                        guide
+                          .raid_name
+                      ]
+                    }
+                    alt=""
+                    style={{
+                      width:
+                        "90px",
+                      height:
+                        "90px",
+                      objectFit:
+                        "contain",
+                    }}
+                  />
+                </div>
 
-                copy[
-                  index
-                ].notes =
-                  e.target.value;
+                <label>
+                  Guide Name
+                </label>
 
-                setGuides(
-                  copy
-                );
-              }}
-            />
+                <input
+                  value={
+                    guide.guide_name
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].guide_name =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Guide URL
+                </label>
+
+                <input
+                  value={
+                    guide.guide_url
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].guide_url =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Notes
+                </label>
+
+                <textarea
+                  value={
+                    guide.notes ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].notes =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <label>
+                  Gym Guide
+                  Name
+                </label>
+
+                <input
+                  value={
+                    guide.guide_name
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].guide_name =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Description
+                </label>
+
+                <textarea
+                  value={
+                    guide.description ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].description =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Money Per
+                  Hour
+                </label>
+
+                <input
+                  value={
+                    guide.money_per_hour ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].money_per_hour =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Team Cost
+                </label>
+
+                <input
+                  value={
+                    guide.team_cost ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].team_cost =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Difficulty
+                </label>
+
+                <input
+                  value={
+                    guide.difficulty ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].difficulty =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Credits
+                </label>
+
+                <input
+                  value={
+                    guide.credits ||
+                    ""
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].credits =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+
+                <label>
+                  Guide URL
+                </label>
+
+                <input
+                  value={
+                    guide.guide_url
+                  }
+                  onChange={(
+                    e
+                  ) => {
+                    const copy =
+                      [
+                        ...guides,
+                      ];
+
+                    copy[
+                      index
+                    ].guide_url =
+                      e.target.value;
+
+                    setGuides(
+                      copy
+                    );
+                  }}
+                />
+              </>
+            )}
 
             <div
               style={{
@@ -611,9 +924,35 @@ async function deleteGuide(
                   "flex",
                 gap: "10px",
                 marginTop:
-                  "10px",
+                  "15px",
               }}
             >
+
+<label>
+  Display Order
+</label>
+
+<input
+  type="number"
+  value={
+    guide.display_order
+  }
+  onChange={(e) => {
+    const copy = [
+      ...guides,
+    ];
+
+    copy[
+      index
+    ].display_order =
+      Number(
+        e.target.value
+      );
+
+    setGuides(copy);
+  }}
+/>
+
               <button
                 className="save-btn"
                 onClick={() =>
@@ -642,6 +981,7 @@ async function deleteGuide(
     </div>
   </>
 )}
+    
     </div>
   );
 }

@@ -366,12 +366,9 @@ function canManageSite(
 <Link to="/raid-builder">
   Raid Builder
 </Link>
-<Link to="/raid-guides">
-  Guides
-</Link>
+
   </div>
 </li>
-
 
           <NavLink to="/board">
             Leaderboard 
@@ -380,6 +377,10 @@ function canManageSite(
 <NavLink to="/members">
   Members
 </NavLink>
+
+          <NavLink to="/raid-guides">
+            Guides
+          </NavLink>
 
 {canManageSite(
   profile?.role
@@ -514,15 +515,6 @@ function canManageSite(
 
 
       <Link
-        to="/raid-guides"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Raid Guides
-      </Link>
-
-      <Link
         to="/board"
         onClick={() =>
           setMobileOpen(false)
@@ -540,6 +532,16 @@ function canManageSite(
         }
       >
         Members
+      </Link>
+
+
+      <Link
+        to="/raid-guides"
+        onClick={() =>
+          setMobileOpen(false)
+        }
+      >
+        Guides
       </Link>
 
       {canManageSite(
