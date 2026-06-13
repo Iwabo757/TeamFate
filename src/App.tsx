@@ -378,7 +378,7 @@ function canManageSite(
   Members
 </NavLink>
 
-          <NavLink to="/raid-guides">
+          <NavLink to="/guides">
             Guides
           </NavLink>
 
@@ -536,7 +536,7 @@ function canManageSite(
 
 
       <Link
-        to="/raid-guides"
+        to="/guides"
         onClick={() =>
           setMobileOpen(false)
         }
@@ -794,7 +794,7 @@ function canManageSite(
   element={<RaidOverview />}
 />
 <Route
-  path="/raid-guides"
+  path="/guides"
   element={<RaidGuides />}
 />
 
