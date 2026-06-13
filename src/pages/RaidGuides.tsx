@@ -36,11 +36,39 @@ type Guide = {
   description?: string;
 };
 
-export default function RaidGuides() {
-  const [guides, setGuides] =
-    useState<Guide[]>([]);
+function getEmbedUrl(
+  url: string
+) {
+  try {
+    const docMatch =
+      url.match(
+        /\/d\/([^/]+)\//
+      );
 
-  const [tab, setTab] =
+    if (docMatch) {
+      return `https://docs.google.com/document/d/${docMatch[1]}/preview`;
+    }
+
+    return `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(
+      url
+    )}`;
+  } catch {
+    return url;
+  }
+}
+export default function RaidGuides() {
+const [guides, setGuides] =
+  useState<Guide[]>([]);
+
+const [
+  selectedGuide,
+  setSelectedGuide,
+] =
+  useState<Guide | null>(
+    null
+  );
+
+const [tab, setTab] =
     useState<
       "gym" | "raids"
     >("gym");
@@ -181,12 +209,11 @@ export default function RaidGuides() {
 
                 <button
                   className="save-btn"
-                  onClick={() =>
-                    window.open(
-                      guide.guide_url,
-                      "_blank"
-                    )
-                  }
+onClick={() =>
+  setSelectedGuide(
+    guide
+  )
+}
                 >
                   Visit{" "}
                   {
@@ -261,12 +288,11 @@ export default function RaidGuides() {
 
                 <button
                   className="save-btn"
-                  onClick={() =>
-                    window.open(
-                      guide.guide_url,
-                      "_blank"
-                    )
-                  }
+onClick={() =>
+  setSelectedGuide(
+    guide
+  )
+}
                 >
                   Open Guide
                 </button>
@@ -275,6 +301,80 @@ export default function RaidGuides() {
           )}
         </div>
       )}
+
+{selectedGuide && (
+  <div
+    className="modal-overlay"
+    onClick={() =>
+      setSelectedGuide(null)
+    }
+  >
+    <div
+      className="event-modal"
+      style={{
+        width: "95vw",
+        maxWidth: "1400px",
+        height: "90vh",
+      }}
+      onClick={(e) =>
+        e.stopPropagation()
+      }
+    >
+      <button
+        className="close-btn"
+        onClick={() =>
+          setSelectedGuide(null)
+        }
+      >
+        ×
+      </button>
+
+      <h2
+        style={{
+          marginBottom:
+            "15px",
+        }}
+      >
+        {
+          selectedGuide.guide_name
+        }
+      </h2>
+
+<>
+  <iframe
+    title="guide"
+    src={getEmbedUrl(
+      selectedGuide.guide_url
+    )}
+    style={{
+      width: "100%",
+      height: "75vh",
+      border: "none",
+      borderRadius: "12px",
+      background: "#fff",
+    }}
+  />
+
+  <div
+    style={{
+      textAlign: "center",
+      marginTop: "10px",
+    }}
+  >
+    <a
+      href={
+        selectedGuide.guide_url
+      }
+      target="_blank"
+      rel="noreferrer"
+    >
+      Open Guide In New Tab
+    </a>
+  </div>
+</>
+    </div>
+  </div>
+)}
     </div>
   );
 }
