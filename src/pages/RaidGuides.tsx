@@ -56,6 +56,19 @@ function getEmbedUrl(
     return url;
   }
 }
+
+function isEmbeddable(
+  url: string
+) {
+  return (
+    url.includes(
+      "docs.google.com"
+    ) ||
+    url.endsWith(".pdf")
+  );
+}
+
+
 export default function RaidGuides() {
 const [guides, setGuides] =
   useState<Guide[]>([]);
@@ -340,38 +353,78 @@ onClick={() =>
         }
       </h2>
 
-<>
-  <iframe
-    title="guide"
-    src={getEmbedUrl(
-      selectedGuide.guide_url
-    )}
-    style={{
-      width: "100%",
-      height: "75vh",
-      border: "none",
-      borderRadius: "12px",
-      background: "#fff",
-    }}
-  />
+{isEmbeddable(
+  selectedGuide.guide_url
+) ? (
+  <>
+    <iframe
+      title="guide"
+      src={getEmbedUrl(
+        selectedGuide.guide_url
+      )}
+      style={{
+        width: "100%",
+        height: "75vh",
+        border: "none",
+        borderRadius: "12px",
+        background: "#fff",
+      }}
+    />
 
+    <div
+      style={{
+        textAlign:
+          "center",
+        marginTop:
+          "10px",
+      }}
+    >
+      <a
+        href={
+          selectedGuide.guide_url
+        }
+        target="_blank"
+        rel="noreferrer"
+      >
+        Open Guide In New Tab
+      </a>
+    </div>
+  </>
+) : (
   <div
     style={{
-      textAlign: "center",
-      marginTop: "10px",
+      textAlign:
+        "center",
+      padding:
+        "50px",
     }}
   >
-    <a
-      href={
-        selectedGuide.guide_url
+    <h3>
+      This guide
+      cannot be
+      embedded
+    </h3>
+
+    <p>
+      Some websites
+      block embedding
+      for security
+      reasons.
+    </p>
+
+    <button
+      className="save-btn"
+      onClick={() =>
+        window.open(
+          selectedGuide.guide_url,
+          "_blank"
+        )
       }
-      target="_blank"
-      rel="noreferrer"
     >
-      Open Guide In New Tab
-    </a>
+      Open Guide
+    </button>
   </div>
-</>
+)}
     </div>
   </div>
 )}
