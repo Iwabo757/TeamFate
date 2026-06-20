@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 type DexCardProps = {
   id: number;
   name: string;
@@ -6,6 +8,18 @@ type DexCardProps = {
   onClick: () => void;
 };
 
+function getGifName(
+  name: string
+) {
+  return name
+    .toLowerCase()
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
+
 export default function DexCard({
   id,
   name,
@@ -13,19 +27,49 @@ export default function DexCard({
   owners,
   onClick,
 }: DexCardProps) {
+  const [hovered, setHovered] =
+    useState(false);
+
+  const staticSprite =
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
+
+  const animatedSprite =
+    `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+      name
+    )}.gif`;
+
   return (
     <div
       className={`dex-entry ${
-        caught ? "caught" : "missing"
+        caught
+          ? "caught"
+          : "missing"
       }`}
       onClick={onClick}
+      onMouseEnter={() =>
+        setHovered(true)
+      }
+      onMouseLeave={() =>
+        setHovered(false)
+      }
     >
       <img
-        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`}
+        src={
+          hovered &&
+          caught
+            ? animatedSprite
+            : staticSprite
+        }
         alt={name}
         className={`dex-sprite ${
-          caught ? "" : "missing"
+          caught
+            ? ""
+            : "missing"
         }`}
+        onError={(e) => {
+          e.currentTarget.src =
+            staticSprite;
+        }}
       />
 
       <div className="dex-tooltip">
@@ -35,20 +79,33 @@ export default function DexCard({
 
         {caught ? (
           <>
-            <div>Owned By:</div>
+            <div>
+              Owned By:
+            </div>
 
             <div className="owner-preview">
-              {Object.entries(owners).map(
-                ([owner, count]) => (
-                  <div key={owner}>
-                    {owner} x{count}
+              {Object.entries(
+                owners
+              ).map(
+                ([
+                  owner,
+                  count,
+                ]) => (
+                  <div
+                    key={owner}
+                  >
+                    {owner} x
+                    {count}
                   </div>
                 )
               )}
             </div>
           </>
         ) : (
-          <p>Not Yet Obtained</p>
+          <p>
+            Not Yet
+            Obtained
+          </p>
         )}
       </div>
     </div>
