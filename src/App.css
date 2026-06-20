@@ -2332,3 +2332,11 @@ textarea:focus {
   margin-bottom: 20px;
   text-align: center;
 }
+
+.dex-sprite {
+  transition: transform 0.2s ease;
+}
+
+.dex-entry:hover .dex-sprite {
+  transform: scale(1.12);
+}
