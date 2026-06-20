@@ -49,6 +49,12 @@ export default function AdminDashboard() {
           👥 Manage Members
         </Link>
 
+        <Link
+          to="/admin/raid-dashboard"
+          className="admin-card"
+        >
+          Raids and Guides Dashboard
+        </Link>
       </div>
     </div>
   );

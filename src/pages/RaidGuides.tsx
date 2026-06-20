@@ -36,22 +36,45 @@ type Guide = {
   description?: string;
 };
 
+
 function getEmbedUrl(
   url: string
 ) {
   try {
+    const cleanUrl =
+      url.trim();
+
+    // Published Google Doc
+    const pubMatch =
+      cleanUrl.match(
+        /document\/u\/\d+\/d\/e\/([^/]+)\/pub/
+      );
+
+    if (pubMatch) {
+      return `https://docs.google.com/document/d/e/${pubMatch[1]}/pub?embedded=true`;
+    }
+
+    // Normal Google Doc
     const docMatch =
-      url.match(
-        /\/d\/([^/]+)\//
+      cleanUrl.match(
+        /document\/d\/([^/]+)/
       );
 
     if (docMatch) {
       return `https://docs.google.com/document/d/${docMatch[1]}/preview`;
     }
 
-    return `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(
-      url
-    )}`;
+    // Google Drive files
+    const driveMatch =
+      cleanUrl.match(
+        /file\/d\/([^/]+)/
+      );
+
+    if (driveMatch) {
+      return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+    }
+
+    return cleanUrl;
   } catch {
     return url;
   }
