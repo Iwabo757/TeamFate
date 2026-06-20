@@ -168,7 +168,12 @@ setProfiles(
     );
   }
 
-function getPreviewImage(event: EventPost) {
+function getPreviewImage(
+  event: EventPost
+) {
+  if (event.banner_url)
+    return event.banner_url;
+
   const eventBlocks =
     blocks[event.id] || [];
 
@@ -180,7 +185,6 @@ function getPreviewImage(event: EventPost) {
 
   return (
     firstImage?.content ||
-    event.banner_url ||
     "/placeholder.png"
   );
 }
@@ -292,11 +296,6 @@ function getProfile(
     {event.prize}
   </p>
 </div>
-
-                <p>
-                  Prize:{" "}
-                  {event.prize}
-                </p>
               </div>
             </div>
           )
