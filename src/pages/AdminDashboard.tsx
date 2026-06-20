@@ -50,7 +50,7 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
-          to="/admin/raid-dashboard"
+          to="/admin-raids"
           className="admin-card"
         >
           Raids and Guides Dashboard
