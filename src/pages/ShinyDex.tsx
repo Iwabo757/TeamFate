@@ -2,6 +2,20 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import DexCard from "../components/DexCard";
 
+function getGifName(
+  name: string
+) {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
+
 type DexPokemon = {
   id: number;
   name: string;
@@ -613,13 +627,17 @@ const regionStats: Record<
             <div className="modal-body">
 
               <div className="modal-left">
-                <img
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.id}.png`}
-                  alt={
-                    selectedPokemon.name
-                  }
-                  className="modal-sprite"
-                />
+<img
+  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+    selectedPokemon.name
+  )}.gif`}
+  alt={selectedPokemon.name}
+  className="modal-sprite"
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.id}.png`;
+  }}
+/>
               </div>
 
               <div className="modal-right">

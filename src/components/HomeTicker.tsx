@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+function getGifName(
+  name: string
+) {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
+
 export default function HomeTicker() {
   const [items, setItems] = useState<any[]>([]);
   const [current, setCurrent] = useState(0);
@@ -121,10 +135,16 @@ return (
   >
       {item.type === "shiny" ? (
         <>
-          <img
-            className="ticker-sprite"
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`}
-          />
+<img
+  className="ticker-sprite"
+  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+    item.pokemonName
+  )}.gif`}
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`;
+  }}
+/>
 
           <div>
             <h2>
