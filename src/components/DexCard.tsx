@@ -4,6 +4,7 @@ type DexCardProps = {
   id: number;
   name: string;
   caught: boolean;
+  evoUnlocked?: boolean;
   owners: Record<string, number>;
   onClick: () => void;
 };
@@ -24,6 +25,7 @@ export default function DexCard({
   id,
   name,
   caught,
+  evoUnlocked,
   owners,
   onClick,
 }: DexCardProps) {
@@ -40,11 +42,13 @@ export default function DexCard({
 
   return (
     <div
-      className={`dex-entry ${
-        caught
-          ? "caught"
-          : "missing"
-      }`}
+className={`dex-entry ${
+  caught
+    ? "caught"
+    : evoUnlocked
+    ? "evo-unlocked"
+    : "missing"
+}`}
       onClick={onClick}
       onMouseEnter={() =>
         setHovered(true)

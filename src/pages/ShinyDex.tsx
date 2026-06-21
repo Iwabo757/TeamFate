@@ -7,11 +7,10 @@ type DexPokemon = {
   name: string;
   region?: string;
   caught: boolean;
-
+  evoUnlocked?: boolean;
+  evolution_line_id: number;
   owners: Record<string, number>;
-
   screenshots: string[];
-
   totalCopies: number;
 };
 
@@ -24,6 +23,9 @@ export default function ShinyDex() {
 
   const [selectedRegion, setSelectedRegion] =
     useState("National");
+
+const [livingDex, setLivingDex] =
+  useState(true);
 
   const [searchMode, setSearchMode] = useState<
     "pokemon" | "trainer"
@@ -44,7 +46,7 @@ const [currentBounty, setCurrentBounty] =
 useEffect(() => {
   loadDex();
   loadBounties();
-}, []);
+}, [livingDex]);
 
 useEffect(() => {
   if (bounties.length <= 1) return;
@@ -167,38 +169,55 @@ catchData?.forEach((entry: any) => {
         ) || []
       );
 
-      const dexData: DexPokemon[] =
-        (pokemonData || []).map(
-          (poke: any) => ({
-            id: Number(poke.id),
-            name: poke.name,
-            region: poke.region,
-            caught: caughtIds.has(
-              Number(poke.id)
-            ),
-owners:
-  ownershipMap[
-    Number(poke.id)
-  ] || {},
-
-screenshots:
-  screenshotMap[
-    Number(poke.id)
-  ] || [],
-
-totalCopies:
-  Object.values(
-    ownershipMap[
-      Number(poke.id)
-    ] || {}
-  ).reduce(
-    (a, b) => a + b,
-    0
-  ),
-          })
+const dexData: DexPokemon[] =
+  (pokemonData || []).map(
+    (poke: any) => {
+      const directlyCaught =
+        caughtIds.has(
+          Number(poke.id)
         );
 
-      setPokemon(dexData);
+      const evoUnlocked =
+        !livingDex &&
+        (pokemonData || []).some(
+          (p: any) =>
+            p.evolution_line_id ===
+              poke.evolution_line_id &&
+            caughtIds.has(
+              Number(p.id)
+            )
+        );
+
+      return {
+        id: Number(poke.id),
+        name: poke.name,
+        region: poke.region,
+        evolution_line_id:
+          poke.evolution_line_id,
+        caught: directlyCaught,
+        evoUnlocked,
+        owners:
+          ownershipMap[
+            Number(poke.id)
+          ] || {},
+        screenshots:
+          screenshotMap[
+            Number(poke.id)
+          ] || [],
+        totalCopies:
+          Object.values(
+            ownershipMap[
+              Number(poke.id)
+            ] || {}
+          ).reduce(
+            (a, b) => a + b,
+            0
+          ),
+      };
+    }
+  );
+
+setPokemon(dexData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -388,6 +407,7 @@ const regionStats: Record<
   }
 
   return (
+
     <div className="dex-page">
 
 <div className="dex-header">
@@ -467,6 +487,21 @@ const regionStats: Record<
 
       <div className="dex-controls">
 
+<button
+  className="save-btn"
+  onClick={() =>
+    setLivingDex(
+      !livingDex
+    )
+  }
+>
+  Living Dex:
+  {" "}
+  {livingDex
+    ? "ON"
+    : "OFF"}
+</button>
+
         <select
           value={searchMode}
           onChange={(e) =>
@@ -517,24 +552,27 @@ const regionStats: Record<
 
       </div>
 
-      <div className="dex-grid">
-        {filteredPokemon.map(
-          (poke) => (
-            <DexCard
-              key={poke.id}
-              id={poke.id}
-              name={poke.name}
-              caught={poke.caught}
-              owners={poke.owners}
-              onClick={() =>
-                setSelectedPokemon(
-                  poke
-                )
-              }
-            />
+<div className="dex-grid">
+  {filteredPokemon.map(
+    (poke) => (
+      <DexCard
+        key={poke.id}
+        id={poke.id}
+        name={poke.name}
+        caught={poke.caught}
+        evoUnlocked={
+          poke.evoUnlocked
+        }
+        owners={poke.owners}
+        onClick={() =>
+          setSelectedPokemon(
+            poke
           )
-        )}
-      </div>
+        }
+      />
+    )
+  )}
+</div>
 
       {selectedPokemon && (
         <div
