@@ -2341,9 +2341,16 @@ textarea:focus {
   transform: scale(1.12);
 }
 
-.evo-unlocked {
-  border: 2px solid #4da6ff;
+.dex-entry.evo-unlocked {
+  opacity: 1 !important;
+  filter: none !important;
+  border: 2px solid #b266ff;
   box-shadow:
-    0 0 12px #4da6ff,
-    0 0 20px rgba(77,166,255,.45);
+    0 0 10px rgba(178, 102, 255, 0.7),
+    inset 0 0 8px rgba(178, 102, 255, 0.25);
 }
+.dex-entry.evo-unlocked img {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
