@@ -4,6 +4,7 @@ import { supabase } from "../lib/supabase";
 type ShinyCatch = {
   id: string;
   pokemon_id: number;
+  pokemon_name: string;
   owner: string;
   date_found: string;
 };
@@ -14,6 +15,18 @@ type LeaderboardEntry = {
   avatar?: string;
   shinies: ShinyCatch[];
 };
+
+function getGifName(
+  name: string
+) {
+  return name
+    .toLowerCase()
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
 
 export default function Leaderboard() {
   const [loading, setLoading] =
@@ -121,6 +134,23 @@ profiles?.forEach(
   }
 );
 
+const { data: pokemonData } =
+  await supabase
+    .from("pokemon")
+    .select("id,name");
+
+const pokemonMap: Record<
+  number,
+  string
+> = {};
+
+pokemonData?.forEach(
+  (poke: any) => {
+    pokemonMap[
+      Number(poke.id)
+    ] = poke.name;
+  }
+);
       const { data: catches } =
         await supabase
           .from("shiny_catches")
@@ -184,16 +214,22 @@ groups[trainer] = {
             trainer
           ].count++;
 
-          groups[
-            trainer
-          ].shinies.push({
-            id: catchData.id,
-            pokemon_id:
-              catchData.pokemon_id,
-            owner: trainer,
-            date_found:
-              catchData.date_found,
-          });
+groups[
+  trainer
+].shinies.push({
+  id: catchData.id,
+  pokemon_id:
+    catchData.pokemon_id,
+  pokemon_name:
+    pokemonMap[
+      Number(
+        catchData.pokemon_id
+      )
+    ] || "unknown",
+  owner: trainer,
+  date_found:
+    catchData.date_found,
+});
         }
       );
 
@@ -345,11 +381,26 @@ const filterOptions: [
                       )
                     }
                   >
-                    <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
-                      alt=""
-                      className="showcase-sprite"
-                    />
+<img
+  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
+  alt=""
+  className="showcase-sprite"
+  onMouseEnter={(e) => {
+    e.currentTarget.src =
+      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+        shiny.pokemon_name
+      )}.gif`;
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+  }}
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+  }}
+/>
+
                   </div>
                 )
               )}
@@ -399,11 +450,17 @@ const filterOptions: [
 
             <div className="modal-body">
               <div className="modal-left">
-                <img
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`}
-                  alt=""
-                  className="modal-sprite"
-                />
+<img
+  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+    selectedPokemon.pokemon_name
+  )}.gif`}
+  alt=""
+  className="modal-sprite"
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`;
+  }}
+/>
               </div>
 
               <div className="modal-right">
