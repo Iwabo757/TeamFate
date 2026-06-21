@@ -57,60 +57,60 @@ className={`dex-entry ${
         setHovered(false)
       }
     >
-      <img
-        src={
-          hovered &&
-          caught
-            ? animatedSprite
-            : staticSprite
-        }
-        alt={name}
-        className={`dex-sprite ${
-          caught
-            ? ""
-            : "missing"
-        }`}
-        onError={(e) => {
-          e.currentTarget.src =
-            staticSprite;
-        }}
-      />
+
+<img
+  src={
+    hovered &&
+    (caught ||
+      evoUnlocked)
+      ? animatedSprite
+      : staticSprite
+  }
+  alt={name}
+  className={`dex-sprite ${
+    caught ||
+    evoUnlocked
+      ? ""
+      : "missing"
+  }`}
+  onError={(e) => {
+    e.currentTarget.src =
+      staticSprite;
+  }}
+/>
 
       <div className="dex-tooltip">
         <strong>
           #{id} {name}
         </strong>
 
-        {caught ? (
-          <>
-            <div>
-              Owned By:
-            </div>
 
-            <div className="owner-preview">
-              {Object.entries(
-                owners
-              ).map(
-                ([
-                  owner,
-                  count,
-                ]) => (
-                  <div
-                    key={owner}
-                  >
-                    {owner} x
-                    {count}
-                  </div>
-                )
-              )}
-            </div>
-          </>
-        ) : (
-          <p>
-            Not Yet
-            Obtained
-          </p>
-        )}
+{caught || evoUnlocked ? (
+  <>
+    <div>Owned By:</div>
+
+    <div className="owner-preview">
+      {Object.entries(
+        owners
+      ).map(
+        ([owner, count]) => (
+          <div key={owner}>
+            {owner} x{count}
+          </div>
+        )
+      )}
+    </div>
+  </>
+) : evoUnlocked ? (
+  <p>
+    Evolution line owned
+  </p>
+) : (
+  <p>
+    Not Yet Obtained
+  </p>
+)}
+
       </div>
     </div>
   );
