@@ -1,5 +1,28 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Select from "react-select";
+
+const selectStyles = {
+  control: (base: any) => ({
+    ...base,
+    background: "#111827",
+    borderColor: "#374151",
+    color: "white",
+  }),
+  menu: (base: any) => ({
+    ...base,
+    background: "#111827",
+  }),
+  singleValue: (base: any) => ({
+    ...base,
+    color: "white",
+  }),
+  option: (base: any) => ({
+    ...base,
+    color: "white",
+    background: "#111827",
+  }),
+};
 
 export default function SubmitShiny() {
   const [pokemon, setPokemon] = useState<any[]>([]);
@@ -20,6 +43,12 @@ export default function SubmitShiny() {
 
 const [profile, setProfile] =
   useState<any>(null);
+
+const [isSecret, setIsSecret] =
+  useState(false);
+
+const [isAlpha, setIsAlpha] =
+  useState(false);
 
   useEffect(() => {
     loadPokemon();
@@ -162,6 +191,11 @@ if (
 
             status:
               "pending",
+
+           is_secret: isSecret,
+
+           is_alpha: isAlpha,
+
           });
 
       if (result.error)
@@ -211,31 +245,65 @@ if (
       <div className="card">
         <div className="admin-form">
 
-          <select
-            value={pokemonId}
-            onChange={(e) =>
-              setPokemonId(
-                e.target.value
-              )
-            }
-          >
-            <option value="">
-              Select Pokémon
-            </option>
+<Select
+  styles={selectStyles}
+  options={pokemon.map(
+    (p) => ({
+      value: p.id,
+      label: `${p.name} • ${p.region}`,
+    })
+  )}
+  value={
+    pokemon
+      .filter(
+        (p) =>
+          String(p.id) ===
+          pokemonId
+      )
+      .map((p) => ({
+        value: p.id,
+        label: `${p.name} • ${p.region}`,
+      }))[0] || null
+  }
+  onChange={(option: any) =>
+    setPokemonId(
+      String(
+        option?.value || ""
+      )
+    )
+  }
+  placeholder="Search Pokémon..."
+  isSearchable
+/>
 
-            {pokemon.map(
-              (p) => (
-                <option
-                  key={p.id}
-                  value={p.id}
-                >
-                  {p.name}
-                  {" • "}
-                  {p.region}
-                </option>
-              )
-            )}
-          </select>
+<div className="checkbox-group">
+  <label>
+    <input
+      type="checkbox"
+      checked={isSecret}
+      onChange={(e) =>
+        setIsSecret(
+          e.target.checked
+        )
+      }
+    />
+    Secret Shiny
+  </label>
+
+  <label>
+    <input
+      type="checkbox"
+      checked={isAlpha}
+      onChange={(e) =>
+        setIsAlpha(
+          e.target.checked
+        )
+      }
+    />
+    Alpha
+  </label>
+</div>
+
 
           <input
             type="date"
@@ -286,18 +354,6 @@ if (
 
             <option value="Safari">
               Safari
-            </option>
-
-            <option value="Shalpha">
-              Gift
-            </option>
-
-            <option value="Wild Shalpha">
-              Wild Shalpha
-            </option>
-
-            <option value="Secret Shiny">
-              Secret Shiny
             </option>
 
             <option value="Legendary">

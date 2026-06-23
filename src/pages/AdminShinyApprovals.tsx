@@ -53,6 +53,8 @@ export default function AdminShinyApprovals() {
         )
 .insert({
   pokemon_id: submission.pokemon_id,
+  is_secret: submission.is_secret,
+  is_alpha: submission.is_alpha,
 
   profile_id: submission.profile_id,
 

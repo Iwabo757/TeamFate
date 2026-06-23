@@ -12,14 +12,14 @@ interface ShinyCatch {
   member_name: string;
   date_found: string;
   method: string;
-  secret_shiny?: boolean;
+  is_secret?: boolean;
+  is_alpha?: boolean;
 
   pokemon?: {
     name: string;
     sprite_url: string;
   };
 }
-
 
 interface TeamMember {
   id: string;
@@ -164,12 +164,19 @@ setLoading(false);
 
 }
 
-function shinyPoints(shiny: ShinyCatch) {
-  let points = catchPoints(shiny.method);
+function shinyPoints(
+  shiny: ShinyCatch
+) {
+  let points =
+    catchPoints(
+      shiny.method
+    );
 
-  if (shiny.secret_shiny) {
-    points += 1;
-  }
+  if (shiny.is_alpha)
+    points += 12;
+
+  if (shiny.is_secret)
+    points += 8;
 
   return points;
 }

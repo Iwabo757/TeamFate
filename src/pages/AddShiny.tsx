@@ -26,6 +26,12 @@ const [memberName, setMemberName] =
   const [loading, setLoading] =
     useState(false);
 
+const [isSecret, setIsSecret] =
+  useState(false);
+
+const [isAlpha, setIsAlpha] =
+  useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -389,6 +395,38 @@ const selectStyles = {
   }}
   placeholder="Search or type member..."
 />
+
+<div className="checkbox-group">
+  <label>
+    <input
+      type="checkbox"
+      checked={isSecret}
+      onChange={(e) =>
+        setIsSecret(
+          e.target.checked
+        )
+      }
+    />
+    Secret Shiny
+  </label>
+
+  <label>
+    <input
+      type="checkbox"
+      checked={isAlpha}
+      onChange={(e) =>
+        setIsAlpha(
+          e.target.checked
+        )
+      }
+    />
+    Alpha
+  </label>
+</div>
+
+is_secret: isSecret,
+is_alpha: isAlpha,
+
           <input
             type="date"
             value={dateFound}

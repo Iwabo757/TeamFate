@@ -29,6 +29,13 @@ const [editingMethod, setEditingMethod] =
 
 const [editingDate, setEditingDate] =
   useState<Record<string, string>>({});
+
+const [isSecret, setIsSecret] =
+  useState<Record<string, boolean>>({});
+
+const [isAlpha, setIsAlpha] =
+  useState<Record<string, boolean>>({});
+
   useEffect(() => {
     loadShinies();
   }, []);
@@ -111,15 +118,25 @@ async function updateShiny(
   const { error } =
     await supabase
       .from("shiny_catches")
-      .update({
-        date_found:
-          editingDate[shiny.id] ??
-          shiny.date_found,
+.update({
+  date_found:
+    editingDate[shiny.id] ??
+    shiny.date_found,
 
-        method:
-          editingMethod[shiny.id] ??
-          shiny.method,
-      })
+  method:
+    editingMethod[shiny.id] ??
+    shiny.method,
+
+  is_secret:
+    isSecret[shiny.id] ??
+    shiny.is_secret ??
+    false,
+
+  is_alpha:
+    isAlpha[shiny.id] ??
+    shiny.is_alpha ??
+    false,
+})
       .eq("id", shiny.id);
 
   if (error) {
@@ -231,36 +248,79 @@ async function updateShiny(
     Single
   </option>
 
-  <option value="x3 Horde">
-    x3 Horde
-  </option>
+            <option value="x3 Horde">
+              3x Horde
+            </option>
 
-  <option value="x5 Horde">
-    x5 Horde
-  </option>
+            <option value="x5 Horde">
+              5x Horde
+            </option>
 
-  <option value="Fishing">
-    Fishing
-  </option>
+            <option value="Egg">
+              Egg
+            </option>
 
-  <option value="Egg">
-    Egg
-  </option>
+            <option value="Fossil">
+              Fossil
+            </option>
 
-  <option value="Fossil">
-    Fossil
-  </option>
+            <option value="Fishing">
+              Fishing
+            </option>
 
-  <option value="Legendary">
-    Legendary
-  </option>
+            <option value="Safari">
+              Safari
+            </option>
 
-  <option value="Sceret Shiny">
-    Sceret Shiny
-  </option>
+            <option value="Legendary">
+              Legendary
+            </option>
 
+            <option value="Event">
+              Event
+            </option>
 
 </select>
+
+<div className="checkbox-group">
+  <label>
+    <input
+      type="checkbox"
+      checked={
+        isSecret[shiny.id] ??
+        shiny.is_secret ??
+        false
+      }
+      onChange={(e) =>
+        setIsSecret({
+          ...isSecret,
+          [shiny.id]:
+            e.target.checked,
+        })
+      }
+    />
+    Secret Shiny
+  </label>
+
+  <label>
+    <input
+      type="checkbox"
+      checked={
+        isAlpha[shiny.id] ??
+        shiny.is_alpha ??
+        false
+      }
+      onChange={(e) =>
+        setIsAlpha({
+          ...isAlpha,
+          [shiny.id]:
+            e.target.checked,
+        })
+      }
+    />
+    Alpha
+  </label>
+</div>
 
 <p>
   Caught:
