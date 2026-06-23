@@ -48,6 +48,21 @@ interface War {
 
   end_date: string;
 }
+
+function getGifName(
+  name: string
+) {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
+
 export default function ShinyWars() {
 
   const [war,
@@ -537,12 +552,17 @@ function memberScore(
 
   return (
 <img
-  key={shiny.id}
-  src={
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`
+  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+    shiny.pokemon?.name || ""
+  )}.gif`}
+  alt={
+    shiny.pokemon?.name
   }
-  alt={shiny.pokemon?.name}
-  title={shiny.pokemon?.name}
+  className="war-pokemon-sprite"
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+  }}
 />
   );
 })}
@@ -621,12 +641,17 @@ function memberScore(
                       shiny
                     ) => (
 <img
-  key={shiny.id}
-  src={
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`
+  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+    shiny.pokemon?.name || ""
+  )}.gif`}
+  alt={
+    shiny.pokemon?.name
   }
-  alt={shiny.pokemon?.name}
-  title={shiny.pokemon?.name}
+  className="war-pokemon-sprite"
+  onError={(e) => {
+    e.currentTarget.src =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+  }}
 />
 
                     )
