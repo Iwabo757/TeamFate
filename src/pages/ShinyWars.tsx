@@ -172,11 +172,9 @@ function shinyPoints(
       shiny.method
     );
 
-  if (shiny.is_alpha)
-    points += 12;
-
-  if (shiny.is_secret)
-    points += 8;
+  if (shiny.is_secret) {
+    points += 1;
+  }
 
   return points;
 }
@@ -198,36 +196,80 @@ function memberShinies(memberName: string) {
   return results;
 }
 
-function catchPoints(method?: string) {
-  const m = method?.toLowerCase().trim();
+function catchPoints(
+  method?: string
+) {
+  const m =
+    method
+      ?.toLowerCase()
+      .trim();
 
   if (!m) return 1;
 
-  if (m.includes("5") && m.includes("horde"))
+  if (
+    m.includes("5") &&
+    m.includes("horde")
+  )
     return 2;
 
-  if (m.includes("3") && m.includes("horde"))
+  if (
+    m.includes("3") &&
+    m.includes("horde")
+  )
     return 3;
 
-  if (m.includes("fishing"))
+  if (
+    m.includes(
+      "fishing"
+    )
+  )
     return 6;
 
-  if (m.includes("single"))
+  if (
+    m.includes(
+      "single"
+    )
+  )
     return 8;
 
-  if (m.includes("fossil"))
+  if (
+    m.includes(
+      "safari"
+    )
+  )
+    return 10;
+
+  if (
+    m.includes(
+      "fossil"
+    )
+  )
     return 12;
 
-  if (m.includes("egg"))
+  if (
+    m.includes("egg")
+  )
     return 17;
 
-  if (m.includes("shalpha"))
-    return 20;
-
-  if (m.includes("wild shalpha"))
+  if (
+    m.includes(
+      "wild shalpha"
+    )
+  )
     return 35;
 
-  if (m.includes("legendary"))
+  if (
+    m.includes(
+      "shalpha"
+    )
+  )
+    return 20;
+
+  if (
+    m.includes(
+      "legendary"
+    )
+  )
     return 40;
 
   return 1;

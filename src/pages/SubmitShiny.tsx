@@ -47,9 +47,6 @@ const [profile, setProfile] =
 const [isSecret, setIsSecret] =
   useState(false);
 
-const [isAlpha, setIsAlpha] =
-  useState(false);
-
   useEffect(() => {
     loadPokemon();
     loadProfile();
@@ -194,7 +191,7 @@ if (
 
            is_secret: isSecret,
 
-           is_alpha: isAlpha,
+
 
           });
 
@@ -290,18 +287,6 @@ if (
     Secret Shiny
   </label>
 
-  <label>
-    <input
-      type="checkbox"
-      checked={isAlpha}
-      onChange={(e) =>
-        setIsAlpha(
-          e.target.checked
-        )
-      }
-    />
-    Alpha
-  </label>
 </div>
 
 
@@ -355,6 +340,15 @@ if (
             <option value="Safari">
               Safari
             </option>
+
+
+<option value="Shalpha">
+  Shalpha
+</option>
+
+<option value="Wild Shalpha">
+  Wild Shalpha
+</option>
 
             <option value="Legendary">
               Legendary

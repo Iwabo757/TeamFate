@@ -33,8 +33,6 @@ const [editingDate, setEditingDate] =
 const [isSecret, setIsSecret] =
   useState<Record<string, boolean>>({});
 
-const [isAlpha, setIsAlpha] =
-  useState<Record<string, boolean>>({});
 
   useEffect(() => {
     loadShinies();
@@ -132,10 +130,7 @@ async function updateShiny(
     shiny.is_secret ??
     false,
 
-  is_alpha:
-    isAlpha[shiny.id] ??
-    shiny.is_alpha ??
-    false,
+
 })
       .eq("id", shiny.id);
 
@@ -272,6 +267,13 @@ async function updateShiny(
               Safari
             </option>
 
+<option value="Shalpha">
+  Shalpha
+</option>
+
+<option value="Wild Shalpha">
+  Wild Shalpha
+</option>
             <option value="Legendary">
               Legendary
             </option>
@@ -302,24 +304,6 @@ async function updateShiny(
     Secret Shiny
   </label>
 
-  <label>
-    <input
-      type="checkbox"
-      checked={
-        isAlpha[shiny.id] ??
-        shiny.is_alpha ??
-        false
-      }
-      onChange={(e) =>
-        setIsAlpha({
-          ...isAlpha,
-          [shiny.id]:
-            e.target.checked,
-        })
-      }
-    />
-    Alpha
-  </label>
 </div>
 
 <p>
