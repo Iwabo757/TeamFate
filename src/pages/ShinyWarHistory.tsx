@@ -18,13 +18,17 @@ interface ShinyWar {
   teamTwoScore?: number;
 }
 
+interface TeamMember {
+  id: string;
+  member_name: string;
+  team: string;
+}
+
 function catchPoints(
   method?: string
 ) {
   const m =
-    method
-      ?.toLowerCase()
-      .trim();
+    method?.toLowerCase().trim();
 
   if (!m) return 1;
 
@@ -82,131 +86,175 @@ export default function ShinyWarHistory() {
     loadWars();
   }, []);
 
-async function loadWars() {
-  const { data, error } =
-    await supabase
-      .from("shiny_wars")
-      .select("*")
-      .eq("active", false)
-      .order("end_date", {
-        ascending: false,
-      });
+  async function loadWars() {
+    const { data, error } =
+      await supabase
+        .from("shiny_wars")
+        .select("*")
+        .eq("active", false)
+        .order("end_date", {
+          ascending: false,
+        });
 
-  if (error) {
-    console.error(error);
-    setLoading(false);
-    return;
-  }
+    if (error) {
+      console.error(error);
+      setLoading(false);
+      return;
+    }
 
-  const processedWars =
-    await Promise.all(
-      (data || []).map(
-        async (war) => {
-          const {
-            data: catches,
-          } = await supabase
-            .from(
-              "shiny_catches"
-            )
-            .select(`
-              method,
-              is_secret,
-              profile_id
-            `)
-            .gte(
-              "date_found",
-              war.start_date
-            )
-            .lte(
-              "date_found",
-              war.end_date
-            );
-
-          let teamOneScore = 0;
-          let teamTwoScore = 0;
-
-          for (const shiny of catches || []) {
-            let points =
-              catchPoints(
-                shiny.method
-              );
-
-            if (
-              shiny.is_secret
-            ) {
-              points += 1;
-            }
-
+    const processedWars =
+      await Promise.all(
+        (data || []).map(
+          async (war) => {
             const {
-              data: profile,
+              data: teamData,
             } = await supabase
               .from(
-                "profiles"
+                "shiny_war_teams"
               )
-              .select("team")
+              .select("*")
               .eq(
-                "id",
-                shiny.profile_id
+                "war_id",
+                war.id
+              );
+
+            const teamMembers =
+              (teamData ||
+                []) as TeamMember[];
+
+            const {
+              data: catches,
+            } = await supabase
+              .from(
+                "shiny_catches"
               )
-              .single();
+              .select(`
+                member_name,
+                method,
+                is_secret,
+                date_found
+              `);
 
-            const team =
-              profile?.team;
+            const startDate =
+              new Date(
+                war.start_date
+              );
+            startDate.setHours(
+              0,
+              0,
+              0,
+              0
+            );
 
-            if (
-              team ===
-              war.team_one_name
-            ) {
-              teamOneScore +=
-                points;
+            const endDate =
+              new Date(
+                war.end_date
+              );
+            endDate.setHours(
+              23,
+              59,
+              59,
+              999
+            );
+
+            const warCatches =
+              (catches || []).filter(
+                (shiny) => {
+                  const shinyDate =
+                    new Date(
+                      shiny.date_found
+                    );
+
+                  return (
+                    shinyDate >=
+                      startDate &&
+                    shinyDate <=
+                      endDate
+                  );
+                }
+              );
+
+            let teamOneScore = 0;
+            let teamTwoScore = 0;
+
+            for (const shiny of warCatches) {
+              let points =
+                catchPoints(
+                  shiny.method
+                );
+
+              if (
+                shiny.is_secret
+              ) {
+                points += 1;
+              }
+
+              const member =
+                teamMembers.find(
+                  (m) =>
+                    m.member_name
+                      ?.toLowerCase()
+                      .trim() ===
+                    shiny.member_name
+                      ?.toLowerCase()
+                      .trim()
+                );
+
+              if (!member)
+                continue;
+
+              if (
+                member.team ===
+                war.team_one_name
+              ) {
+                teamOneScore +=
+                  points;
+              }
+
+              if (
+                member.team ===
+                war.team_two_name
+              ) {
+                teamTwoScore +=
+                  points;
+              }
             }
 
+            let winner =
+              "Tie";
+
             if (
-              team ===
-              war.team_two_name
+              teamOneScore >
+              teamTwoScore
             ) {
-              teamTwoScore +=
-                points;
+              winner =
+                war.team_one_name;
+            } else if (
+              teamTwoScore >
+              teamOneScore
+            ) {
+              winner =
+                war.team_two_name;
             }
+
+            return {
+              ...war,
+              winner,
+              teamOneScore,
+              teamTwoScore,
+            };
           }
+        )
+      );
 
-          let winner =
-            "Tie";
-
-          if (
-            teamOneScore >
-            teamTwoScore
-          ) {
-            winner =
-              war.team_one_name;
-          } else if (
-            teamTwoScore >
-            teamOneScore
-          ) {
-            winner =
-              war.team_two_name;
-          }
-
-          return {
-            ...war,
-            teamOneScore,
-            teamTwoScore,
-            winner,
-          };
-        }
-      )
-    );
-
-  setWars(processedWars);
-  setLoading(false);
-}
+    setWars(processedWars);
+    setLoading(false);
+  }
 
   if (loading) {
     return (
       <div className="page">
-        <h1>
-          Loading...
-        </h1>
+        <h1>Loading...</h1>
       </div>
     );
   }
@@ -217,70 +265,62 @@ async function loadWars() {
         Shiny War History
       </h1>
 
-      {wars.length ===
-      0 ? (
+      {wars.length === 0 ? (
         <p>
           No completed shiny
           wars yet.
         </p>
       ) : (
         <div className="event-grid">
-          {wars.map(
-            (war) => (
-              <div
-                key={war.id}
-                className="event-card"
-              >
-                <div className="event-card-content">
-                  <h2>
-                    {
-                      war.title
-                    }
-                  </h2>
+          {wars.map((war) => (
+            <div
+              key={war.id}
+              className="event-card"
+            >
+              <div className="event-card-content">
+                <h2>
+                  {war.title}
+                </h2>
 
-                  <p>
-                    Started:{" "}
-                    {new Date(
-                      war.start_date
-                    ).toLocaleDateString()}
-                  </p>
+                <p>
+                  Started:{" "}
+                  {new Date(
+                    war.start_date
+                  ).toLocaleDateString()}
+                </p>
 
-                  <p>
-                    Ended:{" "}
-                    {new Date(
-                      war.end_date
-                    ).toLocaleDateString()}
-                  </p>
+                <p>
+                  Ended:{" "}
+                  {new Date(
+                    war.end_date
+                  ).toLocaleDateString()}
+                </p>
 
-                  <p className="war-winner">
-                    🏆 Winner:{" "}
-                    <strong>
-                      {
-                        war.winner
-                      }
-                    </strong>
-                  </p>
+                <p className="war-winner">
+                  🏆 Winner:{" "}
+                  <strong>
+                    {war.winner}
+                  </strong>
+                </p>
 
-                  <p className="war-score">
-                    ⭐{" "}
-                    {war.teamOneScore ??
-                      0}{" "}
-                    — 🔥{" "}
-                    {war.teamTwoScore ??
-                      0}
-                  </p>
+                <p className="war-score">
+                  ⭐{" "}
+                  {war.teamOneScore ??
+                    0}{" "}
+                  — 🔥{" "}
+                  {war.teamTwoScore ??
+                    0}
+                </p>
 
-                  <Link
-                    className="save-btn"
-                    to={`/events/shinywars/${war.id}`}
-                  >
-                    View
-                    Results
-                  </Link>
-                </div>
+                <Link
+                  className="save-btn"
+                  to={`/events/shinywars/${war.id}`}
+                >
+                  View Results
+                </Link>
               </div>
-            )
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>
