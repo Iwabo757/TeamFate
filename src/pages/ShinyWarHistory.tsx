@@ -82,121 +82,124 @@ export default function ShinyWarHistory() {
     loadWars();
   }, []);
 
-  async function loadWars() {
-    const { data, error } =
-      await supabase
-        .from("shiny_wars")
-        .select("*")
-        .eq("active", false)
-        .order("end_date", {
-          ascending: false,
-        });
+async function loadWars() {
+  const { data, error } =
+    await supabase
+      .from("shiny_wars")
+      .select("*")
+      .eq("active", false)
+      .order("end_date", {
+        ascending: false,
+      });
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
-    }
+  if (error) {
+    console.error(error);
+    setLoading(false);
+    return;
+  }
 
-    const processedWars =
-      await Promise.all(
-        (data || []).map(
-          async (war) => {
-            const {
-              data: catches,
-            } = await supabase
-              .from(
-                "shiny_catches"
-              )
-              .select(`
-                method,
-                is_secret,
-                profiles!inner(team)
-              `)
-              .gte(
-                "date_found",
-                war.start_date
-              )
-              .lte(
-                "date_found",
-                war.end_date
-              );
-
-            let teamOneScore = 0;
-            let teamTwoScore = 0;
-
-            catches?.forEach(
-              (shiny: any) => {
-                let points =
-                  catchPoints(
-                    shiny.method
-                  );
-
-                if (
-                  shiny.is_secret
-                ) {
-                  points += 1;
-                }
-
-                const team =
-                  Array.isArray(
-                    shiny.profiles
-                  )
-                    ? shiny
-                        .profiles[0]
-                        ?.team
-                    : shiny
-                        .profiles
-                        ?.team;
-
-                if (
-                  team ===
-                  war.team_one_name
-                ) {
-                  teamOneScore +=
-                    points;
-                }
-
-                if (
-                  team ===
-                  war.team_two_name
-                ) {
-                  teamTwoScore +=
-                    points;
-                }
-              }
+  const processedWars =
+    await Promise.all(
+      (data || []).map(
+        async (war) => {
+          const {
+            data: catches,
+          } = await supabase
+            .from(
+              "shiny_catches"
+            )
+            .select(`
+              method,
+              is_secret,
+              profile_id
+            `)
+            .gte(
+              "date_found",
+              war.start_date
+            )
+            .lte(
+              "date_found",
+              war.end_date
             );
 
-            let winner =
-              "Tie";
+          let teamOneScore = 0;
+          let teamTwoScore = 0;
+
+          for (const shiny of catches || []) {
+            let points =
+              catchPoints(
+                shiny.method
+              );
 
             if (
-              teamOneScore >
-              teamTwoScore
+              shiny.is_secret
             ) {
-              winner =
-                war.team_one_name;
-            } else if (
-              teamTwoScore >
-              teamOneScore
-            ) {
-              winner =
-                war.team_two_name;
+              points += 1;
             }
 
-            return {
-              ...war,
-              teamOneScore,
-              teamTwoScore,
-              winner,
-            };
-          }
-        )
-      );
+            const {
+              data: profile,
+            } = await supabase
+              .from(
+                "profiles"
+              )
+              .select("team")
+              .eq(
+                "id",
+                shiny.profile_id
+              )
+              .single();
 
-    setWars(processedWars);
-    setLoading(false);
-  }
+            const team =
+              profile?.team;
+
+            if (
+              team ===
+              war.team_one_name
+            ) {
+              teamOneScore +=
+                points;
+            }
+
+            if (
+              team ===
+              war.team_two_name
+            ) {
+              teamTwoScore +=
+                points;
+            }
+          }
+
+          let winner =
+            "Tie";
+
+          if (
+            teamOneScore >
+            teamTwoScore
+          ) {
+            winner =
+              war.team_one_name;
+          } else if (
+            teamTwoScore >
+            teamOneScore
+          ) {
+            winner =
+              war.team_two_name;
+          }
+
+          return {
+            ...war,
+            teamOneScore,
+            teamTwoScore,
+            winner,
+          };
+        }
+      )
+    );
+
+  setWars(processedWars);
+  setLoading(false);
+}
 
   if (loading) {
     return (
