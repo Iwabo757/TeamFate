@@ -2354,3 +2354,24 @@ textarea:focus {
   opacity: 1 !important;
 }
 
+.history-results-card {
+  background: rgba(0, 15, 60, 0.75);
+  border: 1px solid #2b6fff;
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 28px;
+  color: white;
+}
+
+.history-results-card h2 {
+  margin-bottom: 20px;
+}
+
+.history-score-row,
+.history-mvp-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+}

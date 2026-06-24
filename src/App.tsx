@@ -772,6 +772,10 @@ function canManageSite(
   element={<ShinyWars />}
 />
 <Route
+  path="/events/shinywars/:warId"
+  element={<ShinyWars />}
+/>
+<Route
   path="/raid-tracker"
   element={<RaidTracker />}
 />

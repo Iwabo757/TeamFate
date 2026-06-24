@@ -6,6 +6,8 @@ import {
 import { supabase }
 from "../lib/supabase";
 
+import { useParams } from "react-router-dom";
+
 interface ShinyCatch {
   id: string;
   pokemon_id: number;
@@ -87,19 +89,41 @@ export default function ShinyWars() {
     setLoading] =
     useState(true);
 
-  useEffect(() => {
-    loadWar();
-  }, []);
+const { warId } = useParams();
+
+const isHistory =
+  !!warId;
+
+
+useEffect(() => {
+  loadWar();
+}, [warId]);
 
   async function loadWar() {
 
-    const {
-      data: warData,
-    } = await supabase
-      .from("shiny_wars")
-      .select("*")
-      .eq("active", true)
-      .single();
+let warQuery = supabase
+  .from("shiny_wars")
+  .select("*");
+
+if (warId) {
+  warQuery =
+    warQuery.eq(
+      "id",
+      warId
+    );
+} else {
+  warQuery =
+    warQuery.eq(
+      "active",
+      true
+    );
+}
+
+const {
+  data: warData,
+} =
+  await warQuery.single();
+
 
     if (!warData) {
       setLoading(false);
@@ -330,6 +354,74 @@ function memberScore(
     0
   );
 }
+
+function winningTeam() {
+  if (!war) return null;
+
+  const teamOneScore =
+    teamScore(
+      war.team_one_name
+    );
+
+  const teamTwoScore =
+    teamScore(
+      war.team_two_name
+    );
+
+  if (
+    teamOneScore >
+    teamTwoScore
+  )
+    return war.team_one_name;
+
+  if (
+    teamTwoScore >
+    teamOneScore
+  )
+    return war.team_two_name;
+
+  return "Tie";
+}
+
+function teamMVP(
+  teamName: string
+) {
+  const teamMembers =
+    members.filter(
+      (m) =>
+        m.team === teamName
+    );
+
+  if (
+    teamMembers.length === 0
+  )
+    return null;
+
+  let best =
+    teamMembers[0];
+
+  let bestScore =
+    memberScore(
+      best.member_name
+    );
+
+  for (const member of teamMembers) {
+    const score =
+      memberScore(
+        member.member_name
+      );
+
+    if (score > bestScore) {
+      best = member;
+      bestScore = score;
+    }
+  }
+
+  return {
+    name: best.member_name,
+    points: bestScore,
+  };
+}
   function daysRemaining() {
 
     if (!war)
@@ -384,7 +476,40 @@ function memberScore(
         war.team_two_name
     );
 
-  return (
+return (
+  <>
+    {isHistory && war && (
+      <div className="history-results-card">
+        <h2>🏆 Winner: {winningTeam()}</h2>
+
+        <div className="history-score-row">
+          <div>
+            ⭐ {war.team_one_name}: {teamScore(war.team_one_name)} pts
+          </div>
+
+          <div>
+            🔥 {war.team_two_name}: {teamScore(war.team_two_name)} pts
+          </div>
+        </div>
+
+        <div className="history-mvp-row">
+          <div>
+            ⭐ MVP: {teamMVP(war.team_one_name)?.name}
+            {" ("}
+            {teamMVP(war.team_one_name)?.points}
+            pts)
+          </div>
+
+          <div>
+            🔥 MVP: {teamMVP(war.team_two_name)?.name}
+            {" ("}
+            {teamMVP(war.team_two_name)?.points}
+            pts)
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="page">
 
       <h1>
@@ -434,10 +559,16 @@ function memberScore(
             ⚔️ Shiny War
           </h2>
 
-          <h3>
-            {daysRemaining()}
-            d Remaining
-          </h3>
+{isHistory ? (
+  <h3>
+    War Complete
+  </h3>
+) : (
+  <h3>
+    {daysRemaining()}
+    d Remaining
+  </h3>
+)}
 
           <p>
             Ends:
@@ -669,5 +800,6 @@ function memberScore(
       </div>
 
     </div>
+    </>
   );
 }
