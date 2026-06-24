@@ -2375,3 +2375,31 @@ textarea:focus {
   margin-bottom: 16px;
   font-size: 1.1rem;
 }
+
+.war-winner {
+  margin-top: 12px;
+  margin-bottom: 18px;
+  font-size: 1.1rem;
+  color: #8bd3ff;
+}
+
+.event-card .save-btn {
+  width: fit-content;
+  min-width: 180px;
+  text-align: center;
+  display: inline-block;
+}
+
+.war-winner {
+  margin-top: 12px;
+  font-size: 1.15rem;
+  color: #8fd3ff;
+}
+
+.war-score {
+  margin: 12px 0 20px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: white;
+}
+
