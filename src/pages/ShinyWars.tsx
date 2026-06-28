@@ -492,6 +492,38 @@ function teamMVP(
         <h1>
           No Active Shiny War
         </h1>
+<div className="leaderboard-filters">
+  <button
+    className={`leader-filter ${
+      view === "current"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      switchView(
+        "current"
+      )
+    }
+  >
+    Active Wars
+  </button>
+
+  <button
+    className={`leader-filter ${
+      view === "past"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      switchView(
+        "past"
+      )
+    }
+  >
+    War History
+  </button>
+</div>
+
       </div>
     );
   }
