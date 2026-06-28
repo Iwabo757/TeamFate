@@ -5,6 +5,8 @@ import {
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+import { useNavigate } from "react-router-dom";
+
 interface ShinyWar {
   id: string;
   title: string;
@@ -81,6 +83,12 @@ export default function ShinyWarHistory() {
 
   const [loading, setLoading] =
     useState(true);
+
+const navigate =
+  useNavigate();
+
+const [view, setView] =
+  useState("past");
 
   useEffect(() => {
     loadWars();
@@ -261,6 +269,33 @@ export default function ShinyWarHistory() {
 
   return (
     <div className="page">
+<div className="leaderboard-filters">
+  <button
+    className={`leader-filter ${
+      view === "current"
+        ? "active"
+        : ""
+    }`}
+    onClick={() => {
+      setView("current");
+      navigate(
+        "/events/shinywars"
+      );
+    }}
+  >
+    Active War
+  </button>
+
+  <button
+    className={`leader-filter ${
+      view === "past"
+        ? "active"
+        : ""
+    }`}
+  >
+    War History
+  </button>
+</div>
       <h1>
         Shiny War History
       </h1>

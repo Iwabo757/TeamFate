@@ -6,7 +6,10 @@ import {
 import { supabase }
 from "../lib/supabase";
 
-import { useParams } from "react-router-dom";
+import {
+  useParams,
+  useNavigate
+} from "react-router-dom";
 
 interface ShinyCatch {
   id: string;
@@ -90,6 +93,16 @@ export default function ShinyWars() {
     useState(true);
 
 const { warId } = useParams();
+
+const navigate =
+  useNavigate();
+
+const [view, setView] =
+  useState(
+    warId
+      ? "past"
+      : "current"
+  );
 
 const isHistory =
   !!warId;
@@ -233,6 +246,27 @@ function memberShinies(memberName: string) {
   );
 
   return results;
+}
+
+function switchView(
+  newView:
+    | "current"
+    | "past"
+) {
+  setView(newView);
+
+  if (
+    newView ===
+    "current"
+  ) {
+    navigate(
+      "/events/shinywars"
+    );
+  } else {
+    navigate(
+      "/events/shinywars/history"
+    );
+  }
 }
 
 function catchPoints(
@@ -511,6 +545,38 @@ return (
     )}
 
     <div className="page">
+
+<div className="leaderboard-filters">
+  <button
+    className={`leader-filter ${
+      view === "current"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      switchView(
+        "current"
+      )
+    }
+  >
+    Active Wars
+  </button>
+
+  <button
+    className={`leader-filter ${
+      view === "past"
+        ? "active"
+        : ""
+    }`}
+    onClick={() =>
+      switchView(
+        "past"
+      )
+    }
+  >
+    War History
+  </button>
+</div>
 
       <h1>
         {war.title}
