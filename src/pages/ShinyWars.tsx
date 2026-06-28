@@ -489,9 +489,6 @@ function teamMVP(
   if (!war) {
     return (
       <div className="page">
-        <h1>
-          No Active Shiny War
-        </h1>
 <div className="leaderboard-filters">
   <button
     className={`leader-filter ${
@@ -524,6 +521,9 @@ function teamMVP(
   </button>
 </div>
 
+        <h1>
+          No Active Shiny War
+        </h1>
       </div>
     );
   }

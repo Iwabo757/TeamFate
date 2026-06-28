@@ -239,6 +239,15 @@ setPokemon(dexData);
     }
   }
 
+function countsAsCaught(
+  poke: DexPokemon
+) {
+  return livingDex
+    ? poke.caught
+    : poke.caught ||
+        poke.evoUnlocked;
+}
+
 const filteredPokemon = pokemon.filter(
   (poke) => {
     const searchText =
@@ -334,9 +343,9 @@ const regionPokemon =
 
 const capturedCount =
   regionPokemon.filter(
-    (p) => p.caught
+    (p) =>
+      countsAsCaught(p)
   ).length;
-
 
 
 const totalCount =
@@ -351,70 +360,48 @@ const completionPercent =
       ).toFixed(1)
     : "0";
 
-const regionStats: Record<
-  string,
-  {
-    caught: number;
-    total: number;
-  }
-> = {
-  National: {
-    caught: pokemon.filter(
-      (p) => p.caught
-    ).length,
-    total: 649,
-  },
-
-  Kanto: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 1 &&
-        p.id <= 151
-    ).length,
-    total: 151,
-  },
-
-  Johto: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 152 &&
-        p.id <= 251
-    ).length,
-    total: 100,
-  },
-
-  Hoenn: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 252 &&
-        p.id <= 386
-    ).length,
-    total: 135,
-  },
-
-  Sinnoh: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 387 &&
-        p.id <= 493
-    ).length,
-    total: 107,
-  },
-
-  Unova: {
-    caught: pokemon.filter(
-      (p) =>
-        p.caught &&
-        p.id >= 494 &&
-        p.id <= 649
-    ).length,
-    total: 156,
-  },
+const regionRanges = {
+  National: [1, 649],
+  Kanto: [1, 151],
+  Johto: [152, 251],
+  Hoenn: [252, 386],
+  Sinnoh: [387, 493],
+  Unova: [494, 649],
 };
+
+const regionStats =
+  Object.fromEntries(
+    Object.entries(
+      regionRanges
+    ).map(
+      ([region, range]) => {
+        const [min, max] =
+          range;
+
+        const regionMons =
+          pokemon.filter(
+            (p) =>
+              p.id >= min &&
+              p.id <= max
+          );
+
+        return [
+          region,
+          {
+            caught:
+              regionMons.filter(
+                (p) =>
+                  countsAsCaught(
+                    p
+                  )
+              ).length,
+            total:
+              regionMons.length,
+          },
+        ];
+      }
+    )
+  );
 
   if (loading) {
     return <h2>Loading Dex...</h2>;
@@ -464,7 +451,11 @@ const regionStats: Record<
 )}
 
 <p>
-  {selectedRegion} Completion:
+  {selectedRegion}
+Completion
+({livingDex
+  ? "Living Dex"
+  : "Evo Line"}):
   {" "}
   {capturedCount}
   {" / "}
