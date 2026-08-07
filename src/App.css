@@ -2402,4 +2402,35 @@ textarea:focus {
   font-weight: bold;
   color: white;
 }
+/* =========================================
+   Recruitment
+========================================= */
+.recruitment-content {
+  background: rgba(0,0,40,.6);
+  padding: 30px;
+  border-radius: 18px;
+  color: white;
+  line-height: 1.7;
+}
 
+.recruitment-content a {
+  color: #61b4ff;
+  font-weight: bold;
+}
+.recruitment-banner {
+  width: 100%;
+  max-height: 350px;
+  object-fit: cover;
+  border-radius: 20px;
+  margin-bottom: 24px;
+}
+.discord-btn {
+  display: inline-block;
+  margin-top: 24px;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  background: #5865f2;
+  color: white;
+}

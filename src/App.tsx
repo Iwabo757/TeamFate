@@ -60,9 +60,9 @@ import ReadyRaiders from "./pages/ReadyRaiders";
 import RaidBuilder from "./pages/RaidBuilder";
 import AdminRaidDashboard from "./pages/AdminRaidDashboard";
 import RaidOverview from "./pages/RaidOverview";
-
 import RaidGuides from "./pages/RaidGuides";
 
+import Recruitment from "./pages/Recruitment";
 
 type ProfileData = {
   id: string;
@@ -382,6 +382,7 @@ function canManageSite(
             Guides
           </NavLink>
 
+
 {canManageSite(
   profile?.role
 ) && (
@@ -413,12 +414,15 @@ function canManageSite(
     </Link>
 
 <Link to="/admin-raids">
-  Raid Dashboard
+  Raid/Guides Dashboard
 </Link>
 
     <Link to="/admin/members">
       Manage Members
     </Link>
+<Link to="/recruitment">
+  Recruitment
+</Link>
   </div>
 </div>
 )}
@@ -801,7 +805,10 @@ function canManageSite(
   path="/guides"
   element={<RaidGuides />}
 />
-
+<Route
+  path="/recruitment"
+  element={<Recruitment />}
+/>
           <Route
             path="/profile"
             element={<Profile />}
