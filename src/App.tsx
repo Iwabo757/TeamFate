@@ -454,14 +454,14 @@ function canManageSite(
       to="/events"
       className="sub-nav-link"
     >
-      📅 Current Events
+      📅 Events
     </NavLink>
 
     <NavLink
-      to="/bountiest"
+      to="/bounties"
       className="sub-nav-link"
     >
-      Bounties
+      🎯 Bounties
     </NavLink>
 
 

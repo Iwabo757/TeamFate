@@ -2790,3 +2790,45 @@ textarea:focus {
     padding: 6px 12px;
   }
 }
+
+/* =========================================
+   SMALL SECONDARY NAV ONLY
+   ========================================= */
+
+.sub-nav,
+.secondary-nav {
+  height: 42px;
+  min-height: 42px;
+
+  padding: 2px 12px;
+
+  gap: 6px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-sizing: border-box;
+
+  overflow: hidden;
+}
+
+.sub-nav-link,
+.secondary-nav-link {
+  height: 34px;
+  min-height: 34px;
+
+  padding: 0 14px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  border-radius: 6px;
+
+  white-space: nowrap;
+  box-sizing: border-box;
+}

@@ -15,6 +15,20 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          to="/admin/recruitment"
+          className="admin-card"
+        >
+           Recruitment 
+        </Link>
+
+        <Link
+          to="/admin/shiny-dashboard"
+          className="admin-card"
+        >
+          📖 Shiny Dashboard
+        </Link>
+
+        <Link
           to="/admin/events"
           className="admin-card"
         >
@@ -32,15 +46,10 @@ export default function AdminDashboard() {
           to="/admin/shinywars"
           className="admin-card"
         >
-          ⚔️ Shiny Wars Dashboard
+          ⚔️ Wars Dashboard
         </Link>
 
-        <Link
-          to="/admin/shiny-dashboard"
-          className="admin-card"
-        >
-          📖 Shiny Dashboard
-        </Link>
+
 
         <Link
           to="/admin/members"
