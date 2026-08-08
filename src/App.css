@@ -2488,91 +2488,84 @@ textarea:focus {
 
 
 /* =========================================================
-   SECONDARY NAV
+   TEAM FATE SECONDARY NAVIGATION
 ========================================================= */
 
-.secondary-nav {
-  width: 100%;
+.topbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
-  min-height: 44px;
-
+.logo-link {
   display: flex;
   align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.sub-nav {
+  width: 100%;
+  flex-basis: 100%;
+
+  display: flex;
   justify-content: center;
+  align-items: center;
 
   gap: 8px;
 
-  padding:
-    6px 16px;
+  padding: 8px 12px;
 
-  box-sizing: border-box;
+  background: rgba(5, 14, 35, 0.96);
 
-  background:
-    rgba(7, 13, 29, 0.98);
-
-  border-bottom:
-    1px solid rgba(120, 190, 255, 0.16);
+  border-top: 1px solid rgba(100, 207, 255, 0.12);
+  border-bottom: 1px solid rgba(100, 207, 255, 0.22);
 
   box-shadow:
-    0 3px 12px rgba(0, 0, 0, 0.25);
-
-  overflow-x: auto;
-
-  scrollbar-width: none;
+    0 4px 18px rgba(0, 0, 0, 0.25);
 }
 
-.secondary-nav::-webkit-scrollbar {
-  display: none;
-}
-
-
-/* =========================================================
-   SECONDARY LINKS
-========================================================= */
-
-.secondary-nav-link {
+.sub-nav-link {
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
 
-  min-height: 32px;
+  padding: 7px 16px;
 
-  padding:
-    5px 14px;
+  border-radius: 8px;
 
-  border-radius: 6px;
+  color: #b8dfff;
 
-  color:
-    rgba(220, 235, 255, 0.72);
-
-  text-decoration: none;
-
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 
-  white-space: nowrap;
+  text-decoration: none;
 
   transition:
     background 0.2s ease,
     color 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.2s ease;
 }
 
-.secondary-nav-link:hover {
-  color: #ffffff;
-
-  background:
-    rgba(80, 140, 220, 0.14);
+.sub-nav-link:hover {
+  background: rgba(100, 207, 255, 0.12);
+  color: white;
+  transform: translateY(-1px);
 }
 
-.secondary-nav-link.active {
-  color: #ffffff;
-
+.sub-nav-link.active {
   background:
-    rgba(80, 140, 220, 0.24);
+    linear-gradient(
+      135deg,
+      #64cfff,
+      #9fdfff
+    );
+
+  color: #081225;
+
+  font-weight: 700;
 
   box-shadow:
-    inset 0 0 0 1px
-    rgba(120, 190, 255, 0.18);
+    0 0 14px rgba(100, 207, 255, 0.25);
 }
