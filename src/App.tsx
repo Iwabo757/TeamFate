@@ -369,105 +369,255 @@ function canManageSite(
     )}
   </div>
 
-</header>
-
 {/* =========================================================
     HOME SUB NAVIGATION
 ========================================================= */}
+{(
+  location.pathname === "/" ||
+  location.pathname === "/recruitment"
+) && (
+  <div className="sub-nav">
 
-const getSubNav = () => {
-  const path = location.pathname;
+    <NavLink
+      to="/"
+      end
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Home
+    </NavLink>
 
-  if (
-    path === "/" ||
-    path === "/recruitment"
-  ) {
-    return (
-      <>
-        <NavLink to="/" end className="sub-nav-link">
-          Home
-        </NavLink>
+    <NavLink
+      to="/recruitment"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Recruitment
+    </NavLink>
 
-        <NavLink to="/recruitment" className="sub-nav-link">
-          Recruitment
-        </NavLink>
-      </>
-    );
-  }
+  </div>
+)}
 
-  if (
-    path.startsWith("/shinydex") ||
-    path === "/showcase" ||
-    path === "/submit-shiny"
-  ) {
-    return (
-      <>
-        <NavLink to="/shinydex" className="sub-nav-link">
-          ✨ Team Shiny Dex
-        </NavLink>
+{/* =========================================================
+    SHINY SUB NAVIGATION
+========================================================= */}
+{(
+  location.pathname === "/shinydex" ||
+  location.pathname === "/showcase" ||
+  location.pathname === "/submit-shiny"
+) && (
+  <div className="sub-nav">
 
-        <NavLink to="/showcase" className="sub-nav-link">
-          Shiny Showcase
-        </NavLink>
+    <NavLink
+      to="/shinydex"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      ✨ Team Shiny Dex
+    </NavLink>
 
-        <NavLink to="/submit-shiny" className="sub-nav-link">
-          Submit Shiny
-        </NavLink>
-      </>
-    );
-  }
+    <NavLink
+      to="/showcase"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Shiny Showcase
+    </NavLink>
 
-  if (
-    path === "/raid-overview" ||
-    path === "/raid-tracker" ||
-    path === "/raid-builder"
-  ) {
-    return (
-      <>
-        <NavLink to="/raid-tracker" className="sub-nav-link">
-          My Raid Status
-        </NavLink>
+    <NavLink
+      to="/submit-shiny"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Submit Shiny
+    </NavLink>
 
-        <NavLink to="/raid-overview" className="sub-nav-link">
-          Raid Overview
-        </NavLink>
+  </div>
+)}
 
-        <NavLink to="/raid-builder" className="sub-nav-link">
-          Raid Builder
-        </NavLink>
-      </>
-    );
-  }
+{/* =========================================================
+    EVENTS SUB NAVIGATION
+========================================================= */}
+{location.pathname.startsWith("/events") && (
+  <div className="sub-nav">
 
-  if (
-    path.startsWith("/admin")
-  ) {
-    return canManageSite(profile?.role) ? (
-      <>
-        <NavLink to="/admin" end className="sub-nav-link">
-          Admin Dashboard
-        </NavLink>
+    <NavLink
+      to="/events"
+      className="sub-nav-link"
+    >
+      📅 Current Events
+    </NavLink>
 
-        <NavLink
-          to="/admin/shiny-dashboard"
-          className="sub-nav-link"
-        >
-          Shiny Dashboard
-        </NavLink>
+    <NavLink
+      to="/events?view=past"
+      className="sub-nav-link"
+    >
+      Past Events
+    </NavLink>
 
-        <NavLink
-          to="/admin/bounty-dashboard"
-          className="sub-nav-link"
-        >
-          Bounty Dashboard
-        </NavLink>
-      </>
-    ) : null;
-  }
+    <NavLink
+      to="/events/shinywars"
+      className="sub-nav-link"
+    >
+      ⚔️ Shiny Wars
+    </NavLink>
 
-  return null;
-};
+    <NavLink
+      to="/events/shinywars/history"
+      className="sub-nav-link"
+    >
+      War History
+    </NavLink>
 
+  </div>
+)}
+
+{/* =========================================================
+    BOUNTY SUB NAVIGATION
+========================================================= */}
+{location.pathname.startsWith("/bounties") && (
+  <div className="sub-nav">
+
+    <NavLink
+      to="/bounties"
+      className="sub-nav-link"
+    >
+      🎯 Active Bounties
+    </NavLink>
+
+    <NavLink
+      to="/bounties?view=past"
+      className="sub-nav-link"
+    >
+      Completed Bounties
+    </NavLink>
+
+  </div>
+)}
+
+{/* =========================================================
+    RAIDS SUB NAVIGATION
+========================================================= */}
+{(
+  location.pathname === "/raid-overview" ||
+  location.pathname === "/raid-tracker" ||
+  location.pathname === "/raid-builder"
+) && (
+  <div className="sub-nav">
+
+    <NavLink
+      to="/raid-tracker"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      My Raid Status
+    </NavLink>
+
+    <NavLink
+      to="/raid-overview"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Raid Overview
+    </NavLink>
+
+    <NavLink
+      to="/raid-builder"
+      className={({ isActive }) =>
+        `sub-nav-link ${isActive ? "active" : ""}`
+      }
+    >
+      Raid Builder
+    </NavLink>
+
+  </div>
+)}
+
+{/* =========================================================
+    ADMIN SUB NAVIGATION
+========================================================= */}
+{canManageSite(profile?.role) &&
+  location.pathname.startsWith("/admin") && (
+    <div className="sub-nav">
+
+      <NavLink
+        to="/admin"
+        end
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Admin Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/shiny-dashboard"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Shiny Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/bounty-dashboard"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Bounty Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/shinywars"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Shiny Wars
+      </NavLink>
+
+      <NavLink
+        to="/admin/events"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Events
+      </NavLink>
+
+      <NavLink
+        to="/admin/recruitment"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Recruitment Editor
+      </NavLink>
+
+      <NavLink
+        to="/admin/members"
+        className={({ isActive }) =>
+          `sub-nav-link ${isActive ? "active" : ""}`
+        }
+      >
+        Members
+      </NavLink>
+
+    </div>
+)}
+
+
+</header>
+
+const subNav = getSubNav();
 
 
 <div className="mobile-nav-container"
@@ -606,49 +756,6 @@ const getSubNav = () => {
     </div>
   )}
 </div>
-
-
-<div className="topbar-right">
-          {profile ? (
-  <div className="user-menu">
-    <Link
-      to="/profile"
-      className="user-button"
-    >
-      <img
-        src={profile.avatar_url}
-        alt={profile.nickname ||
- profile.username}
-        className="nav-avatar"
-      />
-
-      <div className="user-info">
-        <span className="username">
-          {profile.nickname ||
- profile.username}
-        </span>
-
-        <button
-          className="logout-link"
-          onClick={(e) => {
-            e.preventDefault();
-            handleLogout();
-          }}
-        >
-          Logout
-        </button>
-      </div>
-    </Link>
-  </div>
-) : (
-  <NavLink
-    to="/login"
-    className="login-btn"
-  >
-    Login
-  </NavLink>
-)}
-        </div>
       
 
       <main className="content">
