@@ -255,343 +255,362 @@ function canManageSite(
   return (
     <>
     <div className="app">
-      <header className="topbar">
-<div className="logo">
-  <img
-    src="/images/jirachi-banner.jpg"
-    alt="Team Fate"
-    className="logo-image"
-  />
+<header className="site-header">
 
-  <div className="logo-text">
-    <div className="logo-main">
-      Team Faté
-    </div>
+  {/* MAIN NAV */}
+  <div className="main-nav">
+    <div className="nav-left">
 
-    <div className="logo-sub">
-      ★ One Wish. One Faté ★
+      {/* LOGO */}
+      <Link to="/" className="brand">
+        <img
+          src="/logo.png"
+          alt="Team Fate"
+        />
+        <div className="brand-text">
+          <div className="brand-title">FATE</div>
+          <div className="brand-subtitle">
+            ★ ONE WISH. ONE FATE ★
+          </div>
+        </div>
+      </Link>
+
+      {/* MAIN LINKS */}
+      <nav className="nav-links">
+
+        <NavLink
+          to="/"
+          end
+        >
+          Home
+        </NavLink>
+
+        <NavLink to="/shinydex">
+          Shiny
+        </NavLink>
+
+        <NavLink to="/events">
+          Events
+        </NavLink>
+
+        <NavLink to="/bounties">
+          Bounty
+        </NavLink>
+
+        <NavLink to="/raid-overview">
+          Raids
+        </NavLink>
+
+        <NavLink to="/board">
+          Leaderboard
+        </NavLink>
+
+        <NavLink to="/members">
+          Members
+        </NavLink>
+
+        <NavLink to="/guides">
+          Guides
+        </NavLink>
+
+        {canManageSite(profile?.role) && (
+          <NavLink to="/admin">
+            Admin
+          </NavLink>
+        )}
+
+      </nav>
+
     </div>
   </div>
-</div>
 
-          <button
-            className="mobile-menu-btn"
-            onClick={() =>
-              setMobileOpen(!mobileOpen)
-            }
-          >
-            ☰
-          </button>
 
-<nav className="nav-links">
+  {/* =====================================================
+      SECONDARY NAV
+      THIS MUST BE OUTSIDE .main-nav
+  ===================================================== */}
 
-  <NavLink to="/">
-    Home
-  </NavLink>
+  {(location.pathname === "/" ||
+    location.pathname === "/recruitment") && (
 
-  <NavLink to="/shinydex">
-    Shiny
-  </NavLink>
+    <div className="secondary-nav">
 
-  <NavLink to="/events">
-    Events
-  </NavLink>
+      <NavLink
+        to="/"
+        end
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Home
+      </NavLink>
 
-  <NavLink to="/bounties">
-    Bounty
-  </NavLink>
+      <NavLink
+        to="/recruitment"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Recruitment
+      </NavLink>
 
-  <NavLink to="/raid-overview">
-    Raids
-  </NavLink>
+    </div>
 
-  <NavLink to="/board">
-    Leaderboard
-  </NavLink>
-
-  <NavLink to="/members">
-    Members
-  </NavLink>
-
-  <NavLink to="/guides">
-    Guides
-  </NavLink>
-
-  {canManageSite(
-    profile?.role
-  ) && (
-    <NavLink to="/admin">
-      Admin
-    </NavLink>
   )}
 
-</nav>
-{/* =========================================================
-    SECONDARY NAVIGATION
-========================================================= */}
 
-{location.pathname.startsWith(
-  "/shinydex"
-) ||
-location.pathname ===
-  "/showcase" ||
-location.pathname ===
-  "/submit-shiny" ? (
-  <div className="sub-nav">
+  {/* SHINY SUB NAV */}
 
-    <NavLink
-      to="/shinydex"
-      className={({ isActive }) =>
-        `sub-nav-link ${
-          isActive
-            ? "active"
-            : ""
-        }`
-      }
-    >
-      ✨ Team Shiny Dex
-    </NavLink>
+  {(location.pathname === "/shinydex" ||
+    location.pathname === "/showcase" ||
+    location.pathname === "/submit-shiny") && (
 
-    <NavLink
-      to="/showcase"
-      className={({ isActive }) =>
-        `sub-nav-link ${
-          isActive
-            ? "active"
-            : ""
-        }`
-      }
-    >
-      Shiny Showcase
-    </NavLink>
+    <div className="secondary-nav">
 
-    <NavLink
-      to="/submit-shiny"
-      className={({ isActive }) =>
-        `sub-nav-link ${
-          isActive
-            ? "active"
-            : ""
-        }`
-      }
-    >
-      Submit Shiny
-    </NavLink>
+      <NavLink
+        to="/shinydex"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        ✨ Team Shiny Dex
+      </NavLink>
 
-  </div>
-) : null}
+      <NavLink
+        to="/showcase"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Shiny Showcase
+      </NavLink>
 
-{/* =========================================================
-    SECONDARY EVENTS NAVIGATION
-========================================================= */}
-{location.pathname.startsWith(
-  "/events"
-) ? (
-  <div className="sub-nav">
+      <NavLink
+        to="/submit-shiny"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Submit Shiny
+      </NavLink>
 
-    <NavLink
-      to="/events"
-      className="sub-nav-link"
-    >
-      📅 Current Events
-    </NavLink>
+    </div>
 
-    <NavLink
-      to="/events?view=past"
-      className="sub-nav-link"
-    >
-      Past Events
-    </NavLink>
+  )}
 
-    <NavLink
-      to="/events/shinywars"
-      className="sub-nav-link"
-    >
-      ⚔️ Shiny Wars
-    </NavLink>
 
-    <NavLink
-      to="/events/shinywars/history"
-      className="sub-nav-link"
-    >
-      War History
-    </NavLink>
+  {/* EVENTS SUB NAV */}
 
-  </div>
-) : null}
+  {location.pathname.startsWith("/events") && (
 
-{/* =========================================================
-    SECONDARY BOUNTIES NAVIGATION
-========================================================= */}
+    <div className="secondary-nav">
 
-{location.pathname.startsWith(
-  "/bounties"
-) ? (
-  <div className="sub-nav">
+      <NavLink
+        to="/events"
+        end
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Current Events
+      </NavLink>
 
-    <NavLink
-      to="/bounties"
-      className="sub-nav-link"
-    >
-      🎯 Active Bounties
-    </NavLink>
+      <NavLink
+        to="/events?view=past"
+        className="secondary-nav-link"
+      >
+        Past Events
+      </NavLink>
 
-    <NavLink
-      to="/bounties?view=past"
-      className="sub-nav-link"
-    >
-      Completed Bounties
-    </NavLink>
+      <NavLink
+        to="/events/shinywars"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        ⚔️ Shiny Wars
+      </NavLink>
 
-  </div>
-) : null}
+      <NavLink
+        to="/events/shinywars/history"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        War History
+      </NavLink>
 
-{/* =========================================================
-    SECONDARY RAIDS NAVIGATION
-========================================================= */}
+    </div>
 
-{location.pathname ===
-  "/raid-overview" ||
-location.pathname ===
-  "/raid-tracker" ||
-location.pathname ===
-  "/raid-builder" ? (
-  <div className="sub-nav">
+  )}
 
-    <NavLink
-      to="/raid-tracker"
-      className="sub-nav-link"
-    >
-      My Raid Status
-    </NavLink>
 
-    <NavLink
-      to="/raid-overview"
-      className="sub-nav-link"
-    >
-      Raid Overview
-    </NavLink>
+  {/* BOUNTY SUB NAV */}
 
-    <NavLink
-      to="/raid-builder"
-      className="sub-nav-link"
-    >
-      Raid Builder
-    </NavLink>
+  {location.pathname.startsWith("/bounties") && (
 
-  </div>
-) : null}
+    <div className="secondary-nav">
 
-{/* =========================================================
-    SECONDARY ADMIN NAVIGATION
-========================================================= */}
+      <NavLink
+        to="/bounties"
+        end
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Active Bounties
+      </NavLink>
 
-{canManageSite(
-  profile?.role
-) &&
-location.pathname.startsWith(
-  "/admin"
-) ? (
-  <div className="sub-nav">
+      <NavLink
+        to="/bounties?view=past"
+        className="secondary-nav-link"
+      >
+        Completed Bounties
+      </NavLink>
 
-    <NavLink
-      to="/admin"
-      end
-      className="sub-nav-link"
-    >
-      Admin Dashboard
-    </NavLink>
+    </div>
 
-    <NavLink
-      to="/admin/shiny-dashboard"
-      className="sub-nav-link"
-    >
-      Shiny Dashboard
-    </NavLink>
+  )}
 
-    <NavLink
-      to="/admin/bounty-dashboard"
-      className="sub-nav-link"
-    >
-      Bounty Dashboard
-    </NavLink>
 
-    <NavLink
-      to="/admin/shinywars"
-      className="sub-nav-link"
-    >
-      Shiny Wars
-    </NavLink>
+  {/* RAIDS SUB NAV */}
 
-    <NavLink
-      to="/admin/events"
-      className="sub-nav-link"
-    >
-      Events
-    </NavLink>
+  {(location.pathname === "/raid-overview" ||
+    location.pathname === "/raid-tracker" ||
+    location.pathname === "/raid-builder") && (
 
-    <NavLink
-      to="/admin-raids"
-      className="sub-nav-link"
-    >
-      Raid / Guides
-    </NavLink>
+    <div className="secondary-nav">
 
-    <NavLink
-      to="/admin/recruitment"
-      className="sub-nav-link"
-    >
-      Recruitment Editor
-    </NavLink>
+      <NavLink
+        to="/raid-tracker"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        My Raid Status
+      </NavLink>
 
-    <NavLink
-      to="/admin/members"
-      className="sub-nav-link"
-    >
-      Members
-    </NavLink>
+      <NavLink
+        to="/raid-overview"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Raid Overview
+      </NavLink>
 
-  </div>
-) : null}
+      <NavLink
+        to="/raid-builder"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Raid Builder
+      </NavLink>
 
-{/* =========================================================
-    SECONDARY HOME NAVIGATION
-========================================================= */}
+    </div>
 
-{location.pathname === "/" ||
-location.pathname === "/recruitment" ? (
-  <div className="sub-nav">
+  )}
 
-    <NavLink
-      to="/"
-      end
-      className={({ isActive }) =>
-        `sub-nav-link ${
-          isActive ? "active" : ""
-        }`
-      }
-    >
-      Home
-    </NavLink>
 
-    <NavLink
-      to="/recruitment"
-      className={({ isActive }) =>
-        `sub-nav-link ${
-          isActive ? "active" : ""
-        }`
-      }
-    >
-      Recruitment
-    </NavLink>
+  {/* ADMIN SUB NAV */}
 
-  </div>
-) : null}
+  {canManageSite(profile?.role) &&
+    location.pathname.startsWith("/admin") && (
+
+    <div className="secondary-nav">
+
+      <NavLink
+        to="/admin"
+        end
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Admin Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/shiny-dashboard"
+        className="secondary-nav-link"
+      >
+        Shiny Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/bounty-dashboard"
+        className="secondary-nav-link"
+      >
+        Bounty Dashboard
+      </NavLink>
+
+      <NavLink
+        to="/admin/shinywars"
+        className="secondary-nav-link"
+      >
+        Shiny Wars
+      </NavLink>
+
+      <NavLink
+        to="/admin/events"
+        className="secondary-nav-link"
+      >
+        Events
+      </NavLink>
+
+      <NavLink
+        to="/admin/recruitment"
+        className={({ isActive }) =>
+          `secondary-nav-link ${
+            isActive ? "active" : ""
+          }`
+        }
+      >
+        Recruitment Editor
+      </NavLink>
+
+      <NavLink
+        to="/admin/members"
+        className="secondary-nav-link"
+      >
+        Members
+      </NavLink>
+
+    </div>
+
+  )}
+
+</header>
 
 
 
-<div
-  className="mobile-nav-container"
+<div className="mobile-nav-container"
   ref={menuRef}
 >
   {mobileOpen && (
@@ -770,7 +789,7 @@ location.pathname === "/recruitment" ? (
   </NavLink>
 )}
         </div>
-      </header>
+      
 
       <main className="content">
         <Routes>

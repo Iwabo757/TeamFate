@@ -2436,53 +2436,115 @@ textarea:focus {
 }
 
 /* =========================================================
-   SECONDARY TOP NAVIGATION
+   SITE HEADER
 ========================================================= */
 
-.sub-nav {
+.site-header {
   width: 100%;
+  position: relative;
+  z-index: 1000;
+}
+
+
+/* =========================================================
+   MAIN NAV
+========================================================= */
+
+.main-nav {
+  width: 100%;
+  min-height: 82px;
+
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
-
-  padding: 8px 16px;
-
-  background:
-    rgba(10, 10, 18, 0.96);
-
-  border-top:
-    1px solid rgba(255, 255, 255, 0.06);
-
-  border-bottom:
-    1px solid rgba(255, 255, 255, 0.08);
 
   box-sizing: border-box;
+
+  background: rgba(4, 15, 38, 0.96);
+
+  border-bottom:
+    1px solid rgba(120, 190, 255, 0.15);
+}
+
+.nav-left {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding:
+    0 28px;
+
+  box-sizing: border-box;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+
+  gap: 24px;
+
+  margin-left: auto;
+}
+
+
+/* =========================================================
+   SECONDARY NAV
+========================================================= */
+
+.secondary-nav {
+  width: 100%;
+
+  min-height: 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding:
+    6px 16px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(7, 13, 29, 0.98);
+
+  border-bottom:
+    1px solid rgba(120, 190, 255, 0.16);
+
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, 0.25);
 
   overflow-x: auto;
 
   scrollbar-width: none;
 }
 
-.sub-nav::-webkit-scrollbar {
+.secondary-nav::-webkit-scrollbar {
   display: none;
 }
 
-.sub-nav-link {
+
+/* =========================================================
+   SECONDARY LINKS
+========================================================= */
+
+.secondary-nav-link {
   display: inline-flex;
+
   align-items: center;
   justify-content: center;
 
-  padding: 7px 14px;
+  min-height: 32px;
 
-  border-radius: 7px;
+  padding:
+    5px 14px;
 
-  color: rgba(
-    255,
-    255,
-    255,
-    0.72
-  );
+  border-radius: 6px;
+
+  color:
+    rgba(220, 235, 255, 0.72);
 
   text-decoration: none;
 
@@ -2494,46 +2556,23 @@ textarea:focus {
   transition:
     background 0.2s ease,
     color 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.2s ease;
 }
 
-.sub-nav-link:hover {
+.secondary-nav-link:hover {
+  color: #ffffff;
+
   background:
-    rgba(255, 255, 255, 0.08);
-
-  color: #fff;
-
-  transform:
-    translateY(-1px);
+    rgba(80, 140, 220, 0.14);
 }
 
-.sub-nav-link.active {
-  background:
-    rgba(255, 255, 255, 0.13);
+.secondary-nav-link.active {
+  color: #ffffff;
 
-  color: #fff;
+  background:
+    rgba(80, 140, 220, 0.24);
 
   box-shadow:
-    0 0 0 1px
-    rgba(255, 255, 255, 0.08);
-}
-
-@media (max-width: 768px) {
-
-  .sub-nav {
-    justify-content: flex-start;
-
-    padding:
-      7px 10px;
-
-    gap: 6px;
-  }
-
-  .sub-nav-link {
-    font-size: 12px;
-
-    padding:
-      7px 11px;
-  }
-
+    inset 0 0 0 1px
+    rgba(120, 190, 255, 0.18);
 }
