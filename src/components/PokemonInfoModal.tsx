@@ -762,11 +762,11 @@ setMovesLoaded(true);
       )
       ?.flavor_text || "No description available.";
 
-  const shinySprite =
-    `https://play.pokemonshowdown.com/sprites/ani-shiny/${pokemon.id}.gif`;
+const shinySprite =
+`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${pokemon.id}.gif`;
 
-  const fallbackSprite =
-    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
+const fallbackSprite =
+  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
 
   const weaknesses = new Set<string>();
   const resistances = new Set<string>();
@@ -833,7 +833,7 @@ const evolutionStatic =
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evolutionId}.png`;
 
 const evolutionGif =
-  `https://play.pokemonshowdown.com/sprites/ani-shiny/${evolutionId}.gif`;
+`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${evolutionId}.gif`;
 
     return (
       <div
