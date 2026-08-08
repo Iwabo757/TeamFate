@@ -435,23 +435,23 @@ function canManageSite(
 <header className="topbar">
 
   <div className="logo">
-    <Link to="/" className="logo-link">
-      <img
-        src="/images/jirachi-banner.jpg"
-        alt="Team Fate"
-        className="logo-image"
-      />
+<Link to="/" className="brand">
+  <img
+    src="/logo.png"
+    alt="Team Fate"
+    className="brand-logo"
+  />
 
-      <div className="logo-text">
-        <div className="logo-main">
-          Team Faté
-        </div>
+  <div className="logo-text">
+    <div className="logo-main">
+      Team Faté
+    </div>
 
-        <div className="logo-sub">
-          ★ One Wish. One Faté ★
-        </div>
-      </div>
-    </Link>
+    <div className="logo-sub">
+      ★ One Wish. One Faté ★
+    </div>
+  </div>
+</Link>
   </div>
 
   <button
