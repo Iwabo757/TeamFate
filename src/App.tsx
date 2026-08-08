@@ -375,131 +375,98 @@ function canManageSite(
     HOME SUB NAVIGATION
 ========================================================= */}
 
-{(
-  location.pathname === "/" ||
-  location.pathname === "/recruitment"
-) && (
-  <div className="sub-nav">
+const getSubNav = () => {
+  const path = location.pathname;
 
-    <NavLink
-      to="/"
-      end
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Home
-    </NavLink>
+  if (
+    path === "/" ||
+    path === "/recruitment"
+  ) {
+    return (
+      <>
+        <NavLink to="/" end className="sub-nav-link">
+          Home
+        </NavLink>
 
-    <NavLink
-      to="/recruitment"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Recruitment
-    </NavLink>
+        <NavLink to="/recruitment" className="sub-nav-link">
+          Recruitment
+        </NavLink>
+      </>
+    );
+  }
 
-  </div>
-)}
+  if (
+    path.startsWith("/shinydex") ||
+    path === "/showcase" ||
+    path === "/submit-shiny"
+  ) {
+    return (
+      <>
+        <NavLink to="/shinydex" className="sub-nav-link">
+          ✨ Team Shiny Dex
+        </NavLink>
 
-{/* =========================================================
-    SHINY SUB NAVIGATION
-========================================================= */}
+        <NavLink to="/showcase" className="sub-nav-link">
+          Shiny Showcase
+        </NavLink>
 
-{(
-  location.pathname === "/shinydex" ||
-  location.pathname === "/showcase" ||
-  location.pathname === "/submit-shiny"
-) && (
-  <div className="sub-nav">
+        <NavLink to="/submit-shiny" className="sub-nav-link">
+          Submit Shiny
+        </NavLink>
+      </>
+    );
+  }
 
-    <NavLink
-      to="/shinydex"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      ✨ Team Shiny Dex
-    </NavLink>
+  if (
+    path === "/raid-overview" ||
+    path === "/raid-tracker" ||
+    path === "/raid-builder"
+  ) {
+    return (
+      <>
+        <NavLink to="/raid-tracker" className="sub-nav-link">
+          My Raid Status
+        </NavLink>
 
-    <NavLink
-      to="/showcase"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Shiny Showcase
-    </NavLink>
+        <NavLink to="/raid-overview" className="sub-nav-link">
+          Raid Overview
+        </NavLink>
 
-    <NavLink
-      to="/submit-shiny"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Submit Shiny
-    </NavLink>
+        <NavLink to="/raid-builder" className="sub-nav-link">
+          Raid Builder
+        </NavLink>
+      </>
+    );
+  }
 
-  </div>
-)}
-{/* =========================================================
-    RAIDS SUB NAVIGATION
-========================================================= */}
+  if (
+    path.startsWith("/admin")
+  ) {
+    return canManageSite(profile?.role) ? (
+      <>
+        <NavLink to="/admin" end className="sub-nav-link">
+          Admin Dashboard
+        </NavLink>
 
-{(
-  location.pathname === "/raid-overview" ||
-  location.pathname === "/raid-tracker" ||
-  location.pathname === "/raid-builder"
-) && (
-  <div className="sub-nav">
-    <NavLink to="/raid-tracker" className="sub-nav-link">
-      My Raid Status
-    </NavLink>
+        <NavLink
+          to="/admin/shiny-dashboard"
+          className="sub-nav-link"
+        >
+          Shiny Dashboard
+        </NavLink>
 
-    <NavLink to="/raid-overview" className="sub-nav-link">
-      Raid Overview
-    </NavLink>
+        <NavLink
+          to="/admin/bounty-dashboard"
+          className="sub-nav-link"
+        >
+          Bounty Dashboard
+        </NavLink>
+      </>
+    ) : null;
+  }
 
-    <NavLink to="/raid-builder" className="sub-nav-link">
-      Raid Builder
-    </NavLink>
-  </div>
-)}
-{/* =========================================================
-    ADMIN SUB NAVIGATION
-========================================================= */}
-{canManageSite(profile?.role) &&
-  location.pathname.startsWith("/admin") && (
-    <div className="sub-nav">
-
-      <NavLink
-        to="/admin"
-        end
-        className="sub-nav-link"
-      >
-        Admin Dashboard
-      </NavLink>
-
-      <NavLink
-        to="/admin/shiny-dashboard"
-        className="sub-nav-link"
-      >
-        Shiny Dashboard
-      </NavLink>
-
-      <NavLink
-        to="/admin/bounty-dashboard"
-        className="sub-nav-link"
-      >
-        Bounty Dashboard
-      </NavLink>
-
-      {/* Keep the rest of your existing admin links here */}
-
-    </div>
-)}
-
+  return null;
+};
 
 
 
