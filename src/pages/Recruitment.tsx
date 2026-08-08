@@ -1,41 +1,148 @@
-import { useEffect, useState } from "react";
-import ReactQuill from "react-quill-new";
-import "react-quill-new/dist/quill.snow.css";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
-type RecruitmentPageData = {
+type RecruitmentPage = {
   id: number;
-  content: string | null;
+  title: string;
+  content: string;
   draft_content: string | null;
   banner_url: string | null;
   discord_url: string | null;
   updated_at: string | null;
+  updated_by: string | null;
 };
 
+const PAGE_ID = 1;
+
+/*
+ * ============================================================
+ * ADMIN CONFIGURATION
+ * ============================================================
+ *
+ * You can put Discord IDs here if you want to hard-code admins.
+ *
+ * Example:
+ * const ADMIN_DISCORD_IDS = [
+ *   "123456789012345678",
+ *   "987654321098765432",
+ * ];
+ *
+ * You can also use:
+ *
+ * VITE_ADMIN_DISCORD_IDS=123456789012345678,987654321098765432
+ *
+ * in your .env file.
+ */
+
+const ADMIN_DISCORD_IDS =
+  import.meta.env.VITE_ADMIN_DISCORD_IDS
+    ? String(import.meta.env.VITE_ADMIN_DISCORD_IDS)
+        .split(",")
+        .map((id: string) => id.trim())
+        .filter(Boolean)
+    : [];
+
+/* ============================================================
+   DEFAULT CONTENT
+   ============================================================ */
+
+const DEFAULT_CONTENT = `
+<h2>Join Team Fate</h2>
+<p>
+  Welcome to Team Fate!
+</p>
+<p>
+  We are always looking for active and friendly members to join our community.
+</p>
+<p>
+  If you're interested in joining, click the Discord button below to get in touch with us.
+</p>
+`;
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+
+function getDiscordId(user: any): string | null {
+  if (!user) return null;
+
+  return (
+    user.user_metadata?.discord_id ||
+    user.user_metadata?.provider_id ||
+    user.user_metadata?.sub ||
+    user.identities?.[0]?.identity_data?.provider_id ||
+    null
+  );
+}
+
+function isUserAdmin(user: any): boolean {
+  if (!user) return false;
+
+  const discordId = getDiscordId(user);
+
+  if (!discordId) return false;
+
+  return ADMIN_DISCORD_IDS.includes(String(discordId));
+}
+
+function sanitizeUrl(url: string): string {
+  const trimmed = url.trim();
+
+  if (!trimmed) return "";
+
+  if (
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("mailto:")
+  ) {
+    return trimmed;
+  }
+
+  return `https://${trimmed}`;
+}
+
+/* ============================================================
+   TOOLBAR BUTTON
+   ============================================================ */
+
+type ToolbarButtonProps = {
+  label: string;
+  title: string;
+  onClick: () => void;
+};
+
+function ToolbarButton({
+  label,
+  title,
+  onClick,
+}: ToolbarButtonProps) {
+  return (
+    <button
+      type="button"
+      title={title}
+      className="recruitment-toolbar-button"
+      onMouseDown={(event) => {
+        event.preventDefault();
+      }}
+      onClick={onClick}
+    >
+      {label}
+    </button>
+  );
+}
+
+/* ============================================================
+   MAIN PAGE
+   ============================================================ */
+
 export default function Recruitment() {
-  const [pageData, setPageData] =
-    useState<RecruitmentPageData | null>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [content, setContent] =
-    useState("");
+  const [page, setPage] =
+    useState<RecruitmentPage | null>(null);
 
-  const [draftContent, setDraftContent] =
-    useState("");
-
-  const [bannerUrl, setBannerUrl] =
-    useState("");
-
-  const [discordUrl, setDiscordUrl] =
-    useState("");
-
-  const [isAdmin, setIsAdmin] =
-    useState(false);
-
-  const [editing, setEditing] =
-    useState(false);
-
-  const [previewMode, setPreviewMode] =
-    useState(false);
+  const [user, setUser] = useState<any>(null);
 
   const [loading, setLoading] =
     useState(true);
@@ -43,32 +150,99 @@ export default function Recruitment() {
   const [saving, setSaving] =
     useState(false);
 
-  const [uploading, setUploading] =
+  const [uploadingBanner, setUploadingBanner] =
     useState(false);
 
-  const [message, setMessage] =
+  const [isEditing, setIsEditing] =
+    useState(false);
+
+  const [showPreview, setShowPreview] =
+    useState(false);
+
+  const [title, setTitle] =
+    useState("Join Team Fate");
+
+  const [discordUrl, setDiscordUrl] =
     useState("");
+
+  const [bannerUrl, setBannerUrl] =
+    useState("");
+
+  const [draftContent, setDraftContent] =
+    useState("");
+
+  const [statusMessage, setStatusMessage] =
+    useState("");
+
+  const [linkUrl, setLinkUrl] =
+    useState("");
+
+  const [showLinkBox, setShowLinkBox] =
+    useState(false);
+
+  const admin = isUserAdmin(user);
+
+  /* ==========================================================
+     LOAD USER
+     ========================================================== */
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (mounted) {
+        setUser(user);
+      }
+    }
+
+    loadUser();
+
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (mounted) {
+          setUser(session?.user ?? null);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  /* ==========================================================
+     LOAD RECRUITMENT PAGE
+     ========================================================== */
 
   useEffect(() => {
     loadPage();
-    checkAdmin();
   }, []);
-
-  /*
-   * ---------------------------------------------------------
-   * LOAD PAGE
-   * ---------------------------------------------------------
-   */
 
   async function loadPage() {
     setLoading(true);
+    setStatusMessage("");
 
-    const { data, error } =
-      await supabase
-        .from("recruitment_page")
-        .select("*")
-        .eq("id", 1)
-        .single();
+    const { data, error } = await supabase
+      .from("recruitment_page")
+      .select(`
+        id,
+        title,
+        content,
+        draft_content,
+        banner_url,
+        discord_url,
+        updated_at,
+        updated_by
+      `)
+      .eq("id", PAGE_ID)
+      .maybeSingle();
 
     if (error) {
       console.error(
@@ -76,619 +250,954 @@ export default function Recruitment() {
         error
       );
 
+      setStatusMessage(
+        "Unable to load the recruitment page."
+      );
+
       setLoading(false);
       return;
     }
 
-    if (data) {
-      setPageData(data);
+    if (!data) {
+      setPage({
+        id: PAGE_ID,
+        title: "Join Team Fate",
+        content: DEFAULT_CONTENT,
+        draft_content: null,
+        banner_url: null,
+        discord_url: null,
+        updated_at: null,
+        updated_by: null,
+      });
 
-      setContent(
-        data.content || ""
-      );
+      setTitle("Join Team Fate");
+      setDraftContent(DEFAULT_CONTENT);
+      setBannerUrl("");
+      setDiscordUrl("");
 
-      setDraftContent(
-        data.draft_content ||
-          data.content ||
-          ""
-      );
-
-      setBannerUrl(
-        data.banner_url || ""
-      );
-
-      setDiscordUrl(
-        data.discord_url || ""
-      );
+      setLoading(false);
+      return;
     }
+
+    const loadedPage =
+      data as RecruitmentPage;
+
+    setPage(loadedPage);
+
+    setTitle(
+      loadedPage.title || "Join Team Fate"
+    );
+
+    setDraftContent(
+      loadedPage.draft_content ??
+        loadedPage.content ??
+        DEFAULT_CONTENT
+    );
+
+    setBannerUrl(
+      loadedPage.banner_url ?? ""
+    );
+
+    setDiscordUrl(
+      loadedPage.discord_url ?? ""
+    );
 
     setLoading(false);
   }
 
-  /*
-   * ---------------------------------------------------------
-   * CHECK ADMIN
-   * ---------------------------------------------------------
-   */
-
-  async function checkAdmin() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      setIsAdmin(false);
-      return;
-    }
-
-    /*
-     * Change this query if your project
-     * stores admin information differently.
-     */
-
-    const { data, error } =
-      await supabase
-        .from("profiles")
-        .select("is_admin")
-        .eq("id", user.id)
-        .single();
-
-    if (error) {
-      console.error(
-        "Admin check failed:",
-        error
-      );
-
-      setIsAdmin(false);
-      return;
-    }
-
-    setIsAdmin(
-      data?.is_admin === true
-    );
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * START EDITING
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     START EDITING
+     ========================================================== */
 
   function startEditing() {
-    setDraftContent(
-      content
-    );
+    if (!admin) return;
 
-    setPreviewMode(false);
+    setStatusMessage("");
+    setShowPreview(false);
+    setIsEditing(true);
 
-    setMessage("");
-
-    setEditing(true);
+    setTimeout(() => {
+      if (editorRef.current) {
+        editorRef.current.innerHTML =
+          draftContent || DEFAULT_CONTENT;
+      }
+    }, 0);
   }
 
-  /*
-   * ---------------------------------------------------------
-   * CANCEL EDITING
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     CANCEL EDITING
+     ========================================================== */
 
   function cancelEditing() {
-    setDraftContent(
-      content
-    );
+    setIsEditing(false);
+    setShowPreview(false);
+    setStatusMessage("");
 
-    setBannerUrl(
-      pageData?.banner_url || ""
-    );
+    if (page) {
+      setTitle(page.title);
+      setDiscordUrl(page.discord_url ?? "");
+      setBannerUrl(page.banner_url ?? "");
 
-    setDiscordUrl(
-      pageData?.discord_url || ""
-    );
-
-    setPreviewMode(false);
-
-    setMessage("");
-
-    setEditing(false);
+      setDraftContent(
+        page.draft_content ??
+          page.content ??
+          DEFAULT_CONTENT
+      );
+    }
   }
 
-  /*
-   * ---------------------------------------------------------
-   * UPLOAD BANNER
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     EDITOR CONTENT
+     ========================================================== */
 
-  async function uploadBanner(
-    e: React.ChangeEvent<HTMLInputElement>
+  function syncEditor() {
+    if (!editorRef.current) return;
+
+    setDraftContent(
+      editorRef.current.innerHTML
+    );
+  }
+
+  /* ==========================================================
+     RICH TEXT COMMAND
+     ========================================================== */
+
+  function execCommand(
+    command: string,
+    value?: string
+  ) {
+    if (!editorRef.current) return;
+
+    editorRef.current.focus();
+
+    document.execCommand(
+      command,
+      false,
+      value
+    );
+
+    syncEditor();
+  }
+
+  /* ==========================================================
+     FORMATTERS
+     ========================================================== */
+
+  function makeBold() {
+    execCommand("bold");
+  }
+
+  function makeItalic() {
+    execCommand("italic");
+  }
+
+  function makeUnderline() {
+    execCommand("underline");
+  }
+
+  function alignLeft() {
+    execCommand("justifyLeft");
+  }
+
+  function alignCenter() {
+    execCommand("justifyCenter");
+  }
+
+  function alignRight() {
+    execCommand("justifyRight");
+  }
+
+  function makeBulletList() {
+    execCommand("insertUnorderedList");
+  }
+
+  function makeNumberList() {
+    execCommand("insertOrderedList");
+  }
+
+  function createHeading() {
+    execCommand(
+      "formatBlock",
+      "h2"
+    );
+  }
+
+  function createParagraph() {
+    execCommand(
+      "formatBlock",
+      "p"
+    );
+  }
+
+  /* ==========================================================
+     LINK
+     ========================================================== */
+
+  function openLinkBox() {
+    setLinkUrl("");
+    setShowLinkBox(true);
+  }
+
+  function insertLink() {
+    const url = sanitizeUrl(linkUrl);
+
+    if (!url) {
+      setShowLinkBox(false);
+      return;
+    }
+
+    execCommand(
+      "createLink",
+      url
+    );
+
+    setLinkUrl("");
+    setShowLinkBox(false);
+  }
+
+  /* ==========================================================
+     REMOVE FORMAT
+     ========================================================== */
+
+  function clearFormatting() {
+    execCommand(
+      "removeFormat"
+    );
+  }
+
+  /* ==========================================================
+     BANNER UPLOAD
+     ========================================================== */
+
+  function selectBanner() {
+    fileInputRef.current?.click();
+  }
+
+  async function handleBannerUpload(
+    event: React.ChangeEvent<HTMLInputElement>
   ) {
     const file =
-      e.target.files?.[0];
+      event.target.files?.[0];
 
     if (!file) return;
 
-    setUploading(true);
-    setMessage("");
+    if (!file.type.startsWith("image/")) {
+      setStatusMessage(
+        "Please select an image file."
+      );
+      return;
+    }
+
+    setUploadingBanner(true);
+    setStatusMessage("");
 
     try {
-      const fileExtension =
-        file.name
-          .split(".")
-          .pop();
+      const extension =
+        file.name.split(".").pop() ||
+        "png";
 
       const fileName =
-        `banner-${Date.now()}.${fileExtension}`;
+        `recruitment-${Date.now()}.${extension}`;
 
       const filePath =
         `recruitment/${fileName}`;
 
+      /*
+       * This expects a Supabase Storage bucket
+       * named "site-images".
+       *
+       * If your bucket has a different name,
+       * change it here.
+       */
+
       const {
         error: uploadError,
       } = await supabase.storage
-        .from(
-          "recruitment-banners"
-        )
+        .from("site-images")
         .upload(
           filePath,
           file,
           {
-            cacheControl:
-              "3600",
-            upsert: false,
+            cacheControl: "3600",
+            upsert: true,
           }
         );
 
       if (uploadError) {
-        throw uploadError;
+        console.error(
+          uploadError
+        );
+
+        setStatusMessage(
+          `Banner upload failed: ${uploadError.message}`
+        );
+
+        setUploadingBanner(false);
+        return;
       }
 
       const {
         data: publicData,
-      } =
-        supabase.storage
-          .from(
-            "recruitment-banners"
-          )
-          .getPublicUrl(
-            filePath
-          );
-
-      if (!publicData?.publicUrl) {
-        throw new Error(
-          "Could not get banner URL."
-        );
-      }
+      } = supabase.storage
+        .from("site-images")
+        .getPublicUrl(filePath);
 
       setBannerUrl(
         publicData.publicUrl
       );
 
-      setMessage(
-        "Banner uploaded."
+      setStatusMessage(
+        "Banner uploaded. Publish the page to save it."
       );
     } catch (error) {
-      console.error(
-        "Banner upload failed:",
-        error
-      );
+      console.error(error);
 
-      setMessage(
-        "Failed to upload banner."
+      setStatusMessage(
+        "Unable to upload banner."
       );
-    } finally {
-      setUploading(false);
     }
+
+    setUploadingBanner(false);
   }
 
-  /*
-   * ---------------------------------------------------------
-   * SAVE DRAFT
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     SAVE DRAFT
+     ========================================================== */
 
   async function saveDraft() {
+    if (!admin) return;
+
+    syncEditor();
+
     setSaving(true);
-    setMessage("");
+    setStatusMessage("");
 
-    const { error } =
-      await supabase
-        .from("recruitment_page")
-        .update({
-          draft_content:
-            draftContent,
-          banner_url:
-            bannerUrl || null,
-          discord_url:
-            discordUrl || null,
-        })
-        .eq("id", 1);
+    const {
+      data: {
+        user: currentUser,
+      },
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error(
-        "Draft save failed:",
-        error
-      );
-
-      setMessage(
-        "Failed to save draft."
+    if (!currentUser) {
+      setStatusMessage(
+        "You must be logged in."
       );
 
       setSaving(false);
       return;
     }
 
-    setMessage(
-      "Draft saved."
+    const content =
+      editorRef.current?.innerHTML ??
+      draftContent;
+
+    const { error } = await supabase
+      .from("recruitment_page")
+      .update({
+        title:
+          title.trim() ||
+          "Join Team Fate",
+
+        draft_content: content,
+
+        banner_url:
+          bannerUrl.trim() || null,
+
+        discord_url:
+          discordUrl.trim() || null,
+
+        updated_at:
+          new Date().toISOString(),
+
+        updated_by:
+          currentUser.id,
+      })
+      .eq("id", PAGE_ID);
+
+    if (error) {
+      console.error(error);
+
+      setStatusMessage(
+        `Unable to save draft: ${error.message}`
+      );
+
+      setSaving(false);
+      return;
+    }
+
+    setDraftContent(content);
+
+    setStatusMessage(
+      "Draft saved successfully."
     );
 
     setSaving(false);
   }
 
-  /*
-   * ---------------------------------------------------------
-   * PUBLISH
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     PUBLISH
+     ========================================================== */
 
   async function publishPage() {
+    if (!admin) return;
+
+    syncEditor();
+
     setSaving(true);
-    setMessage("");
+    setStatusMessage("");
 
-    const { error } =
-      await supabase
-        .from("recruitment_page")
-        .update({
-          content:
-            draftContent,
-          draft_content:
-            draftContent,
-          banner_url:
-            bannerUrl || null,
-          discord_url:
-            discordUrl || null,
-          updated_at:
-            new Date().toISOString(),
-        })
-        .eq("id", 1);
+    const {
+      data: {
+        user: currentUser,
+      },
+    } = await supabase.auth.getUser();
 
-    if (error) {
-      console.error(
-        "Publish failed:",
-        error
-      );
-
-      setMessage(
-        "Failed to publish page."
+    if (!currentUser) {
+      setStatusMessage(
+        "You must be logged in."
       );
 
       setSaving(false);
       return;
     }
 
-    setContent(
-      draftContent
-    );
+    const content =
+      editorRef.current?.innerHTML ??
+      draftContent;
 
-    setPageData(
-      (previous) =>
-        previous
-          ? {
-              ...previous,
-              content:
-                draftContent,
-              draft_content:
-                draftContent,
-              banner_url:
-                bannerUrl ||
-                null,
-              discord_url:
-                discordUrl ||
-                null,
-              updated_at:
-                new Date().toISOString(),
-            }
-          : previous
-    );
+    const cleanTitle =
+      title.trim() ||
+      "Join Team Fate";
 
-    setMessage(
+    const { error } = await supabase
+      .from("recruitment_page")
+      .update({
+        title: cleanTitle,
+
+        content,
+
+        draft_content: content,
+
+        banner_url:
+          bannerUrl.trim() || null,
+
+        discord_url:
+          discordUrl.trim() || null,
+
+        updated_at:
+          new Date().toISOString(),
+
+        updated_by:
+          currentUser.id,
+      })
+      .eq("id", PAGE_ID);
+
+    if (error) {
+      console.error(error);
+
+      setStatusMessage(
+        `Unable to publish: ${error.message}`
+      );
+
+      setSaving(false);
+      return;
+    }
+
+    setPage((previous) => ({
+      ...(previous ?? {
+        id: PAGE_ID,
+        title: cleanTitle,
+        content,
+        draft_content: content,
+        banner_url: null,
+        discord_url: null,
+        updated_at: null,
+        updated_by: null,
+      }),
+
+      title: cleanTitle,
+      content,
+      draft_content: content,
+      banner_url:
+        bannerUrl.trim() || null,
+      discord_url:
+        discordUrl.trim() || null,
+      updated_at:
+        new Date().toISOString(),
+      updated_by:
+        currentUser.id,
+    }));
+
+    setTitle(cleanTitle);
+    setDraftContent(content);
+
+    setStatusMessage(
       "Recruitment page published successfully."
     );
 
-    setPreviewMode(false);
-    setEditing(false);
+    setIsEditing(false);
+    setShowPreview(false);
 
     setSaving(false);
   }
 
-  /*
-   * ---------------------------------------------------------
-   * QUILL TOOLBAR
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     PREVIEW
+     ========================================================== */
 
-  const modules = {
-    toolbar: [
-      [
-        {
-          header: [
-            1,
-            2,
-            3,
-            false,
-          ],
-        },
-      ],
+  function togglePreview() {
+    syncEditor();
 
-      [
-        "bold",
-        "italic",
-        "underline",
-        "strike",
-      ],
+    setShowPreview(
+      (previous) => !previous
+    );
+  }
 
-      [
-        {
-          align: [],
-        },
-      ],
-
-      [
-        {
-          list: "ordered",
-        },
-        {
-          list: "bullet",
-        },
-      ],
-
-      [
-        {
-          indent: "-1",
-        },
-        {
-          indent: "+1",
-        },
-      ],
-
-      [
-        "link",
-      ],
-
-      [
-        "clean",
-      ],
-    ],
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "align",
-    "list",
-    "indent",
-    "link",
-  ];
-
-  /*
-   * ---------------------------------------------------------
-   * LOADING
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     LOADING
+     ========================================================== */
 
   if (loading) {
     return (
-      <div className="page">
-        <div className="loading">
-          Loading recruitment...
+      <div className="recruitment-page">
+        <div className="recruitment-container">
+          <h1 className="page-title">
+            Recruitment
+          </h1>
+
+          <div className="recruitment-card">
+            Loading recruitment information...
+          </div>
         </div>
       </div>
     );
   }
 
-  /*
-   * ---------------------------------------------------------
-   * EDITOR / ADMIN VIEW
-   * ---------------------------------------------------------
-   */
+  /* ==========================================================
+     PUBLIC CONTENT
+     ========================================================== */
 
-  if (
-    editing &&
-    isAdmin
-  ) {
-    return (
-      <div className="page recruitment-page">
+  const publicTitle =
+    page?.title ||
+    "Join Team Fate";
+
+  const publicContent =
+    page?.content ||
+    DEFAULT_CONTENT;
+
+  return (
+    <div className="recruitment-page">
+      <div className="recruitment-container">
+
+        {/* ==================================================
+            PAGE HEADER
+        ================================================== */}
 
         <div className="recruitment-header">
-          <div>
-            <h1>
-              Recruitment
-            </h1>
+          <h1 className="page-title">
+            Recruitment
+          </h1>
 
-            <p>
-              Edit the Team Fate
-              recruitment page.
-            </p>
-          </div>
-
-          <div className="recruitment-actions">
-
+          {admin && !isEditing && (
             <button
-              className="leader-filter"
-              onClick={() =>
-                setPreviewMode(
-                  !previewMode
-                )
-              }
+              type="button"
+              className="recruitment-admin-button"
+              onClick={startEditing}
             >
-              {previewMode
-                ? "Back to Edit"
-                : "Preview"}
+              ✎ Edit Recruitment
             </button>
-
-            <button
-              className="leader-filter"
-              onClick={
-                cancelEditing
-              }
-            >
-              Cancel
-            </button>
-
-          </div>
+          )}
         </div>
 
-        {previewMode ? (
-          <div className="recruitment-preview">
+        {/* ==================================================
+            EDITOR
+        ================================================== */}
 
-            <div className="preview-label">
-              PREVIEW
+        {isEditing ? (
+          <div className="recruitment-editor-card">
+
+            <div className="recruitment-admin-header">
+              <h2>
+                Edit Recruitment Page
+              </h2>
+
+              <span className="admin-badge">
+                ADMIN
+              </span>
             </div>
 
-            {bannerUrl && (
-              <img
-                src={bannerUrl}
-                alt="Recruitment banner"
-                className="recruitment-banner"
-              />
-            )}
+            {/* TITLE */}
 
-            <div
-              className="recruitment-content"
-              dangerouslySetInnerHTML={{
-                __html:
-                  draftContent,
-              }}
+            <label className="recruitment-label">
+              Page Title
+            </label>
+
+            <input
+              type="text"
+              className="recruitment-input"
+              value={title}
+              onChange={(event) =>
+                setTitle(
+                  event.target.value
+                )
+              }
+              placeholder="Join Team Fate"
             />
 
-            {discordUrl && (
-              <div className="discord-button-container">
-                <a
-                  href={
-                    discordUrl
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="discord-button"
-                >
-                  Join Team Fate Discord
-                </a>
-              </div>
-            )}
+            {/* BANNER */}
 
-          </div>
-        ) : (
-          <div className="recruitment-editor">
+            <label className="recruitment-label">
+              Banner Image
+            </label>
 
-            <div className="editor-section">
-
-              <label>
-                Banner Image
-              </label>
-
-              {bannerUrl && (
-                <div className="banner-preview">
-
-                  <img
-                    src={bannerUrl}
-                    alt="Current recruitment banner"
-                  />
-
-                  <button
-                    type="button"
-                    className="remove-banner"
-                    onClick={() =>
-                      setBannerUrl("")
-                    }
-                  >
-                    Remove Banner
-                  </button>
-
-                </div>
-              )}
+            <div className="banner-controls">
 
               <input
+                type="text"
+                className="recruitment-input"
+                value={bannerUrl}
+                onChange={(event) =>
+                  setBannerUrl(
+                    event.target.value
+                  )
+                }
+                placeholder="Banner image URL..."
+              />
+
+              <button
+                type="button"
+                className="recruitment-secondary-button"
+                onClick={selectBanner}
+                disabled={
+                  uploadingBanner
+                }
+              >
+                {uploadingBanner
+                  ? "Uploading..."
+                  : "Upload Banner"}
+              </button>
+
+              <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={
-                  uploadBanner
+                  handleBannerUpload
                 }
-                disabled={
-                  uploading
-                }
-              />
-
-              {uploading && (
-                <p>
-                  Uploading banner...
-                </p>
-              )}
-
-            </div>
-
-            <div className="editor-section">
-
-              <label>
-                Discord Invite
-              </label>
-
-              <input
-                type="url"
-                value={
-                  discordUrl
-                }
-                onChange={(e) =>
-                  setDiscordUrl(
-                    e.target.value
-                  )
-                }
-                placeholder="https://discord.gg/..."
-                className="recruitment-input"
-              />
-
-              <small>
-                This creates the
-                "Join Team Fate
-                Discord" button.
-              </small>
-
-            </div>
-
-            <div className="editor-section">
-
-              <label>
-                Recruitment Information
-              </label>
-
-              <ReactQuill
-                theme="snow"
-                value={
-                  draftContent
-                }
-                onChange={
-                  setDraftContent
-                }
-                modules={
-                  modules
-                }
-                formats={
-                  formats
-                }
+                style={{
+                  display: "none",
+                }}
               />
 
             </div>
 
-            <div className="editor-bottom-actions">
+            {bannerUrl && (
+              <div className="banner-preview">
+                <img
+                  src={bannerUrl}
+                  alt="Recruitment banner preview"
+                  onError={(event) => {
+                    event.currentTarget.style.display =
+                      "none";
+                  }}
+                />
+              </div>
+            )}
+
+            {/* DISCORD */}
+
+            <label className="recruitment-label">
+              Discord Invite URL
+            </label>
+
+            <input
+              type="url"
+              className="recruitment-input"
+              value={discordUrl}
+              onChange={(event) =>
+                setDiscordUrl(
+                  event.target.value
+                )
+              }
+              placeholder="https://discord.gg/..."
+            />
+
+            {/* TOOLBAR */}
+
+            <label className="recruitment-label">
+              Page Content
+            </label>
+
+            <div className="recruitment-toolbar">
+
+              <ToolbarButton
+                label="B"
+                title="Bold"
+                onClick={
+                  makeBold
+                }
+              />
+
+              <ToolbarButton
+                label="I"
+                title="Italic"
+                onClick={
+                  makeItalic
+                }
+              />
+
+              <ToolbarButton
+                label="U"
+                title="Underline"
+                onClick={
+                  makeUnderline
+                }
+              />
+
+              <div className="toolbar-divider" />
+
+              <ToolbarButton
+                label="H2"
+                title="Heading"
+                onClick={
+                  createHeading
+                }
+              />
+
+              <ToolbarButton
+                label="P"
+                title="Paragraph"
+                onClick={
+                  createParagraph
+                }
+              />
+
+              <div className="toolbar-divider" />
+
+              <ToolbarButton
+                label="≡"
+                title="Align Left"
+                onClick={
+                  alignLeft
+                }
+              />
+
+              <ToolbarButton
+                label="≡"
+                title="Center"
+                onClick={
+                  alignCenter
+                }
+              />
+
+              <ToolbarButton
+                label="≡"
+                title="Align Right"
+                onClick={
+                  alignRight
+                }
+              />
+
+              <div className="toolbar-divider" />
+
+              <ToolbarButton
+                label="• List"
+                title="Bullet List"
+                onClick={
+                  makeBulletList
+                }
+              />
+
+              <ToolbarButton
+                label="1. List"
+                title="Numbered List"
+                onClick={
+                  makeNumberList
+                }
+              />
+
+              <div className="toolbar-divider" />
+
+              <ToolbarButton
+                label="🔗"
+                title="Insert Link"
+                onClick={
+                  openLinkBox
+                }
+              />
+
+              <ToolbarButton
+                label="Clear"
+                title="Remove Formatting"
+                onClick={
+                  clearFormatting
+                }
+              />
+
+            </div>
+
+            {/* LINK POPUP */}
+
+            {showLinkBox && (
+              <div className="recruitment-link-box">
+
+                <input
+                  type="url"
+                  className="recruitment-input"
+                  value={linkUrl}
+                  onChange={(event) =>
+                    setLinkUrl(
+                      event.target.value
+                    )
+                  }
+                  placeholder="https://example.com"
+                  autoFocus
+                />
+
+                <button
+                  type="button"
+                  className="recruitment-primary-button"
+                  onClick={
+                    insertLink
+                  }
+                >
+                  Insert Link
+                </button>
+
+                <button
+                  type="button"
+                  className="recruitment-secondary-button"
+                  onClick={() =>
+                    setShowLinkBox(
+                      false
+                    )
+                  }
+                >
+                  Cancel
+                </button>
+
+              </div>
+            )}
+
+            {/* EDITOR */}
+
+            <div
+              ref={editorRef}
+              className="recruitment-rich-editor"
+              contentEditable
+              suppressContentEditableWarning
+              onInput={
+                syncEditor
+              }
+              onBlur={
+                syncEditor
+              }
+            />
+
+            {/* DISCORD BUTTON PREVIEW */}
+
+            {discordUrl && (
+              <div className="discord-preview-section">
+
+                <div className="recruitment-label">
+                  Discord Button Preview
+                </div>
+
+                <a
+                  href={sanitizeUrl(
+                    discordUrl
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="discord-button"
+                  onClick={(event) =>
+                    event.preventDefault()
+                  }
+                >
+                  💬 Join Team Fate Discord
+                </a>
+
+              </div>
+            )}
+
+            {/* PREVIEW */}
+
+            {showPreview && (
+              <div className="recruitment-preview">
+
+                <div className="recruitment-preview-label">
+                  ADMIN PREVIEW
+                </div>
+
+                {bannerUrl && (
+                  <img
+                    src={bannerUrl}
+                    alt=""
+                    className="recruitment-banner"
+                  />
+                )}
+
+                <h2>
+                  {title ||
+                    "Join Team Fate"}
+                </h2>
+
+                <div
+                  className="recruitment-content"
+                  dangerouslySetInnerHTML={{
+                    __html:
+                      draftContent ||
+                      DEFAULT_CONTENT,
+                  }}
+                />
+
+                {discordUrl && (
+                  <a
+                    href={sanitizeUrl(
+                      discordUrl
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="discord-button"
+                  >
+                    💬 Join Team Fate Discord
+                  </a>
+                )}
+
+              </div>
+            )}
+
+            {/* STATUS */}
+
+            {statusMessage && (
+              <div className="recruitment-status">
+                {statusMessage}
+              </div>
+            )}
+
+            {/* ACTIONS */}
+
+            <div className="recruitment-editor-actions">
 
               <button
-                className="leader-filter"
+                type="button"
+                className="recruitment-secondary-button"
+                onClick={
+                  togglePreview
+                }
+              >
+                {showPreview
+                  ? "Hide Preview"
+                  : "Preview"}
+              </button>
+
+              <button
+                type="button"
+                className="recruitment-secondary-button"
                 onClick={
                   saveDraft
                 }
-                disabled={
-                  saving
-                }
+                disabled={saving}
               >
                 {saving
                   ? "Saving..."
@@ -696,24 +1205,80 @@ export default function Recruitment() {
               </button>
 
               <button
-                className="leader-filter active"
+                type="button"
+                className="recruitment-primary-button"
                 onClick={
                   publishPage
                 }
-                disabled={
-                  saving
-                }
+                disabled={saving}
               >
                 {saving
                   ? "Publishing..."
                   : "Publish"}
               </button>
 
+              <button
+                type="button"
+                className="recruitment-danger-button"
+                onClick={
+                  cancelEditing
+                }
+                disabled={saving}
+              >
+                Cancel
+              </button>
+
             </div>
 
-            {message && (
-              <div className="recruitment-message">
-                {message}
+          </div>
+        ) : (
+          /* ==================================================
+             PUBLIC PAGE
+             ================================================== */
+
+          <div className="recruitment-card">
+
+            {page?.banner_url && (
+              <img
+                src={page.banner_url}
+                alt=""
+                className="recruitment-banner"
+              />
+            )}
+
+            <h2 className="recruitment-title">
+              {publicTitle}
+            </h2>
+
+            <div
+              className="recruitment-content"
+              dangerouslySetInnerHTML={{
+                __html:
+                  publicContent,
+              }}
+            />
+
+            {page?.discord_url && (
+              <div className="recruitment-discord">
+                <a
+                  href={sanitizeUrl(
+                    page.discord_url
+                  )}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="discord-button"
+                >
+                  💬 Join Team Fate Discord
+                </a>
+              </div>
+            )}
+
+            {page?.updated_at && (
+              <div className="recruitment-last-updated">
+                Last updated:{" "}
+                {new Date(
+                  page.updated_at
+                ).toLocaleDateString()}
               </div>
             )}
 
@@ -721,73 +1286,6 @@ export default function Recruitment() {
         )}
 
       </div>
-    );
-  }
-
-  /*
-   * ---------------------------------------------------------
-   * PUBLIC VIEW
-   * ---------------------------------------------------------
-   */
-
-  return (
-    <div className="page recruitment-page">
-
-      {isAdmin && (
-        <div className="recruitment-admin-bar">
-
-          <button
-            className="leader-filter"
-            onClick={
-              startEditing
-            }
-          >
-            Edit Recruitment
-          </button>
-
-        </div>
-      )}
-
-      {bannerUrl && (
-        <img
-          src={bannerUrl}
-          alt="Team Fate Recruitment"
-          className="recruitment-banner"
-        />
-      )}
-
-      <div
-        className="recruitment-content"
-        dangerouslySetInnerHTML={{
-          __html:
-            content,
-        }}
-      />
-
-      {discordUrl && (
-        <div className="discord-button-container">
-
-          <a
-            href={discordUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="discord-button"
-          >
-            Join Team Fate Discord
-          </a>
-
-        </div>
-      )}
-
-      {pageData?.updated_at && (
-        <div className="recruitment-updated">
-          Last updated{" "}
-          {new Date(
-            pageData.updated_at
-          ).toLocaleDateString()}
-        </div>
-      )}
-
     </div>
   );
 }

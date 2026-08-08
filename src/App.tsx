@@ -286,7 +286,9 @@ function canManageSite(
           <NavLink to="/">
             Home
           </NavLink>
-
+<NavLink to="/recruitment">
+  Recruitment
+</NavLink>
 <div className="dropdown">
   <span> Shiny Dex ▼</span>
 
@@ -420,9 +422,7 @@ function canManageSite(
     <Link to="/admin/members">
       Manage Members
     </Link>
-<Link to="/recruitment">
-  Recruitment
-</Link>
+
   </div>
 </div>
 )}
