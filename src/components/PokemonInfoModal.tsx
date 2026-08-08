@@ -724,11 +724,24 @@ async function loadMoveDetails() {
       })
     );
 
-    const allMoves =
-      results.flat();
+const allMoves = results.flat();
 
-    setMoveDetails(allMoves);
-    setMovesLoaded(true);
+/* Remove duplicate moves from different PokeAPI version groups */
+const uniqueMoves = Array.from(
+  new Map(
+    allMoves.map((move) => {
+      const key =
+        move.method === "level-up"
+          ? `${move.method}-${move.name}-${move.level}`
+          : `${move.method}-${move.name}`;
+
+      return [key, move];
+    })
+  ).values()
+);
+
+setMoveDetails(uniqueMoves);
+setMovesLoaded(true);
   } catch (error) {
     console.error(
       "Failed to load move details:",
