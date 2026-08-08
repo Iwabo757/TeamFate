@@ -289,10 +289,6 @@ function canManageSite(
     Home
   </NavLink>
 
-  <NavLink to="/recruitment">
-    Recruitment
-  </NavLink>
-
   <NavLink to="/shinydex">
     Shiny
   </NavLink>
