@@ -559,10 +559,31 @@ function canManageSite(
     </Link>
 
     <Link
+      to="/recruitment"
+      onClick={() => setMobileOpen(false)}
+    >
+      Recruitment
+    </Link>
+
+    <Link
       to="/shinydex"
       onClick={() => setMobileOpen(false)}
     >
-      Shiny
+      Team Shiny Dex
+    </Link>
+
+    <Link
+      to="/submit-shiny"
+      onClick={() => setMobileOpen(false)}
+    >
+      Submit Shiny
+    </Link>
+
+    <Link
+      to="/showcase"
+      onClick={() => setMobileOpen(false)}
+    >
+      Showcase
     </Link>
 
     <Link
@@ -580,10 +601,24 @@ function canManageSite(
     </Link>
 
     <Link
+      to="/raid-tracker"
+      onClick={() => setMobileOpen(false)}
+    >
+      My Raid Status
+    </Link>
+
+    <Link
       to="/raid-overview"
       onClick={() => setMobileOpen(false)}
     >
-      Raids
+      Raid Overview
+    </Link>
+
+    <Link
+      to="/raid-builder"
+      onClick={() => setMobileOpen(false)}
+    >
+      Raids Team Builder
     </Link>
 
     <Link
