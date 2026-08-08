@@ -3958,3 +3958,175 @@ textarea:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   POKEMON MOVE TABLE
+========================================================= */
+
+.pokemon-moves-table {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(120, 190, 255, 0.18);
+  background: rgba(5, 20, 38, 0.55);
+}
+
+/* Header + rows use the exact same columns */
+.pokemon-moves-header,
+.pokemon-move-row {
+  display: grid;
+  grid-template-columns:
+    90px
+    minmax(220px, 1fr)
+    120px
+    90px
+    70px
+    80px;
+
+  align-items: center;
+  min-width: 670px;
+}
+
+/* Header */
+.pokemon-moves-header {
+  min-height: 48px;
+  padding: 0 14px;
+
+  background: rgba(40, 75, 105, 0.75);
+
+  border-bottom: 1px solid
+    rgba(150, 210, 255, 0.2);
+
+  color: #d9efff;
+
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* Rows */
+.pokemon-move-row {
+  min-height: 48px;
+  padding: 0 14px;
+
+  border-bottom: 1px solid
+    rgba(120, 180, 220, 0.1);
+
+  color: #e5f3ff;
+
+  font-size: 14px;
+}
+
+.pokemon-move-row:last-child {
+  border-bottom: none;
+}
+
+/* Alternating rows */
+.pokemon-move-row:nth-child(even) {
+  background: rgba(30, 65, 95, 0.18);
+}
+
+/* Hover */
+.pokemon-move-row:hover {
+  background: rgba(70, 130, 180, 0.2);
+}
+
+/* Column alignment */
+.pokemon-moves-header span,
+.pokemon-move-row > span {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Level */
+.pokemon-move-row > span:first-child,
+.pokemon-moves-header > span:first-child {
+  justify-content: center;
+}
+
+/* Move name */
+.pokemon-move-row .move-name {
+  font-weight: 700;
+  color: #f0f8ff;
+  white-space: nowrap;
+}
+
+/* Type column */
+.pokemon-move-row > span:nth-child(3) {
+  justify-content: center;
+}
+
+/* Numeric columns */
+.pokemon-move-row > span:nth-child(n + 4),
+.pokemon-moves-header > span:nth-child(n + 4) {
+  justify-content: center;
+}
+
+/* Make the type badge fit the column */
+.pokemon-move-row .type-badge {
+  min-width: 82px;
+  justify-content: center;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+/* Section title */
+.pokemon-info-card > h3 {
+  margin-bottom: 14px;
+}
+
+/* Loading */
+.pokemon-tab-loading {
+  padding: 20px;
+  text-align: center;
+  color: #b9dcf5;
+  font-size: 15px;
+}
+
+/* No moves */
+.pokemon-no-moves {
+  padding: 20px;
+  text-align: center;
+  color: #9db8ca;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+  .pokemon-moves-table {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pokemon-moves-header,
+  .pokemon-move-row {
+    grid-template-columns:
+      75px
+      minmax(170px, 1fr)
+      105px
+      70px
+      60px
+      70px;
+
+    min-width: 550px;
+  }
+
+  .pokemon-moves-header {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  .pokemon-move-row {
+    font-size: 13px;
+    padding: 0 10px;
+  }
+
+  .pokemon-move-row .type-badge {
+    min-width: 72px;
+    font-size: 11px;
+  }
+}
