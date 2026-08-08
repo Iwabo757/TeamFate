@@ -303,25 +303,22 @@ function canManageSite(
       Events
     </NavLink>
 
-    <NavLink to="/bounties">
-      Bounty
+    <NavLink to="/board">
+      Leaderboard
     </NavLink>
 
     <NavLink to="/raid-overview">
       Raids
     </NavLink>
 
-    <NavLink to="/board">
-      Leaderboard
+    <NavLink to="/guides">
+      Guides
     </NavLink>
 
     <NavLink to="/members">
       Members
     </NavLink>
 
-    <NavLink to="/guides">
-      Guides
-    </NavLink>
 
     {canManageSite(profile?.role) && (
       <NavLink to="/admin">
@@ -447,7 +444,10 @@ function canManageSite(
 {/* =========================================================
     EVENTS SUB NAVIGATION
 ========================================================= */}
-{location.pathname.startsWith("/events") && (
+{(
+  location.pathname.startsWith("/events") || 
+  location.pathname.startsWith("/bounties")
+) && (
   <div className="sub-nav">
 
     <NavLink
@@ -458,11 +458,12 @@ function canManageSite(
     </NavLink>
 
     <NavLink
-      to="/events?view=past"
+      to="/bountiest"
       className="sub-nav-link"
     >
-      Past Events
+      Bounties
     </NavLink>
+
 
     <NavLink
       to="/events/shinywars"
@@ -476,29 +477,6 @@ function canManageSite(
       className="sub-nav-link"
     >
       War History
-    </NavLink>
-
-  </div>
-)}
-
-{/* =========================================================
-    BOUNTY SUB NAVIGATION
-========================================================= */}
-{location.pathname.startsWith("/bounties") && (
-  <div className="sub-nav">
-
-    <NavLink
-      to="/bounties"
-      className="sub-nav-link"
-    >
-      🎯 Active Bounties
-    </NavLink>
-
-    <NavLink
-      to="/bounties?view=past"
-      className="sub-nav-link"
-    >
-      Completed Bounties
     </NavLink>
 
   </div>
