@@ -1,20 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import DexCard from "../components/DexCard";
+import PokemonInfoModal from "../components/PokemonInfoModal";
 
-function getGifName(
-  name: string
-) {
-  return name
-    .toLowerCase()
-    .replace(/♀/g, "f")
-    .replace(/♂/g, "m")
-    .replace(/ /g, "")
-    .replace(/\./g, "")
-    .replace(/'/g, "")
-    .replace(/:/g, "")
-    .replace(/-/g, "");
-}
+
 
 type DexPokemon = {
   id: number;
@@ -579,138 +568,14 @@ Completion
   )}
 </div>
 
-      {selectedPokemon && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setSelectedPokemon(null)
-          }
-        >
-          <div
-            className="pokemon-modal"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <button
-              className="close-btn"
-              onClick={() =>
-                setSelectedPokemon(null)
-              }
-            >
-              ×
-            </button>
-
-            <div className="modal-header">
-              <h2>
-                #{selectedPokemon.id}
-                {" "}
-                {selectedPokemon.name}
-              </h2>
-
-              <span className="status-badge">
-                {selectedPokemon.caught
-                  ? "Captured"
-                  : "Missing"}
-              </span>
-            </div>
-
-            <div className="modal-body">
-
-              <div className="modal-left">
-<img
-  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-    selectedPokemon.name
-  )}.gif`}
-  alt={selectedPokemon.name}
-  className="modal-sprite"
-  onError={(e) => {
-    e.currentTarget.src =
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.id}.png`;
-  }}
-/>
-              </div>
-
-              <div className="modal-right">
-
-                <div className="detail-card">
-                  <h3>Pokédex Info</h3>
-
-                  <p>
-                    National Dex #
-                    {selectedPokemon.id}
-                  </p>
-
-                  <p>
-                    Region:
-                    {" "}
-                    {
-                      selectedPokemon.region
-                    }
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>Owners</h3>
-
-                  {Object.keys(selectedPokemon.owners).length > 0 ? (
-Object.entries(
-  selectedPokemon.owners
-).map(
-  ([name, count]) => (
-    <div
-      key={name}
-      className="owner-row"
-    >
-      👤 {name} x{count}
-    </div>
-  )
-)
-                  ) : (
-                    <p>
-                      No owners yet
-                    </p>
-                  )}
-                </div>
-
-                <div className="detail-card">
-                  <h3>Collection Stats</h3>
-
-                  <p>
-                    Copies:
-                    {" "}
-                    {selectedPokemon.totalCopies}
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>Gallery</h3>
-
-                  {selectedPokemon.screenshots.length > 0 ? (
-  <div className="gallery-grid">
-    {selectedPokemon.screenshots.map(
-      (url, index) => (
-<img
-  key={index}
-  src={url}
-  alt={`Screenshot ${index + 1}`}
-  className="gallery-image"
-  onClick={() => window.open(url, "_blank")}
-/>
-      )
-    )}
-  </div>
-) : (
-  <p>No screenshots uploaded yet.</p>
+{selectedPokemon && (
+  <PokemonInfoModal
+    pokemon={selectedPokemon}
+    onClose={() =>
+      setSelectedPokemon(null)
+    }
+  />
 )}
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
