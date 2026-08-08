@@ -598,144 +598,177 @@ function canManageSite(
 
 
 
+{/* =========================================================
+    MOBILE NAVIGATION
+========================================================= */}
 
+{mobileOpen && (
+  <div className="mobile-menu">
 
-<div className="mobile-nav-container"
-  ref={menuRef}
->
-  {mobileOpen && (
-    <div className="mobile-nav">
+    {/* HOME */}
+    {(location.pathname === "/" ||
+      location.pathname === "/recruitment") && (
+      <>
+        <Link
+          to="/"
+          onClick={() => setMobileOpen(false)}
+        >
+          Home
+        </Link>
 
-      <Link
-        to="/"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Home
-      </Link>
+        <Link
+          to="/recruitment"
+          onClick={() => setMobileOpen(false)}
+        >
+          Recruitment
+        </Link>
+      </>
+    )}
 
-      <Link
-        to="/shinydex"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Team Shiny Dex
-      </Link>
+    {/* SHINY */}
+    {(location.pathname.startsWith("/shinydex") ||
+      location.pathname === "/showcase" ||
+      location.pathname === "/submit-shiny") && (
+      <>
+        <Link
+          to="/shinydex"
+          onClick={() => setMobileOpen(false)}
+        >
+          ✨ Team Shiny Dex
+        </Link>
 
-      <Link
-        to="/showcase"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Shiny Showcase
-      </Link>
+        <Link
+          to="/showcase"
+          onClick={() => setMobileOpen(false)}
+        >
+          Shiny Showcase
+        </Link>
 
-      <Link 
-        to="/submit-shiny"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Submit Shiny
-      </Link>
+        <Link
+          to="/submit-shiny"
+          onClick={() => setMobileOpen(false)}
+        >
+          Submit Shiny
+        </Link>
+      </>
+    )}
 
-      <Link
-        to="/events"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Events
+    {/* EVENTS */}
+    {location.pathname.startsWith("/events") && (
+      <>
+        <Link
+          to="/events"
+          onClick={() => setMobileOpen(false)}
+        >
+          Current Events
+        </Link>
 
-      </Link>
+        <Link
+          to="/events/shinywars"
+          onClick={() => setMobileOpen(false)}
+        >
+          ⚔️ Shiny Wars
+        </Link>
 
-      <Link
-        to="/events/shinywars"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Shiny Wars
-      </Link>
-      <Link
-        to="/bounties"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Bounties
-      </Link>
+        <Link
+          to="/events/shinywars/history"
+          onClick={() => setMobileOpen(false)}
+        >
+          War History
+        </Link>
+      </>
+    )}
 
-      <Link
-        to="/raid-overview"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Raid Overview
-      </Link>
+    {/* BOUNTIES */}
+    {location.pathname.startsWith("/bounties") && (
+      <>
+        <Link
+          to="/bounties"
+          onClick={() => setMobileOpen(false)}
+        >
+          Active Bounties
+        </Link>
+      </>
+    )}
 
-      <Link
-        to="/raid-tracker"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        My Raid Status
-      </Link>
+    {/* RAIDS */}
+    {(location.pathname === "/raid-overview" ||
+      location.pathname === "/raid-tracker" ||
+      location.pathname === "/raid-builder") && (
+      <>
+        <Link
+          to="/raid-tracker"
+          onClick={() => setMobileOpen(false)}
+        >
+          My Raid Status
+        </Link>
 
+        <Link
+          to="/raid-overview"
+          onClick={() => setMobileOpen(false)}
+        >
+          Raid Overview
+        </Link>
 
-      <Link
-        to="/board"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Leaderboard
-      </Link>
+        <Link
+          to="/raid-builder"
+          onClick={() => setMobileOpen(false)}
+        >
+          Raid Builder
+        </Link>
+      </>
+    )}
 
-
-
-      <Link
-        to="/members"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Members
-      </Link>
-
-
-      <Link
-        to="/guides"
-        onClick={() =>
-          setMobileOpen(false)
-        }
-      >
-        Guides
-      </Link>
-
-      {canManageSite(
-        profile?.role
-      ) && (
+    {/* ADMIN */}
+    {canManageSite(profile?.role) &&
+      location.pathname.startsWith("/admin") && (
         <>
           <Link
             to="/admin"
-            onClick={() =>
-              setMobileOpen(false)
-            }
+            onClick={() => setMobileOpen(false)}
           >
             Admin Dashboard
           </Link>
 
+          <Link
+            to="/admin/shiny-dashboard"
+            onClick={() => setMobileOpen(false)}
+          >
+            Shiny Dashboard
+          </Link>
+
+          <Link
+            to="/admin/bounty-dashboard"
+            onClick={() => setMobileOpen(false)}
+          >
+            Bounty Dashboard
+          </Link>
+
+          <Link
+            to="/admin/shinywars"
+            onClick={() => setMobileOpen(false)}
+          >
+            Shiny Wars
+          </Link>
+
+          <Link
+            to="/admin/events"
+            onClick={() => setMobileOpen(false)}
+          >
+            Events
+          </Link>
+
+          <Link
+            to="/admin/recruitment"
+            onClick={() => setMobileOpen(false)}
+          >
+            Recruitment Editor
+          </Link>
         </>
       )}
-    </div>
-  )}
-</div>
+
+  </div>
+)}
       
 
       <main className="content">
