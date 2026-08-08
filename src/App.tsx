@@ -253,6 +253,181 @@ function canManageSite(
     await supabase.auth.signOut();
     setProfile(null);
   }
+  const getSubNav = () => {
+    const path = location.pathname;
+
+    // HOME
+    if (
+      path === "/" ||
+      path === "/recruitment"
+    ) {
+      return [
+        {
+          label: "Home",
+          path: "/",
+          end: true,
+        },
+        {
+          label: "Recruitment",
+          path: "/recruitment",
+        },
+      ];
+    }
+
+    // SHINY
+    if (
+      path === "/shinydex" ||
+      path === "/showcase" ||
+      path === "/submit-shiny"
+    ) {
+      return [
+        {
+          label: "Team Shiny Dex",
+          path: "/shinydex",
+        },
+        {
+          label: "Shiny Showcase",
+          path: "/showcase",
+        },
+        {
+          label: "Submit Shiny",
+          path: "/submit-shiny",
+        },
+      ];
+    }
+
+    // EVENTS
+    if (
+      path.startsWith("/events")
+    ) {
+      return [
+        {
+          label: "Events",
+          path: "/events",
+        },
+        {
+          label: "Shiny Wars",
+          path: "/events/shinywars",
+        },
+        {
+          label: "War History",
+          path: "/events/shinywars/history",
+        },
+      ];
+    }
+
+    // BOUNTIES
+    if (
+      path.startsWith("/bounties")
+    ) {
+      return [
+        {
+          label: "Bounties",
+          path: "/bounties",
+        },
+      ];
+    }
+
+    // RAIDS
+    if (
+      path === "/raid-tracker" ||
+      path === "/raid-overview" ||
+      path === "/raid-builder"
+    ) {
+      return [
+        {
+          label: "My Raid Status",
+          path: "/raid-tracker",
+        },
+        {
+          label: "Raid Overview",
+          path: "/raid-overview",
+        },
+        {
+          label: "Raid Builder",
+          path: "/raid-builder",
+        },
+      ];
+    }
+
+    // LEADERBOARD
+    if (
+      path.startsWith("/board")
+    ) {
+      return [
+        {
+          label: "Leaderboard",
+          path: "/board",
+        },
+      ];
+    }
+
+    // MEMBERS
+    if (
+      path.startsWith("/members")
+    ) {
+      return [
+        {
+          label: "Members",
+          path: "/members",
+        },
+      ];
+    }
+
+    // GUIDES
+    if (
+      path.startsWith("/guides")
+    ) {
+      return [
+        {
+          label: "Guides",
+          path: "/guides",
+        },
+      ];
+    }
+
+    // ADMIN
+    if (
+      path.startsWith("/admin") &&
+      canManageSite(profile?.role)
+    ) {
+      return [
+        {
+          label: "Admin Dashboard",
+          path: "/admin",
+          end: true,
+        },
+        {
+          label: "Shiny Dashboard",
+          path: "/admin/shiny-dashboard",
+        },
+        {
+          label: "Bounty Dashboard",
+          path: "/admin/bounty-dashboard",
+        },
+        {
+          label: "Shiny Wars",
+          path: "/admin/shinywars",
+        },
+        {
+          label: "Events",
+          path: "/admin/events",
+        },
+        {
+          label: "Recruitment Editor",
+          path: "/admin/recruitment",
+        },
+        {
+          label: "Members",
+          path: "/admin/members",
+        },
+      ];
+    }
+
+    return [];
+  };
+
+  const subNav = getSubNav();
 
   return (
     <>
@@ -370,408 +545,106 @@ function canManageSite(
   </div>
 
 {/* =========================================================
-    MOBILE NAVIGATION
+    MOBILE MAIN NAVIGATION
 ========================================================= */}
 
 {mobileOpen && (
   <div className="mobile-menu">
 
-    {/* HOME */}
-    {(location.pathname === "/" ||
-      location.pathname === "/recruitment") && (
-      <>
-        <Link
-          to="/"
-          onClick={() => setMobileOpen(false)}
-        >
-          Home
-        </Link>
-
-        <Link
-          to="/recruitment"
-          onClick={() => setMobileOpen(false)}
-        >
-          Recruitment
-        </Link>
-      </>
-    )}
-
-    {/* SHINY */}
-    {(location.pathname.startsWith("/shinydex") ||
-      location.pathname === "/showcase" ||
-      location.pathname === "/submit-shiny") && (
-      <>
-        <Link
-          to="/shinydex"
-          onClick={() => setMobileOpen(false)}
-        >
-          ✨ Team Shiny Dex
-        </Link>
-
-        <Link
-          to="/showcase"
-          onClick={() => setMobileOpen(false)}
-        >
-          Shiny Showcase
-        </Link>
-
-        <Link
-          to="/submit-shiny"
-          onClick={() => setMobileOpen(false)}
-        >
-          Submit Shiny
-        </Link>
-      </>
-    )}
-
-    {/* EVENTS */}
-    {location.pathname.startsWith("/events") && (
-      <>
-        <Link
-          to="/events"
-          onClick={() => setMobileOpen(false)}
-        >
-          Current Events
-        </Link>
-
-        <Link
-          to="/events/shinywars"
-          onClick={() => setMobileOpen(false)}
-        >
-          ⚔️ Shiny Wars
-        </Link>
-
-        <Link
-          to="/events/shinywars/history"
-          onClick={() => setMobileOpen(false)}
-        >
-          War History
-        </Link>
-      </>
-    )}
-
-    {/* BOUNTIES */}
-    {location.pathname.startsWith("/bounties") && (
-      <>
-        <Link
-          to="/bounties"
-          onClick={() => setMobileOpen(false)}
-        >
-          Active Bounties
-        </Link>
-      </>
-    )}
-
-    {/* RAIDS */}
-    {(location.pathname === "/raid-overview" ||
-      location.pathname === "/raid-tracker" ||
-      location.pathname === "/raid-builder") && (
-      <>
-        <Link
-          to="/raid-tracker"
-          onClick={() => setMobileOpen(false)}
-        >
-          My Raid Status
-        </Link>
-
-        <Link
-          to="/raid-overview"
-          onClick={() => setMobileOpen(false)}
-        >
-          Raid Overview
-        </Link>
-
-        <Link
-          to="/raid-builder"
-          onClick={() => setMobileOpen(false)}
-        >
-          Raid Builder
-        </Link>
-      </>
-    )}
-
-    {/* ADMIN */}
-    {canManageSite(profile?.role) &&
-      location.pathname.startsWith("/admin") && (
-        <>
-          <Link
-            to="/admin"
-            onClick={() => setMobileOpen(false)}
-          >
-            Admin Dashboard
-          </Link>
-
-          <Link
-            to="/admin/shiny-dashboard"
-            onClick={() => setMobileOpen(false)}
-          >
-            Shiny Dashboard
-          </Link>
-
-          <Link
-            to="/admin/bounty-dashboard"
-            onClick={() => setMobileOpen(false)}
-          >
-            Bounty Dashboard
-          </Link>
-
-          <Link
-            to="/admin/shinywars"
-            onClick={() => setMobileOpen(false)}
-          >
-            Shiny Wars
-          </Link>
-
-          <Link
-            to="/admin/events"
-            onClick={() => setMobileOpen(false)}
-          >
-            Events
-          </Link>
-
-          <Link
-            to="/admin/recruitment"
-            onClick={() => setMobileOpen(false)}
-          >
-            Recruitment Editor
-          </Link>
-        </>
-      )}
-
-  </div>
-)}
-</header>
-
-{/* =========================================================
-    HOME SUB NAVIGATION
-========================================================= */}
-{(
-  location.pathname === "/" ||
-  location.pathname === "/recruitment"
-) && (
-  <div className="sub-nav">
-
-    <NavLink
+    <Link
       to="/"
-      end
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
+      onClick={() => setMobileOpen(false)}
     >
       Home
-    </NavLink>
+    </Link>
 
-    <NavLink
-      to="/recruitment"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Recruitment
-    </NavLink>
-
-  </div>
-)}
-
-{/* =========================================================
-    SHINY SUB NAVIGATION
-========================================================= */}
-{(
-  location.pathname === "/shinydex" ||
-  location.pathname === "/showcase" ||
-  location.pathname === "/submit-shiny"
-) && (
-  <div className="sub-nav">
-
-    <NavLink
+    <Link
       to="/shinydex"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
+      onClick={() => setMobileOpen(false)}
     >
-      ✨ Team Shiny Dex
-    </NavLink>
+      Shiny
+    </Link>
 
-    <NavLink
-      to="/showcase"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Shiny Showcase
-    </NavLink>
-
-    <NavLink
-      to="/submit-shiny"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      Submit Shiny
-    </NavLink>
-
-  </div>
-)}
-
-{/* =========================================================
-    EVENTS SUB NAVIGATION
-========================================================= */}
-{(
-  location.pathname.startsWith("/events") || 
-  location.pathname.startsWith("/bounties")
-) && (
-  <div className="sub-nav">
-
-    <NavLink
+    <Link
       to="/events"
-      className="sub-nav-link"
+      onClick={() => setMobileOpen(false)}
     >
-      📅 Events
-    </NavLink>
+      Events
+    </Link>
 
-    <NavLink
+    <Link
       to="/bounties"
-      className="sub-nav-link"
+      onClick={() => setMobileOpen(false)}
     >
-      🎯 Bounties
-    </NavLink>
+      Bounty
+    </Link>
 
-
-    <NavLink
-      to="/events/shinywars"
-      className="sub-nav-link"
-    >
-      ⚔️ Shiny Wars
-    </NavLink>
-
-    <NavLink
-      to="/events/shinywars/history"
-      className="sub-nav-link"
-    >
-      War History
-    </NavLink>
-
-  </div>
-)}
-
-{/* =========================================================
-    RAIDS SUB NAVIGATION
-========================================================= */}
-{(
-  location.pathname === "/raid-overview" ||
-  location.pathname === "/raid-tracker" ||
-  location.pathname === "/raid-builder"
-) && (
-  <div className="sub-nav">
-
-    <NavLink
-      to="/raid-tracker"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
-    >
-      My Raid Status
-    </NavLink>
-
-    <NavLink
+    <Link
       to="/raid-overview"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
+      onClick={() => setMobileOpen(false)}
     >
-      Raid Overview
-    </NavLink>
+      Raids
+    </Link>
 
-    <NavLink
-      to="/raid-builder"
-      className={({ isActive }) =>
-        `sub-nav-link ${isActive ? "active" : ""}`
-      }
+    <Link
+      to="/board"
+      onClick={() => setMobileOpen(false)}
     >
-      Raid Builder
-    </NavLink>
+      Leaderboard
+    </Link>
+
+    <Link
+      to="/members"
+      onClick={() => setMobileOpen(false)}
+    >
+      Members
+    </Link>
+
+    <Link
+      to="/guides"
+      onClick={() => setMobileOpen(false)}
+    >
+      Guides
+    </Link>
+
+    {canManageSite(profile?.role) && (
+      <Link
+        to="/admin"
+        onClick={() => setMobileOpen(false)}
+      >
+        Admin
+      </Link>
+    )}
 
   </div>
 )}
 
+</header>
+
+
 {/* =========================================================
-    ADMIN SUB NAVIGATION
+    DYNAMIC SUB NAVIGATION
 ========================================================= */}
-{canManageSite(profile?.role) &&
-  location.pathname.startsWith("/admin") && (
-    <div className="sub-nav">
 
+{subNav.length > 0 && (
+  <div className="sub-nav">
+    {subNav.map((item) => (
       <NavLink
-        to="/admin"
-        end
+        key={item.path}
+        to={item.path}
+        end={item.end}
         className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
+          `sub-nav-link ${
+            isActive ? "active" : ""
+          }`
         }
       >
-        Admin Dashboard
+        {item.label}
       </NavLink>
-
-      <NavLink
-        to="/admin/shiny-dashboard"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Shiny Dashboard
-      </NavLink>
-
-      <NavLink
-        to="/admin/bounty-dashboard"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Bounty Dashboard
-      </NavLink>
-
-      <NavLink
-        to="/admin/shinywars"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Shiny Wars
-      </NavLink>
-
-      <NavLink
-        to="/admin/events"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Events
-      </NavLink>
-
-      <NavLink
-        to="/admin/recruitment"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Recruitment Editor
-      </NavLink>
-
-      <NavLink
-        to="/admin/members"
-        className={({ isActive }) =>
-          `sub-nav-link ${isActive ? "active" : ""}`
-        }
-      >
-        Members
-      </NavLink>
-
-    </div>
+    ))}
+  </div>
 )}
-
-
-
-
-      
+  
 
       <main className="content">
         <Routes>
