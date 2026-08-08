@@ -42,6 +42,7 @@ type ApiPokemon = {
   moves: {
     move: {
       name: string;
+      url: string
     };
     version_group_details: {
       level_learned_at: number;
@@ -75,15 +76,6 @@ type ApiSpecies = {
   };
 };
 
-type MoveDetail = {
-  name: string;
-  type: {
-    name: string;
-  };
-  power: number | null;
-  pp: number | null;
-  accuracy: number | null;
-};
 
 type DetailedMove = {
   name: string;
@@ -551,6 +543,12 @@ const [locations, setLocations] =
 const [moveDetails, setMoveDetails] =
   useState<DetailedMove[]>([]);
 
+const [movesLoading, setMovesLoading] =
+  useState(false);
+
+const [movesLoaded, setMovesLoaded] =
+  useState(false);
+
   const [loading, setLoading] =
     useState(true);
 
@@ -604,56 +602,6 @@ const [moveDetails, setMoveDetails] =
       setData(pokemonData);
       setSpecies(speciesData);
 
-const detailedMoves: DetailedMove[] = [];
-
-for (const moveEntry of pokemonData.moves) {
-  try {
-    const moveResponse = await fetch(
-      moveEntry.move.url
-    );
-
-    if (!moveResponse.ok) continue;
-
-    const moveData: MoveDetail =
-      await moveResponse.json();
-
-    const relevantDetails =
-      moveEntry.version_group_details
-        .filter(
-          (detail: any) =>
-            [
-              "level-up",
-              "machine",
-              "egg",
-              "tutor",
-            ].includes(
-              detail.move_learn_method.name
-            )
-        );
-
-    for (const detail of relevantDetails) {
-detailedMoves.push({
-  name: moveData.name,
-  type: moveData.type.name,
-  power: moveData.power,
-  pp: moveData.pp,
-  accuracy: moveData.accuracy,
-  method:
-    detail.move_learn_method.name,
-  level:
-    detail.level_learned_at,
-});
-    }
-  } catch (err) {
-    console.error(
-      "Failed to load move:",
-      moveEntry.move.name,
-      err
-    );
-  }
-}
-
-setMoveDetails(detailedMoves);
 
       if (speciesData.evolution_chain?.url) {
         const evolutionResponse =
@@ -716,6 +664,80 @@ try {
     }
   }
 
+async function loadMoveDetails() {
+  if (!data || movesLoaded || movesLoading) {
+    return;
+  }
+
+  setMovesLoading(true);
+
+  try {
+    const results = await Promise.all(
+      data.moves.map(async (moveEntry) => {
+        try {
+          const response = await fetch(
+            moveEntry.move.url
+          );
+
+          if (!response.ok) {
+            return [];
+          }
+
+          const moveData =
+            await response.json();
+
+          const relevantDetails =
+            moveEntry.version_group_details.filter(
+              (detail) =>
+                [
+                  "level-up",
+                  "machine",
+                  "egg",
+                  "tutor",
+                ].includes(
+                  detail.move_learn_method.name
+                )
+            );
+
+          return relevantDetails.map(
+            (detail) => ({
+              name: moveData.name,
+              type: moveData.type.name,
+              power: moveData.power,
+              pp: moveData.pp,
+              accuracy: moveData.accuracy,
+              method:
+                detail.move_learn_method.name,
+              level:
+                detail.level_learned_at,
+            })
+          );
+        } catch (error) {
+          console.error(
+            "Failed to load move:",
+            moveEntry.move.name,
+            error
+          );
+
+          return [];
+        }
+      })
+    );
+
+    const allMoves =
+      results.flat();
+
+    setMoveDetails(allMoves);
+    setMovesLoaded(true);
+  } catch (error) {
+    console.error(
+      "Failed to load move details:",
+      error
+    );
+  } finally {
+    setMovesLoading(false);
+  }
+}
   const description =
     species?.flavor_text_entries
       ?.find(
@@ -905,19 +927,23 @@ function renderEvolutionTree(
 
         <nav className="pokemon-info-tabs">
           {tabs.map((tab) => (
-            <button
-              key={tab}
-              className={
-                activeTab === tab
-                  ? "active"
-                  : ""
-              }
-              onClick={() =>
-                setActiveTab(tab)
-              }
-            >
-              {tab}
-            </button>
+<button
+  key={tab}
+  className={
+    activeTab === tab
+      ? "active"
+      : ""
+  }
+  onClick={() => {
+    setActiveTab(tab);
+
+    if (tab === "Moves") {
+      loadMoveDetails();
+    }
+  }}
+>
+  {tab}
+</button>
           ))}
         </nav>
 
@@ -1093,6 +1119,32 @@ function renderEvolutionTree(
   <div className="pokemon-tab-section">
     <h3>Moves</h3>
 
+    {movesLoading && (
+      <div className="pokemon-info-loading">
+        Loading move information...
+      </div>
+    )}
+
+    {!movesLoading &&
+      movesLoaded &&
+      moveDetails.length === 0 && (
+        <div className="pokemon-info-error">
+          No move information available.
+        </div>
+      )}
+
+{movesLoading && (
+  <div className="pokemon-tab-loading">
+    Loading move information...
+  </div>
+)}
+{!movesLoading &&
+  movesLoaded &&
+  moveDetails.length === 0 && (
+    <div className="pokemon-no-moves">
+      No move information available.
+    </div>
+  )}
     {(
       [
         "level-up",
