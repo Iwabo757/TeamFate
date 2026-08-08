@@ -282,6 +282,7 @@ function canManageSite(
   <button
     className="mobile-menu-btn"
     onClick={() => setMobileOpen(!mobileOpen)}
+    aria-label="Toggle navigation"
   >
     ☰
   </button>
@@ -368,6 +369,177 @@ function canManageSite(
     )}
   </div>
 
+{/* =========================================================
+    MOBILE NAVIGATION
+========================================================= */}
+
+{mobileOpen && (
+  <div className="mobile-menu">
+
+    {/* HOME */}
+    {(location.pathname === "/" ||
+      location.pathname === "/recruitment") && (
+      <>
+        <Link
+          to="/"
+          onClick={() => setMobileOpen(false)}
+        >
+          Home
+        </Link>
+
+        <Link
+          to="/recruitment"
+          onClick={() => setMobileOpen(false)}
+        >
+          Recruitment
+        </Link>
+      </>
+    )}
+
+    {/* SHINY */}
+    {(location.pathname.startsWith("/shinydex") ||
+      location.pathname === "/showcase" ||
+      location.pathname === "/submit-shiny") && (
+      <>
+        <Link
+          to="/shinydex"
+          onClick={() => setMobileOpen(false)}
+        >
+          ✨ Team Shiny Dex
+        </Link>
+
+        <Link
+          to="/showcase"
+          onClick={() => setMobileOpen(false)}
+        >
+          Shiny Showcase
+        </Link>
+
+        <Link
+          to="/submit-shiny"
+          onClick={() => setMobileOpen(false)}
+        >
+          Submit Shiny
+        </Link>
+      </>
+    )}
+
+    {/* EVENTS */}
+    {location.pathname.startsWith("/events") && (
+      <>
+        <Link
+          to="/events"
+          onClick={() => setMobileOpen(false)}
+        >
+          Current Events
+        </Link>
+
+        <Link
+          to="/events/shinywars"
+          onClick={() => setMobileOpen(false)}
+        >
+          ⚔️ Shiny Wars
+        </Link>
+
+        <Link
+          to="/events/shinywars/history"
+          onClick={() => setMobileOpen(false)}
+        >
+          War History
+        </Link>
+      </>
+    )}
+
+    {/* BOUNTIES */}
+    {location.pathname.startsWith("/bounties") && (
+      <>
+        <Link
+          to="/bounties"
+          onClick={() => setMobileOpen(false)}
+        >
+          Active Bounties
+        </Link>
+      </>
+    )}
+
+    {/* RAIDS */}
+    {(location.pathname === "/raid-overview" ||
+      location.pathname === "/raid-tracker" ||
+      location.pathname === "/raid-builder") && (
+      <>
+        <Link
+          to="/raid-tracker"
+          onClick={() => setMobileOpen(false)}
+        >
+          My Raid Status
+        </Link>
+
+        <Link
+          to="/raid-overview"
+          onClick={() => setMobileOpen(false)}
+        >
+          Raid Overview
+        </Link>
+
+        <Link
+          to="/raid-builder"
+          onClick={() => setMobileOpen(false)}
+        >
+          Raid Builder
+        </Link>
+      </>
+    )}
+
+    {/* ADMIN */}
+    {canManageSite(profile?.role) &&
+      location.pathname.startsWith("/admin") && (
+        <>
+          <Link
+            to="/admin"
+            onClick={() => setMobileOpen(false)}
+          >
+            Admin Dashboard
+          </Link>
+
+          <Link
+            to="/admin/shiny-dashboard"
+            onClick={() => setMobileOpen(false)}
+          >
+            Shiny Dashboard
+          </Link>
+
+          <Link
+            to="/admin/bounty-dashboard"
+            onClick={() => setMobileOpen(false)}
+          >
+            Bounty Dashboard
+          </Link>
+
+          <Link
+            to="/admin/shinywars"
+            onClick={() => setMobileOpen(false)}
+          >
+            Shiny Wars
+          </Link>
+
+          <Link
+            to="/admin/events"
+            onClick={() => setMobileOpen(false)}
+          >
+            Events
+          </Link>
+
+          <Link
+            to="/admin/recruitment"
+            onClick={() => setMobileOpen(false)}
+          >
+            Recruitment Editor
+          </Link>
+        </>
+      )}
+
+  </div>
+)}
 </header>
 
 {/* =========================================================
@@ -598,177 +770,7 @@ function canManageSite(
 
 
 
-{/* =========================================================
-    MOBILE NAVIGATION
-========================================================= */}
 
-{mobileOpen && (
-  <div className="mobile-menu">
-
-    {/* HOME */}
-    {(location.pathname === "/" ||
-      location.pathname === "/recruitment") && (
-      <>
-        <Link
-          to="/"
-          onClick={() => setMobileOpen(false)}
-        >
-          Home
-        </Link>
-
-        <Link
-          to="/recruitment"
-          onClick={() => setMobileOpen(false)}
-        >
-          Recruitment
-        </Link>
-      </>
-    )}
-
-    {/* SHINY */}
-    {(location.pathname.startsWith("/shinydex") ||
-      location.pathname === "/showcase" ||
-      location.pathname === "/submit-shiny") && (
-      <>
-        <Link
-          to="/shinydex"
-          onClick={() => setMobileOpen(false)}
-        >
-          ✨ Team Shiny Dex
-        </Link>
-
-        <Link
-          to="/showcase"
-          onClick={() => setMobileOpen(false)}
-        >
-          Shiny Showcase
-        </Link>
-
-        <Link
-          to="/submit-shiny"
-          onClick={() => setMobileOpen(false)}
-        >
-          Submit Shiny
-        </Link>
-      </>
-    )}
-
-    {/* EVENTS */}
-    {location.pathname.startsWith("/events") && (
-      <>
-        <Link
-          to="/events"
-          onClick={() => setMobileOpen(false)}
-        >
-          Current Events
-        </Link>
-
-        <Link
-          to="/events/shinywars"
-          onClick={() => setMobileOpen(false)}
-        >
-          ⚔️ Shiny Wars
-        </Link>
-
-        <Link
-          to="/events/shinywars/history"
-          onClick={() => setMobileOpen(false)}
-        >
-          War History
-        </Link>
-      </>
-    )}
-
-    {/* BOUNTIES */}
-    {location.pathname.startsWith("/bounties") && (
-      <>
-        <Link
-          to="/bounties"
-          onClick={() => setMobileOpen(false)}
-        >
-          Active Bounties
-        </Link>
-      </>
-    )}
-
-    {/* RAIDS */}
-    {(location.pathname === "/raid-overview" ||
-      location.pathname === "/raid-tracker" ||
-      location.pathname === "/raid-builder") && (
-      <>
-        <Link
-          to="/raid-tracker"
-          onClick={() => setMobileOpen(false)}
-        >
-          My Raid Status
-        </Link>
-
-        <Link
-          to="/raid-overview"
-          onClick={() => setMobileOpen(false)}
-        >
-          Raid Overview
-        </Link>
-
-        <Link
-          to="/raid-builder"
-          onClick={() => setMobileOpen(false)}
-        >
-          Raid Builder
-        </Link>
-      </>
-    )}
-
-    {/* ADMIN */}
-    {canManageSite(profile?.role) &&
-      location.pathname.startsWith("/admin") && (
-        <>
-          <Link
-            to="/admin"
-            onClick={() => setMobileOpen(false)}
-          >
-            Admin Dashboard
-          </Link>
-
-          <Link
-            to="/admin/shiny-dashboard"
-            onClick={() => setMobileOpen(false)}
-          >
-            Shiny Dashboard
-          </Link>
-
-          <Link
-            to="/admin/bounty-dashboard"
-            onClick={() => setMobileOpen(false)}
-          >
-            Bounty Dashboard
-          </Link>
-
-          <Link
-            to="/admin/shinywars"
-            onClick={() => setMobileOpen(false)}
-          >
-            Shiny Wars
-          </Link>
-
-          <Link
-            to="/admin/events"
-            onClick={() => setMobileOpen(false)}
-          >
-            Events
-          </Link>
-
-          <Link
-            to="/admin/recruitment"
-            onClick={() => setMobileOpen(false)}
-          >
-            Recruitment Editor
-          </Link>
-        </>
-      )}
-
-  </div>
-)}
       
 
       <main className="content">
