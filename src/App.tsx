@@ -296,37 +296,28 @@ function canManageSite(
       ];
     }
 
-    // EVENTS
-    if (
-      path.startsWith("/events")
-    ) {
-      return [
-        {
-          label: "Events",
-          path: "/events",
-        },
-        {
-          label: "Shiny Wars",
-          path: "/events/shinywars",
-        },
-        {
-          label: "War History",
-          path: "/events/shinywars/history",
-        },
-      ];
-    }
+  // EVENTS + BOUNTIES
+  if (
+    path.startsWith("/events") ||
+    path.startsWith("/bounties")
+  ) {
+    return [
+      {
+        label: "Events",
+        path: "/events",
+      },
+      {
+        label: "Bounties",
+        path: "/bounties",
+      },
+      {
+        label: "Shiny Wars",
+        path: "/events/shinywars",
+      },
 
-    // BOUNTIES
-    if (
-      path.startsWith("/bounties")
-    ) {
-      return [
-        {
-          label: "Bounties",
-          path: "/bounties",
-        },
-      ];
-    }
+    ];
+  }
+
 
     // RAIDS
     if (
