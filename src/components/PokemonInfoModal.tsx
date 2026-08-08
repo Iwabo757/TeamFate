@@ -77,7 +77,9 @@ type ApiSpecies = {
 
 type MoveDetail = {
   name: string;
-  type: string;
+  type: {
+    name: string;
+  };
   power: number | null;
   pp: number | null;
   accuracy: number | null;
@@ -630,17 +632,17 @@ for (const moveEntry of pokemonData.moves) {
         );
 
     for (const detail of relevantDetails) {
-      detailedMoves.push({
-        name: moveData.name,
-        type: moveData.type,
-        power: moveData.power,
-        pp: moveData.pp,
-        accuracy: moveData.accuracy,
-        method:
-          detail.move_learn_method.name,
-        level:
-          detail.level_learned_at,
-      });
+detailedMoves.push({
+  name: moveData.name,
+  type: moveData.type.name,
+  power: moveData.power,
+  pp: moveData.pp,
+  accuracy: moveData.accuracy,
+  method:
+    detail.move_learn_method.name,
+  level:
+    detail.level_learned_at,
+});
     }
   } catch (err) {
     console.error(
