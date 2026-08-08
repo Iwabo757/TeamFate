@@ -574,6 +574,16 @@ Completion
     onClose={() =>
       setSelectedPokemon(null)
     }
+    onPokemonClick={(pokemonId) => {
+      const nextPokemon =
+        pokemon.find(
+          (p) => p.id === pokemonId
+        );
+
+      if (nextPokemon) {
+        setSelectedPokemon(nextPokemon);
+      }
+    }}
   />
 )}
 

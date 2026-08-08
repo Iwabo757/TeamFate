@@ -13,6 +13,7 @@ type DexPokemon = {
 type Props = {
   pokemon: DexPokemon;
   onClose: () => void;
+  onPokemonClick?: (pokemonId: number) => void;
 };
 
 type ApiPokemon = {
@@ -521,7 +522,9 @@ function getMatchupLabel(
 export default function PokemonInfoModal({
   pokemon,
   onClose,
+  onPokemonClick,
 }: Props) {
+
   const [activeTab, setActiveTab] =
     useState<Tab>("Summary");
 
@@ -821,34 +824,53 @@ function renderEvolutionTree(
     const evolutions =
       currentNode.evolves_to || [];
 
+const evolutionId =
+  getPokemonIdFromUrl(
+    currentNode.species.url
+  );
+
+const evolutionStatic =
+  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evolutionId}.png`;
+
+const evolutionGif =
+  `https://play.pokemonshowdown.com/sprites/ani-shiny/${evolutionId}.gif`;
+
     return (
       <div
         key={`${name}-${depth}`}
         className="evolution-level"
       >
-        <div className="evolution-card">
-          <div className="evolution-number">
-            #{name
-              ? String(
-                  getPokemonIdFromUrl(
-                    currentNode.species.url
-                  )
-                ).padStart(3, "0")
-              : "---"}
-          </div>
 
-          <img
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonIdFromUrl(
-              currentNode.species.url
-            )}.png`}
-            alt={formatName(name)}
-            className="evolution-sprite"
-          />
+<button
+  type="button"
+  className="evolution-card"
+  onClick={() => {
+    onPokemonClick?.(evolutionId);
+  }}
+>
+  <div className="evolution-number">
+    #{String(evolutionId).padStart(3, "0")}
+  </div>
 
-          <strong>
-            {formatName(name)}
-          </strong>
-        </div>
+  <div className="evolution-sprite-wrapper">
+    <img
+      src={evolutionStatic}
+      alt={formatName(name)}
+      className="evolution-sprite evolution-sprite-static"
+    />
+
+    <img
+      src={evolutionGif}
+      alt={formatName(name)}
+      className="evolution-sprite evolution-sprite-gif"
+    />
+  </div>
+
+  <strong>
+    {formatName(name)}
+  </strong>
+</button>
+
 
         {evolutions.length > 0 && (
           <div className="evolution-branches">
