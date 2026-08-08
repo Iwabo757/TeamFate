@@ -577,7 +577,7 @@ Completion
     onPokemonClick={(pokemonId) => {
       const nextPokemon =
         pokemon.find(
-          (p) => p.id === pokemonId
+          (poke) => poke.id === pokemonId
         );
 
       if (nextPokemon) {

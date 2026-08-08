@@ -558,9 +558,20 @@ const [movesLoaded, setMovesLoaded] =
   const [error, setError] =
     useState<string | null>(null);
 
-  useEffect(() => {
-    loadPokemon();
-  }, [pokemon.id]);
+useEffect(() => {
+  setActiveTab("Summary");
+
+  setData(null);
+  setSpecies(null);
+  setEvolution(null);
+  setTypeRelations({});
+  setLocations([]);
+  setMoveDetails([]);
+  setMovesLoaded(false);
+  setMovesLoading(false);
+
+  loadPokemon();
+}, [pokemon.id]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
