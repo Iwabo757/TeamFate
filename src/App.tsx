@@ -437,7 +437,7 @@ function canManageSite(
   <div className="logo">
 <Link to="/" className="brand">
   <img
-    src="/logo.png"
+    src="/images/jirachi-banner.jpg"
     alt="Team Fate"
     className="brand-logo"
   />
