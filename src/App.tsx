@@ -369,6 +369,8 @@ function canManageSite(
     )}
   </div>
 
+</header>
+
 {/* =========================================================
     HOME SUB NAVIGATION
 ========================================================= */}
@@ -615,9 +617,7 @@ function canManageSite(
 )}
 
 
-</header>
 
-const subNav = getSubNav();
 
 
 <div className="mobile-nav-container"
