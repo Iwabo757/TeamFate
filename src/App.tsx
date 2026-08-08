@@ -7,6 +7,7 @@ import {
   Route,
   NavLink,
   Link,
+  useLocation,
 } from "react-router-dom";
 
 import { Analytics } from '@vercel/analytics/react';
@@ -75,6 +76,7 @@ type ProfileData = {
 
 
 export default function App() {
+  const location = useLocation();
 
   const [profile, setProfile] =
     useState<ProfileData | null>(null);
