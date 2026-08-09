@@ -1408,37 +1408,29 @@ const evolutionGif =
       <h3>Wild Locations</h3>
 
       {/* SEASON SELECTOR */}
-      <div className="season-selector">
+<div className="wild-season-tabs">
+  {(["Spring", "Summer", "Autumn", "Winter"] as const).map(
+    (season) => (
+      <button
+        key={season}
+        type="button"
+        className={`wild-season-tab ${
+          selectedSeason === season ? "active" : ""
+        }`}
+        onClick={() => setSelectedSeason(season)}
+      >
+        <span className="wild-season-icon">
+          {season === "Spring" && "🌸"}
+          {season === "Summer" && "☀️"}
+          {season === "Autumn" && "🍂"}
+          {season === "Winter" && "❄️"}
+        </span>
 
-        {(
-          [
-            "Spring",
-            "Summer",
-            "Autumn",
-            "Winter",
-          ] as const
-        ).map((season) => (
-          <button
-            key={season}
-            type="button"
-            className={
-              selectedSeason === season
-                ? "season-button active"
-                : "season-button"
-            }
-            onClick={() =>
-              setSelectedSeason(season)
-            }
-          >
-            {season === "Spring" && "🌸 "}
-            {season === "Summer" && "☀️ "}
-            {season === "Autumn" && "🍂 "}
-            {season === "Winter" && "❄️ "}
-            {season}
-          </button>
-        ))}
-
-      </div>
+        {season}
+      </button>
+    )
+  )}
+</div>
 
       {locations.length > 0 ? (
 

@@ -4184,3 +4184,76 @@ textarea:focus {
 .evolution-card:hover {
   transform: translateY(-2px);
 }
+
+.wild-season-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin: 8px 0 18px;
+  padding: 0 4px;
+  border-bottom: 1px solid rgba(120, 190, 255, 0.22);
+}
+
+.wild-season-tab {
+  position: relative;
+  min-width: 118px;
+  padding: 10px 18px 11px;
+  border: 1px solid rgba(120, 190, 255, 0.28);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(
+    180deg,
+    rgba(20, 48, 72, 0.95),
+    rgba(8, 25, 43, 0.98)
+  );
+  color: #b8cde2;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.wild-season-tab:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(32, 70, 102, 0.98),
+    rgba(12, 34, 56, 0.98)
+  );
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.wild-season-tab.active {
+  background: linear-gradient(
+    180deg,
+    #245b87,
+    #123a5d
+  );
+  border-color: #76cfff;
+  color: #ffffff;
+  box-shadow:
+    0 -2px 12px rgba(90, 190, 255, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  z-index: 2;
+}
+
+.wild-season-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -2px;
+  height: 3px;
+  border-radius: 3px;
+  background: #79d3ff;
+  box-shadow: 0 0 8px rgba(121, 211, 255, 0.75);
+}
+
+.wild-season-icon {
+  margin-right: 7px;
+  font-size: 16px;
+}
