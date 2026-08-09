@@ -666,23 +666,7 @@ setLocations(
 
       setTypeRelations(relations);
 
-try {
-  const locationResponse =
-    await fetch(
-      `https://pokeapi.co/api/v2/pokemon/${pokemon.id}/encounters`
-    );
 
-  if (locationResponse.ok) {
-    const locationData =
-      await locationResponse.json();
-
-    setLocations(locationData);
-  } else {
-    setLocations([]);
-  }
-} catch {
-  setLocations([]);
-}
     } catch (err) {
       console.error(err);
       setError(
