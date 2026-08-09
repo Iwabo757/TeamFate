@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import {
+  getPokeMMOLocations,
+  type PokeMMOLocation,
+} from "../data/pokemmoLocations";
 
 type DexPokemon = {
   id: number;
@@ -198,6 +202,7 @@ function formatName(name: string) {
     )
     .join(" ");
 }
+
 
 function formatMoveMethod(name: string) {
   if (name === "level-up") return "Level Up";
@@ -541,7 +546,15 @@ export default function PokemonInfoModal({
     useState<Record<string, TypeRelations>>({});
 
 const [locations, setLocations] =
-  useState<any[]>([]);
+  useState<PokeMMOLocation[]>([]);
+
+const [selectedSeason, setSelectedSeason] =
+  useState<
+    "Spring" |
+    "Summer" |
+    "Autumn" |
+    "Winter"
+  >("Spring");
 
 const [moveDetails, setMoveDetails] =
   useState<DetailedMove[]>([]);
@@ -615,7 +628,9 @@ useEffect(() => {
 
       setData(pokemonData);
       setSpecies(speciesData);
-
+setLocations(
+  getPokeMMOLocations(pokemon.id)
+);
 
       if (speciesData.evolution_chain?.url) {
         const evolutionResponse =
@@ -1403,196 +1418,154 @@ const evolutionGif =
 
 {activeTab === "Wild Locations" && (
   <div className="pokemon-tab-section">
-    <h3>Wild Locations</h3>
 
     <section className="pokemon-info-card">
-      {locations.length > 0 ? (
-        <div className="pokemon-locations-table">
-          <div className="pokemon-locations-header">
-            <span>Region</span>
-            <span>Location</span>
-            <span>Method</span>
-            <span>Levels</span>
-            <span>Morning</span>
-            <span>Day</span>
-            <span>Night</span>
-          </div>
 
-          {locations.map(
-            (entry: any, index: number) => {
-              const areaName =
-                formatName(
-                  entry.location_area.name
-                );
+      <h3>Wild Locations</h3>
 
-              const versionDetails =
-                entry.version_details || [];
+      {/* SEASON SELECTOR */}
+      <div className="season-selector">
 
-              const encounterDetails =
-                versionDetails.flatMap(
-                  (version: any) =>
-                    version.encounter_details ||
-                    []
-                );
-
-              const minLevel =
-                encounterDetails.length
-                  ? Math.min(
-                      ...encounterDetails.map(
-                        (detail: any) =>
-                          detail.min_level
-                      )
-                    )
-                  : null;
-
-              const maxLevel =
-                encounterDetails.length
-                  ? Math.max(
-                      ...encounterDetails.map(
-                        (detail: any) =>
-                          detail.max_level
-                      )
-                    )
-                  : null;
-
-              const levels =
-                minLevel !== null &&
-                maxLevel !== null
-                  ? minLevel === maxLevel
-                    ? `${minLevel}`
-                    : `${minLevel}–${maxLevel}`
-                  : "—";
-
-              const methods =
-                encounterDetails.length
-                  ? Array.from(
-                      new Set(
-                        encounterDetails.map(
-                          (detail: any) =>
-                            formatName(
-                              detail.method
-                                ?.name || "Unknown"
-                            )
-                        )
-                      )
-                    ).join(", ")
-                  : "—";
-
-              const hasMorning =
-                encounterDetails.some(
-                  (detail: any) =>
-                    detail.condition_values?.some(
-                      (condition: any) =>
-                        condition.name ===
-                        "morning"
-                    )
-                );
-
-              const hasDay =
-                encounterDetails.some(
-                  (detail: any) =>
-                    detail.condition_values?.some(
-                      (condition: any) =>
-                        condition.name === "day"
-                    )
-                );
-
-              const hasNight =
-                encounterDetails.some(
-                  (detail: any) =>
-                    detail.condition_values?.some(
-                      (condition: any) =>
-                        condition.name ===
-                        "night"
-                    )
-                );
-
-              const region =
-                versionDetails[0]
-                  ?.version?.name
-                  ? formatName(
-                      versionDetails[0]
-                        .version.name
-                    )
-                  : pokemon.region ||
-                    "Unknown";
-
-              return (
-                <div
-                  key={`${areaName}-${index}`}
-                  className="pokemon-location-row"
-                >
-                  <span>
-                    {region}
-                  </span>
-
-                  <span className="location-name">
-                    {areaName}
-                  </span>
-
-                  <span>
-                    {methods}
-                  </span>
-
-                  <span>
-                    {levels}
-                  </span>
-
-                  <span
-                    className={
-                      hasMorning
-                        ? "time-yes"
-                        : "time-no"
-                    }
-                  >
-                    {hasMorning
-                      ? "✓"
-                      : "—"}
-                  </span>
-
-                  <span
-                    className={
-                      hasDay
-                        ? "time-yes"
-                        : "time-no"
-                    }
-                  >
-                    {hasDay
-                      ? "✓"
-                      : "—"}
-                  </span>
-
-                  <span
-                    className={
-                      hasNight
-                        ? "time-yes"
-                        : "time-no"
-                    }
-                  >
-                    {hasNight
-                      ? "✓"
-                      : "—"}
-                  </span>
-                </div>
-              );
+        {(
+          [
+            "Spring",
+            "Summer",
+            "Autumn",
+            "Winter",
+          ] as const
+        ).map((season) => (
+          <button
+            key={season}
+            type="button"
+            className={
+              selectedSeason === season
+                ? "season-button active"
+                : "season-button"
             }
-          )}
+            onClick={() =>
+              setSelectedSeason(season)
+            }
+          >
+            {season === "Spring" && "🌸 "}
+            {season === "Summer" && "☀️ "}
+            {season === "Autumn" && "🍂 "}
+            {season === "Winter" && "❄️ "}
+            {season}
+          </button>
+        ))}
+
+      </div>
+
+      {locations.length > 0 ? (
+
+        <div className="locations-table-wrapper">
+
+          <table className="locations-table">
+
+            <thead>
+              <tr>
+                <th>Region</th>
+                <th>Location</th>
+                <th>Method</th>
+                <th>Levels</th>
+                <th>Morning</th>
+                <th>Day</th>
+                <th>Night</th>
+                <th>Horde</th>
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {locations
+                .filter(
+                  (location) =>
+                    location.season === "Any" ||
+                    location.season ===
+                      selectedSeason
+                )
+                .map(
+                  (location, index) => (
+                    <tr
+                      key={`${location.location_id}-${location.type}-${location.season}-${index}`}
+                    >
+
+                      <td>
+                        {location.region_name}
+                      </td>
+
+                      <td>
+                        <strong>
+                          {
+                            location.location_name_full
+                          }
+                        </strong>
+                      </td>
+
+                      <td>
+                        {location.type}
+                      </td>
+
+                      <td>
+                        {location.min_level ===
+                        location.max_level
+                          ? location.min_level
+                          : `${location.min_level}–${location.max_level}`}
+                      </td>
+
+                      <td>
+                        {
+                          location.rarity_morning
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          location.rarity_day
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          location.rarity_night
+                        }
+                      </td>
+
+                      <td>
+
+                        {location.is_horde_5x
+                          ? "5×"
+                          : location.is_horde_3x
+                          ? "3×"
+                          : "—"}
+
+                      </td>
+
+                    </tr>
+                  )
+                )}
+
+            </tbody>
+
+          </table>
+
         </div>
+
       ) : (
-        <div className="pokemon-no-locations">
-          No standard encounter locations
-          available.
-        </div>
+
+        <p>
+          This Pokémon has no recorded
+          PokeMMO wild locations.
+        </p>
+
       )}
 
-      <small>
-        Encounter information is from the
-        standard Pokémon API. PokeMMO encounter
-        data may differ.
-      </small>
     </section>
+
   </div>
 )}
+
+
 
 {activeTab === "Evolution Tree" && (
   <div className="pokemon-tab-section">
