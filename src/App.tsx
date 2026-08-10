@@ -66,6 +66,9 @@ import RaidGuides from "./pages/RaidGuides";
 import Recruitment from "./pages/Recruitment";
 import AdminRecruitment from "./pages/AdminRecruitment";
 
+import HordeHunter from "./pages/HordeHunter";
+
+
 type ProfileData = {
   id: string;
   username: string;
@@ -367,12 +370,17 @@ function canManageSite(
 
     // GUIDES
     if (
-      path.startsWith("/guides")
+      path.startsWith("/guides") ||
+      path.startsWith("/horde-hunter")
     ) {
       return [
         {
           label: "Guides",
           path: "/guides",
+        },
+        {
+          label: "Horde Hunter",
+          path: "/horde-hunter",
         },
       ];
     }
@@ -479,7 +487,7 @@ function canManageSite(
     </NavLink>
 
     <NavLink to="/guides">
-      Guides
+      Tools
     </NavLink>
 
     <NavLink to="/members">
@@ -873,6 +881,10 @@ function canManageSite(
 <Route
   path="/admin/recruitment"
   element={<AdminRecruitment />}
+/>
+<Route
+  path="/horde-hunter"
+  element={<HordeHunter />}
 />
           <Route
             path="/profile"

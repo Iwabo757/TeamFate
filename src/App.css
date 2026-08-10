@@ -4257,3 +4257,200 @@ textarea:focus {
   margin-right: 7px;
   font-size: 16px;
 }
+
+/* =========================================================
+   HORDE HUNTER
+========================================================= */
+
+.horde-hunter-page {
+  padding: 32px;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.horde-hunter-header {
+  margin-bottom: 24px;
+}
+
+.horde-hunter-header h1 {
+  margin: 0;
+  font-size: 38px;
+  letter-spacing: 1px;
+}
+
+.horde-hunter-header p {
+  margin-top: 8px;
+  color: #9eb5ca;
+}
+
+.horde-hunter-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.horde-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border: 1px solid rgba(120, 190, 255, 0.25);
+  border-radius: 10px;
+  background: rgba(4, 20, 38, 0.85);
+}
+
+.horde-search input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.horde-search input::placeholder {
+  color: #7890a6;
+}
+
+.horde-season-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  border-bottom: 1px solid rgba(120, 190, 255, 0.22);
+}
+
+.horde-season-tab {
+  padding: 10px 18px;
+  border: 1px solid rgba(120, 190, 255, 0.25);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: rgba(8, 25, 43, 0.9);
+  color: #a9bfd4;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.horde-season-tab:hover {
+  color: #ffffff;
+  background: rgba(25, 55, 82, 0.95);
+}
+
+.horde-season-tab.active {
+  background: linear-gradient(
+    180deg,
+    #245b87,
+    #123a5d
+  );
+  color: #ffffff;
+  border-color: #76cfff;
+  box-shadow:
+    0 -2px 12px rgba(90, 190, 255, 0.2);
+}
+
+.horde-hunter-card {
+  border: 1px solid rgba(120, 190, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(3, 19, 36, 0.8);
+  overflow: hidden;
+}
+
+.horde-hunter-title {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(120, 190, 255, 0.14);
+}
+
+.horde-hunter-title h2 {
+  margin: 0;
+}
+
+.horde-hunter-title span {
+  display: block;
+  margin-top: 5px;
+  color: #7f9bb3;
+  font-size: 13px;
+}
+
+.horde-table-wrapper {
+  overflow-x: auto;
+}
+
+.horde-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.horde-table th {
+  padding: 15px 18px;
+  text-align: left;
+  color: #8fd2ff;
+  background: rgba(10, 31, 51, 0.9);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.horde-table td {
+  padding: 13px 18px;
+  border-top: 1px solid rgba(120, 190, 255, 0.1);
+  color: #dcecff;
+}
+
+.horde-table tbody tr:hover {
+  background: rgba(45, 90, 125, 0.14);
+}
+
+.horde-region {
+  font-weight: 700;
+  color: #8ecfff;
+}
+
+.horde-pokemon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.horde-pokemon img {
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+}
+
+.horde-chance {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-weight: 800;
+  color: #8fe0ff;
+  white-space: nowrap;
+}
+
+.horde-chance span {
+  font-size: 14px;
+}
+
+.horde-size {
+  display: inline-flex;
+  min-width: 46px;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.horde-size.three {
+  background: rgba(70, 130, 180, 0.2);
+  color: #9bd8ff;
+}
+
+.horde-size.five {
+  background: rgba(170, 100, 220, 0.2);
+  color: #d9a6ff;
+}
+
+.horde-empty {
+  padding: 60px;
+  text-align: center;
+  color: #8199ad;
+}
