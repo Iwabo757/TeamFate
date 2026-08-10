@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import monsters from "../data/monsters.json";
 
 type Season = "Spring" | "Summer" | "Autumn" | "Winter";
