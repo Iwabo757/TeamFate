@@ -1,34 +1,46 @@
 import { useMemo, useState } from "react";
 import monsters from "../data/monsters.json";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
 type Season =
   | "Spring"
   | "Summer"
   | "Autumn"
   | "Winter";
 
+type Region =
+  | "All"
+  | "Kanto"
+  | "Johto"
+  | "Hoenn"
+  | "Sinnoh"
+  | "Unova";
+
 type HordeLocation = {
-  form: number;
-  type: string;
+  form?: number;
+  type?: string;
 
-  region_id: number;
-  region_name: string;
+  region_id?: number;
+  region_name?: string;
 
-  location_id: number;
-  location_name: string;
-  location_name_full: string;
+  location_id?: number;
+  location_name?: string;
+  location_name_full?: string;
 
-  min_level: number;
-  max_level: number;
+  min_level?: number;
+  max_level?: number;
 
-  season: string;
+  season?: string;
 
-  is_horde_3x: boolean;
-  is_horde_5x: boolean;
+  is_horde_3x?: boolean;
+  is_horde_5x?: boolean;
 
-  rarity_morning: string;
-  rarity_day: string;
-  rarity_night: string;
+  rarity_morning?: string;
+  rarity_day?: string;
+  rarity_night?: string;
 };
 
 type Monster = {
@@ -37,12 +49,35 @@ type Monster = {
   locations?: HordeLocation[];
 };
 
-type HordeEncounter = HordeLocation & {
+type HordeEncounter = {
   pokemonId: number;
   pokemonName: string;
+
+  region: string;
+
+  locationId: number;
+  locationName: string;
+
+  minLevel: number;
+  maxLevel: number;
+
+  season: string;
+
+  type: string;
+
+  horde3x: boolean;
+  horde5x: boolean;
+
+  morning: string;
+  day: string;
+  night: string;
 };
 
-const seasons: {
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const SEASONS: {
   name: Season;
   icon: string;
 }[] = [
@@ -64,20 +99,219 @@ const seasons: {
   },
 ];
 
+const REGIONS: Region[] = [
+  "All",
+  "Kanto",
+  "Johto",
+  "Hoenn",
+  "Sinnoh",
+  "Unova",
+];
+
 /* =========================================================
-   HORDE RATE CONVERSION
+   REGION NORMALIZER
 ========================================================= */
 
-function getHordeRate(
-  percent: string
-): number | null {
-  const value = parseFloat(percent);
+function normalizeRegion(
+  location: HordeLocation
+): string {
+  const raw = (
+    location.region_name ?? ""
+  )
+    .trim()
+    .toLowerCase();
 
-  if (Number.isNaN(value)) {
+  /*
+   * Already using the correct names.
+   */
+  if (raw.includes("kanto")) {
+    return "Kanto";
+  }
+
+  if (raw.includes("johto")) {
+    return "Johto";
+  }
+
+  if (raw.includes("hoenn")) {
+    return "Hoenn";
+  }
+
+  if (raw.includes("sinnoh")) {
+    return "Sinnoh";
+  }
+
+  if (raw.includes("unova")) {
+    return "Unova";
+  }
+
+  /*
+   * Handle game/version names if
+   * they exist in the dataset.
+   */
+
+  if (
+    [
+      "red",
+      "blue",
+      "yellow",
+      "fire red",
+      "leaf green",
+      "firered",
+      "leafgreen",
+    ].includes(raw)
+  ) {
+    return "Kanto";
+  }
+
+  if (
+    [
+      "gold",
+      "silver",
+      "crystal",
+      "heartgold",
+      "soulsilver",
+      "heartgold",
+      "soul silver",
+    ].includes(raw)
+  ) {
+    return "Johto";
+  }
+
+  if (
+    [
+      "ruby",
+      "sapphire",
+      "emerald",
+      "omega ruby",
+      "alpha sapphire",
+      "omegaruby",
+      "alphasapphire",
+    ].includes(raw)
+  ) {
+    return "Hoenn";
+  }
+
+  if (
+    [
+      "diamond",
+      "pearl",
+      "platinum",
+      "brilliant diamond",
+      "shining pearl",
+    ].includes(raw)
+  ) {
+    return "Sinnoh";
+  }
+
+  if (
+    [
+      "black",
+      "white",
+      "black 2",
+      "white 2",
+      "black2",
+      "white2",
+    ].includes(raw)
+  ) {
+    return "Unova";
+  }
+
+  /*
+   * If the dataset has region_id but
+   * region_name is missing.
+   *
+   * PokeMMO Gen 1-5 ordering.
+   */
+  switch (location.region_id) {
+    case 1:
+      return "Kanto";
+
+    case 2:
+      return "Johto";
+
+    case 3:
+      return "Hoenn";
+
+    case 4:
+      return "Sinnoh";
+
+    case 5:
+      return "Unova";
+
+    default:
+      return (
+        location.region_name ||
+        "Unknown"
+      );
+  }
+}
+
+/* =========================================================
+   SEASON NORMALIZER
+========================================================= */
+
+function normalizeSeason(
+  value?: string
+): string {
+  if (!value) {
+    return "Any";
+  }
+
+  const normalized =
+    value.trim().toLowerCase();
+
+  if (normalized === "spring") {
+    return "Spring";
+  }
+
+  if (normalized === "summer") {
+    return "Summer";
+  }
+
+  if (
+    normalized === "autumn" ||
+    normalized === "fall"
+  ) {
+    return "Autumn";
+  }
+
+  if (normalized === "winter") {
+    return "Winter";
+  }
+
+  if (
+    normalized === "any" ||
+    normalized === "all"
+  ) {
+    return "Any";
+  }
+
+  return value;
+}
+
+/* =========================================================
+   PERCENTAGE CONVERSION
+========================================================= */
+
+function getHordePercentage(
+  value: string
+): number | null {
+  if (
+    !value ||
+    value === "--" ||
+    value === "-"
+  ) {
     return null;
   }
 
-  switch (value) {
+  const number =
+    parseFloat(value);
+
+  if (Number.isNaN(number)) {
+    return null;
+  }
+
+  switch (number) {
     case 5:
       return 100;
 
@@ -99,42 +333,64 @@ function getHordeRate(
 }
 
 /* =========================================================
-   FORMAT HORDE CHANCE
+   PERCENTAGE DISPLAY
 ========================================================= */
 
-function formatHordeChance(
-  location: HordeEncounter
-) {
-  const chances = [
-    location.rarity_morning,
-    location.rarity_day,
-    location.rarity_night,
-  ].filter(
-    (chance) =>
-      chance &&
-      chance !== "--"
-  );
+function ChanceDisplay({
+  value,
+}: {
+  value: string;
+}) {
+  const converted =
+    getHordePercentage(value);
 
-  const uniqueChances =
-    Array.from(
-      new Set(chances)
+  if (
+    !value ||
+    value === "--" ||
+    value === "-"
+  ) {
+    return (
+      <span className="horde-time-empty">
+        —
+      </span>
     );
+  }
 
-  return uniqueChances.map(
-    (chance) => {
-      const relative =
-        getHordeRate(chance);
+  return (
+    <div className="horde-time-chance">
+      <strong>
+        {value}
+      </strong>
 
-      return {
-        percent: chance,
-        relative,
-      };
-    }
+      {converted !== null && (
+        <small>
+          ({converted}%)
+        </small>
+      )}
+    </div>
   );
 }
 
 /* =========================================================
-   HORDE HUNTER PAGE
+   HORDE SIZE
+========================================================= */
+
+function getHordeSize(
+  horde: HordeEncounter
+): string {
+  if (horde.horde5x) {
+    return "5×";
+  }
+
+  if (horde.horde3x) {
+    return "3×";
+  }
+
+  return "—";
+}
+
+/* =========================================================
+   MAIN PAGE
 ========================================================= */
 
 export default function HordeHunter() {
@@ -144,9 +400,26 @@ export default function HordeHunter() {
   ] = useState<Season>("Spring");
 
   const [
+    selectedRegion,
+    setSelectedRegion,
+  ] = useState<Region>("All");
+
+  const [
     search,
     setSearch,
   ] = useState("");
+
+  /*
+   * Routes are intentionally empty
+   * at first, meaning every route
+   * starts collapsed.
+   */
+  const [
+    expandedRoutes,
+    setExpandedRoutes,
+  ] = useState<Set<string>>(
+    new Set()
+  );
 
   /* =======================================================
      BUILD HORDE DATA
@@ -154,22 +427,25 @@ export default function HordeHunter() {
 
   const hordeLocations =
     useMemo<HordeEncounter[]>(() => {
-      const results: HordeEncounter[] = [];
+      const results: HordeEncounter[] =
+        [];
 
-      const pokemonData =
+      const data =
         monsters as Monster[];
 
-      pokemonData.forEach(
+      data.forEach(
         (pokemon) => {
-          if (!pokemon.locations) {
+          if (
+            !pokemon.locations ||
+            pokemon.locations.length === 0
+          ) {
             return;
           }
 
           pokemon.locations.forEach(
             (location) => {
               /*
-               * Only include actual horde
-               * encounters.
+               * Only actual hordes.
                */
               if (
                 !location.is_horde_3x &&
@@ -178,27 +454,83 @@ export default function HordeHunter() {
                 return;
               }
 
+              const season =
+                normalizeSeason(
+                  location.season
+                );
+
               /*
-               * "Any" encounters appear
-               * in every season.
+               * "Any" appears during
+               * every season.
                */
               if (
-                location.season !==
-                  "Any" &&
-                location.season !==
+                season !== "Any" &&
+                season !==
                   selectedSeason
               ) {
                 return;
               }
 
-              results.push({
-                ...location,
+              const region =
+                normalizeRegion(
+                  location
+                );
 
+              const locationName =
+                location.location_name_full ||
+                location.location_name ||
+                "Unknown Location";
+
+              results.push({
                 pokemonId:
                   pokemon.id,
 
                 pokemonName:
                   pokemon.name,
+
+                region,
+
+                locationId:
+                  location.location_id ??
+                  0,
+
+                locationName,
+
+                minLevel:
+                  location.min_level ??
+                  0,
+
+                maxLevel:
+                  location.max_level ??
+                  0,
+
+                season,
+
+                type:
+                  location.type ||
+                  "Horde",
+
+                horde3x:
+                  Boolean(
+                    location.is_horde_3x
+                  ),
+
+                horde5x:
+                  Boolean(
+                    location.is_horde_5x
+                  ),
+
+                morning:
+                  location.rarity_morning ||
+                  "--",
+
+                day:
+                  location.rarity_day ||
+                  "--",
+
+                night:
+                  location.rarity_night ||
+                  "--",
               });
             }
           );
@@ -209,7 +541,7 @@ export default function HordeHunter() {
     }, [selectedSeason]);
 
   /* =======================================================
-     SEARCH
+     SEARCH + REGION FILTER
   ======================================================= */
 
   const filteredHordes =
@@ -219,34 +551,36 @@ export default function HordeHunter() {
           .trim()
           .toLowerCase();
 
-      if (!query) {
-        return hordeLocations;
-      }
-
       return hordeLocations.filter(
         (horde) => {
-          return (
+          const matchesRegion =
+            selectedRegion ===
+              "All" ||
+            horde.region ===
+              selectedRegion;
+
+          const matchesSearch =
+            !query ||
             horde.pokemonName
               .toLowerCase()
               .includes(query) ||
-
-            horde.location_name
+            horde.locationName
               .toLowerCase()
               .includes(query) ||
-
-            horde.location_name_full
+            horde.region
               .toLowerCase()
-              .includes(query) ||
+              .includes(query);
 
-            horde.region_name
-              .toLowerCase()
-              .includes(query)
+          return (
+            matchesRegion &&
+            matchesSearch
           );
         }
       );
     }, [
       hordeLocations,
       search,
+      selectedRegion,
     ]);
 
   /* =======================================================
@@ -269,32 +603,30 @@ export default function HordeHunter() {
 
       filteredHordes.forEach(
         (horde) => {
-          const region =
-            horde.region_name ||
-            "Unknown Region";
-
-          const route =
-            horde.location_name_full ||
-            horde.location_name ||
-            "Unknown Location";
-
-          if (!grouped[region]) {
-            grouped[region] = {};
+          if (!grouped[horde.region]) {
+            grouped[horde.region] =
+              {};
           }
 
-          if (!grouped[region][route]) {
-            grouped[region][route] = [];
+          if (
+            !grouped[horde.region][
+              horde.locationName
+            ]
+          ) {
+            grouped[horde.region][
+              horde.locationName
+            ] = [];
           }
 
-          grouped[region][route].push(
-            horde
-          );
+          grouped[horde.region][
+            horde.locationName
+          ].push(horde);
         }
       );
 
       /*
-       * Sort Pokémon inside
-       * each route alphabetically.
+       * Alphabetize Pokémon
+       * inside routes.
        */
       Object.values(grouped).forEach(
         (routes) => {
@@ -326,32 +658,65 @@ export default function HordeHunter() {
   ];
 
   const sortedRegions =
-    Object.keys(groupedHordes).sort(
-      (a, b) => {
-        const indexA =
-          regionOrder.indexOf(a);
+    Object.keys(
+      groupedHordes
+    ).sort((a, b) => {
+      const aIndex =
+        regionOrder.indexOf(a);
 
-        const indexB =
-          regionOrder.indexOf(b);
+      const bIndex =
+        regionOrder.indexOf(b);
+
+      if (
+        aIndex === -1 &&
+        bIndex === -1
+      ) {
+        return a.localeCompare(b);
+      }
+
+      if (aIndex === -1) {
+        return 1;
+      }
+
+      if (bIndex === -1) {
+        return -1;
+      }
+
+      return aIndex - bIndex;
+    });
+
+  /* =======================================================
+     TOGGLE ROUTE
+  ======================================================= */
+
+  function toggleRoute(
+    routeKey: string
+  ) {
+    setExpandedRoutes(
+      (previous) => {
+        const next =
+          new Set(previous);
 
         if (
-          indexA === -1 &&
-          indexB === -1
+          next.has(routeKey)
         ) {
-          return a.localeCompare(b);
+          next.delete(routeKey);
+        } else {
+          next.add(routeKey);
         }
 
-        if (indexA === -1) {
-          return 1;
-        }
-
-        if (indexB === -1) {
-          return -1;
-        }
-
-        return indexA - indexB;
+        return next;
       }
     );
+  }
+
+  /* =======================================================
+     CLEAR SEARCH
+  ======================================================= */
+
+  function clearSearch() {
+    setSearch("");
+  }
 
   /* =======================================================
      RENDER
@@ -372,9 +737,10 @@ export default function HordeHunter() {
           </h1>
 
           <p>
-            Find every PokeMMO horde
+            Find every horde
             encounter by region,
-            route, Pokémon, and season.
+            route, Pokémon, and
+            season.
           </p>
         </div>
 
@@ -405,12 +771,53 @@ export default function HordeHunter() {
           <button
             type="button"
             className="horde-search-clear"
-            onClick={() =>
-              setSearch("")
+            onClick={
+              clearSearch
             }
+            aria-label="Clear search"
           >
             ×
           </button>
+        )}
+
+      </div>
+
+      {/* =================================================
+          REGION FILTER
+      ================================================= */}
+
+      <div className="horde-region-filter">
+
+        {REGIONS.map(
+          (region) => (
+            <button
+              key={region}
+              type="button"
+              className={
+                selectedRegion ===
+                region
+                  ? "horde-region-filter-button active"
+                  : "horde-region-filter-button"
+              }
+              onClick={() => {
+                setSelectedRegion(
+                  region
+                );
+
+                /*
+                 * When switching region,
+                 * start with routes collapsed.
+                 */
+                setExpandedRoutes(
+                  new Set()
+                );
+              }}
+            >
+              {region === "All"
+                ? "All Regions"
+                : region}
+            </button>
+          )
         )}
 
       </div>
@@ -421,7 +828,7 @@ export default function HordeHunter() {
 
       <div className="horde-season-tabs">
 
-        {seasons.map(
+        {SEASONS.map(
           (season) => (
             <button
               key={season.name}
@@ -432,11 +839,19 @@ export default function HordeHunter() {
                   ? "horde-season-tab active"
                   : "horde-season-tab"
               }
-              onClick={() =>
+              onClick={() => {
                 setSelectedSeason(
                   season.name
-                )
-              }
+                );
+
+                /*
+                 * Keep all routes collapsed
+                 * when changing seasons.
+                 */
+                setExpandedRoutes(
+                  new Set()
+                );
+              }}
             >
 
               <span className="horde-season-icon">
@@ -454,7 +869,7 @@ export default function HordeHunter() {
       </div>
 
       {/* =================================================
-          CURRENT SEASON / RESULTS
+          RESULTS HEADER
       ================================================= */}
 
       <div className="horde-results-header">
@@ -463,7 +878,7 @@ export default function HordeHunter() {
 
           <h2>
             {
-              seasons.find(
+              SEASONS.find(
                 (season) =>
                   season.name ===
                   selectedSeason
@@ -474,17 +889,18 @@ export default function HordeHunter() {
 
           <span>
             {filteredHordes.length}{" "}
-            horde encounters
+            encounters
           </span>
 
         </div>
 
-        {search && (
-          <div className="horde-search-result">
-            Searching for:
+        {selectedRegion !==
+          "All" && (
+          <div className="horde-active-region">
+            Region:
             <strong>
               {" "}
-              {search}
+              {selectedRegion}
             </strong>
           </div>
         )}
@@ -492,7 +908,7 @@ export default function HordeHunter() {
       </div>
 
       {/* =================================================
-          NO RESULTS
+          EMPTY STATE
       ================================================= */}
 
       {sortedRegions.length ===
@@ -509,21 +925,21 @@ export default function HordeHunter() {
 
           <p>
             Try another Pokémon,
-            route, or region.
+            route, region, or
+            season.
           </p>
 
         </div>
       )}
 
       {/* =================================================
-          REGION GROUPS
+          REGIONS
       ================================================= */}
 
       <div className="horde-region-list">
 
         {sortedRegions.map(
           (region) => {
-
             const routes =
               groupedHordes[
                 region
@@ -532,9 +948,8 @@ export default function HordeHunter() {
             const sortedRoutes =
               Object.keys(
                 routes
-              ).sort(
-                (a, b) =>
-                  a.localeCompare(b)
+              ).sort((a, b) =>
+                a.localeCompare(b)
               );
 
             return (
@@ -543,9 +958,9 @@ export default function HordeHunter() {
                 className="horde-region-section"
               >
 
-                {/* ===============================
-                    REGION
-                =============================== */}
+                {/* =======================================
+                    REGION HEADER
+                ======================================= */}
 
                 <div className="horde-region-header">
 
@@ -559,196 +974,246 @@ export default function HordeHunter() {
 
                 </div>
 
-                {/* ===============================
+                {/* =======================================
                     ROUTES
-                =============================== */}
+                ======================================= */}
 
                 <div className="horde-routes">
 
                   {sortedRoutes.map(
                     (route) => {
-
                       const pokemon =
                         routes[
                           route
                         ];
 
+                      const routeKey =
+                        `${region}-${route}`;
+
+                      const isExpanded =
+                        expandedRoutes.has(
+                          routeKey
+                        );
+
                       return (
                         <div
-                          key={route}
+                          key={routeKey}
                           className="horde-route"
                         >
 
-                          {/* ROUTE HEADER */}
+                          {/* =========================
+                              ROUTE HEADER
+                          ========================= */}
 
-                          <div className="horde-route-header">
+                          <button
+                            type="button"
+                            className="horde-route-header"
+                            onClick={() =>
+                              toggleRoute(
+                                routeKey
+                              )
+                            }
+                          >
 
-                            <h3>
-                              {route}
-                            </h3>
+                            <div className="horde-route-title">
 
-                            <span>
+                              <span className="horde-route-arrow">
+                                {isExpanded
+                                  ? "▼"
+                                  : "▶"}
+                              </span>
+
+                              <h3>
+                                {route}
+                              </h3>
+
+                            </div>
+
+                            <span className="horde-route-count">
                               {
                                 pokemon.length
                               }{" "}
-                              horde
-                              {pokemon.length !==
+                              {pokemon.length ===
                               1
-                                ? "s"
-                                : ""}
+                                ? "Horde"
+                                : "Hordes"}
                             </span>
 
-                          </div>
+                          </button>
 
-                          {/* COLUMN HEADERS */}
+                          {/* =========================
+                              POKÉMON CONTENT
+                          ========================= */}
 
-                          <div className="horde-column-header">
+                          {isExpanded && (
+                            <div className="horde-route-content">
 
-                            <span>
-                              Pokémon
-                            </span>
+                              {/* =====================
+                                  COLUMN HEADERS
+                              ===================== */}
 
-                            <span>
-                              Levels
-                            </span>
+                              <div className="horde-column-header">
 
-                            <span>
-                              Horde Chance
-                            </span>
+                                <span>
+                                  Pokémon
+                                </span>
 
-                            <span>
-                              Horde Size
-                            </span>
+                                <span>
+                                  Levels
+                                </span>
 
-                          </div>
+                                <span>
+                                  Morning
+                                </span>
 
-                          {/* POKÉMON */}
+                                <span>
+                                  Day
+                                </span>
 
-                          <div className="horde-pokemon-list">
+                                <span>
+                                  Night
+                                </span>
 
-                            {pokemon.map(
-                              (
-                                location,
-                                index
-                              ) => {
+                                <span>
+                                  Horde Size
+                                </span>
 
-                                const chances =
-                                  formatHordeChance(
-                                    location
-                                  );
+                              </div>
 
-                                const hordeSize =
-                                  location.is_horde_5x
-                                    ? "5×"
-                                    : "3×";
+                              {/* =====================
+                                  POKÉMON GRID
+                              ===================== */}
 
-                                return (
-                                  <div
-                                    key={`${location.pokemonId}-${location.location_id}-${index}`}
-                                    className="horde-pokemon-row"
-                                  >
+                              <div className="horde-pokemon-list">
 
-                                    {/* POKÉMON */}
+                                {pokemon.map(
+                                  (
+                                    horde,
+                                    index
+                                  ) => {
 
-                                    <div className="horde-pokemon-info">
+                                    const hordeSize =
+                                      getHordeSize(
+                                        horde
+                                      );
 
-                                      <img
-                                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${location.pokemonId}.png`}
-                                        alt={
-                                          location.pokemonName
-                                        }
-                                        loading="lazy"
-                                      />
+                                    return (
+                                      <div
+                                        key={`${horde.pokemonId}-${horde.locationId}-${index}`}
+                                        className="horde-pokemon-card"
+                                      >
 
-                                      <div>
+                                        {/* POKÉMON */}
 
-                                        <strong>
-                                          {
-                                            location.pokemonName
-                                          }
-                                        </strong>
+                                        <div className="horde-pokemon-info">
 
-                                        <small>
-                                          {
-                                            location.type
-                                          }
-                                        </small>
+                                          <div className="horde-pokemon-sprite">
 
-                                      </div>
+                                            <img
+                                              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${horde.pokemonId}.png`}
+                                              alt={
+                                                horde.pokemonName
+                                              }
+                                              loading="lazy"
+                                            />
 
-                                    </div>
+                                          </div>
 
-                                    {/* LEVELS */}
-
-                                    <div className="horde-levels">
-
-                                      {location.min_level ===
-                                      location.max_level
-                                        ? location.min_level
-                                        : `${location.min_level}–${location.max_level}`}
-
-                                    </div>
-
-                                    {/* CHANCE */}
-
-                                    <div className="horde-chance-list">
-
-                                      {chances.map(
-                                        (
-                                          chance,
-                                          chanceIndex
-                                        ) => (
-                                          <span
-                                            key={`${chance.percent}-${chanceIndex}`}
-                                            className="horde-chance-item"
-                                          >
+                                          <div className="horde-pokemon-name">
 
                                             <strong>
                                               {
-                                                chance.percent
+                                                horde.pokemonName
                                               }
                                             </strong>
 
-                                            {chance.relative !==
-                                              null && (
+                                            {horde.type && (
                                               <small>
-                                                (
                                                 {
-                                                  chance.relative
+                                                  horde.type
                                                 }
-                                                %)
                                               </small>
                                             )}
 
+                                          </div>
+
+                                        </div>
+
+                                        {/* LEVELS */}
+
+                                        <div className="horde-levels">
+
+                                          {horde.minLevel ===
+                                          horde.maxLevel
+                                            ? horde.minLevel
+                                            : `${horde.minLevel}–${horde.maxLevel}`}
+
+                                        </div>
+
+                                        {/* MORNING */}
+
+                                        <div className="horde-time">
+
+                                          <ChanceDisplay
+                                            value={
+                                              horde.morning
+                                            }
+                                          />
+
+                                        </div>
+
+                                        {/* DAY */}
+
+                                        <div className="horde-time">
+
+                                          <ChanceDisplay
+                                            value={
+                                              horde.day
+                                            }
+                                          />
+
+                                        </div>
+
+                                        {/* NIGHT */}
+
+                                        <div className="horde-time">
+
+                                          <ChanceDisplay
+                                            value={
+                                              horde.night
+                                            }
+                                          />
+
+                                        </div>
+
+                                        {/* HORDE SIZE */}
+
+                                        <div className="horde-size-container">
+
+                                          <span
+                                            className={
+                                              hordeSize ===
+                                              "5×"
+                                                ? "horde-size five"
+                                                : "horde-size three"
+                                            }
+                                          >
+                                            {
+                                              hordeSize
+                                            }
                                           </span>
-                                        )
-                                      )}
 
-                                    </div>
+                                        </div>
 
-                                    {/* HORDE SIZE */}
+                                      </div>
+                                    );
+                                  }
+                                )}
 
-                                    <div>
+                              </div>
 
-                                      <span
-                                        className={
-                                          hordeSize ===
-                                          "5×"
-                                            ? "horde-size five"
-                                            : "horde-size three"
-                                        }
-                                      >
-                                        {hordeSize}
-                                      </span>
-
-                                    </div>
-
-                                  </div>
-                                );
-                              }
-                            )}
-
-                          </div>
+                            </div>
+                          )}
 
                         </div>
                       );

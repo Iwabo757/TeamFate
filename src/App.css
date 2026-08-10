@@ -4454,3 +4454,279 @@ textarea:focus {
   text-align: center;
   color: #8199ad;
 }
+.horde-pokemon-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(280px, 1fr)
+  );
+  gap: 16px;
+  padding: 18px;
+}
+.horde-route {
+  margin-bottom: 14px;
+  border: 1px solid rgba(120, 190, 255, 0.22);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(3, 20, 43, 0.72);
+}
+
+.horde-route-header {
+  width: 100%;
+  min-height: 64px;
+  padding: 14px 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border: 0;
+  cursor: pointer;
+
+  color: #dceeff;
+  background: rgba(10, 34, 64, 0.9);
+
+  text-align: left;
+}
+
+.horde-route-header:hover {
+  background: rgba(25, 61, 101, 0.95);
+}
+
+.horde-route-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.horde-route-title h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.horde-route-arrow {
+  width: 22px;
+  font-size: 14px;
+  color: #8ed3ff;
+}
+
+.horde-route-count {
+  padding: 5px 10px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  color: #9edcff;
+
+  background: rgba(
+    80,
+    160,
+    230,
+    0.12
+  );
+}
+.horde-region-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin: 16px 0 20px;
+}
+
+.horde-region-filter-button {
+  padding: 9px 18px;
+
+  border: 1px solid
+    rgba(120, 190, 255, 0.28);
+
+  border-radius: 10px;
+
+  background: rgba(
+    5,
+    25,
+    50,
+    0.85
+  );
+
+  color: #b9d8f2;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.horde-region-filter-button:hover {
+  transform: translateY(-1px);
+
+  background: rgba(
+    30,
+    72,
+    115,
+    0.9
+  );
+}
+
+.horde-region-filter-button.active {
+  color: white;
+
+  background: linear-gradient(
+    135deg,
+    #2777d4,
+    #4d8cff
+  );
+
+  border-color: #8ed3ff;
+
+  box-shadow:
+    0 0 14px
+    rgba(
+      70,
+      160,
+      255,
+      0.28
+    );
+}
+.horde-pokemon-row {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    auto
+    auto
+    auto;
+
+  align-items: center;
+
+  gap: 14px;
+
+  min-height: 120px;
+
+  padding: 14px 16px;
+
+  border: 1px solid
+    rgba(100, 170, 230, 0.18);
+
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(11, 38, 69, 0.92),
+      rgba(4, 21, 42, 0.96)
+    );
+}
+
+.horde-pokemon-row:hover {
+  border-color:
+    rgba(120, 200, 255, 0.45);
+
+  transform: translateY(-2px);
+}
+
+.horde-pokemon-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.horde-pokemon-info img {
+  width: 72px;
+  height: 72px;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+}
+
+.horde-pokemon-info strong {
+  display: block;
+
+  color: #e5f3ff;
+
+  font-size: 17px;
+}
+
+.horde-pokemon-info small {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #83b6d9;
+
+  font-size: 12px;
+}
+
+.horde-levels {
+  color: #dceeff;
+  font-weight: 700;
+}
+
+.horde-chance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.horde-chance-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+
+  white-space: nowrap;
+}
+
+.horde-chance-item strong {
+  color: #ffffff;
+}
+
+.horde-chance-item small {
+  color: #8fd0ff;
+}
+
+.horde-size {
+  display: inline-flex;
+
+  min-width: 45px;
+  height: 34px;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  font-weight: 800;
+}
+
+.horde-size.five {
+  color: #ffd1ff;
+
+  background: rgba(
+    180,
+    90,
+    210,
+    0.28
+  );
+
+  border: 1px solid
+    rgba(210, 120, 240, 0.45);
+}
+
+.horde-size.three {
+  color: #bde7ff;
+
+  background: rgba(
+    60,
+    140,
+    210,
+    0.25
+  );
+
+  border: 1px solid
+    rgba(90, 170, 230, 0.4);
+}
