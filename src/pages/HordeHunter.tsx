@@ -2,7 +2,14 @@ import { useMemo, useState } from "react";
 import monsters from "../data/monsters.json";
 
 type Season = "Spring" | "Summer" | "Autumn" | "Winter";
-type Region = "All Regions" | "Kanto" | "Johto" | "Hoenn" | "Sinnoh" | "Unova";
+
+type Region =
+  | "All Regions"
+  | "Kanto"
+  | "Johto"
+  | "Hoenn"
+  | "Sinnoh"
+  | "Unova";
 
 type MonsterLocation = {
   form: number;
@@ -62,7 +69,6 @@ type HordeEntry = {
 
 type RouteGroup = {
   region: string;
-  locationId: number;
   locationName: string;
   entries: HordeEntry[];
 };
@@ -84,7 +90,7 @@ const REGIONS: Region[] = [
 ];
 
 /*
- * PokeMMO Horde Hunter conversion:
+ * Horde encounter conversion:
  *
  * 5%   = 100%
  * 3%   = 60%
@@ -115,9 +121,18 @@ const REGION_ICONS: Record<string, string> = {
   Unova: "⚫",
 };
 
+/* =========================================================
+   HELPERS
+========================================================= */
+
 function getHordeSize(location: MonsterLocation): number {
-  if (location.is_horde_5x) return 5;
-  if (location.is_horde_3x) return 3;
+  if (location.is_horde_5x) {
+    return 5;
+  }
+
+  if (location.is_horde_3x) {
+    return 3;
+  }
 
   return 0;
 }
@@ -133,15 +148,18 @@ function getNumericChance(value: string): number | null {
     return null;
   }
 
-  return Number(match[0]);
+  const number = Number(match[0]);
+
+  return Number.isFinite(number) ? number : null;
 }
 
 /*
- * Finds the encounter percentage attached to the horde.
- *
- * We look through Morning / Day / Night and use the highest
- * numeric value because some horde entries can have more than
- * one active time period.
+ * Find the horde encounter percentage.
+
+ * Some entries contain different percentages for
+ * morning / day / night.
+
+ * We use the highest value attached to the encounter.
  */
 function getHordeChance(location: MonsterLocation): string {
   const chances = [
@@ -150,18 +168,21 @@ function getHordeChance(location: MonsterLocation): string {
     location.rarity_night,
   ]
     .map(getNumericChance)
-    .filter((value): value is number => value !== null);
+    .filter(
+      (value): value is number =>
+        value !== null
+    );
 
   if (chances.length === 0) {
     return "--";
   }
 
-  const highest = Math.max(...chances);
-
-  return `${highest}%`;
+  return `${Math.max(...chances)}%`;
 }
 
-function getConvertedChance(chance: string): number | null {
+function getConvertedChance(
+  chance: string
+): number | null {
   return HORDE_CONVERSION[chance] ?? null;
 }
 
@@ -182,8 +203,53 @@ function getShinySprite(id: number): string {
 }
 
 function normalize(value: string): string {
-  return value.toLowerCase().trim();
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
 }
+
+/*
+ * This is important.
+
+ * We do NOT use location_id to identify a route.
+
+ * monsters.json can contain different location records
+ * that display as the exact same route/location.
+
+ * Therefore the real route identity is:
+ *
+ * REGION + DISPLAYED LOCATION NAME
+ */
+function getRouteKey(
+  region: string,
+  locationName: string
+): string {
+  return `${normalize(region)}::${normalize(
+    locationName
+  )}`;
+}
+
+/*
+ * Prevent duplicate Pokémon inside the same route.
+
+ * The same Pokémon can sometimes appear more than once
+ * in the raw dataset for the same displayed location.
+ */
+function getPokemonKey(entry: HordeEntry): string {
+  return [
+    entry.pokemonId,
+    normalize(entry.pokemonName),
+    entry.hordeSize,
+    entry.hordeChance,
+    entry.minLevel,
+    entry.maxLevel,
+  ].join("::");
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
 
 export default function HordeHunter() {
   const [selectedSeason, setSelectedSeason] =
@@ -195,199 +261,328 @@ export default function HordeHunter() {
   const [search, setSearch] = useState("");
 
   /*
-   * Routes are intentionally collapsed by default.
+   * Routes start CLOSED.
    */
-  const [openRoutes, setOpenRoutes] = useState<
-    Record<string, boolean>
-  >({});
+  const [openRoutes, setOpenRoutes] =
+    useState<Record<string, boolean>>({});
 
-  /*
-   * Build Horde entries directly from monsters.json.
-   */
+  /* =======================================================
+     BUILD HORDE DATA
+  ======================================================= */
+
   const hordeEntries = useMemo<HordeEntry[]>(() => {
     const output: HordeEntry[] = [];
 
-    (monsters as Monster[]).forEach((pokemon) => {
-      if (!pokemon.locations) {
-        return;
+    (monsters as Monster[]).forEach(
+      (pokemon) => {
+        if (!pokemon.locations) {
+          return;
+        }
+
+        pokemon.locations.forEach(
+          (location) => {
+            /*
+             * Only include actual hordes.
+             */
+            const hordeSize =
+              getHordeSize(location);
+
+            if (hordeSize === 0) {
+              return;
+            }
+
+            /*
+             * Seasonal encounters.
+
+             * "Any" is available in every season.
+             */
+            if (
+              location.season !== "Any" &&
+              location.season !== selectedSeason
+            ) {
+              return;
+            }
+
+            /*
+             * Region filter.
+             */
+            if (
+              selectedRegion !==
+                "All Regions" &&
+              location.region_name !==
+                selectedRegion
+            ) {
+              return;
+            }
+
+            const hordeChance =
+              getHordeChance(location);
+
+            const locationFullName =
+              location.location_name_full ||
+              location.location_name ||
+              "Unknown Location";
+
+            output.push({
+              pokemonId: pokemon.id,
+              pokemonName: pokemon.name,
+
+              locationId:
+                location.location_id,
+
+              locationName:
+                location.location_name ||
+                locationFullName,
+
+              locationFullName,
+
+              region:
+                location.region_name ||
+                "Unknown",
+
+              minLevel:
+                location.min_level,
+
+              maxLevel:
+                location.max_level,
+
+              method:
+                location.type || "Unknown",
+
+              hordeSize,
+
+              hordeChance,
+
+              convertedChance:
+                getConvertedChance(
+                  hordeChance
+                ),
+
+              morning:
+                location.rarity_morning ||
+                "--",
+
+              day:
+                location.rarity_day ||
+                "--",
+
+              night:
+                location.rarity_night ||
+                "--",
+            });
+          }
+        );
       }
-
-      pokemon.locations.forEach((location) => {
-        /*
-         * Only Horde encounters.
-         */
-        const hordeSize = getHordeSize(location);
-
-        if (hordeSize === 0) {
-          return;
-        }
-
-        /*
-         * Season filtering happens here.
-         */
-        if (
-          location.season !== "Any" &&
-          location.season !== selectedSeason
-        ) {
-          return;
-        }
-
-        /*
-         * Region filtering.
-         */
-        if (
-          selectedRegion !== "All Regions" &&
-          location.region_name !== selectedRegion
-        ) {
-          return;
-        }
-
-        const hordeChance = getHordeChance(location);
-
-        output.push({
-          pokemonId: pokemon.id,
-          pokemonName: pokemon.name,
-
-          locationId: location.location_id,
-          locationName: location.location_name,
-          locationFullName:
-            location.location_name_full,
-
-          region: location.region_name,
-
-          minLevel: location.min_level,
-          maxLevel: location.max_level,
-
-          method: location.type,
-
-          hordeSize,
-          hordeChance,
-          convertedChance:
-            getConvertedChance(hordeChance),
-
-          morning: location.rarity_morning,
-          day: location.rarity_day,
-          night: location.rarity_night,
-        });
-      });
-    });
+    );
 
     return output;
-  }, [selectedSeason, selectedRegion]);
+  }, [
+    selectedSeason,
+    selectedRegion,
+  ]);
 
-  /*
-   * Search Pokémon OR route/location.
-   */
-  const filteredEntries = useMemo(() => {
-    const query = normalize(search);
+  /* =======================================================
+     SEARCH
+  ======================================================= */
 
-    if (!query) {
-      return hordeEntries;
-    }
+  const filteredEntries =
+    useMemo(() => {
+      const query =
+        normalize(search);
 
-    return hordeEntries.filter((entry) => {
-      return (
-        normalize(entry.pokemonName).includes(query) ||
-        normalize(entry.locationName).includes(query) ||
-        normalize(entry.locationFullName).includes(query) ||
-        normalize(entry.region).includes(query)
-      );
-    });
-  }, [hordeEntries, search]);
-
-  /*
-   * Group:
-   *
-   * Region
-   *   ↓
-   * Route
-   *   ↓
-   * Pokémon
-   */
-  const groupedRoutes = useMemo<RouteGroup[]>(() => {
-    const groups = new Map<string, RouteGroup>();
-
-    filteredEntries.forEach((entry) => {
-      const key = `${entry.region}-${entry.locationId}`;
-
-      if (!groups.has(key)) {
-        groups.set(key, {
-          region: entry.region,
-          locationId: entry.locationId,
-          locationName: entry.locationFullName,
-          entries: [],
-        });
+      if (!query) {
+        return hordeEntries;
       }
 
-      groups.get(key)!.entries.push(entry);
-    });
+      return hordeEntries.filter(
+        (entry) =>
+          normalize(
+            entry.pokemonName
+          ).includes(query) ||
+          normalize(
+            entry.locationName
+          ).includes(query) ||
+          normalize(
+            entry.locationFullName
+          ).includes(query) ||
+          normalize(
+            entry.region
+          ).includes(query)
+      );
+    }, [
+      hordeEntries,
+      search,
+    ]);
 
-    return Array.from(groups.values())
-      .map((route) => ({
-        ...route,
+  /* =======================================================
+     GROUP ROUTES
 
-        /*
-         * Keep Pokémon left → right.
-         */
-        entries: route.entries.sort((a, b) =>
-          a.pokemonName.localeCompare(b.pokemonName)
-        ),
-      }))
-      .sort((a, b) => {
-        const regionCompare =
-          a.region.localeCompare(b.region);
+     REGION
+       ↓
+     ROUTE
+       ↓
+     POKÉMON
+  ======================================================= */
 
-        if (regionCompare !== 0) {
-          return regionCompare;
+  const groupedRoutes =
+    useMemo<RouteGroup[]>(() => {
+      const groups =
+        new Map<string, RouteGroup>();
+
+      /*
+       * First group by:
+       *
+       * Region + displayed location name
+       *
+       * NOT location_id.
+       */
+      filteredEntries.forEach(
+        (entry) => {
+          const routeName =
+            entry.locationFullName ||
+            entry.locationName ||
+            "Unknown Location";
+
+          const routeKey =
+            getRouteKey(
+              entry.region,
+              routeName
+            );
+
+          if (!groups.has(routeKey)) {
+            groups.set(routeKey, {
+              region:
+                entry.region,
+
+              locationName:
+                routeName,
+
+              entries: [],
+            });
+          }
+
+          const route =
+            groups.get(routeKey)!;
+
+          /*
+           * Remove exact duplicate Pokémon
+           * records inside this route.
+           */
+          const alreadyExists =
+            route.entries.some(
+              (existing) =>
+                getPokemonKey(
+                  existing
+                ) ===
+                getPokemonKey(entry)
+            );
+
+          if (!alreadyExists) {
+            route.entries.push(entry);
+          }
         }
+      );
 
-        return a.locationName.localeCompare(
-          b.locationName
-        );
-      });
-  }, [filteredEntries]);
+      return Array.from(
+        groups.values()
+      )
+        .map((route) => ({
+          ...route,
 
-  /*
-   * Count unique routes.
-   */
-  const routeCount = groupedRoutes.length;
+          /*
+           * Pokémon appear left → right.
+           */
+          entries: [
+            ...route.entries,
+          ].sort((a, b) =>
+            a.pokemonName.localeCompare(
+              b.pokemonName
+            )
+          ),
+        }))
+        .sort((a, b) => {
+          const regionCompare =
+            a.region.localeCompare(
+              b.region
+            );
 
-  /*
-   * Count individual horde entries.
-   */
-  const hordeCount = filteredEntries.length;
+          if (
+            regionCompare !== 0
+          ) {
+            return regionCompare;
+          }
 
-  function toggleRoute(routeKey: string) {
-    setOpenRoutes((previous) => ({
-      ...previous,
-      [routeKey]: !previous[routeKey],
-    }));
+          return a.locationName.localeCompare(
+            b.locationName
+          );
+        });
+    }, [filteredEntries]);
+
+  /* =======================================================
+     STATS
+  ======================================================= */
+
+  const routeCount =
+    groupedRoutes.length;
+
+  const hordeCount =
+    groupedRoutes.reduce(
+      (total, route) =>
+        total +
+        route.entries.length,
+      0
+    );
+
+  /* =======================================================
+     ROUTE TOGGLE
+  ======================================================= */
+
+  function toggleRoute(
+    routeKey: string
+  ) {
+    setOpenRoutes(
+      (previous) => ({
+        ...previous,
+        [routeKey]:
+          !previous[routeKey],
+      })
+    );
   }
 
-  function handleSeasonChange(season: Season) {
+  function handleSeasonChange(
+    season: Season
+  ) {
     setSelectedSeason(season);
 
     /*
-     * Keep routes collapsed when changing seasons.
+     * Always collapse routes when
+     * changing season.
      */
     setOpenRoutes({});
   }
 
-  function handleRegionChange(region: Region) {
+  function handleRegionChange(
+    region: Region
+  ) {
     setSelectedRegion(region);
 
     /*
-     * Keep routes collapsed when changing regions.
+     * Always collapse routes when
+     * changing region.
      */
     setOpenRoutes({});
   }
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <div className="horde-hunter-page">
 
-      {/* =========================
+      {/* ===================================================
           HEADER
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-hunter-header">
         <h1 className="horde-hunter-title">
@@ -395,14 +590,15 @@ export default function HordeHunter() {
         </h1>
 
         <p className="horde-hunter-subtitle">
-          Find every Horde encounter by region,
-          route, Pokémon, and season.
+          Find every Horde encounter by
+          region, route, Pokémon, and
+          season.
         </p>
       </div>
 
-      {/* =========================
+      {/* ===================================================
           SEARCH
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-search-wrapper">
         <span className="horde-search-icon">
@@ -413,16 +609,18 @@ export default function HordeHunter() {
           type="text"
           value={search}
           onChange={(event) =>
-            setSearch(event.target.value)
+            setSearch(
+              event.target.value
+            )
           }
           placeholder="Search Pokémon or route..."
           className="horde-search-input"
         />
       </div>
 
-      {/* =========================
+      {/* ===================================================
           REGION FILTER
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-filter-section">
 
@@ -431,40 +629,49 @@ export default function HordeHunter() {
         </div>
 
         <div className="horde-filter-row">
-          {REGIONS.map((region) => {
-            const active =
-              selectedRegion === region;
+          {REGIONS.map(
+            (region) => {
+              const active =
+                selectedRegion ===
+                region;
 
-            return (
-              <button
-                key={region}
-                type="button"
-                onClick={() =>
-                  handleRegionChange(region)
-                }
-                className={
-                  active
-                    ? "horde-filter-button active"
-                    : "horde-filter-button"
-                }
-              >
-                {region !== "All Regions" && (
-                  <span className="region-icon">
-                    {REGION_ICONS[region]}
-                  </span>
-                )}
+              return (
+                <button
+                  key={region}
+                  type="button"
+                  onClick={() =>
+                    handleRegionChange(
+                      region
+                    )
+                  }
+                  className={
+                    active
+                      ? "horde-filter-button active"
+                      : "horde-filter-button"
+                  }
+                >
+                  {region !==
+                    "All Regions" && (
+                    <span className="region-icon">
+                      {
+                        REGION_ICONS[
+                          region
+                        ]
+                      }
+                    </span>
+                  )}
 
-                {region}
-              </button>
-            );
-          })}
+                  {region}
+                </button>
+              );
+            }
+          )}
         </div>
-
       </div>
 
-      {/* =========================
+      {/* ===================================================
           SEASON FILTER
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-filter-section">
 
@@ -473,46 +680,54 @@ export default function HordeHunter() {
         </div>
 
         <div className="horde-season-row">
+          {SEASONS.map(
+            (season) => {
+              const active =
+                selectedSeason ===
+                season;
 
-          {SEASONS.map((season) => {
-            const active =
-              selectedSeason === season;
-
-            return (
-              <button
-                key={season}
-                type="button"
-                onClick={() =>
-                  handleSeasonChange(season)
-                }
-                className={
-                  active
-                    ? "horde-season-button active"
-                    : "horde-season-button"
-                }
-              >
-                <span>
-                  {SEASON_ICONS[season]}
-                </span>
-
-                <span>{season}</span>
-
-                {active && (
-                  <span className="season-selected-dot">
-                    ●
+              return (
+                <button
+                  key={season}
+                  type="button"
+                  onClick={() =>
+                    handleSeasonChange(
+                      season
+                    )
+                  }
+                  className={
+                    active
+                      ? "horde-season-button active"
+                      : "horde-season-button"
+                  }
+                >
+                  <span>
+                    {
+                      SEASON_ICONS[
+                        season
+                      ]
+                    }
                   </span>
-                )}
-              </button>
-            );
-          })}
 
+                  <span>
+                    {season}
+                  </span>
+
+                  {active && (
+                    <span className="season-selected-dot">
+                      ●
+                    </span>
+                  )}
+                </button>
+              );
+            }
+          )}
         </div>
-
       </div>
 
-      {/* =========================
+      {/* ===================================================
           STATS
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-stats">
 
@@ -548,9 +763,9 @@ export default function HordeHunter() {
 
       </div>
 
-      {/* =========================
+      {/* ===================================================
           HORDE CONVERSION
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-conversion-card">
 
@@ -559,25 +774,38 @@ export default function HordeHunter() {
         </div>
 
         <div className="horde-conversion-values">
+          <span>
+            5% = 100%
+          </span>
 
-          <span>5% = 100%</span>
-          <span>3% = 60%</span>
-          <span>2.5% = 50%</span>
-          <span>2% = 40%</span>
-          <span>1% = 20%</span>
+          <span>
+            3% = 60%
+          </span>
 
+          <span>
+            2.5% = 50%
+          </span>
+
+          <span>
+            2% = 40%
+          </span>
+
+          <span>
+            1% = 20%
+          </span>
         </div>
-
       </div>
 
-      {/* =========================
+      {/* ===================================================
           RESULTS
-      ========================= */}
+      =================================================== */}
 
       <div className="horde-results">
 
-        {groupedRoutes.length === 0 ? (
+        {groupedRoutes.length ===
+        0 ? (
           <div className="horde-empty">
+
             <div className="horde-empty-icon">
               🔍
             </div>
@@ -587,234 +815,290 @@ export default function HordeHunter() {
             </h2>
 
             <p>
-              Try another Pokémon, route,
-              region, or season.
+              Try another Pokémon,
+              route, region, or
+              season.
             </p>
+
           </div>
         ) : (
-          groupedRoutes.map((route) => {
+          groupedRoutes.map(
+            (route) => {
+              /*
+               * IMPORTANT:
+               *
+               * Use the same region +
+               * displayed location key
+               * that was used during
+               * grouping.
+               */
+              const routeKey =
+                getRouteKey(
+                  route.region,
+                  route.locationName
+                );
 
-            const routeKey =
-              `${route.region}-${route.locationId}`;
+              const isOpen =
+                openRoutes[
+                  routeKey
+                ] === true;
 
-            const isOpen =
-              openRoutes[routeKey] === true;
-
-            return (
-              <section
-                key={routeKey}
-                className={
-                  isOpen
-                    ? "horde-route open"
-                    : "horde-route"
-                }
-              >
-
-                {/* =========================
-                    ROUTE HEADER
-                ========================= */}
-
-                <button
-                  type="button"
-                  className="horde-route-header"
-                  onClick={() =>
-                    toggleRoute(routeKey)
+              return (
+                <section
+                  key={routeKey}
+                  className={
+                    isOpen
+                      ? "horde-route open"
+                      : "horde-route"
                   }
                 >
 
-                  <div className="horde-route-left">
+                  {/* =========================================
+                      ROUTE HEADER
+                  ========================================= */}
 
-                    <span className="horde-route-arrow">
-                      {isOpen ? "▼" : "▶"}
-                    </span>
+                  <button
+                    type="button"
+                    className="horde-route-header"
+                    onClick={() =>
+                      toggleRoute(
+                        routeKey
+                      )
+                    }
+                  >
 
-                    <div>
+                    <div className="horde-route-left">
 
-                      <div className="horde-route-region">
-                        {REGION_ICONS[route.region] ||
-                          "◆"}{" "}
-                        {route.region}
+                      <span className="horde-route-arrow">
+                        {isOpen
+                          ? "▼"
+                          : "▶"}
+                      </span>
+
+                      <div>
+
+                        <div className="horde-route-region">
+                          {
+                            REGION_ICONS[
+                              route.region
+                            ] || "◆"
+                          }{" "}
+                          {route.region}
+                        </div>
+
+                        <h2 className="horde-route-name">
+                          {
+                            route.locationName
+                          }
+                        </h2>
+
                       </div>
-
-                      <h2 className="horde-route-name">
-                        {route.locationName}
-                      </h2>
-
                     </div>
 
-                  </div>
+                    <div className="horde-route-count">
+                      {
+                        route.entries
+                          .length
+                      }{" "}
+                      {
+                        route.entries
+                          .length ===
+                        1
+                          ? "Horde"
+                          : "Hordes"
+                      }
+                    </div>
 
-                  <div className="horde-route-count">
-                    {route.entries.length}{" "}
-                    {route.entries.length === 1
-                      ? "Horde"
-                      : "Hordes"}
-                  </div>
+                  </button>
 
-                </button>
+                  {/* =========================================
+                      ROUTE CONTENT
+                  ========================================= */}
 
-                {/* =========================
-                    ROUTE CONTENT
-                ========================= */}
+                  {isOpen && (
+                    <div className="horde-route-content">
 
-                {isOpen && (
-                  <div className="horde-route-content">
+                      <div className="horde-pokemon-grid">
 
-                    <div className="horde-pokemon-grid">
+                        {route.entries.map(
+                          (entry) => (
+                            <article
+                              key={`${routeKey}-${getPokemonKey(
+                                entry
+                              )}`}
+                              className="horde-pokemon-card"
+                            >
 
-                      {route.entries.map(
-                        (entry) => (
-                          <article
-                            key={`${entry.pokemonId}-${entry.locationId}-${entry.pokemonName}`}
-                            className="horde-pokemon-card"
-                          >
+                              {/* Pokémon image */}
 
-                            {/* Pokémon image */}
+                              <div className="horde-pokemon-image-wrapper">
 
-                            <div className="horde-pokemon-image-wrapper">
+                                <img
+                                  src={getSprite(
+                                    entry.pokemonId
+                                  )}
+                                  alt={
+                                    entry.pokemonName
+                                  }
+                                  className="horde-pokemon-image normal"
+                                />
 
-                              <img
-                                src={getSprite(
-                                  entry.pokemonId
-                                )}
-                                alt={
-                                  entry.pokemonName
-                                }
-                                className="horde-pokemon-image normal"
-                              />
-
-                              <img
-                                src={getShinySprite(
-                                  entry.pokemonId
-                                )}
-                                alt={`${entry.pokemonName} shiny`}
-                                className="horde-pokemon-image shiny"
-                              />
-
-                            </div>
-
-                            {/* Pokémon name */}
-
-                            <h3 className="horde-pokemon-name">
-                              {entry.pokemonName}
-                            </h3>
-
-                            {/* Levels */}
-
-                            <div className="horde-pokemon-level">
-                              Lv.{" "}
-                              {getLevelText(entry)}
-                            </div>
-
-                            {/* Horde size */}
-
-                            <div className="horde-size-badge">
-                              {entry.hordeSize}× HORDE
-                            </div>
-
-                            {/* Horde chance */}
-
-                            <div className="horde-chance-row">
-
-                              <div className="horde-chance-box">
-
-                                <span className="horde-detail-label">
-                                  HORDE CHANCE
-                                </span>
-
-                                <strong>
-                                  {entry.hordeChance}
-                                </strong>
+                                <img
+                                  src={getShinySprite(
+                                    entry.pokemonId
+                                  )}
+                                  alt={`${entry.pokemonName} shiny`}
+                                  className="horde-pokemon-image shiny"
+                                />
 
                               </div>
 
-                              {entry.convertedChance !==
-                                null && (
-                                <div className="horde-chance-box converted">
+                              {/* Pokémon name */}
+
+                              <h3 className="horde-pokemon-name">
+                                {
+                                  entry.pokemonName
+                                }
+                              </h3>
+
+                              {/* Levels */}
+
+                              <div className="horde-pokemon-level">
+                                Lv.{" "}
+                                {
+                                  getLevelText(
+                                    entry
+                                  )
+                                }
+                              </div>
+
+                              {/* Horde size */}
+
+                              <div className="horde-size-badge">
+                                {
+                                  entry.hordeSize
+                                }× HORDE
+                              </div>
+
+                              {/* Chances */}
+
+                              <div className="horde-chance-row">
+
+                                <div className="horde-chance-box">
 
                                   <span className="horde-detail-label">
-                                    FIND CHANCE
+                                    HORDE CHANCE
                                   </span>
 
                                   <strong>
                                     {
-                                      entry.convertedChance
+                                      entry.hordeChance
                                     }
-                                    %
                                   </strong>
 
                                 </div>
-                              )}
 
-                            </div>
+                                {entry.convertedChance !==
+                                  null && (
+                                  <div className="horde-chance-box converted">
 
-                            {/* Time availability */}
+                                    <span className="horde-detail-label">
+                                      FIND CHANCE
+                                    </span>
 
-                            <div className="horde-times">
+                                    <strong>
+                                      {
+                                        entry.convertedChance
+                                      }
+                                      %
+                                    </strong>
 
-                              <div>
-                                <span>
-                                  🌅
-                                </span>
-                                <strong>
-                                  Morning
-                                </strong>
-                                <span>
-                                  {entry.morning}
-                                </span>
+                                  </div>
+                                )}
+
                               </div>
 
-                              <div>
-                                <span>
-                                  ☀️
-                                </span>
-                                <strong>
-                                  Day
-                                </strong>
-                                <span>
-                                  {entry.day}
-                                </span>
+                              {/* Time availability */}
+
+                              <div className="horde-times">
+
+                                <div>
+                                  <span>
+                                    🌅
+                                  </span>
+
+                                  <strong>
+                                    Morning
+                                  </strong>
+
+                                  <span>
+                                    {
+                                      entry.morning
+                                    }
+                                  </span>
+                                </div>
+
+                                <div>
+                                  <span>
+                                    ☀️
+                                  </span>
+
+                                  <strong>
+                                    Day
+                                  </strong>
+
+                                  <span>
+                                    {
+                                      entry.day
+                                    }
+                                  </span>
+                                </div>
+
+                                <div>
+                                  <span>
+                                    🌙
+                                  </span>
+
+                                  <strong>
+                                    Night
+                                  </strong>
+
+                                  <span>
+                                    {
+                                      entry.night
+                                    }
+                                  </span>
+                                </div>
+
                               </div>
 
-                              <div>
-                                <span>
-                                  🌙
-                                </span>
-                                <strong>
-                                  Night
-                                </strong>
-                                <span>
-                                  {entry.night}
-                                </span>
+                              {/* Encounter method */}
+
+                              <div className="horde-method">
+                                {
+                                  entry.method
+                                }
                               </div>
 
-                            </div>
+                            </article>
+                          )
+                        )}
 
-                            {/* Encounter method */}
-
-                            <div className="horde-method">
-                              {entry.method}
-                            </div>
-
-                          </article>
-                        )
-                      )}
-
+                      </div>
                     </div>
+                  )}
 
-                  </div>
-                )}
-
-              </section>
-            );
-          })
+                </section>
+              );
+            }
+          )
         )}
 
       </div>
 
-      {/* =========================
-          INLINE STYLES
-      ========================= */}
+      {/* ===================================================
+          STYLES
+      =================================================== */}
 
       <style>{`
 
@@ -851,19 +1135,30 @@ export default function HordeHunter() {
           width: min(520px, 100%);
           height: 58px;
           margin-bottom: 26px;
-          border: 1px solid rgba(100, 175, 255, 0.55);
+
+          border: 1px solid
+            rgba(100, 175, 255, 0.55);
+
           border-radius: 14px;
-          background: rgba(2, 19, 42, 0.85);
+
+          background:
+            rgba(2, 19, 42, 0.85);
+
           box-shadow:
-            inset 0 0 20px rgba(0, 80, 160, 0.12),
-            0 0 15px rgba(0, 60, 130, 0.08);
+            inset 0 0 20px
+              rgba(0, 80, 160, 0.12),
+            0 0 15px
+              rgba(0, 60, 130, 0.08);
         }
 
         .horde-search-wrapper:focus-within {
           border-color: #7ecbff;
+
           box-shadow:
-            0 0 0 2px rgba(100, 190, 255, 0.15),
-            0 0 20px rgba(60, 160, 255, 0.12);
+            0 0 0 2px
+              rgba(100, 190, 255, 0.15),
+            0 0 20px
+              rgba(60, 160, 255, 0.12);
         }
 
         .horde-search-icon {
@@ -874,12 +1169,18 @@ export default function HordeHunter() {
         .horde-search-input {
           flex: 1;
           height: 100%;
+
           border: 0;
           outline: 0;
+
           background: transparent;
+
           color: #edf7ff;
+
           font-size: 17px;
-          padding: 0 18px 0 12px;
+
+          padding:
+            0 18px 0 12px;
         }
 
         .horde-search-input::placeholder {
@@ -894,9 +1195,12 @@ export default function HordeHunter() {
 
         .horde-filter-label {
           margin-bottom: 10px;
+
           color: #8fcaff;
+
           font-size: 13px;
           font-weight: 800;
+
           letter-spacing: 1.5px;
         }
 
@@ -909,14 +1213,24 @@ export default function HordeHunter() {
 
         .horde-filter-button,
         .horde-season-button {
-          border: 1px solid rgba(95, 157, 222, 0.45);
-          background: rgba(5, 27, 53, 0.88);
+          border:
+            1px solid
+            rgba(95, 157, 222, 0.45);
+
+          background:
+            rgba(5, 27, 53, 0.88);
+
           color: #c6daf3;
+
           border-radius: 12px;
+
           padding: 11px 19px;
+
           font-size: 15px;
           font-weight: 800;
+
           cursor: pointer;
+
           transition:
             background 0.18s ease,
             border-color 0.18s ease,
@@ -933,15 +1247,19 @@ export default function HordeHunter() {
         .horde-filter-button.active,
         .horde-season-button.active {
           color: white;
+
           border-color: #83cfff;
+
           background:
             linear-gradient(
               180deg,
               rgba(54, 137, 224, 0.9),
               rgba(27, 85, 153, 0.95)
             );
+
           box-shadow:
-            0 0 18px rgba(63, 161, 255, 0.2);
+            0 0 18px
+              rgba(63, 161, 255, 0.2);
         }
 
         .region-icon {
@@ -951,9 +1269,11 @@ export default function HordeHunter() {
         .horde-season-button {
           display: flex;
           align-items: center;
-          gap: 9px;
-          min-width: 135px;
           justify-content: center;
+
+          gap: 9px;
+
+          min-width: 135px;
         }
 
         .season-selected-dot {
@@ -968,30 +1288,45 @@ export default function HordeHunter() {
           display: flex;
           flex-wrap: wrap;
           gap: 12px;
+
           margin: 30px 0 20px;
         }
 
         .horde-stat {
           min-width: 160px;
+
           padding: 14px 18px;
+
           border-radius: 13px;
-          border: 1px solid rgba(74, 137, 202, 0.35);
-          background: rgba(4, 24, 48, 0.75);
+
+          border:
+            1px solid
+            rgba(74, 137, 202, 0.35);
+
+          background:
+            rgba(4, 24, 48, 0.75);
         }
 
         .horde-stat-number {
           display: block;
+
           color: #e7f4ff;
+
           font-size: 23px;
           font-weight: 900;
         }
 
         .horde-stat-label {
           display: block;
+
           margin-top: 3px;
+
           color: #849bb7;
+
           font-size: 12px;
+
           text-transform: uppercase;
+
           letter-spacing: 1px;
         }
 
@@ -999,25 +1334,38 @@ export default function HordeHunter() {
 
         .horde-conversion-card {
           margin: 22px 0 28px;
+
           padding: 17px 20px;
-          border: 1px solid rgba(135, 89, 218, 0.4);
+
+          border:
+            1px solid
+            rgba(135, 89, 218, 0.4);
+
           border-radius: 14px;
-          background: rgba(28, 13, 61, 0.45);
+
+          background:
+            rgba(28, 13, 61, 0.45);
         }
 
         .horde-conversion-title {
           color: #cda8ff;
+
           font-size: 12px;
           font-weight: 900;
+
           letter-spacing: 1.5px;
+
           margin-bottom: 10px;
         }
 
         .horde-conversion-values {
           display: flex;
           flex-wrap: wrap;
+
           gap: 12px 22px;
+
           color: #e5d6ff;
+
           font-weight: 800;
         }
 
@@ -1025,103 +1373,157 @@ export default function HordeHunter() {
 
         .horde-route {
           margin-bottom: 14px;
+
           overflow: hidden;
-          border: 1px solid rgba(65, 129, 195, 0.42);
+
+          border:
+            1px solid
+            rgba(65, 129, 195, 0.42);
+
           border-radius: 18px;
-          background: rgba(3, 25, 51, 0.86);
+
+          background:
+            rgba(3, 25, 51, 0.86);
+
           box-shadow:
-            0 8px 30px rgba(0, 0, 0, 0.14);
+            0 8px 30px
+              rgba(0, 0, 0, 0.14);
         }
 
         .horde-route-header {
           display: flex;
+
           align-items: center;
           justify-content: space-between;
+
           width: 100%;
+
           min-height: 88px;
+
           padding: 16px 22px;
+
           border: 0;
+
           color: inherit;
+
           background: transparent;
+
           cursor: pointer;
+
           text-align: left;
         }
 
         .horde-route-header:hover {
-          background: rgba(34, 92, 151, 0.12);
+          background:
+            rgba(34, 92, 151, 0.12);
         }
 
         .horde-route-left {
           display: flex;
+
           align-items: center;
+
           gap: 16px;
+
           min-width: 0;
         }
 
         .horde-route-arrow {
           width: 24px;
+
           color: #8bd3ff;
+
           font-size: 17px;
+
           text-align: center;
         }
 
         .horde-route-region {
           margin-bottom: 2px;
+
           color: #72bfff;
+
           font-size: 11px;
           font-weight: 900;
+
           letter-spacing: 1.2px;
+
           text-transform: uppercase;
         }
 
         .horde-route-name {
           margin: 0;
+
           color: #edf6ff;
+
           font-size: 23px;
           font-weight: 900;
         }
 
         .horde-route-count {
           flex-shrink: 0;
+
           padding: 8px 14px;
-          border: 1px solid rgba(94, 168, 241, 0.4);
+
+          border:
+            1px solid
+            rgba(94, 168, 241, 0.4);
+
           border-radius: 999px;
+
           color: #a8d9ff;
-          background: rgba(29, 82, 139, 0.3);
+
+          background:
+            rgba(29, 82, 139, 0.3);
+
           font-size: 13px;
           font-weight: 800;
         }
 
         .horde-route-content {
           padding: 0 20px 22px;
-          border-top: 1px solid rgba(70, 125, 180, 0.25);
+
+          border-top:
+            1px solid
+            rgba(70, 125, 180, 0.25);
         }
 
-        /* POKEMON GRID */
+        /* POKÉMON GRID */
 
         .horde-pokemon-grid {
           display: grid;
+
           grid-template-columns:
             repeat(
               auto-fit,
               minmax(220px, 1fr)
             );
+
           gap: 15px;
+
           padding-top: 20px;
         }
 
         .horde-pokemon-card {
           position: relative;
+
           min-width: 0;
+
           padding: 18px;
-          border: 1px solid rgba(67, 130, 194, 0.35);
+
+          border:
+            1px solid
+            rgba(67, 130, 194, 0.35);
+
           border-radius: 16px;
+
           background:
             linear-gradient(
               180deg,
               rgba(8, 39, 72, 0.9),
               rgba(3, 21, 43, 0.95)
             );
+
           transition:
             transform 0.18s ease,
             border-color 0.18s ease,
@@ -1129,25 +1531,38 @@ export default function HordeHunter() {
         }
 
         .horde-pokemon-card:hover {
-          transform: translateY(-3px);
-          border-color: rgba(104, 191, 255, 0.65);
+          transform:
+            translateY(-3px);
+
+          border-color:
+            rgba(104, 191, 255, 0.65);
+
           box-shadow:
-            0 10px 30px rgba(0, 0, 0, 0.2);
+            0 10px 30px
+              rgba(0, 0, 0, 0.2);
         }
+
+        /* POKÉMON NORMAL / SHINY */
 
         .horde-pokemon-image-wrapper {
           position: relative;
+
           display: flex;
+
           justify-content: center;
           align-items: center;
+
           height: 125px;
+
           margin-bottom: 8px;
         }
 
         .horde-pokemon-image {
           width: 120px;
           height: 120px;
+
           object-fit: contain;
+
           image-rendering: pixelated;
         }
 
@@ -1167,27 +1582,45 @@ export default function HordeHunter() {
 
         .horde-pokemon-name {
           margin: 0;
+
           color: #f1f7ff;
+
           font-size: 20px;
           font-weight: 900;
+
           text-align: center;
         }
 
         .horde-pokemon-level {
           margin-top: 5px;
+
           color: #8da9c5;
+
           font-size: 13px;
+
           text-align: center;
         }
 
+        /* HORDE SIZE */
+
         .horde-size-badge {
           width: fit-content;
+
           margin: 12px auto;
+
           padding: 7px 13px;
+
           border-radius: 9px;
+
           color: #dfc6ff;
-          background: rgba(115, 61, 172, 0.35);
-          border: 1px solid rgba(172, 115, 237, 0.35);
+
+          background:
+            rgba(115, 61, 172, 0.35);
+
+          border:
+            1px solid
+            rgba(172, 115, 237, 0.35);
+
           font-size: 13px;
           font-weight: 900;
         }
@@ -1196,35 +1629,54 @@ export default function HordeHunter() {
 
         .horde-chance-row {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+
+          grid-template-columns:
+            1fr 1fr;
+
           gap: 8px;
+
           margin-top: 10px;
         }
 
         .horde-chance-box {
           padding: 9px 7px;
+
           border-radius: 9px;
-          background: rgba(8, 25, 48, 0.8);
-          border: 1px solid rgba(65, 116, 166, 0.28);
+
+          background:
+            rgba(8, 25, 48, 0.8);
+
+          border:
+            1px solid
+            rgba(65, 116, 166, 0.28);
+
           text-align: center;
         }
 
         .horde-chance-box.converted {
-          border-color: rgba(151, 100, 224, 0.3);
-          background: rgba(57, 27, 91, 0.35);
+          border-color:
+            rgba(151, 100, 224, 0.3);
+
+          background:
+            rgba(57, 27, 91, 0.35);
         }
 
         .horde-detail-label {
           display: block;
+
           margin-bottom: 3px;
+
           color: #7791ad;
+
           font-size: 9px;
           font-weight: 900;
+
           letter-spacing: 0.7px;
         }
 
         .horde-chance-box strong {
           color: #e8f5ff;
+
           font-size: 17px;
         }
 
@@ -1236,31 +1688,48 @@ export default function HordeHunter() {
 
         .horde-times {
           margin-top: 13px;
-          border-top: 1px solid rgba(73, 125, 177, 0.2);
+
+          border-top:
+            1px solid
+            rgba(73, 125, 177, 0.2);
+
           padding-top: 10px;
         }
 
         .horde-times > div {
           display: grid;
-          grid-template-columns: 22px 1fr auto;
+
+          grid-template-columns:
+            22px 1fr auto;
+
           gap: 6px;
+
           align-items: center;
+
           min-height: 25px;
+
           color: #8ca5c0;
+
           font-size: 11px;
         }
 
         .horde-times strong {
           color: #bcd2e9;
+
           font-size: 11px;
         }
 
         .horde-method {
           margin-top: 10px;
+
           color: #64809c;
+
           font-size: 10px;
+
           text-align: center;
+
           text-transform: uppercase;
+
           letter-spacing: 1px;
         }
 
@@ -1268,24 +1737,34 @@ export default function HordeHunter() {
 
         .horde-empty {
           padding: 80px 20px;
-          border: 1px solid rgba(68, 126, 184, 0.3);
+
+          border:
+            1px solid
+            rgba(68, 126, 184, 0.3);
+
           border-radius: 18px;
-          background: rgba(3, 22, 44, 0.7);
+
+          background:
+            rgba(3, 22, 44, 0.7);
+
           text-align: center;
         }
 
         .horde-empty-icon {
           font-size: 40px;
+
           margin-bottom: 10px;
         }
 
         .horde-empty h2 {
           margin: 0 0 8px;
+
           color: #eaf5ff;
         }
 
         .horde-empty p {
           margin: 0;
+
           color: #829bb7;
         }
 
@@ -1294,7 +1773,8 @@ export default function HordeHunter() {
         @media (max-width: 700px) {
 
           .horde-hunter-page {
-            padding: 22px 16px 60px;
+            padding:
+              22px 16px 60px;
           }
 
           .horde-hunter-title {
@@ -1307,12 +1787,15 @@ export default function HordeHunter() {
 
           .horde-filter-button,
           .horde-season-button {
-            flex: 1 1 auto;
+            flex:
+              1 1 auto;
           }
 
           .horde-route-header {
             min-height: 76px;
-            padding: 13px 14px;
+
+            padding:
+              13px 14px;
           }
 
           .horde-route-name {
@@ -1321,7 +1804,9 @@ export default function HordeHunter() {
 
           .horde-route-count {
             font-size: 11px;
-            padding: 6px 9px;
+
+            padding:
+              6px 9px;
           }
 
           .horde-route-content {
@@ -1335,6 +1820,7 @@ export default function HordeHunter() {
                 2,
                 minmax(0, 1fr)
               );
+
             gap: 9px;
           }
 
@@ -1356,13 +1842,12 @@ export default function HordeHunter() {
           }
 
           .horde-chance-row {
-            grid-template-columns: 1fr;
+            grid-template-columns:
+              1fr;
           }
-
         }
 
       `}</style>
-
     </div>
   );
 }
