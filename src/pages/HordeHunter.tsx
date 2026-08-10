@@ -1,7 +1,11 @@
 import { useMemo, useState } from "react";
 import monsters from "../data/monsters.json";
 
-type Season = "Spring" | "Summer" | "Autumn" | "Winter";
+type Season =
+  | "Spring"
+  | "Summer"
+  | "Autumn"
+  | "Winter";
 
 type Region =
   | "All Regions"
@@ -90,7 +94,7 @@ const REGIONS: Region[] = [
 ];
 
 /*
- * Horde encounter conversion:
+ * Horde encounter conversion
  *
  * 5%   = 100%
  * 3%   = 60%
@@ -125,7 +129,9 @@ const REGION_ICONS: Record<string, string> = {
    HELPERS
 ========================================================= */
 
-function getHordeSize(location: MonsterLocation): number {
+function getHordeSize(
+  location: MonsterLocation
+): number {
   if (location.is_horde_5x) {
     return 5;
   }
@@ -137,7 +143,9 @@ function getHordeSize(location: MonsterLocation): number {
   return 0;
 }
 
-function getNumericChance(value: string): number | null {
+function getNumericChance(
+  value: string
+): number | null {
   if (!value || value === "--") {
     return null;
   }
@@ -150,18 +158,14 @@ function getNumericChance(value: string): number | null {
 
   const number = Number(match[0]);
 
-  return Number.isFinite(number) ? number : null;
+  return Number.isFinite(number)
+    ? number
+    : null;
 }
 
-/*
- * Find the horde encounter percentage.
-
- * Some entries contain different percentages for
- * morning / day / night.
-
- * We use the highest value attached to the encounter.
- */
-function getHordeChance(location: MonsterLocation): string {
+function getHordeChance(
+  location: MonsterLocation
+): string {
   const chances = [
     location.rarity_morning,
     location.rarity_day,
@@ -186,23 +190,34 @@ function getConvertedChance(
   return HORDE_CONVERSION[chance] ?? null;
 }
 
-function getLevelText(entry: HordeEntry): string {
-  if (entry.minLevel === entry.maxLevel) {
+function getLevelText(
+  entry: HordeEntry
+): string {
+  if (
+    entry.minLevel ===
+    entry.maxLevel
+  ) {
     return `${entry.minLevel}`;
   }
 
   return `${entry.minLevel}–${entry.maxLevel}`;
 }
 
-function getSprite(id: number): string {
+function getSprite(
+  id: number
+): string {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 }
 
-function getShinySprite(id: number): string {
+function getShinySprite(
+  id: number
+): string {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
 }
 
-function normalize(value: string): string {
+function normalize(
+  value: string
+): string {
   return value
     .toLowerCase()
     .trim()
@@ -210,16 +225,15 @@ function normalize(value: string): string {
 }
 
 /*
- * This is important.
-
- * We do NOT use location_id to identify a route.
-
- * monsters.json can contain different location records
- * that display as the exact same route/location.
-
- * Therefore the real route identity is:
+ * Routes are grouped by:
  *
- * REGION + DISPLAYED LOCATION NAME
+ * REGION + DISPLAYED LOCATION
+ *
+ * NOT location_id.
+ *
+ * This prevents duplicate route cards when
+ * monsters.json contains multiple records
+ * for the same displayed location.
  */
 function getRouteKey(
   region: string,
@@ -231,12 +245,12 @@ function getRouteKey(
 }
 
 /*
- * Prevent duplicate Pokémon inside the same route.
-
- * The same Pokémon can sometimes appear more than once
- * in the raw dataset for the same displayed location.
+ * Prevent duplicate Pokémon records
+ * inside the same route.
  */
-function getPokemonKey(entry: HordeEntry): string {
+function getPokemonKey(
+  entry: HordeEntry
+): string {
   return [
     entry.pokemonId,
     normalize(entry.pokemonName),
@@ -252,40 +266,172 @@ function getPokemonKey(entry: HordeEntry): string {
 ========================================================= */
 
 export default function HordeHunter() {
-  const [selectedSeason, setSelectedSeason] =
-    useState<Season>("Spring");
+  const [
+    selectedSeason,
+    setSelectedSeason,
+  ] = useState<Season>("Spring");
 
-const [selectedRegion, setSelectedRegion] =
-  useState<Region>("All Regions");
+  const [
+    selectedRegion,
+    setSelectedRegion,
+  ] = useState<Region>(
+    "All Regions"
+  );
 
-const [seasonExclusiveOnly, setSeasonExclusiveOnly] =
-  useState(false);
+  const [
+    seasonExclusiveOnly,
+    setSeasonExclusiveOnly,
+  ] = useState(false);
 
-const [search, setSearch] = useState("");
+  const [
+    search,
+    setSearch,
+  ] = useState("");
 
   /*
-   * Routes start CLOSED.
+   * Routes start collapsed.
    */
-  const [openRoutes, setOpenRoutes] =
-    useState<Record<string, boolean>>({});
+  const [
+    openRoutes,
+    setOpenRoutes,
+  ] = useState<
+    Record<string, boolean>
+  >({});
 
   /* =======================================================
      BUILD HORDE DATA
   ======================================================= */
 
-  const hordeEntries = useMemo<HordeEntry[]>(() => {
-    const output: HordeEntry[] = [];
+  const hordeEntries =
+    useMemo<HordeEntry[]>(() => {
+      const output: HordeEntry[] = [];
 
-    (monsters as Monster[]).forEach(
-      (pokemon) => {
+      /*
+       * =====================================================
+       * FIRST PASS
+       *
+       * Find EVERY season in which each Pokémon has
+       * a Horde encounter.
+       *
+       * This is intentionally done against the ENTIRE
+       * monsters.json dataset before filters are applied.
+       * =====================================================
+       */
+
+      const pokemonHordeSeasons =
+        new Map<
+          number,
+          Set<Season | "Any">
+        >();
+
+      (
+        monsters as Monster[]
+      ).forEach((pokemon) => {
         if (!pokemon.locations) {
           return;
         }
 
         pokemon.locations.forEach(
           (location) => {
+            const hordeSize =
+              getHordeSize(location);
+
+            if (hordeSize === 0) {
+              return;
+            }
+
+            if (
+              !pokemonHordeSeasons.has(
+                pokemon.id
+              )
+            ) {
+              pokemonHordeSeasons.set(
+                pokemon.id,
+                new Set()
+              );
+            }
+
+            const seasons =
+              pokemonHordeSeasons.get(
+                pokemon.id
+              )!;
+
+            if (
+              location.season ===
+              "Any"
+            ) {
+              seasons.add("Any");
+            } else {
+              seasons.add(
+                location.season
+              );
+            }
+          }
+        );
+      });
+
+      /*
+       * =====================================================
+       * SECOND PASS
+       *
+       * Build the actual displayed Horde entries.
+       * =====================================================
+       */
+
+      (
+        monsters as Monster[]
+      ).forEach((pokemon) => {
+        if (!pokemon.locations) {
+          return;
+        }
+
+        const seasons =
+          pokemonHordeSeasons.get(
+            pokemon.id
+          );
+
+        if (!seasons) {
+          return;
+        }
+
+        /*
+         * ===================================================
+         * TRUE SEASON EXCLUSIVITY
+         *
+         * A Pokémon is exclusive to the selected season
+         * ONLY when:
+         *
+         * 1. It has a Horde in the selected season.
+         * 2. It has NO "Any" Horde.
+         * 3. It has NO Horde in any other season.
+         *
+         * Examples:
+         *
+         * Spring only:
+         *   ["Spring"]          -> TRUE
+         *
+         * Spring + Summer:
+         *   ["Spring","Summer"] -> FALSE
+         *
+         * Any:
+         *   ["Any"]             -> FALSE
+         *
+         * Spring + Any:
+         *   ["Spring","Any"]    -> FALSE
+         * ===================================================
+         */
+
+        const isSeasonExclusive =
+          !seasons.has("Any") &&
+          seasons.size === 1 &&
+          seasons.has(
+            selectedSeason
+          );
+
+        pokemon.locations.forEach(
+          (location) => {
             /*
-             * Only include actual hordes.
+             * Only Horde encounters.
              */
             const hordeSize =
               getHordeSize(location);
@@ -295,32 +441,49 @@ const [search, setSearch] = useState("");
             }
 
             /*
-             * Seasonal encounters.
-
-             * "Any" is available in every season.
+             * =================================================
+             * EXCLUSIVE MODE
+             *
+             * Only show the actual selected-season records
+             * for Pokémon that occur ONLY in this season.
+             * =================================================
              */
-/*
- * Season filtering.
- *
- * Normal mode:
- *   Show the selected season + Any.
- *
- * Exclusive Only:
- *   Show ONLY hordes specifically assigned
- *   to the selected season.
- */
-if (seasonExclusiveOnly) {
-  if (location.season !== selectedSeason) {
-    return;
-  }
-} else {
-  if (
-    location.season !== "Any" &&
-    location.season !== selectedSeason
-  ) {
-    return;
-  }
-}
+
+            if (seasonExclusiveOnly) {
+              if (!isSeasonExclusive) {
+                return;
+              }
+
+              if (
+                location.season !==
+                selectedSeason
+              ) {
+                return;
+              }
+            }
+
+            /*
+             * =================================================
+             * NORMAL MODE
+             *
+             * Show:
+             *
+             * selected season
+             * +
+             * Any
+             * =================================================
+             */
+
+            if (!seasonExclusiveOnly) {
+              if (
+                location.season !==
+                  "Any" &&
+                location.season !==
+                  selectedSeason
+              ) {
+                return;
+              }
+            }
 
             /*
              * Region filter.
@@ -335,7 +498,14 @@ if (seasonExclusiveOnly) {
             }
 
             const hordeChance =
-              getHordeChance(location);
+              getHordeChance(
+                location
+              );
+
+            const locationName =
+              location.location_name ||
+              location.location_name_full ||
+              "Unknown Location";
 
             const locationFullName =
               location.location_name_full ||
@@ -343,15 +513,16 @@ if (seasonExclusiveOnly) {
               "Unknown Location";
 
             output.push({
-              pokemonId: pokemon.id,
-              pokemonName: pokemon.name,
+              pokemonId:
+                pokemon.id,
+
+              pokemonName:
+                pokemon.name,
 
               locationId:
                 location.location_id,
 
-              locationName:
-                location.location_name ||
-                locationFullName,
+              locationName,
 
               locationFullName,
 
@@ -366,7 +537,8 @@ if (seasonExclusiveOnly) {
                 location.max_level,
 
               method:
-                location.type || "Unknown",
+                location.type ||
+                "Unknown",
 
               hordeSize,
 
@@ -391,15 +563,14 @@ if (seasonExclusiveOnly) {
             });
           }
         );
-      }
-    );
+      });
 
-    return output;
-}, [
-  selectedSeason,
-  selectedRegion,
-  seasonExclusiveOnly,
-]);
+      return output;
+    }, [
+      selectedSeason,
+      selectedRegion,
+      seasonExclusiveOnly,
+    ]);
 
   /* =======================================================
      SEARCH
@@ -436,26 +607,16 @@ if (seasonExclusiveOnly) {
 
   /* =======================================================
      GROUP ROUTES
-
-     REGION
-       ↓
-     ROUTE
-       ↓
-     POKÉMON
   ======================================================= */
 
   const groupedRoutes =
     useMemo<RouteGroup[]>(() => {
       const groups =
-        new Map<string, RouteGroup>();
+        new Map<
+          string,
+          RouteGroup
+        >();
 
-      /*
-       * First group by:
-       *
-       * Region + displayed location name
-       *
-       * NOT location_id.
-       */
       filteredEntries.forEach(
         (entry) => {
           const routeName =
@@ -470,25 +631,24 @@ if (seasonExclusiveOnly) {
             );
 
           if (!groups.has(routeKey)) {
-            groups.set(routeKey, {
-              region:
-                entry.region,
+            groups.set(
+              routeKey,
+              {
+                region:
+                  entry.region,
 
-              locationName:
-                routeName,
+                locationName:
+                  routeName,
 
-              entries: [],
-            });
+                entries: [],
+              }
+            );
           }
 
           const route =
             groups.get(routeKey)!;
 
-          /*
-           * Remove exact duplicate Pokémon
-           * records inside this route.
-           */
-          const alreadyExists =
+          const duplicate =
             route.entries.some(
               (existing) =>
                 getPokemonKey(
@@ -497,8 +657,10 @@ if (seasonExclusiveOnly) {
                 getPokemonKey(entry)
             );
 
-          if (!alreadyExists) {
-            route.entries.push(entry);
+          if (!duplicate) {
+            route.entries.push(
+              entry
+            );
           }
         }
       );
@@ -509,9 +671,6 @@ if (seasonExclusiveOnly) {
         .map((route) => ({
           ...route,
 
-          /*
-           * Pokémon appear left → right.
-           */
           entries: [
             ...route.entries,
           ].sort((a, b) =>
@@ -575,8 +734,8 @@ if (seasonExclusiveOnly) {
     setSelectedSeason(season);
 
     /*
-     * Always collapse routes when
-     * changing season.
+     * Collapse routes when changing
+     * season.
      */
     setOpenRoutes({});
   }
@@ -587,8 +746,20 @@ if (seasonExclusiveOnly) {
     setSelectedRegion(region);
 
     /*
-     * Always collapse routes when
-     * changing region.
+     * Collapse routes when changing
+     * region.
+     */
+    setOpenRoutes({});
+  }
+
+  function toggleExclusive() {
+    setSeasonExclusiveOnly(
+      (previous) => !previous
+    );
+
+    /*
+     * Collapse routes when changing
+     * filter mode.
      */
     setOpenRoutes({});
   }
@@ -600,9 +771,7 @@ if (seasonExclusiveOnly) {
   return (
     <div className="horde-hunter-page">
 
-      {/* ===================================================
-          HEADER
-      =================================================== */}
+      {/* HEADER */}
 
       <div className="horde-hunter-header">
         <h1 className="horde-hunter-title">
@@ -616,9 +785,7 @@ if (seasonExclusiveOnly) {
         </p>
       </div>
 
-      {/* ===================================================
-          SEARCH
-      =================================================== */}
+      {/* SEARCH */}
 
       <div className="horde-search-wrapper">
         <span className="horde-search-icon">
@@ -638,9 +805,7 @@ if (seasonExclusiveOnly) {
         />
       </div>
 
-      {/* ===================================================
-          REGION FILTER
-      =================================================== */}
+      {/* REGION */}
 
       <div className="horde-filter-section">
 
@@ -649,6 +814,7 @@ if (seasonExclusiveOnly) {
         </div>
 
         <div className="horde-filter-row">
+
           {REGIONS.map(
             (region) => {
               const active =
@@ -686,12 +852,11 @@ if (seasonExclusiveOnly) {
               );
             }
           )}
+
         </div>
       </div>
 
-      {/* ===================================================
-          SEASON FILTER
-      =================================================== */}
+      {/* SEASON */}
 
       <div className="horde-filter-section">
 
@@ -700,6 +865,7 @@ if (seasonExclusiveOnly) {
         </div>
 
         <div className="horde-season-row">
+
           {SEASONS.map(
             (season) => {
               const active =
@@ -742,44 +908,46 @@ if (seasonExclusiveOnly) {
               );
             }
           )}
+
         </div>
 
-<div className="horde-exclusive-filter">
-  <button
-    type="button"
-    onClick={() =>
-      setSeasonExclusiveOnly(
-        (previous) => !previous
-      )
-    }
-    className={
-      seasonExclusiveOnly
-        ? "horde-exclusive-button active"
-        : "horde-exclusive-button"
-    }
-  >
-    <span className="horde-exclusive-icon">
-      ✦
-    </span>
+        {/* EXCLUSIVE FILTER */}
 
-    <span>
-      Exclusive to {selectedSeason}
-    </span>
+        <div className="horde-exclusive-filter">
 
-    {seasonExclusiveOnly && (
-      <span className="season-selected-dot">
-        ●
-      </span>
-    )}
-  </button>
-</div>
+          <button
+            type="button"
+            onClick={
+              toggleExclusive
+            }
+            className={
+              seasonExclusiveOnly
+                ? "horde-exclusive-button active"
+                : "horde-exclusive-button"
+            }
+          >
 
+            <span className="horde-exclusive-icon">
+              ✦
+            </span>
 
+            <span>
+              Exclusive to{" "}
+              {selectedSeason}
+            </span>
+
+            {seasonExclusiveOnly && (
+              <span className="season-selected-dot">
+                ●
+              </span>
+            )}
+
+          </button>
+
+        </div>
       </div>
 
-      {/* ===================================================
-          STATS
-      =================================================== */}
+      {/* STATS */}
 
       <div className="horde-stats">
 
@@ -815,9 +983,7 @@ if (seasonExclusiveOnly) {
 
       </div>
 
-      {/* ===================================================
-          HORDE CONVERSION
-      =================================================== */}
+      {/* CONVERSION */}
 
       <div className="horde-conversion-card">
 
@@ -826,6 +992,7 @@ if (seasonExclusiveOnly) {
         </div>
 
         <div className="horde-conversion-values">
+
           <span>
             5% = 100%
           </span>
@@ -845,17 +1012,17 @@ if (seasonExclusiveOnly) {
           <span>
             1% = 20%
           </span>
+
         </div>
       </div>
 
-      {/* ===================================================
-          RESULTS
-      =================================================== */}
+      {/* RESULTS */}
 
       <div className="horde-results">
 
         {groupedRoutes.length ===
         0 ? (
+
           <div className="horde-empty">
 
             <div className="horde-empty-icon">
@@ -873,17 +1040,11 @@ if (seasonExclusiveOnly) {
             </p>
 
           </div>
+
         ) : (
+
           groupedRoutes.map(
             (route) => {
-              /*
-               * IMPORTANT:
-               *
-               * Use the same region +
-               * displayed location key
-               * that was used during
-               * grouping.
-               */
               const routeKey =
                 getRouteKey(
                   route.region,
@@ -905,9 +1066,7 @@ if (seasonExclusiveOnly) {
                   }
                 >
 
-                  {/* =========================================
-                      ROUTE HEADER
-                  ========================================= */}
+                  {/* ROUTE HEADER */}
 
                   <button
                     type="button"
@@ -945,6 +1104,7 @@ if (seasonExclusiveOnly) {
                         </h2>
 
                       </div>
+
                     </div>
 
                     <div className="horde-route-count">
@@ -952,20 +1112,15 @@ if (seasonExclusiveOnly) {
                         route.entries
                           .length
                       }{" "}
-                      {
-                        route.entries
-                          .length ===
-                        1
-                          ? "Horde"
-                          : "Hordes"
-                      }
+                      {route.entries
+                        .length === 1
+                        ? "Horde"
+                        : "Hordes"}
                     </div>
 
                   </button>
 
-                  {/* =========================================
-                      ROUTE CONTENT
-                  ========================================= */}
+                  {/* ROUTE CONTENT */}
 
                   {isOpen && (
                     <div className="horde-route-content">
@@ -980,8 +1135,6 @@ if (seasonExclusiveOnly) {
                               )}`}
                               className="horde-pokemon-card"
                             >
-
-                              {/* Pokémon image */}
 
                               <div className="horde-pokemon-image-wrapper">
 
@@ -1005,15 +1158,11 @@ if (seasonExclusiveOnly) {
 
                               </div>
 
-                              {/* Pokémon name */}
-
                               <h3 className="horde-pokemon-name">
                                 {
                                   entry.pokemonName
                                 }
                               </h3>
-
-                              {/* Levels */}
 
                               <div className="horde-pokemon-level">
                                 Lv.{" "}
@@ -1024,15 +1173,11 @@ if (seasonExclusiveOnly) {
                                 }
                               </div>
 
-                              {/* Horde size */}
-
                               <div className="horde-size-badge">
                                 {
                                   entry.hordeSize
                                 }× HORDE
                               </div>
-
-                              {/* Chances */}
 
                               <div className="horde-chance-row">
 
@@ -1069,8 +1214,6 @@ if (seasonExclusiveOnly) {
                                 )}
 
                               </div>
-
-                              {/* Time availability */}
 
                               <div className="horde-times">
 
@@ -1124,8 +1267,6 @@ if (seasonExclusiveOnly) {
 
                               </div>
 
-                              {/* Encounter method */}
-
                               <div className="horde-method">
                                 {
                                   entry.method
@@ -1137,6 +1278,7 @@ if (seasonExclusiveOnly) {
                         )}
 
                       </div>
+
                     </div>
                   )}
 
@@ -1144,13 +1286,14 @@ if (seasonExclusiveOnly) {
               );
             }
           )
+
         )}
 
       </div>
 
-      {/* ===================================================
+      {/* =====================================================
           STYLES
-      =================================================== */}
+      ===================================================== */}
 
       <style>{`
 
@@ -1334,72 +1477,86 @@ if (seasonExclusiveOnly) {
           margin-left: 2px;
         }
 
-.horde-exclusive-filter {
-  margin-top: 12px;
-}
+        /* EXCLUSIVE */
 
-.horde-exclusive-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
+        .horde-exclusive-filter {
+          margin-top: 12px;
+        }
 
-  border: 1px solid rgba(135, 89, 218, 0.45);
-  background: rgba(28, 13, 61, 0.55);
+        .horde-exclusive-button {
+          display: inline-flex;
+          align-items: center;
 
-  color: #d8c8f5;
+          gap: 9px;
 
-  border-radius: 12px;
-  padding: 11px 19px;
+          border:
+            1px solid
+            rgba(135, 89, 218, 0.45);
 
-  font-size: 14px;
-  font-weight: 800;
+          background:
+            rgba(28, 13, 61, 0.55);
 
-  cursor: pointer;
+          color: #d8c8f5;
 
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease,
-    box-shadow 0.18s ease;
-}
+          border-radius: 12px;
 
-.horde-exclusive-button:hover {
-  border-color: #c39aff;
-  transform: translateY(-1px);
+          padding: 11px 19px;
 
-  box-shadow:
-    0 0 15px rgba(135, 89, 218, 0.15);
-}
+          font-size: 14px;
+          font-weight: 800;
 
-.horde-exclusive-button.active {
-  color: white;
+          cursor: pointer;
 
-  border-color: #cda8ff;
+          transition:
+            background 0.18s ease,
+            border-color 0.18s ease,
+            transform 0.18s ease,
+            box-shadow 0.18s ease;
+        }
 
-  background:
-    linear-gradient(
-      180deg,
-      rgba(115, 61, 172, 0.9),
-      rgba(74, 37, 111, 0.95)
-    );
+        .horde-exclusive-button:hover {
+          border-color: #c39aff;
 
-  box-shadow:
-    0 0 18px rgba(151, 100, 224, 0.25);
-}
+          transform:
+            translateY(-1px);
 
-.horde-exclusive-icon {
-  color: #d9b8ff;
-  font-size: 16px;
-}
+          box-shadow:
+            0 0 15px
+              rgba(135, 89, 218, 0.15);
+        }
+
+        .horde-exclusive-button.active {
+          color: white;
+
+          border-color: #cda8ff;
+
+          background:
+            linear-gradient(
+              180deg,
+              rgba(115, 61, 172, 0.9),
+              rgba(74, 37, 111, 0.95)
+            );
+
+          box-shadow:
+            0 0 18px
+              rgba(151, 100, 224, 0.25);
+        }
+
+        .horde-exclusive-icon {
+          color: #d9b8ff;
+          font-size: 16px;
+        }
 
         /* STATS */
 
         .horde-stats {
           display: flex;
           flex-wrap: wrap;
+
           gap: 12px;
 
-          margin: 30px 0 20px;
+          margin:
+            30px 0 20px;
         }
 
         .horde-stat {
@@ -1407,11 +1564,11 @@ if (seasonExclusiveOnly) {
 
           padding: 14px 18px;
 
-          border-radius: 13px;
-
           border:
             1px solid
             rgba(74, 137, 202, 0.35);
+
+          border-radius: 13px;
 
           background:
             rgba(4, 24, 48, 0.75);
@@ -1435,7 +1592,8 @@ if (seasonExclusiveOnly) {
 
           font-size: 12px;
 
-          text-transform: uppercase;
+          text-transform:
+            uppercase;
 
           letter-spacing: 1px;
         }
@@ -1443,7 +1601,8 @@ if (seasonExclusiveOnly) {
         /* CONVERSION */
 
         .horde-conversion-card {
-          margin: 22px 0 28px;
+          margin:
+            22px 0 28px;
 
           padding: 17px 20px;
 
@@ -1510,7 +1669,8 @@ if (seasonExclusiveOnly) {
 
           min-height: 88px;
 
-          padding: 16px 22px;
+          padding:
+            16px 22px;
 
           border: 0;
 
@@ -1558,7 +1718,8 @@ if (seasonExclusiveOnly) {
 
           letter-spacing: 1.2px;
 
-          text-transform: uppercase;
+          text-transform:
+            uppercase;
         }
 
         .horde-route-name {
@@ -1573,7 +1734,8 @@ if (seasonExclusiveOnly) {
         .horde-route-count {
           flex-shrink: 0;
 
-          padding: 8px 14px;
+          padding:
+            8px 14px;
 
           border:
             1px solid
@@ -1591,14 +1753,15 @@ if (seasonExclusiveOnly) {
         }
 
         .horde-route-content {
-          padding: 0 20px 22px;
+          padding:
+            0 20px 22px;
 
           border-top:
             1px solid
             rgba(70, 125, 180, 0.25);
         }
 
-        /* POKÉMON GRID */
+        /* POKEMON GRID */
 
         .horde-pokemon-grid {
           display: grid;
@@ -1652,14 +1815,16 @@ if (seasonExclusiveOnly) {
               rgba(0, 0, 0, 0.2);
         }
 
-        /* POKÉMON NORMAL / SHINY */
+        /* NORMAL / SHINY */
 
         .horde-pokemon-image-wrapper {
           position: relative;
 
           display: flex;
 
-          justify-content: center;
+          justify-content:
+            center;
+
           align-items: center;
 
           height: 125px;
@@ -1673,7 +1838,8 @@ if (seasonExclusiveOnly) {
 
           object-fit: contain;
 
-          image-rendering: pixelated;
+          image-rendering:
+            pixelated;
         }
 
         .horde-pokemon-image.shiny {
@@ -1716,9 +1882,11 @@ if (seasonExclusiveOnly) {
         .horde-size-badge {
           width: fit-content;
 
-          margin: 12px auto;
+          margin:
+            12px auto;
 
-          padding: 7px 13px;
+          padding:
+            7px 13px;
 
           border-radius: 9px;
 
@@ -1749,7 +1917,8 @@ if (seasonExclusiveOnly) {
         }
 
         .horde-chance-box {
-          padding: 9px 7px;
+          padding:
+            9px 7px;
 
           border-radius: 9px;
 
@@ -1794,7 +1963,7 @@ if (seasonExclusiveOnly) {
           color: #d7b8ff;
         }
 
-        /* TIME */
+        /* TIMES */
 
         .horde-times {
           margin-top: 13px;
@@ -1838,7 +2007,8 @@ if (seasonExclusiveOnly) {
 
           text-align: center;
 
-          text-transform: uppercase;
+          text-transform:
+            uppercase;
 
           letter-spacing: 1px;
         }
@@ -1846,7 +2016,8 @@ if (seasonExclusiveOnly) {
         /* EMPTY */
 
         .horde-empty {
-          padding: 80px 20px;
+          padding:
+            80px 20px;
 
           border:
             1px solid
@@ -1867,7 +2038,8 @@ if (seasonExclusiveOnly) {
         }
 
         .horde-empty h2 {
-          margin: 0 0 8px;
+          margin:
+            0 0 8px;
 
           color: #eaf5ff;
         }
@@ -1899,6 +2071,12 @@ if (seasonExclusiveOnly) {
           .horde-season-button {
             flex:
               1 1 auto;
+          }
+
+          .horde-exclusive-button {
+            width: 100%;
+            justify-content:
+              center;
           }
 
           .horde-route-header {
