@@ -255,10 +255,13 @@ export default function HordeHunter() {
   const [selectedSeason, setSelectedSeason] =
     useState<Season>("Spring");
 
-  const [selectedRegion, setSelectedRegion] =
-    useState<Region>("All Regions");
+const [selectedRegion, setSelectedRegion] =
+  useState<Region>("All Regions");
 
-  const [search, setSearch] = useState("");
+const [seasonExclusiveOnly, setSeasonExclusiveOnly] =
+  useState(false);
+
+const [search, setSearch] = useState("");
 
   /*
    * Routes start CLOSED.
@@ -296,12 +299,28 @@ export default function HordeHunter() {
 
              * "Any" is available in every season.
              */
-            if (
-              location.season !== "Any" &&
-              location.season !== selectedSeason
-            ) {
-              return;
-            }
+/*
+ * Season filtering.
+ *
+ * Normal mode:
+ *   Show the selected season + Any.
+ *
+ * Exclusive Only:
+ *   Show ONLY hordes specifically assigned
+ *   to the selected season.
+ */
+if (seasonExclusiveOnly) {
+  if (location.season !== selectedSeason) {
+    return;
+  }
+} else {
+  if (
+    location.season !== "Any" &&
+    location.season !== selectedSeason
+  ) {
+    return;
+  }
+}
 
             /*
              * Region filter.
@@ -376,10 +395,11 @@ export default function HordeHunter() {
     );
 
     return output;
-  }, [
-    selectedSeason,
-    selectedRegion,
-  ]);
+}, [
+  selectedSeason,
+  selectedRegion,
+  seasonExclusiveOnly,
+]);
 
   /* =======================================================
      SEARCH
@@ -723,6 +743,38 @@ export default function HordeHunter() {
             }
           )}
         </div>
+
+<div className="horde-exclusive-filter">
+  <button
+    type="button"
+    onClick={() =>
+      setSeasonExclusiveOnly(
+        (previous) => !previous
+      )
+    }
+    className={
+      seasonExclusiveOnly
+        ? "horde-exclusive-button active"
+        : "horde-exclusive-button"
+    }
+  >
+    <span className="horde-exclusive-icon">
+      ✦
+    </span>
+
+    <span>
+      Exclusive to {selectedSeason}
+    </span>
+
+    {seasonExclusiveOnly && (
+      <span className="season-selected-dot">
+        ●
+      </span>
+    )}
+  </button>
+</div>
+
+
       </div>
 
       {/* ===================================================
@@ -1281,6 +1333,64 @@ export default function HordeHunter() {
           font-size: 9px;
           margin-left: 2px;
         }
+
+.horde-exclusive-filter {
+  margin-top: 12px;
+}
+
+.horde-exclusive-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  border: 1px solid rgba(135, 89, 218, 0.45);
+  background: rgba(28, 13, 61, 0.55);
+
+  color: #d8c8f5;
+
+  border-radius: 12px;
+  padding: 11px 19px;
+
+  font-size: 14px;
+  font-weight: 800;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.horde-exclusive-button:hover {
+  border-color: #c39aff;
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 0 15px rgba(135, 89, 218, 0.15);
+}
+
+.horde-exclusive-button.active {
+  color: white;
+
+  border-color: #cda8ff;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(115, 61, 172, 0.9),
+      rgba(74, 37, 111, 0.95)
+    );
+
+  box-shadow:
+    0 0 18px rgba(151, 100, 224, 0.25);
+}
+
+.horde-exclusive-icon {
+  color: #d9b8ff;
+  font-size: 16px;
+}
 
         /* STATS */
 
