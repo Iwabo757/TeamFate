@@ -1,56 +1,27 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
+import { useEffect, useMemo, useRef, useState } from "react";
 import monsters from "../data/monsters.json";
 
-type Season =
-  | "All Seasons"
-  | "Spring"
-  | "Summer"
-  | "Autumn"
-  | "Winter";
-
-type MonsterLocation = {
-  form?: number;
-  type?: string;
-
-  region_id?: number;
-  region_name?: string;
-
-  location_id?: number;
-  location_name?: string;
-  location_name_full?: string;
-
-  min_level?: number;
-  max_level?: number;
-
-  season?: string;
-
-  is_horde_3x?: boolean;
-  is_horde_5x?: boolean;
-
-  rarity_flags?: number;
-
-  rarity_morning?: string;
-  rarity_day?: string;
-  rarity_night?: string;
-};
+type Season = "All Seasons" | "Spring" | "Summer" | "Autumn" | "Winter";
 
 type Monster = {
-  id: number;
-  name: string;
-  locations?: MonsterLocation[];
+  id?: number;
+  national_dex?: number;
+  dex?: number;
+  name?: string;
+
+  locations?: unknown;
+  wildLocations?: unknown;
+  wild_locations?: unknown;
+  encounters?: unknown;
+
+  seasons?: unknown;
+  season?: unknown;
 };
 
-const pokemonList = monsters as Monster[];
-
-/* =========================================================
-   CONSTANTS
-========================================================= */
+type ReelMonster = {
+  id: number;
+  name: string;
+};
 
 const SEASONS: Season[] = [
   "All Seasons",
@@ -68,2601 +39,1343 @@ const SEASON_ICONS: Record<Season, string> = {
   Winter: "❄️",
 };
 
-/* =========================================================
-   SPRITE HELPERS
-========================================================= */
+const SEASON_COLORS: Record<Season, string> = {
+  "All Seasons": "#7fc9ff",
+  Spring: "#ff8fc7",
+  Summer: "#ffd84d",
+  Autumn: "#ff9a45",
+  Winter: "#72ddff",
+};
 
-function getSprite(id: number) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+const CELL_HEIGHT = 112;
+const START_INDEX = 2;
+const STOP_INDEX = 18;
+
+const REEL_DURATIONS = [
+  1050,
+  1650,
+  2350,
+];
+
+const allMonsters = monsters as Monster[];
+
+/* -------------------------------------------------------
+   BASIC DATA HELPERS
+------------------------------------------------------- */
+
+function getMonsterId(monster: Monster): number | null {
+  const id =
+    monster.id ??
+    monster.national_dex ??
+    monster.dex;
+
+  if (typeof id !== "number") return null;
+
+  return id;
 }
 
-function getShinySprite(id: number) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
+function getMonsterName(monster: Monster): string {
+  return monster.name ?? "Unknown Pokémon";
 }
 
-/* =========================================================
-   SEASON HELPERS
-========================================================= */
+function normalize(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[_-]/g, " ")
+    .trim();
+}
 
-function normalizeSeason(
-  season?: string
-): Season | null {
-  if (!season) {
-    return null;
-  }
+function seasonFromKey(value: string): Season | null {
+  const normalized = normalize(value);
 
-  const value = season.trim().toLowerCase();
-
-  if (value === "spring") {
-    return "Spring";
-  }
-
-  if (value === "summer") {
-    return "Summer";
-  }
-
-  if (value === "autumn" || value === "fall") {
-    return "Autumn";
-  }
-
-  if (value === "winter") {
-    return "Winter";
-  }
+  if (normalized === "spring") return "Spring";
+  if (normalized === "summer") return "Summer";
+  if (normalized === "autumn") return "Autumn";
+  if (normalized === "fall") return "Autumn";
+  if (normalized === "winter") return "Winter";
 
   return null;
 }
 
-/* =========================================================
-   LOCATION HELPERS
-========================================================= */
+/* -------------------------------------------------------
+   LOCATION EXTRACTION
 
-function hasValidLocation(
-  pokemon: Monster,
-  season: Season = "All Seasons"
-) {
-  if (
-    !Array.isArray(pokemon.locations) ||
-    pokemon.locations.length === 0
-  ) {
-    return false;
-  }
+   Supports several possible monster.json structures so
+   the Shunt Machine can work with the existing dataset.
+------------------------------------------------------- */
 
-  return pokemon.locations.some(
-    (location) => {
-      const locationName =
-        location.location_name_full ||
-        location.location_name;
+function extractLocations(
+  monster: Monster,
+  selectedSeason: Season
+): string[] {
+  const results = new Set<string>();
 
-      if (!locationName) {
-        return false;
-      }
+  const sources = [
+    monster.locations,
+    monster.wildLocations,
+    monster.wild_locations,
+    monster.encounters,
+  ];
 
-      if (season === "All Seasons") {
-        return true;
-      }
+  const monsterSeasons = new Set<Season>();
 
-      return (
-        normalizeSeason(location.season) ===
-        season
+  const collectMonsterSeasons = (value: unknown) => {
+    if (!value) return;
+
+    if (typeof value === "string") {
+      const season = seasonFromKey(value);
+      if (season) monsterSeasons.add(season);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach(collectMonsterSeasons);
+      return;
+    }
+
+    if (typeof value === "object") {
+      Object.entries(value as Record<string, unknown>).forEach(
+        ([key, child]) => {
+          const season = seasonFromKey(key);
+
+          if (season) {
+            monsterSeasons.add(season);
+          }
+
+          collectMonsterSeasons(child);
+        }
       );
     }
-  );
-}
+  };
 
-function getLocations(
-  pokemon: Monster,
-  season: Season
-) {
-  if (!Array.isArray(pokemon.locations)) {
-    return [];
-  }
+  collectMonsterSeasons(monster.seasons);
+  collectMonsterSeasons(monster.season);
 
-  const seen = new Set<string>();
+  const collect = (
+    value: unknown,
+    inheritedSeason: Season | null = null,
+    parentKey = ""
+  ) => {
+    if (value === null || value === undefined) return;
 
-  return pokemon.locations.filter(
-    (location) => {
-      const name =
-        location.location_name_full ||
-        location.location_name;
+    if (typeof value === "string") {
+      const text = value.trim();
 
-      if (!name) {
-        return false;
+      if (!text) return;
+
+      const ignored = [
+        "morning",
+        "day",
+        "night",
+        "walk",
+        "surf",
+        "fishing",
+        "gift",
+        "horde",
+        "overworld",
+        "grass",
+        "water",
+      ];
+
+      if (ignored.includes(normalize(text))) return;
+
+      const key = normalize(parentKey);
+
+      const looksLikeLocation =
+        key.includes("location") ||
+        key.includes("route") ||
+        key.includes("area") ||
+        key.includes("place") ||
+        key === "name" ||
+        key === "map";
+
+      const isSeasonMatch =
+        selectedSeason === "All Seasons" ||
+        inheritedSeason === selectedSeason ||
+        monsterSeasons.has(selectedSeason);
+
+      if (looksLikeLocation && isSeasonMatch) {
+        results.add(text);
       }
 
-      /*
-       * When a specific season is selected,
-       * only show locations belonging to that season.
-       */
-      if (season !== "All Seasons") {
-        if (
-          normalizeSeason(location.season) !==
-          season
-        ) {
-          return false;
-        }
-      }
-
-      const key = [
-        name,
-        location.region_name || "",
-        normalizeSeason(location.season) ||
-          "",
-        location.type || "",
-        location.min_level ?? "",
-        location.max_level ?? "",
-      ].join("|");
-
-      if (seen.has(key)) {
-        return false;
-      }
-
-      seen.add(key);
-
-      return true;
+      return;
     }
-  );
-}
 
-/* =========================================================
-   RANDOM HELPERS
-========================================================= */
+    if (Array.isArray(value)) {
+      value.forEach((item) =>
+        collect(item, inheritedSeason, parentKey)
+      );
+      return;
+    }
 
-function randomPokemon(
-  pool: Monster[]
-) {
-  if (pool.length === 0) {
-    return null;
+    if (typeof value === "object") {
+      Object.entries(value as Record<string, unknown>).forEach(
+        ([key, child]) => {
+          const detectedSeason = seasonFromKey(key);
+
+          collect(
+            child,
+            detectedSeason ?? inheritedSeason,
+            key
+          );
+        }
+      );
+    }
+  };
+
+  sources.forEach((source) => {
+    collect(source);
+  });
+
+  /*
+    Fallback for simple datasets such as:
+
+    {
+      locations: ["Route 1", "Viridian Forest"]
+    }
+  */
+
+  if (
+    selectedSeason === "All Seasons" &&
+    results.size === 0
+  ) {
+    const simpleCollect = (value: unknown) => {
+      if (typeof value === "string") {
+        const text = value.trim();
+
+        if (
+          text &&
+          ![
+            "morning",
+            "day",
+            "night",
+            "walk",
+            "surf",
+            "fishing",
+            "gift",
+            "horde",
+          ].includes(normalize(text))
+        ) {
+          results.add(text);
+        }
+
+        return;
+      }
+
+      if (Array.isArray(value)) {
+        value.forEach(simpleCollect);
+        return;
+      }
+
+      if (typeof value === "object" && value !== null) {
+        Object.entries(value as Record<string, unknown>).forEach(
+          ([key, child]) => {
+            const normalizedKey = normalize(key);
+
+            if (
+              normalizedKey.includes("location") ||
+              normalizedKey.includes("route") ||
+              normalizedKey.includes("area") ||
+              normalizedKey === "name"
+            ) {
+              simpleCollect(child);
+            }
+          }
+        );
+      }
+    };
+
+    sources.forEach(simpleCollect);
   }
 
-  return pool[
-    Math.floor(
-      Math.random() * pool.length
-    )
+  return [...results];
+}
+
+function hasHuntLocation(
+  monster: Monster,
+  season: Season
+): boolean {
+  return extractLocations(monster, season).length > 0;
+}
+
+/* -------------------------------------------------------
+   SPRITES
+------------------------------------------------------- */
+
+function getShinySprite(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
+}
+
+function getShinyGif(id: number): string {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/shiny/${id}.gif`;
+}
+
+/* -------------------------------------------------------
+   RANDOM DATA
+------------------------------------------------------- */
+
+function randomMonster(
+  pool: ReelMonster[],
+  excludeId?: number
+): ReelMonster {
+  let candidates = pool;
+
+  if (excludeId !== undefined && pool.length > 1) {
+    candidates = pool.filter(
+      (pokemon) => pokemon.id !== excludeId
+    );
+  }
+
+  return candidates[
+    Math.floor(Math.random() * candidates.length)
   ];
 }
 
-function randomPool(
-  pool: Monster[],
-  amount: number
-) {
-  if (pool.length === 0) {
-    return [];
-  }
-
-  const result: Monster[] = [];
-
-  for (let i = 0; i < amount; i++) {
-    const pokemon = randomPokemon(pool);
-
-    if (pokemon) {
-      result.push(pokemon);
-    }
-  }
-
-  return result;
-}
-
-/* =========================================================
-   BUILD REEL
-========================================================= */
-
 function buildReel(
-  selected: Monster,
-  pool: Monster[]
-) {
-  /*
-   * Lots of random Pokémon first.
-   * Selected Pokémon is always the final
-   * item so the center position lands on it.
-   */
-  const reel = randomPool(
-    pool,
-    18
-  );
+  pool: ReelMonster[],
+  target: ReelMonster
+): ReelMonster[] {
+  const reel: ReelMonster[] = [];
 
-  reel.push(selected);
+  /*
+    The target is deliberately inserted at exactly the same
+    stop position in EVERY reel.
+
+    That guarantees that the middle row of all 3 reels
+    displays the selected Pokémon.
+  */
+
+  for (let i = 0; i < STOP_INDEX; i++) {
+    reel.push(randomMonster(pool));
+  }
+
+  reel.push(target);
+
+  reel.push(randomMonster(pool));
+  reel.push(randomMonster(pool));
 
   return reel;
 }
 
-/* =========================================================
-   PAGE
-========================================================= */
+/* -------------------------------------------------------
+   SOUND
+------------------------------------------------------- */
 
-export default function ShuntMachine() {
-  const [
-    selectedSeason,
-    setSelectedSeason,
-  ] = useState<Season>("All Seasons");
+function playClickSound() {
+  try {
+    const AudioContextClass =
+      window.AudioContext ||
+      (
+        window as typeof window & {
+          webkitAudioContext?: typeof AudioContext;
+        }
+      ).webkitAudioContext;
 
-  const [
-    spinning,
-    setSpinning,
-  ] = useState(false);
+    if (!AudioContextClass) return;
 
-  const [
-    result,
-    setResult,
-  ] = useState<Monster | null>(null);
+    const context = new AudioContextClass();
 
-  const [
-    reelPokemon,
-    setReelPokemon,
-  ] = useState<Monster[][]>([
-    [],
-    [],
-    [],
-  ]);
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
 
-  const [
-    reelStopped,
-    setReelStopped,
-  ] = useState([
-    true,
-    true,
-    true,
-  ]);
-
-  const audioContext =
-    useRef<AudioContext | null>(
-      null
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(
+      180,
+      context.currentTime
     );
 
-  /* =======================================================
-     SHUNTABLE POOL
-  ======================================================= */
+    gain.gain.setValueAtTime(
+      0.08,
+      context.currentTime
+    );
 
-  const shuntablePokemon =
-    useMemo(() => {
-      return pokemonList.filter(
-        (pokemon) =>
-          hasValidLocation(
-            pokemon,
-            selectedSeason
-          )
-      );
-    }, [selectedSeason]);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      context.currentTime + 0.08
+    );
 
-  /* =======================================================
-     INITIAL / SEASON CHANGE
-  ======================================================= */
+    oscillator.connect(gain);
+    gain.connect(context.destination);
 
-  useEffect(() => {
-    /*
-     * Changing seasons completely resets the
-     * visible machine without using a reset button.
-     */
-    setResult(null);
-    setSpinning(false);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.08);
+  } catch {
+    // Audio is optional.
+  }
+}
 
-    setReelStopped([
-      true,
-      true,
-      true,
+/* -------------------------------------------------------
+   COMPONENT
+------------------------------------------------------- */
+
+export default function ShuntMachine() {
+  const [season, setSeason] =
+    useState<Season>("All Seasons");
+
+  const [spinning, setSpinning] =
+    useState(false);
+
+  const [selected, setSelected] =
+    useState<ReelMonster | null>(null);
+
+  const [reelIndexes, setReelIndexes] =
+    useState<number[]>([
+      START_INDEX,
+      START_INDEX,
+      START_INDEX,
     ]);
 
-    if (shuntablePokemon.length > 0) {
-      setReelPokemon([
-        randomPool(
-          shuntablePokemon,
-          7
-        ),
-        randomPool(
-          shuntablePokemon,
-          7
-        ),
-        randomPool(
-          shuntablePokemon,
-          7
-        ),
-      ]);
-    } else {
-      setReelPokemon([
-        [],
-        [],
-        [],
-      ]);
-    }
-  }, [selectedSeason, shuntablePokemon]);
+  const [reels, setReels] =
+    useState<ReelMonster[][]>([
+      [],
+      [],
+      [],
+    ]);
 
-  /* =======================================================
-     CLICK SOUND
-  ======================================================= */
+  const resultTimer = useRef<number | null>(null);
 
-  function playClickSound() {
-    try {
-      const AudioCtx =
-        window.AudioContext ||
-        (
-          window as typeof window & {
-            webkitAudioContext?: typeof AudioContext;
-          }
-        ).webkitAudioContext;
+  /* -----------------------------------------------------
+     BUILD ELIGIBLE POOL
 
-      if (!AudioCtx) {
+     A Pokémon can ONLY enter the machine if it has
+     actual location data for the selected season.
+  ----------------------------------------------------- */
+
+  const eligiblePool = useMemo<ReelMonster[]>(() => {
+    const seen = new Set<number>();
+    const pool: ReelMonster[] = [];
+
+    allMonsters.forEach((monster) => {
+      const id = getMonsterId(monster);
+      const name = getMonsterName(monster);
+
+      if (!id || !name) return;
+
+      if (seen.has(id)) return;
+
+      if (!hasHuntLocation(monster, season)) {
         return;
       }
 
-      if (!audioContext.current) {
-        audioContext.current =
-          new AudioCtx();
+      seen.add(id);
+
+      pool.push({
+        id,
+        name,
+      });
+    });
+
+    return pool;
+  }, [season]);
+
+  /* -----------------------------------------------------
+     CURRENT RESULT LOCATIONS
+  ----------------------------------------------------- */
+
+  const selectedMonsterData = useMemo(() => {
+    if (!selected) return null;
+
+    return allMonsters.find(
+      (monster) =>
+        getMonsterId(monster) === selected.id
+    );
+  }, [selected]);
+
+  const selectedLocations = useMemo(() => {
+    if (!selectedMonsterData) return [];
+
+    return extractLocations(
+      selectedMonsterData,
+      season
+    );
+  }, [selectedMonsterData, season]);
+
+  /* -----------------------------------------------------
+     CLEANUP
+  ----------------------------------------------------- */
+
+  useEffect(() => {
+    return () => {
+      if (resultTimer.current !== null) {
+        window.clearTimeout(resultTimer.current);
       }
+    };
+  }, []);
 
-      const context =
-        audioContext.current;
+  /* -----------------------------------------------------
+     SEASON CHANGE
+  ----------------------------------------------------- */
 
-      const oscillator =
-        context.createOscillator();
+  function changeSeason(nextSeason: Season) {
+    if (spinning) return;
 
-      const gain =
-        context.createGain();
+    setSeason(nextSeason);
+    setSelected(null);
 
-      oscillator.type =
-        "square";
+    setReels([
+      [],
+      [],
+      [],
+    ]);
 
-      oscillator.frequency.setValueAtTime(
-        140,
-        context.currentTime
-      );
-
-      oscillator.frequency.exponentialRampToValueAtTime(
-        60,
-        context.currentTime + 0.08
-      );
-
-      gain.gain.setValueAtTime(
-        0.12,
-        context.currentTime
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        context.currentTime + 0.08
-      );
-
-      oscillator.connect(gain);
-      gain.connect(
-        context.destination
-      );
-
-      oscillator.start();
-
-      oscillator.stop(
-        context.currentTime + 0.08
-      );
-    } catch {
-      // Audio is optional.
-    }
+    setReelIndexes([
+      START_INDEX,
+      START_INDEX,
+      START_INDEX,
+    ]);
   }
 
-  /* =======================================================
-     STOP SOUND
-  ======================================================= */
-
-  function playStopSound() {
-    try {
-      const context =
-        audioContext.current;
-
-      if (!context) {
-        return;
-      }
-
-      const oscillator =
-        context.createOscillator();
-
-      const gain =
-        context.createGain();
-
-      oscillator.type =
-        "sine";
-
-      oscillator.frequency.setValueAtTime(
-        320,
-        context.currentTime
-      );
-
-      oscillator.frequency.exponentialRampToValueAtTime(
-        180,
-        context.currentTime + 0.12
-      );
-
-      gain.gain.setValueAtTime(
-        0.14,
-        context.currentTime
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        context.currentTime + 0.12
-      );
-
-      oscillator.connect(gain);
-      gain.connect(
-        context.destination
-      );
-
-      oscillator.start();
-
-      oscillator.stop(
-        context.currentTime + 0.12
-      );
-    } catch {
-      // Audio is optional.
-    }
-  }
-
-  /* =======================================================
+  /* -----------------------------------------------------
      SHUNT
-  ======================================================= */
 
-  function shunt() {
-    if (
-      spinning ||
-      shuntablePokemon.length === 0
-    ) {
-      return;
-    }
+     IMPORTANT:
 
-    const selected =
-      randomPokemon(
-        shuntablePokemon
-      );
+     ONE target is chosen.
 
-    if (!selected) {
+     ALL THREE reels are built using that same target.
+
+     This fixes the previous issue where only the center
+     reel matched the final Pokémon.
+  ----------------------------------------------------- */
+
+  function shuntAgain() {
+    if (spinning) return;
+
+    if (eligiblePool.length === 0) {
       return;
     }
 
     playClickSound();
 
-    setResult(null);
+    const target = randomMonster(
+      eligiblePool,
+      selected?.id
+    );
+
+    const firstReel = buildReel(
+      eligiblePool,
+      target
+    );
+
+    const secondReel = buildReel(
+      eligiblePool,
+      target
+    );
+
+    const thirdReel = buildReel(
+      eligiblePool,
+      target
+    );
+
+    /*
+      Reset the reels to the beginning before starting
+      the animation.
+    */
+
+    setSelected(null);
+
+    setReels([
+      firstReel,
+      secondReel,
+      thirdReel,
+    ]);
+
+    setReelIndexes([
+      START_INDEX,
+      START_INDEX,
+      START_INDEX,
+    ]);
 
     setSpinning(true);
 
-    setReelStopped([
-      false,
-      false,
-      false,
-    ]);
+    /*
+      Start the actual movement on the next animation frame.
+    */
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setReelIndexes([
+          STOP_INDEX,
+          STOP_INDEX,
+          STOP_INDEX,
+        ]);
+      });
+    });
 
     /*
-     * Every reel receives the SAME selected
-     * Pokémon at its stopping position.
-     */
-    setReelPokemon([
-      buildReel(
-        selected,
-        shuntablePokemon
-      ),
-      buildReel(
-        selected,
-        shuntablePokemon
-      ),
-      buildReel(
-        selected,
-        shuntablePokemon
-      ),
-    ]);
+      The third reel is the slowest and therefore determines
+      when the machine is finished.
+    */
 
-    /*
-     * Each reel stops separately.
-     *
-     * LEFT   = fastest
-     * MIDDLE = slower
-     * RIGHT  = slowest / final reel
-     */
-    const reelTimes = [
-      1800,
-      2600,
-      3600,
-    ];
+    if (resultTimer.current !== null) {
+      window.clearTimeout(resultTimer.current);
+    }
 
-    reelTimes.forEach(
-      (delay, index) => {
-        window.setTimeout(() => {
-          playStopSound();
+    resultTimer.current = window.setTimeout(() => {
+      setSpinning(false);
 
-          setReelStopped(
-            (previous) => {
-              const next = [
-                ...previous,
-              ];
+      /*
+        The SAME target selected before the roll is returned.
+      */
 
-              next[index] = true;
+      setSelected(target);
 
-              return next;
-            }
-          );
-
-          /*
-           * Only reveal the final result
-           * after the third reel has stopped.
-           */
-          if (index === 2) {
-            window.setTimeout(() => {
-              setResult(
-                selected
-              );
-
-              setSpinning(false);
-            }, 500);
-          }
-        }, delay);
-      }
-    );
+      playClickSound();
+    }, REEL_DURATIONS[2] + 150);
   }
 
-  /* =======================================================
-     RESULT LOCATIONS
-  ======================================================= */
+  /* -----------------------------------------------------
+     SEASON THEME
+  ----------------------------------------------------- */
 
-  const resultLocations =
-    result
-      ? getLocations(
-          result,
-          selectedSeason
-        )
-      : [];
+  const seasonColor =
+    SEASON_COLORS[season];
 
-  /* =======================================================
-     THEME
-  ======================================================= */
-
-  const themeClass =
-    selectedSeason === "All Seasons"
-      ? "theme-all"
-      : `theme-${selectedSeason.toLowerCase()}`;
-
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  const seasonClass =
+    season
+      .toLowerCase()
+      .replace(/\s+/g, "-");
 
   return (
     <div
-      className={`shunt-page ${themeClass}`}
+      className={`shunt-page season-${seasonClass}`}
+      style={
+        {
+          "--season-color": seasonColor,
+        } as React.CSSProperties
+      }
     >
-      {/* ===================================================
-          HEADER
-      =================================================== */}
-
-      <div className="shunt-header">
-        <div className="shunt-title-icon">
-          ✨
-        </div>
-
-        <h1>
-          SHUNT MACHINE
-        </h1>
-
-        <p>
-          Don't know what to shunt next?
-          Let fate decide.
-        </p>
-      </div>
-
-      {/* ===================================================
-          SEASON FILTER
-      =================================================== */}
-
-      <div className="season-filter">
-        <div className="season-filter-label">
-          HUNTING SEASON
-        </div>
-
-        <div className="season-buttons">
-          {SEASONS.map(
-            (season) => (
-              <button
-                key={season}
-                type="button"
-                className={
-                  selectedSeason === season
-                    ? "season-button active"
-                    : "season-button"
-                }
-                onClick={() =>
-                  !spinning &&
-                  setSelectedSeason(
-                    season
-                  )
-                }
-                disabled={spinning}
-              >
-                <span className="season-icon">
-                  {
-                    SEASON_ICONS[
-                      season
-                    ]
-                  }
-                </span>
-
-                <span>
-                  {season}
-                </span>
-              </button>
-            )
-          )}
-        </div>
-
-        <div className="season-description">
-          {selectedSeason ===
-          "All Seasons"
-            ? "Fate may choose from any Pokémon with a known hunt location."
-            : `Fate will only choose Pokémon available during ${selectedSeason}.`}
-        </div>
-      </div>
-
-      {/* ===================================================
-          MACHINE
-      =================================================== */}
-
-      <div className="shunt-machine">
-        <div className="machine-top-light">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
-        </div>
-
-        <div className="machine-title">
-          <span>✦</span>
-
-          {selectedSeason ===
-          "All Seasons"
-            ? "NEXT SHUNT"
-            : `${selectedSeason.toUpperCase()} SHUNT`}
-
-          <span>✦</span>
-        </div>
-
-        {/* REELS */}
-
-        <div
-          className={
-            spinning
-              ? "reels spinning"
-              : "reels"
-          }
-        >
-          {reelPokemon.map(
-            (
-              reel,
-              reelIndex
-            ) => {
-              const stopped =
-                reelStopped[
-                  reelIndex
-                ];
-
-              return (
-                <div
-                  key={reelIndex}
-                  className={
-                    stopped
-                      ? "reel stopped"
-                      : `reel moving reel-${reelIndex}`
-                  }
-                >
-                  <div className="reel-inner">
-                    {reel.map(
-                      (
-                        pokemon,
-                        pokemonIndex
-                      ) => (
-                        <div
-                          key={`${reelIndex}-${pokemon.id}-${pokemonIndex}`}
-                          className="reel-pokemon"
-                        >
-                          <img
-                            src={getSprite(
-                              pokemon.id
-                            )}
-                            alt={
-                              pokemon.name
-                            }
-                          />
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              );
-            }
-          )}
-
-          {/* CENTER SELECTION */}
-
-          <div className="selection-window">
-            <div className="selection-arrow left">
-              ▶
-            </div>
-
-            <div className="selection-arrow right">
-              ◀
-            </div>
-          </div>
-        </div>
-
-        {/* MACHINE BOTTOM */}
-
-        <div className="machine-bottom">
-          <div className="machine-status">
-            {spinning ? (
-              <>
-                <span className="status-light spinning-light" />
-                SEARCHING...
-              </>
-            ) : result ? (
-              <>
-                <span className="status-light result-light" />
-                SHUNT FOUND
-              </>
-            ) : (
-              <>
-                <span className="status-light ready-light" />
-                READY
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className={
-              spinning
-                ? "shunt-button disabled"
-                : "shunt-button"
-            }
-            onClick={shunt}
-            disabled={
-              spinning ||
-              shuntablePokemon.length ===
-                0
-            }
-          >
-            <span className="button-top" />
-
-            <span className="button-text">
-              {result
-                ? "SHUNT AGAIN"
-                : "SHUNT"}
-            </span>
-          </button>
-
-          {shuntablePokemon.length ===
-            0 && (
-            <div className="no-results">
-              No Pokémon have a valid hunt
-              location for this season.
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ===================================================
-          RESULT
-      =================================================== */}
-
-      {result && !spinning && (
-        <div className="result-section">
-          <div className="result-label">
-            ✦ YOUR NEXT SHUNT ✦
-          </div>
-
-          <div className="result-card">
-            {/* RESULT POKEMON */}
-
-            <div className="result-pokemon">
-              <div className="result-sparkles">
-                ✦
-              </div>
-
-              <img
-                src={getShinySprite(
-                  result.id
-                )}
-                alt={`${result.name} shiny`}
-              />
-
-              <div className="result-sparkles bottom">
-                ✦
-              </div>
-            </div>
-
-            {/* RESULT INFORMATION */}
-
-            <div className="result-info">
-              <div className="result-number">
-                #
-                {String(
-                  result.id
-                ).padStart(3, "0")}
-              </div>
-
-              <h2>
-                SHINY{" "}
-                {result.name.toUpperCase()}
-              </h2>
-
-              <p className="result-description">
-                Fate has chosen your next
-                target.
-              </p>
-
-              <div className="result-season">
-                <span>
-                  {
-                    SEASON_ICONS[
-                      selectedSeason
-                    ]
-                  }
-                </span>
-
-                {selectedSeason ===
-                "All Seasons"
-                  ? "ALL SEASONS"
-                  : selectedSeason.toUpperCase()}
-              </div>
-
-              <div className="result-divider" />
-
-              {/* LOCATIONS */}
-
-              <div className="locations-title">
-                📍 HUNT LOCATIONS
-              </div>
-
-              {resultLocations.length >
-              0 ? (
-                <div className="locations-list">
-                  {resultLocations.map(
-                    (
-                      location,
-                      index
-                    ) => {
-                      const locationName =
-                        location.location_name_full ||
-                        location.location_name ||
-                        "Unknown Location";
-
-                      return (
-                        <div
-                          key={`${locationName}-${index}`}
-                          className="location-card"
-                        >
-                          <div className="location-main">
-                            <strong>
-                              {
-                                locationName
-                              }
-                            </strong>
-
-                            {location.region_name && (
-                              <span>
-                                {
-                                  location.region_name
-                                }
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="location-details">
-                            {location.season && (
-                              <span>
-                                🍂{" "}
-                                {
-                                  location.season
-                                }
-                              </span>
-                            )}
-
-                            {location.type && (
-                              <span>
-                                🎯{" "}
-                                {
-                                  location.type
-                                }
-                              </span>
-                            )}
-
-                            {location.min_level !==
-                              undefined &&
-                              location.max_level !==
-                                undefined && (
-                                <span>
-                                  Lv.{" "}
-                                  {
-                                    location.min_level
-                                  }
-                                  –
-                                  {
-                                    location.max_level
-                                  }
-                                </span>
-                              )}
-                          </div>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-              ) : (
-                <div className="no-location-data">
-                  No location data available.
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* SHUNT AGAIN */}
-
-          <button
-            type="button"
-            className="result-shunt-again"
-            onClick={shunt}
-          >
-            🎰 SHUNT AGAIN
-          </button>
-        </div>
-      )}
-
-      {/* ===================================================
-          HELP
-      =================================================== */}
-
-      {!result && !spinning && (
-        <div className="machine-help">
-          <div>
-            <span>🎰</span>
-
-            <strong>
-              LET FATE DECIDE
-            </strong>
-
-            <p>
-              Press SHUNT to randomly
-              choose your next shiny
-              target.
-            </p>
-          </div>
-
-          <div>
-            <span>📍</span>
-
-            <strong>
-              LOCATION GUARANTEED
-            </strong>
-
-            <p>
-              Every Pokémon in the
-              machine has at least one
-              known hunt location.
-            </p>
-          </div>
-
-          <div>
-            <span>✨</span>
-
-            <strong>
-              SHINY TARGET
-            </strong>
-
-            <p>
-              The machine only chooses
-              Pokémon you can actually
-              hunt.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* ===================================================
-          STYLES
-      =================================================== */}
-
       <style>{`
-
-        * {
-          box-sizing: border-box;
-        }
-
-        /* =================================================
-           PAGE
-        ================================================= */
-
         .shunt-page {
-          --theme-primary: #63cfff;
-          --theme-secondary: #a878ff;
-          --theme-glow: rgba(99, 207, 255, 0.25);
-          --theme-dark: #061a30;
-          --theme-machine-top: #092d4e;
-          --theme-machine-bottom: #020f20;
-
           width: 100%;
-          max-width: 1250px;
+          min-height: 100vh;
+          box-sizing: border-box;
+          padding: 34px 20px 80px;
+          color: #dceeff;
+          background:
+            radial-gradient(
+              circle at 50% 25%,
+              rgba(70, 160, 255, 0.10),
+              transparent 42%
+            );
+        }
+
+        .shunt-content {
+          width: min(1120px, 100%);
           margin: 0 auto;
-
-          padding:
-            35px 25px 90px;
-
-          color: #edf7ff;
         }
-
-        /* =================================================
-           SEASON THEMES
-        ================================================= */
-
-        .theme-all {
-          --theme-primary: #63cfff;
-          --theme-secondary: #a878ff;
-          --theme-glow: rgba(99, 207, 255, 0.25);
-          --theme-dark: #061a30;
-          --theme-machine-top: #092d4e;
-          --theme-machine-bottom: #020f20;
-        }
-
-        .theme-spring {
-          --theme-primary: #ff9fc8;
-          --theme-secondary: #a9e878;
-          --theme-glow: rgba(255, 159, 200, 0.28);
-          --theme-dark: #26152a;
-          --theme-machine-top: #3a1f39;
-          --theme-machine-bottom: #171022;
-        }
-
-        .theme-summer {
-          --theme-primary: #ffd15c;
-          --theme-secondary: #ff9d4d;
-          --theme-glow: rgba(255, 209, 92, 0.28);
-          --theme-dark: #2d210c;
-          --theme-machine-top: #4a3510;
-          --theme-machine-bottom: #211707;
-        }
-
-        .theme-autumn {
-          --theme-primary: #ff9b52;
-          --theme-secondary: #e45d42;
-          --theme-glow: rgba(255, 155, 82, 0.28);
-          --theme-dark: #2b170d;
-          --theme-machine-top: #4a2411;
-          --theme-machine-bottom: #211009;
-        }
-
-        .theme-winter {
-          --theme-primary: #83e8ff;
-          --theme-secondary: #8ea7ff;
-          --theme-glow: rgba(131, 232, 255, 0.28);
-          --theme-dark: #081d35;
-          --theme-machine-top: #0c3556;
-          --theme-machine-bottom: #031322;
-        }
-
-        /* =================================================
-           HEADER
-        ================================================= */
 
         .shunt-header {
           text-align: center;
-
-          margin-bottom: 28px;
+          margin-bottom: 22px;
         }
 
-        .shunt-title-icon {
-          font-size: 34px;
-
-          margin-bottom: 3px;
-        }
-
-        .shunt-header h1 {
+        .shunt-title {
           margin: 0;
-
-          font-size: 48px;
-          font-weight: 950;
-
-          letter-spacing: 4px;
-
-          text-shadow:
-            0 0 20px
-            var(--theme-glow);
+          font-size: clamp(28px, 4vw, 48px);
+          font-weight: 900;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
         }
 
-        .shunt-header p {
-          margin:
-            8px 0 0;
-
-          color: #8ea9c4;
-
-          font-size: 17px;
+        .shunt-subtitle {
+          margin: 8px auto 0;
+          max-width: 650px;
+          color: #9fc8ec;
+          font-size: 15px;
         }
 
-        /* =================================================
-           SEASON FILTER
-        ================================================= */
+        /* SEASON FILTER */
 
         .season-filter {
-          max-width: 900px;
-
-          margin:
-            0 auto 28px;
-
-          padding:
-            18px 20px;
-
-          border:
-            1px solid
-            rgba(100, 174, 224, 0.28);
-
-          border-radius: 18px;
-
-          background:
-            rgba(4, 25, 47, 0.72);
-
-          box-shadow:
-            0 15px 40px
-            rgba(0, 0, 0, 0.18);
-        }
-
-        .season-filter-label {
-          margin-bottom: 11px;
-
-          color:
-            var(--theme-primary);
-
-          font-size: 11px;
-          font-weight: 950;
-
-          letter-spacing: 2px;
-
-          text-align: center;
-        }
-
-        .season-buttons {
           display: flex;
-
           justify-content: center;
-
-          gap: 8px;
-
           flex-wrap: wrap;
+          gap: 9px;
+          margin: 24px auto 28px;
         }
 
         .season-button {
-          display: flex;
-
-          align-items: center;
-          justify-content: center;
-
-          gap: 7px;
-
-          min-width: 125px;
-
-          padding:
-            11px 17px;
-
-          border:
-            1px solid
-            rgba(101, 166, 213, 0.34);
-
-          border-radius: 11px;
-
-          color: #a9c4dc;
-
-          background:
-            rgba(8, 36, 64, 0.8);
-
-          font-size: 13px;
-          font-weight: 900;
-
+          appearance: none;
+          border: 1px solid rgba(105, 183, 255, 0.42);
+          background: rgba(4, 25, 51, 0.82);
+          color: #b9d9f6;
+          border-radius: 12px;
+          min-height: 42px;
+          padding: 0 17px;
+          font-size: 14px;
+          font-weight: 800;
           cursor: pointer;
-
           transition:
-            all 0.18s ease;
+            transform 0.15s ease,
+            background 0.15s ease,
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
         }
 
         .season-button:hover {
-          border-color:
-            var(--theme-primary);
-
-          color: white;
-
-          transform:
-            translateY(-1px);
-
-          box-shadow:
-            0 0 18px
-            var(--theme-glow);
+          transform: translateY(-1px);
+          border-color: var(--season-color);
         }
 
         .season-button.active {
-          border-color:
-            var(--theme-primary);
-
-          color: white;
-
-          background:
-            linear-gradient(
-              135deg,
-              color-mix(
-                in srgb,
-                var(--theme-primary) 22%,
-                transparent
-              ),
-              rgba(15, 44, 70, 0.95)
-            );
-
-          box-shadow:
-            0 0 22px
-            var(--theme-glow),
-            inset 0 0 18px
-            var(--theme-glow);
-        }
-
-        .season-button:disabled {
-          cursor:
-            not-allowed;
-
-          opacity:
-            0.65;
-        }
-
-        .season-icon {
-          font-size: 16px;
-        }
-
-        .season-description {
-          margin-top: 12px;
-
-          color: #708ba5;
-
-          font-size: 11px;
-
-          text-align: center;
-        }
-
-        /* =================================================
-           MACHINE
-        ================================================= */
-
-        .shunt-machine {
-          position: relative;
-
-          max-width: 900px;
-
-          margin:
-            0 auto;
-
-          padding:
-            25px 28px 30px;
-
-          border:
-            2px solid
-            color-mix(
-              in srgb,
-              var(--theme-primary) 55%,
-              transparent
-            );
-
-          border-radius: 30px;
-
+          color: #fff;
+          border-color: var(--season-color);
           background:
             linear-gradient(
               180deg,
-              var(--theme-machine-top),
-              var(--theme-machine-bottom)
+              color-mix(
+                in srgb,
+                var(--season-color) 28%,
+                rgba(4, 25, 51, 0.95)
+              ),
+              rgba(4, 25, 51, 0.96)
             );
-
           box-shadow:
-            0 25px 70px
-            rgba(0, 0, 0, 0.38),
-
-            inset 0 0 40px
-            var(--theme-glow);
-        }
-
-        .machine-top-light {
-          display: flex;
-
-          justify-content:
-            center;
-
-          gap: 14px;
-
-          margin-bottom: 15px;
-        }
-
-        .machine-top-light span {
-          width: 8px;
-          height: 8px;
-
-          border-radius: 50%;
-
-          background:
-            var(--theme-primary);
-
-          box-shadow:
-            0 0 10px
-            var(--theme-primary);
-        }
-
-        .machine-title {
-          display: flex;
-
-          justify-content:
-            center;
-
-          align-items: center;
-
-          gap: 16px;
-
-          margin-bottom: 20px;
-
-          color: #d9efff;
-
-          font-size: 16px;
-          font-weight: 950;
-
-          letter-spacing: 3px;
-        }
-
-        .machine-title span {
-          color:
-            var(--theme-secondary);
-
-          font-size: 20px;
-        }
-
-        /* =================================================
-           REELS
-        ================================================= */
-
-        .reels {
-          position: relative;
-
-          display: grid;
-
-          grid-template-columns:
-            repeat(3, 1fr);
-
-          gap: 13px;
-
-          height: 400px;
-
-          overflow: hidden;
-
-          padding: 15px;
-
-          border:
-            2px solid
+            0 0 18px
             color-mix(
               in srgb,
-              var(--theme-primary) 42%,
+              var(--season-color) 30%,
               transparent
             );
+        }
 
-          border-radius: 20px;
+        /* MACHINE */
 
+        .machine {
+          width: min(920px, 100%);
+          margin: 0 auto;
+          padding: 18px;
+          border-radius: 24px;
+          border: 1px solid
+            color-mix(
+              in srgb,
+              var(--season-color) 48%,
+              rgba(77, 166, 235, 0.5)
+            );
           background:
-            #020d1b;
-
+            linear-gradient(
+              180deg,
+              rgba(3, 22, 45, 0.97),
+              rgba(2, 15, 31, 0.98)
+            );
           box-shadow:
-            inset 0 0 30px
-            rgba(0, 0, 0, 0.7);
+            0 18px 50px rgba(0, 0, 0, 0.32),
+            inset 0 0 35px rgba(0, 0, 0, 0.32);
+        }
+
+        .machine-frame {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+          padding: 10px;
+          border-radius: 18px;
+          border: 1px solid rgba(110, 189, 255, 0.25);
+          background: rgba(0, 9, 22, 0.68);
         }
 
         .reel {
           position: relative;
-
+          height: calc(${CELL_HEIGHT}px * 3);
           overflow: hidden;
-
-          border:
-            1px solid
-            color-mix(
-              in srgb,
-              var(--theme-primary) 28%,
-              transparent
-            );
-
-          border-radius: 14px;
-
+          border-radius: 13px;
+          border: 1px solid rgba(113, 190, 255, 0.25);
           background:
             linear-gradient(
-              90deg,
-              rgba(0, 0, 0, 0.35),
-              color-mix(
-                in srgb,
-                var(--theme-primary) 12%,
-                transparent
-              ),
-              rgba(0, 0, 0, 0.35)
+              180deg,
+              rgba(3, 22, 42, 0.98),
+              rgba(2, 14, 28, 0.98)
             );
         }
 
         .reel::before,
         .reel::after {
           content: "";
-
           position: absolute;
-
           left: 0;
           right: 0;
-
-          height: 100px;
-
+          height: 30%;
           z-index: 4;
-
-          pointer-events:
-            none;
+          pointer-events: none;
         }
 
         .reel::before {
           top: 0;
-
           background:
             linear-gradient(
               180deg,
-              #020d1b,
+              rgba(0, 8, 20, 0.92),
               transparent
             );
         }
 
         .reel::after {
           bottom: 0;
-
           background:
             linear-gradient(
               0deg,
-              #020d1b,
+              rgba(0, 8, 20, 0.92),
               transparent
             );
         }
 
-        .reel-inner {
-          display: flex;
-
-          flex-direction:
-            column;
-
-          align-items:
-            center;
-
-          gap: 5px;
-
-          padding-top: 5px;
-
-          transform:
-            translateY(-5px);
-
-          transition:
-            transform 0.9s
-            cubic-bezier(
-              0.12,
-              0.8,
-              0.18,
-              1
-            );
-        }
-
-        /*
-         * All reels scroll quickly at first.
-         */
-
-        .reel.moving .reel-inner {
-          animation:
-            reelScroll
-            0.11s
-            linear
-            infinite;
-        }
-
-        /*
-         * Each reel has a progressively slower
-         * mechanical stop.
-         */
-
-        .reel-0.stopped .reel-inner {
-          animation:
-            reelStopFast
-            0.65s
-            cubic-bezier(
-              0.12,
-              0.8,
-              0.18,
-              1
-            );
-        }
-
-        .reel-1.stopped .reel-inner {
-          animation:
-            reelStopMedium
-            0.95s
-            cubic-bezier(
-              0.12,
-              0.8,
-              0.18,
-              1
-            );
-        }
-
-        .reel-2.stopped .reel-inner {
-          animation:
-            reelStopSlow
-            1.35s
-            cubic-bezier(
-              0.12,
-              0.8,
-              0.18,
-              1
-            );
-        }
-
-        .reel.stopped .reel-inner {
-          animation-fill-mode:
-            forwards;
-        }
-
-        .reel-pokemon {
-          display: flex;
-
-          justify-content:
-            center;
-
-          align-items:
-            center;
-
-          flex:
-            0 0 115px;
-
+        .reel-track {
           width: 100%;
+          will-change: transform;
         }
 
-        .reel-pokemon img {
-          width: 110px;
-          height: 110px;
+        .reel-cell {
+          height: ${CELL_HEIGHT}px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-sizing: border-box;
+        }
 
+        .reel-cell img {
+          width: 78px;
+          height: 78px;
           object-fit: contain;
-
-          image-rendering:
-            pixelated;
-
-          transition:
-            filter 0.1s ease;
-        }
-
-        .reel.moving
-        .reel-pokemon img {
+          image-rendering: pixelated;
+          user-select: none;
+          pointer-events: none;
           filter:
-            blur(3px);
+            drop-shadow(0 5px 8px rgba(0,0,0,0.5));
         }
 
-        /* =================================================
-           CENTER WINDOW
-        ================================================= */
+        /*
+          Center selection window.
+        */
 
         .selection-window {
           position: absolute;
-
-          left: 8px;
-          right: 8px;
-
-          top: 50%;
-
-          height: 125px;
-
-          transform:
-            translateY(-50%);
-
-          z-index: 8;
-
-          pointer-events:
-            none;
-
-          border:
-            2px solid
-            var(--theme-primary);
-
-          border-radius: 15px;
-
+          z-index: 5;
+          left: 0;
+          right: 0;
+          top: ${CELL_HEIGHT}px;
+          height: ${CELL_HEIGHT}px;
+          pointer-events: none;
+          border-top: 2px solid var(--season-color);
+          border-bottom: 2px solid var(--season-color);
           box-shadow:
-            0 0 0 3px
-            rgba(3, 17, 31, 0.8),
-
-            0 0 30px
-            var(--theme-glow);
-
-          background:
+            0 0 20px
             color-mix(
               in srgb,
-              var(--theme-primary) 4%,
+              var(--season-color) 32%,
+              transparent
+            ),
+            inset 0 0 20px
+            color-mix(
+              in srgb,
+              var(--season-color) 9%,
               transparent
             );
         }
 
         .selection-arrow {
           position: absolute;
-
           top: 50%;
-
-          transform:
-            translateY(-50%);
-
-          color:
-            var(--theme-primary);
-
-          font-size: 18px;
-
-          text-shadow:
-            0 0 8px
-            var(--theme-primary);
+          transform: translateY(-50%);
+          z-index: 6;
+          color: var(--season-color);
+          font-size: 22px;
+          filter:
+            drop-shadow(
+              0 0 8px
+              color-mix(
+                in srgb,
+                var(--season-color) 65%,
+                transparent
+              )
+            );
         }
 
         .selection-arrow.left {
-          left: 5px;
+          left: 7px;
         }
 
         .selection-arrow.right {
-          right: 5px;
+          right: 7px;
         }
 
-        /* =================================================
-           REEL ANIMATIONS
-        ================================================= */
+        /* MACHINE CONTROLS */
 
-        @keyframes reelScroll {
-          0% {
-            transform:
-              translateY(-10%);
-          }
-
-          100% {
-            transform:
-              translateY(-65%);
-          }
-        }
-
-        @keyframes reelStopFast {
-          0% {
-            transform:
-              translateY(-18%);
-          }
-
-          70% {
-            transform:
-              translateY(-6%);
-          }
-
-          88% {
-            transform:
-              translateY(-8%);
-          }
-
-          100% {
-            transform:
-              translateY(-7%);
-          }
-        }
-
-        @keyframes reelStopMedium {
-          0% {
-            transform:
-              translateY(-25%);
-          }
-
-          65% {
-            transform:
-              translateY(-5%);
-          }
-
-          82% {
-            transform:
-              translateY(-9%);
-          }
-
-          100% {
-            transform:
-              translateY(-7%);
-          }
-        }
-
-        @keyframes reelStopSlow {
-          0% {
-            transform:
-              translateY(-32%);
-          }
-
-          55% {
-            transform:
-              translateY(-8%);
-          }
-
-          72% {
-            transform:
-              translateY(-4%);
-          }
-
-          87% {
-            transform:
-              translateY(-8%);
-          }
-
-          94% {
-            transform:
-              translateY(-6%);
-          }
-
-          100% {
-            transform:
-              translateY(-7%);
-          }
-        }
-
-        /* =================================================
-           MACHINE BOTTOM
-        ================================================= */
-
-        .machine-bottom {
+        .machine-controls {
           display: flex;
-
-          justify-content:
-            center;
-
-          align-items:
-            center;
-
-          flex-direction:
-            column;
-
-          gap: 17px;
-
-          padding-top: 25px;
+          justify-content: center;
+          margin-top: 18px;
         }
-
-        .machine-status {
-          display: flex;
-
-          align-items:
-            center;
-
-          gap: 8px;
-
-          color: #7792ac;
-
-          font-size: 11px;
-          font-weight: 900;
-
-          letter-spacing: 2px;
-        }
-
-        .status-light {
-          width: 7px;
-          height: 7px;
-
-          border-radius: 50%;
-        }
-
-        .ready-light {
-          background:
-            var(--theme-primary);
-
-          box-shadow:
-            0 0 9px
-            var(--theme-primary);
-        }
-
-        .spinning-light {
-          background:
-            var(--theme-secondary);
-
-          box-shadow:
-            0 0 9px
-            var(--theme-secondary);
-
-          animation:
-            pulse
-            0.3s
-            infinite
-            alternate;
-        }
-
-        .result-light {
-          background:
-            #86f4ad;
-
-          box-shadow:
-            0 0 9px
-            #86f4ad;
-        }
-
-        @keyframes pulse {
-          from {
-            opacity:
-              0.35;
-          }
-
-          to {
-            opacity:
-              1;
-          }
-        }
-
-        /* =================================================
-           SHUNT BUTTON
-        ================================================= */
 
         .shunt-button {
-          position: relative;
+          appearance: none;
+          min-width: 240px;
+          min-height: 52px;
+          border: 1px solid var(--season-color);
+          border-radius: 14px;
+          color: #071421;
+          background: var(--season-color);
+          font-size: 16px;
+          font-weight: 950;
+          letter-spacing: 0.08em;
+          cursor: pointer;
+          box-shadow:
+            0 0 22px
+            color-mix(
+              in srgb,
+              var(--season-color) 28%,
+              transparent
+            );
+          transition:
+            transform 0.15s ease,
+            filter 0.15s ease;
+        }
 
-          width: 260px;
-          height: 72px;
+        .shunt-button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          filter: brightness(1.08);
+        }
 
-          border:
-            2px solid
-            var(--theme-secondary);
+        .shunt-button:active:not(:disabled) {
+          transform: translateY(1px);
+        }
 
-          border-radius: 17px;
+        .shunt-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.55;
+        }
 
-          color: white;
+        /* RESULT */
 
+        .result {
+          width: min(760px, 100%);
+          margin: 30px auto 0;
+          padding: 28px 22px;
+          box-sizing: border-box;
+          text-align: center;
+          border-radius: 22px;
+          border: 1px solid
+            color-mix(
+              in srgb,
+              var(--season-color) 38%,
+              rgba(90, 171, 235, 0.4)
+            );
           background:
             linear-gradient(
               180deg,
-              color-mix(
-                in srgb,
-                var(--theme-secondary) 90%,
-                white
-              ),
-              color-mix(
-                in srgb,
-                var(--theme-secondary) 65%,
-                black
-              )
+              rgba(4, 28, 54, 0.92),
+              rgba(2, 17, 35, 0.97)
             );
-
-          font-size: 22px;
-          font-weight: 950;
-
-          letter-spacing: 3px;
-
-          cursor: pointer;
-
-          box-shadow:
-            0 8px 0
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 40%,
-              black
-            ),
-
-            0 0 25px
-            var(--theme-glow);
-
-          transition:
-            transform 0.08s ease,
-            box-shadow 0.08s ease;
-        }
-
-        .shunt-button:hover {
-          box-shadow:
-            0 8px 0
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 40%,
-              black
-            ),
-
-            0 0 35px
-            var(--theme-glow);
-        }
-
-        .shunt-button:active {
-          transform:
-            translateY(6px);
-
-          box-shadow:
-            0 2px 0
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 40%,
-              black
-            );
-        }
-
-        .shunt-button.disabled {
-          opacity:
-            0.65;
-
-          cursor:
-            not-allowed;
-        }
-
-        .no-results {
-          color:
-            #ff9b9b;
-
-          font-size: 12px;
-        }
-
-        /* =================================================
-           RESULT SECTION
-        ================================================= */
-
-        .result-section {
-          max-width: 900px;
-
-          margin:
-            55px auto 0;
-
-          text-align:
-            center;
         }
 
         .result-label {
-          color:
-            var(--theme-primary);
-
-          font-size: 15px;
-          font-weight: 950;
-
-          letter-spacing: 3px;
-
-          margin-bottom: 18px;
+          color: #83b7df;
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.24em;
+          text-transform: uppercase;
         }
-
-        /*
-         * Desktop intentionally uses the SAME
-         * vertical structure as mobile.
-         *
-         * This makes the hunt locations impossible
-         * to miss on PC.
-         */
-
-        .result-card {
-          display: block;
-
-          overflow: hidden;
-
-          text-align:
-            left;
-
-          border:
-            1px solid
-            color-mix(
-              in srgb,
-              var(--theme-primary) 45%,
-              transparent
-            );
-
-          border-radius: 24px;
-
-          background:
-            linear-gradient(
-              135deg,
-              color-mix(
-                in srgb,
-                var(--theme-secondary) 10%,
-                #071d34
-              ),
-              #051b31
-            );
-
-          box-shadow:
-            0 20px 55px
-            rgba(0, 0, 0, 0.28),
-
-            0 0 35px
-            var(--theme-glow);
-        }
-
-        /* =================================================
-           RESULT POKEMON
-        ================================================= */
 
         .result-pokemon {
-          position: relative;
-
-          display: flex;
-
-          justify-content:
-            center;
-
-          align-items:
-            center;
-
-          min-height: 430px;
-
-          overflow: hidden;
-
-          background:
-            radial-gradient(
-              circle,
-              var(--theme-glow),
-              transparent 65%
-            );
-        }
-
-        .result-pokemon::before {
-          content: "";
-
-          position: absolute;
-
-          width: 270px;
-          height: 270px;
-
-          border-radius: 50%;
-
-          background:
-            var(--theme-glow);
-
+          width: 180px;
+          height: 180px;
+          object-fit: contain;
+          image-rendering: pixelated;
+          margin: 4px auto 0;
           filter:
-            blur(18px);
-        }
-
-        .result-pokemon img {
-          position: relative;
-
-          z-index: 2;
-
-          width: 290px;
-          height: 290px;
-
-          object-fit:
-            contain;
-
-          image-rendering:
-            pixelated;
-
-          animation:
-            resultReveal
-            0.65s
-            cubic-bezier(
-              0.2,
-              1.4,
-              0.3,
-              1
+            drop-shadow(
+              0 0 20px
+              color-mix(
+                in srgb,
+                var(--season-color) 35%,
+                transparent
+              )
             );
-        }
-
-        @keyframes resultReveal {
-          0% {
-            opacity: 0;
-
-            transform:
-              scale(0.3)
-              rotate(-10deg);
-          }
-
-          70% {
-            transform:
-              scale(1.08)
-              rotate(2deg);
-          }
-
-          100% {
-            opacity: 1;
-
-            transform:
-              scale(1)
-              rotate(0);
-          }
-        }
-
-        .result-sparkles {
-          position: absolute;
-
-          top: 65px;
-          right: 45px;
-
-          z-index: 3;
-
-          color:
-            var(--theme-primary);
-
-          font-size: 28px;
-
-          animation:
-            sparkle
-            1.2s
-            infinite
-            alternate;
-        }
-
-        .result-sparkles.bottom {
-          top: auto;
-          right: auto;
-
-          bottom: 80px;
-          left: 55px;
-
-          font-size: 20px;
-        }
-
-        @keyframes sparkle {
-          from {
-            opacity:
-              0.3;
-
-            transform:
-              scale(0.8)
-              rotate(0);
-          }
-
-          to {
-            opacity:
-              1;
-
-            transform:
-              scale(1.2)
-              rotate(20deg);
-          }
-        }
-
-        /* =================================================
-           RESULT INFO
-        ================================================= */
-
-        .result-info {
-          padding:
-            35px 40px 40px;
         }
 
         .result-number {
-          color: #718aa4;
-
-          font-size: 13px;
-          font-weight: 900;
-
-          letter-spacing: 2px;
+          margin-top: 4px;
+          color: #8ec6f2;
+          font-size: 14px;
+          font-weight: 800;
         }
 
-        .result-info h2 {
-          margin:
-            5px 0 8px;
-
-          color: #f1e7ff;
-
-          font-size: 38px;
+        .result-name {
+          margin-top: 2px;
+          font-size: clamp(28px, 5vw, 48px);
           font-weight: 950;
-
-          letter-spacing: 2px;
+          font-style: italic;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
         }
 
         .result-description {
-          margin: 0;
-
-          color: #91a8bf;
-
-          font-size: 15px;
+          margin-top: 4px;
+          color: #8fb7d8;
+          font-size: 14px;
         }
 
-        .result-season {
-          display: inline-flex;
+        /* LOCATIONS */
 
-          align-items:
-            center;
-
-          gap: 7px;
-
-          margin-top: 15px;
-
-          padding:
-            7px 11px;
-
-          border:
-            1px solid
-            color-mix(
-              in srgb,
-              var(--theme-primary) 35%,
-              transparent
-            );
-
-          border-radius: 8px;
-
-          color:
-            var(--theme-primary);
-
-          background:
-            color-mix(
-              in srgb,
-              var(--theme-primary) 8%,
-              transparent
-            );
-
-          font-size: 10px;
-          font-weight: 950;
-
-          letter-spacing: 1px;
+        .locations {
+          margin-top: 24px;
+          text-align: left;
         }
-
-        .result-divider {
-          height: 1px;
-
-          margin:
-            25px 0;
-
-          background:
-            color-mix(
-              in srgb,
-              var(--theme-primary) 20%,
-              transparent
-            );
-        }
-
-        /* =================================================
-           LOCATIONS
-        ================================================= */
 
         .locations-title {
-          margin-bottom: 14px;
-
-          color:
-            var(--theme-primary);
-
-          font-size: 13px;
+          margin-bottom: 10px;
+          color: var(--season-color);
+          font-size: 12px;
           font-weight: 950;
-
-          letter-spacing: 1.5px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
         }
 
-        .locations-list {
+        .location-list {
           display: grid;
-
           grid-template-columns:
             repeat(2, minmax(0, 1fr));
-
-          gap: 10px;
-
-          max-height: 400px;
-
-          overflow-y:
-            auto;
-
-          padding-right: 5px;
-        }
-
-        .location-card {
-          padding:
-            13px 15px;
-
-          border:
-            1px solid
-            rgba(91, 139, 182, 0.3);
-
-          border-radius: 11px;
-
-          background:
-            rgba(4, 23, 44, 0.65);
-        }
-
-        .location-main {
-          display: flex;
-
-          justify-content:
-            space-between;
-
-          align-items:
-            center;
-
-          gap: 10px;
-        }
-
-        .location-main strong {
-          color:
-            #e5f2ff;
-
-          font-size: 14px;
-        }
-
-        .location-main span {
-          color:
-            var(--theme-primary);
-
-          font-size: 11px;
-          font-weight: 800;
-
-          white-space:
-            nowrap;
-        }
-
-        .location-details {
-          display: flex;
-
-          flex-wrap:
-            wrap;
-
           gap: 8px;
-
-          margin-top: 7px;
-
-          color: #7e98b2;
-
-          font-size: 10px;
         }
 
-        .location-details span {
-          padding:
-            4px 7px;
-
-          border-radius: 6px;
-
-          background:
-            rgba(39, 82, 120, 0.25);
-        }
-
-        .no-location-data {
-          padding:
-            18px;
-
-          border:
-            1px solid
-            rgba(255, 150, 150, 0.25);
-
+        .location-item {
+          padding: 11px 13px;
           border-radius: 10px;
-
-          color:
-            #d99a9a;
-
-          background:
-            rgba(100, 30, 30, 0.15);
-
-          text-align:
-            center;
-        }
-
-        /* =================================================
-           RESULT BUTTON
-        ================================================= */
-
-        .result-shunt-again {
-          margin-top: 25px;
-
-          padding:
-            13px 28px;
-
-          border:
-            1px solid
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 55%,
-              transparent
-            );
-
-          border-radius: 11px;
-
-          color: #eadbff;
-
-          background:
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 18%,
-              transparent
-            );
-
+          border: 1px solid rgba(93, 174, 235, 0.22);
+          background: rgba(4, 26, 49, 0.72);
+          color: #cce7fb;
           font-size: 14px;
-          font-weight: 900;
-
-          letter-spacing: 1px;
-
-          cursor: pointer;
+          font-weight: 700;
         }
 
-        .result-shunt-again:hover {
-          background:
-            color-mix(
-              in srgb,
-              var(--theme-secondary) 30%,
-              transparent
-            );
+        .empty-state {
+          margin-top: 16px;
+          color: #87aaca;
+          font-size: 14px;
         }
 
-        /* =================================================
-           HELP
-        ================================================= */
+        /* SEASONAL LOOKS */
 
-        .machine-help {
-          display: grid;
-
-          grid-template-columns:
-            repeat(3, 1fr);
-
-          gap: 15px;
-
-          max-width: 900px;
-
-          margin:
-            35px auto 0;
+        .season-spring .machine {
+          box-shadow:
+            0 18px 50px rgba(0, 0, 0, 0.32),
+            0 0 30px rgba(255, 143, 199, 0.08);
         }
 
-        .machine-help > div {
-          padding:
-            20px;
-
-          border:
-            1px solid
-            rgba(72, 135, 194, 0.28);
-
-          border-radius: 15px;
-
-          background:
-            rgba(4, 24, 47, 0.6);
-
-          text-align:
-            center;
+        .season-summer .machine {
+          box-shadow:
+            0 18px 50px rgba(0, 0, 0, 0.32),
+            0 0 30px rgba(255, 216, 77, 0.08);
         }
 
-        .machine-help span {
-          display: block;
-
-          margin-bottom: 8px;
-
-          font-size: 25px;
+        .season-autumn .machine {
+          box-shadow:
+            0 18px 50px rgba(0, 0, 0, 0.32),
+            0 0 30px rgba(255, 154, 69, 0.08);
         }
 
-        .machine-help strong {
-          display: block;
-
-          color: #c4ddf4;
-
-          font-size: 12px;
-
-          letter-spacing: 1px;
+        .season-winter .machine {
+          box-shadow:
+            0 18px 50px rgba(0, 0, 0, 0.32),
+            0 0 30px rgba(114, 221, 255, 0.08);
         }
 
-        .machine-help p {
-          margin:
-            8px 0 0;
+        /* MOBILE */
 
-          color: #7189a2;
-
-          font-size: 12px;
-
-          line-height: 1.5;
-        }
-
-        /* =================================================
-           MOBILE
-        ================================================= */
-
-        @media (max-width: 750px) {
-
+        @media (max-width: 700px) {
           .shunt-page {
             padding:
-              25px 13px 60px;
+              20px 12px 60px;
           }
 
-          .shunt-header h1 {
-            font-size: 34px;
-
-            letter-spacing: 2px;
+          .machine {
+            padding: 10px;
+            border-radius: 18px;
           }
 
-          .shunt-header p {
-            font-size: 14px;
+          .machine-frame {
+            gap: 6px;
+            padding: 6px;
+          }
+
+          .reel {
+            height: calc(${CELL_HEIGHT}px * 3);
+          }
+
+          .reel-cell img {
+            width: 65px;
+            height: 65px;
           }
 
           .season-filter {
-            padding:
-              15px 12px;
-          }
-
-          .season-buttons {
-            display: grid;
-
-            grid-template-columns:
-              repeat(2, 1fr);
-
             gap: 7px;
           }
 
           .season-button {
-            min-width: 0;
-
-            width: 100%;
-
-            padding:
-              10px 7px;
-
-            font-size: 11px;
-          }
-
-          .season-button:first-child {
-            grid-column:
-              1 / -1;
-          }
-
-          .season-description {
-            font-size: 10px;
-
-            line-height: 1.4;
-          }
-
-          .shunt-machine {
-            padding:
-              18px 13px 24px;
-
-            border-radius:
-              21px;
-          }
-
-          .reels {
-            height: 310px;
-
-            gap: 6px;
-
-            padding: 8px;
-          }
-
-          .reel-pokemon {
-            flex-basis:
-              90px;
-          }
-
-          .reel-pokemon img {
-            width: 82px;
-            height: 82px;
-          }
-
-          .selection-window {
-            left: 4px;
-            right: 4px;
-
-            height: 95px;
+            padding: 0 12px;
+            min-height: 39px;
+            font-size: 12px;
           }
 
           .shunt-button {
-            width: 220px;
-            height: 64px;
-
-            font-size: 18px;
+            width: 100%;
+            min-width: 0;
           }
 
-          .result-card {
-            display:
-              block;
+          .result {
+            padding:
+              24px 16px;
           }
 
           .result-pokemon {
-            min-height:
-              310px;
+            width: 155px;
+            height: 155px;
           }
 
-          .result-pokemon img {
-            width: 220px;
-            height: 220px;
-          }
-
-          .result-info {
-            padding:
-              28px 22px;
-          }
-
-          .result-info h2 {
-            font-size: 27px;
-          }
-
-          .locations-list {
-            grid-template-columns:
-              1fr;
-
-            max-height:
-              none;
-          }
-
-          .location-main {
-            align-items:
-              flex-start;
-
-            flex-direction:
-              column;
-
-            gap: 4px;
-          }
-
-          .machine-help {
-            grid-template-columns:
-              1fr;
+          .location-list {
+            grid-template-columns: 1fr;
           }
         }
 
+        @media (max-width: 430px) {
+          .reel {
+            height: calc(${CELL_HEIGHT}px * 3);
+          }
+
+          .reel-cell img {
+            width: 58px;
+            height: 58px;
+          }
+
+          .selection-arrow {
+            font-size: 18px;
+          }
+
+          .result-pokemon {
+            width: 140px;
+            height: 140px;
+          }
+        }
       `}</style>
+
+      <div className="shunt-content">
+
+        {/* HEADER */}
+
+        <header className="shunt-header">
+          <h1 className="shunt-title">
+            Shunt Machine
+          </h1>
+
+          <p className="shunt-subtitle">
+            Let Fate choose your next shiny hunt.
+            Every result has a huntable location.
+          </p>
+        </header>
+
+        {/* SEASON FILTER */}
+
+        <div
+          className="season-filter"
+          aria-label="Season filter"
+        >
+          {SEASONS.map((seasonOption) => {
+            const active =
+              season === seasonOption;
+
+            return (
+              <button
+                key={seasonOption}
+                type="button"
+                className={`season-button ${
+                  active ? "active" : ""
+                }`}
+                onClick={() =>
+                  changeSeason(seasonOption)
+                }
+                disabled={spinning}
+                style={
+                  {
+                    "--season-color":
+                      SEASON_COLORS[seasonOption],
+                  } as React.CSSProperties
+                }
+              >
+                <span>
+                  {SEASON_ICONS[seasonOption]}
+                </span>{" "}
+                {seasonOption}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* MACHINE */}
+
+        <section
+          className="machine"
+          aria-label="Shunt Machine"
+        >
+          <div className="machine-frame">
+
+            {[0, 1, 2].map((reelIndex) => {
+              const reel =
+                reels[reelIndex] ?? [];
+
+              const index =
+                reelIndexes[reelIndex] ??
+                START_INDEX;
+
+              const duration =
+                REEL_DURATIONS[reelIndex];
+
+              const translate =
+                CELL_HEIGHT -
+                index * CELL_HEIGHT;
+
+              return (
+                <div
+                  className="reel"
+                  key={reelIndex}
+                >
+                  <div
+                    className="reel-track"
+                    style={{
+                      transform:
+                        `translateY(${translate}px)`,
+
+                      transition: spinning
+                        ? `
+                          transform
+                          ${duration}ms
+                          cubic-bezier(
+                            0.12,
+                            0.78,
+                            0.22,
+                            1
+                          )
+                        `
+                        : "none",
+                    }}
+                  >
+                    {reel.map(
+                      (pokemon, index) => (
+                        <div
+                          className="reel-cell"
+                          key={`${reelIndex}-${index}`}
+                        >
+                          <img
+                            src={getShinySprite(
+                              pokemon.id
+                            )}
+                            alt={pokemon.name}
+                            draggable={false}
+                          />
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {reelIndex === 0 && (
+                    <span className="selection-arrow left">
+                      ▶
+                    </span>
+                  )}
+
+                  {reelIndex === 2 && (
+                    <span className="selection-arrow right">
+                      ◀
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="selection-window" />
+          </div>
+
+          {/* CONTROLS */}
+
+          <div className="machine-controls">
+            <button
+              type="button"
+              className="shunt-button"
+              onClick={shuntAgain}
+              disabled={
+                spinning ||
+                eligiblePool.length === 0
+              }
+            >
+              {spinning
+                ? "FATE IS SPINNING..."
+                : "🎰 SHUNT AGAIN"}
+            </button>
+          </div>
+
+          {eligiblePool.length === 0 && (
+            <div className="empty-state">
+              No Pokémon with hunt locations were found
+              for this season.
+            </div>
+          )}
+        </section>
+
+        {/* RESULT */}
+
+        {selected && (
+          <section
+            className="result"
+            aria-live="polite"
+          >
+            <div className="result-label">
+              ✦ Fate Has Chosen ✦
+            </div>
+
+            {/* ANIMATED SHINY GIF */}
+
+            <img
+              className="result-pokemon"
+              src={getShinyGif(selected.id)}
+              alt={`Shiny ${selected.name}`}
+              draggable={false}
+            />
+
+            <div className="result-number">
+              #{String(selected.id).padStart(3, "0")}
+            </div>
+
+            <div className="result-name">
+              {selected.name}
+            </div>
+
+            <div className="result-description">
+              Your next shiny hunt.
+            </div>
+
+            {/* LOCATIONS */}
+
+            {selectedLocations.length > 0 && (
+              <div className="locations">
+                <div className="locations-title">
+                  Hunt Locations
+                </div>
+
+                <div className="location-list">
+                  {selectedLocations.map(
+                    (location, index) => (
+                      <div
+                        className="location-item"
+                        key={`${location}-${index}`}
+                      >
+                        📍 {location}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
     </div>
   );
 }
