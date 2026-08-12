@@ -67,6 +67,9 @@ import Recruitment from "./pages/Recruitment";
 import AdminRecruitment from "./pages/AdminRecruitment";
 
 import HordeHunter from "./pages/HordeHunter";
+import ShuntMachine from "./pages/ShuntMachine";
+
+import Tools from "./pages/Tools";
 
 
 type ProfileData = {
@@ -368,12 +371,18 @@ function canManageSite(
       ];
     }
 
-    // GUIDES
+    // Tools
     if (
+      path.startsWith("/tools") ||
       path.startsWith("/guides") ||
-      path.startsWith("/horde-hunter")
+      path.startsWith("/horde-hunter") ||
+      path.startsWith("/shunt-machine")
     ) {
       return [
+        {
+          label: "Tools",
+          path: "/tools",
+        },
         {
           label: "Guides",
           path: "/guides",
@@ -381,6 +390,10 @@ function canManageSite(
         {
           label: "Horde Hunter",
           path: "/horde-hunter",
+        },
+        {
+          label: "Shunt Machine",
+          path: "/shunt-machine",
         },
       ];
     }
@@ -486,7 +499,7 @@ function canManageSite(
       Raids
     </NavLink>
 
-    <NavLink to="/guides">
+    <NavLink to="/tools">
       Tools
     </NavLink>
 
@@ -635,18 +648,12 @@ function canManageSite(
     </Link>
 
     <Link
-      to="/guides"
+      to="/tools"
       onClick={() => setMobileOpen(false)}
     >
-      Guides
+      Tools
     </Link>
 
-    <Link
-      to="/horde-hunter"
-      onClick={() => setMobileOpen(false)}
-    >
-      Horde Hunter
-    </Link>
 
     {canManageSite(profile?.role) && (
       <Link
@@ -892,6 +899,14 @@ function canManageSite(
 <Route
   path="/horde-hunter"
   element={<HordeHunter />}
+/>
+<Route
+  path="/shunt-machine"
+  element={<ShuntMachine />}
+/>
+<Route
+  path="/tools"
+  element={<Tools />}
 />
           <Route
             path="/profile"
