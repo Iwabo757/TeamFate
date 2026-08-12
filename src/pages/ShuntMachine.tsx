@@ -49,12 +49,12 @@ const SEASON_COLORS: Record<Season, string> = {
 
 const CELL_HEIGHT = 112;
 const START_INDEX = 2;
-const STOP_INDEX = 18;
+const STOP_INDEX = 46;
 
 const REEL_DURATIONS = [
-  1050,
-  1650,
-  2350,
+  1350,
+  2100,
+  3000,
 ];
 
 const allMonsters = monsters as Monster[];
@@ -621,7 +621,7 @@ export default function ShuntMachine() {
       setSelected(target);
 
       playClickSound();
-    }, REEL_DURATIONS[2] + 150);
+    }, REEL_DURATIONS[2] + 120);
   }
 
   /* -----------------------------------------------------
@@ -667,15 +667,7 @@ export default function ShuntMachine() {
 
         .shunt-header {
           text-align: center;
-          margin-bottom: 22px;
-        }
-
-        .shunt-title {
-          margin: 0;
-          font-size: clamp(28px, 4vw, 48px);
-          font-weight: 900;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
+          margin-bottom: 18px;
         }
 
         .shunt-subtitle {
@@ -764,6 +756,17 @@ export default function ShuntMachine() {
             inset 0 0 35px rgba(0, 0, 0, 0.32);
         }
 
+        .machine-name {
+          text-align: center;
+          margin: 0 0 12px;
+          color: var(--season-color);
+          font-size: 18px;
+          font-weight: 950;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          text-shadow: 0 0 14px color-mix(in srgb, var(--season-color) 35%, transparent);
+        }
+
         .machine-frame {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -822,6 +825,11 @@ export default function ShuntMachine() {
         .reel-track {
           width: 100%;
           will-change: transform;
+        }
+
+        .reel-track.spinning .reel-cell img {
+          filter: blur(1.4px) drop-shadow(0 5px 8px rgba(0,0,0,0.5));
+          transform: scaleY(1.04);
         }
 
         .reel-cell {
@@ -1092,6 +1100,11 @@ export default function ShuntMachine() {
             border-radius: 18px;
           }
 
+          .machine-name {
+            font-size: 15px;
+            margin-bottom: 8px;
+          }
+
           .machine-frame {
             gap: 6px;
             padding: 6px;
@@ -1162,10 +1175,6 @@ export default function ShuntMachine() {
         {/* HEADER */}
 
         <header className="shunt-header">
-          <h1 className="shunt-title">
-            Shunt Machine
-          </h1>
-
           <p className="shunt-subtitle">
             Let Fate choose your next shiny hunt.
             Every result has a huntable location.
@@ -1215,6 +1224,10 @@ export default function ShuntMachine() {
           className="machine"
           aria-label="Shunt Machine"
         >
+          <div className="machine-name">
+            SHUNT MACHINE
+          </div>
+
           <div className="machine-frame">
 
             {[0, 1, 2].map((reelIndex) => {
@@ -1238,7 +1251,7 @@ export default function ShuntMachine() {
                   key={reelIndex}
                 >
                   <div
-                    className="reel-track"
+                    className={`reel-track ${spinning ? "spinning" : ""}`}
                     style={{
                       transform:
                         `translateY(${translate}px)`,
