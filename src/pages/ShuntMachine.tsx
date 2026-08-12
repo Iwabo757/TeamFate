@@ -1,344 +1,402 @@
-import { useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import monsters from "../data/monsters.json";
 
-type MonsterLocation = {
-  form?: number;
-  type?: string;
+/* =========================================================
+   TYPES
+========================================================= */
 
-  region_id?: number;
-  region_name?: string;
-
-  location_id?: number;
-  location_name?: string;
-  location_name_full?: string;
-
-  min_level?: number;
-  max_level?: number;
-
-  season?: string;
-
-  is_horde_3x?: boolean;
-  is_horde_5x?: boolean;
-
-  rarity_flags?: number;
-  rarity_morning?: string;
-  rarity_day?: string;
-  rarity_night?: string;
-};
+type Season =
+  | "Spring"
+  | "Summer"
+  | "Autumn"
+  | "Winter";
 
 type Monster = {
-  id: number;
-  name: string;
+  id?: number;
+  name?: string;
+  species?: string;
+
+  sprite?: string;
+  shinySprite?: string;
+  shiny_sprite?: string;
+
   locations?: MonsterLocation[];
 };
 
-const pokemonList = monsters as Monster[];
+type MonsterLocation = {
+  season?: Season | string;
+
+  region?: string;
+
+  location?: string;
+  location_name?: string;
+  location_name_full?: string;
+
+  route?: string;
+
+  method?: string;
+
+  levels?: string | number;
+
+  morning?: string | number;
+  day?: string | number;
+  night?: string | number;
+
+  [key: string]: unknown;
+};
+
+type ReelMonster = Monster & {
+  _key: string;
+};
 
 /* =========================================================
-   SPRITES
+   CONSTANTS
 ========================================================= */
 
-function getSprite(id: number): string {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-}
+const SEASONS: Season[] = [
+  "Spring",
+  "Summer",
+  "Autumn",
+  "Winter",
+];
 
-function getShinySprite(id: number): string {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
-}
+const SEASON_ICONS: Record<Season, string> = {
+  Spring: "🌸",
+  Summer: "☀️",
+  Autumn: "🍂",
+  Winter: "❄️",
+};
+
+const REEL_LENGTH = 9;
+
+const SPIN_TIME = 2600;
 
 /* =========================================================
-   LOCATION HELPERS
+   HELPERS
 ========================================================= */
 
-function hasValidLocation(pokemon: Monster): boolean {
+function getMonsterName(monster: Monster): string {
+  return (
+    monster.name ||
+    monster.species ||
+    "Unknown Pokémon"
+  );
+}
+
+function getMonsterId(monster: Monster): number | null {
   if (
-    !Array.isArray(pokemon.locations) ||
-    pokemon.locations.length === 0
+    typeof monster.id === "number" &&
+    Number.isFinite(monster.id)
   ) {
-    return false;
+    return monster.id;
   }
 
-  return pokemon.locations.some((location) => {
-    return Boolean(
-      location.location_name ||
-        location.location_name_full
-    );
-  });
+  return null;
 }
 
-function getLocations(pokemon: Monster): MonsterLocation[] {
-  if (!Array.isArray(pokemon.locations)) {
+function getShinySprite(monster: Monster): string {
+  if (monster.shinySprite) {
+    return monster.shinySprite;
+  }
+
+  if (monster.shiny_sprite) {
+    return monster.shiny_sprite;
+  }
+
+  const id = getMonsterId(monster);
+
+  if (id) {
+    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${id}.png`;
+  }
+
+  if (monster.sprite) {
+    return monster.sprite;
+  }
+
+  return "";
+}
+
+function getLocationName(
+  location: MonsterLocation
+): string {
+  return (
+    location.location_name ||
+    location.location_name_full ||
+    location.location ||
+    location.route ||
+    "Unknown Location"
+  );
+}
+
+function getLocationRegion(
+  location: MonsterLocation
+): string {
+  return (
+    location.region ||
+    "Unknown Region"
+  );
+}
+
+function getLocationSeason(
+  location: MonsterLocation
+): string {
+  return String(
+    location.season || ""
+  ).trim();
+}
+
+function normalizeMonsters(): Monster[] {
+  if (!Array.isArray(monsters)) {
     return [];
   }
 
-  const seen = new Set<string>();
-
-  return pokemon.locations.filter((location) => {
-    const name =
-      location.location_name_full ||
-      location.location_name;
-
-    if (!name) {
-      return false;
-    }
-
-    const key = [
-      name,
-      location.region_name || "",
-      location.season || "",
-      location.type || "",
-    ].join("|");
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-    return true;
-  });
+  return monsters as Monster[];
 }
 
-/* =========================================================
-   RANDOM HELPERS
-========================================================= */
+function getSeasonLocations(
+  monster: Monster,
+  season: Season
+): MonsterLocation[] {
+  if (!Array.isArray(monster.locations)) {
+    return [];
+  }
 
-function randomPokemon(
-  pool: Monster[]
-): Monster | null {
-  if (pool.length === 0) {
+  return monster.locations.filter(
+    (location) =>
+      getLocationSeason(location).toLowerCase() ===
+      season.toLowerCase() &&
+      Boolean(getLocationName(location))
+  );
+}
+
+function hasSeasonLocation(
+  monster: Monster,
+  season: Season
+): boolean {
+  return (
+    getSeasonLocations(
+      monster,
+      season
+    ).length > 0
+  );
+}
+
+function randomItem<T>(
+  array: T[]
+): T | null {
+  if (!array.length) {
     return null;
   }
 
-  return pool[
-    Math.floor(Math.random() * pool.length)
+  return array[
+    Math.floor(
+      Math.random() * array.length
+    )
   ];
 }
 
-function randomPool(
+function buildReel(
   pool: Monster[],
-  amount: number
-): Monster[] {
-  if (pool.length === 0) {
+  length: number
+): ReelMonster[] {
+  if (!pool.length) {
     return [];
   }
 
-  const result: Monster[] = [];
+  return Array.from(
+    { length },
+    (_, index) => {
+      const monster =
+        pool[
+          Math.floor(
+            Math.random() * pool.length
+          )
+        ];
 
-  for (let i = 0; i < amount; i++) {
-    const pokemon = randomPokemon(pool);
-
-    if (pokemon) {
-      result.push(pokemon);
+      return {
+        ...monster,
+        _key: `${getMonsterName(
+          monster
+        )}-${index}-${Math.random()}`,
+      };
     }
-  }
-
-  return result;
+  );
 }
 
 /* =========================================================
-   PAGE
+   COMPONENT
 ========================================================= */
 
 export default function ShuntMachine() {
-  /*
-   * Only Pokémon with a real hunt location
-   * are allowed into the machine.
-   */
+  /* -------------------------------------------------------
+     DATA
+  ------------------------------------------------------- */
+
+  const allMonsters = useMemo(
+    () => normalizeMonsters(),
+    []
+  );
+
+  /* -------------------------------------------------------
+     SEASON
+  ------------------------------------------------------- */
+
+  const [
+    selectedSeason,
+    setSelectedSeason,
+  ] = useState<Season>("Spring");
+
+  /* -------------------------------------------------------
+     SHUNTABLE POOL
+  ------------------------------------------------------- */
+
   const shuntablePokemon = useMemo(() => {
-    return pokemonList.filter(hasValidLocation);
-  }, []);
+    return allMonsters.filter(
+      (monster) =>
+        hasSeasonLocation(
+          monster,
+          selectedSeason
+        )
+    );
+  }, [
+    allMonsters,
+    selectedSeason,
+  ]);
 
-  const [spinning, setSpinning] =
-    useState(false);
+  /* -------------------------------------------------------
+     REELS
+  ------------------------------------------------------- */
 
-  const [result, setResult] =
-    useState<Monster | null>(null);
+  const [
+    reelPokemon,
+    setReelPokemon,
+  ] = useState<ReelMonster[][]>([
+    [],
+    [],
+    [],
+  ]);
 
-  const [reelPokemon, setReelPokemon] =
-    useState<Monster[][]>(() => {
-      const initial = randomPool(
+  /* -------------------------------------------------------
+     MACHINE STATE
+  ------------------------------------------------------- */
+
+  const [
+    spinning,
+    setSpinning,
+  ] = useState(false);
+
+  const [
+    result,
+    setResult,
+  ] = useState<Monster | null>(null);
+
+  const [
+    showReveal,
+    setShowReveal,
+  ] = useState(false);
+
+  const [
+    reelStopped,
+    setReelStopped,
+  ] = useState<boolean[]>([
+    true,
+    true,
+    true,
+  ]);
+
+  const spinTimeout =
+    useRef<ReturnType<
+      typeof setTimeout
+    > | null>(null);
+
+  /* -------------------------------------------------------
+     BUILD INITIAL REELS
+  ------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!shuntablePokemon.length) {
+      setReelPokemon([
+        [],
+        [],
+        [],
+      ]);
+
+      setResult(null);
+
+      return;
+    }
+
+    setReelPokemon([
+      buildReel(
         shuntablePokemon,
-        9
-      );
+        REEL_LENGTH
+      ),
+      buildReel(
+        shuntablePokemon,
+        REEL_LENGTH
+      ),
+      buildReel(
+        shuntablePokemon,
+        REEL_LENGTH
+      ),
+    ]);
 
-      return initial.reduce(
-        (all, pokemon, index) => {
-          all[index % 3].push(pokemon);
-          return all;
-        },
-        [[], [], []] as Monster[][]
-      );
-    });
+    setResult(null);
+    setShowReveal(false);
 
-  const [reelStopped, setReelStopped] =
-    useState<boolean[]>([
+    setReelStopped([
       true,
       true,
       true,
     ]);
+  }, [
+    shuntablePokemon,
+  ]);
 
-  const audioContext =
-    useRef<AudioContext | null>(null);
+  /* -------------------------------------------------------
+     CLEANUP
+  ------------------------------------------------------- */
 
-  /* =======================================================
-     AUDIO
-  ======================================================= */
-
-  function getAudioContext(): AudioContext | null {
-    try {
-      const AudioCtx =
-        window.AudioContext ||
-        (
-          window as typeof window & {
-            webkitAudioContext?: typeof AudioContext;
-          }
-        ).webkitAudioContext;
-
-      if (!AudioCtx) {
-        return null;
+  useEffect(() => {
+    return () => {
+      if (spinTimeout.current) {
+        clearTimeout(
+          spinTimeout.current
+        );
       }
+    };
+  }, []);
 
-      if (!audioContext.current) {
-        audioContext.current =
-          new AudioCtx();
-      }
-
-      return audioContext.current;
-    } catch {
-      return null;
-    }
-  }
-
-  function playClickSound() {
-    try {
-      const context =
-        getAudioContext();
-
-      if (!context) {
-        return;
-      }
-
-      const oscillator =
-        context.createOscillator();
-
-      const gain =
-        context.createGain();
-
-      oscillator.type = "square";
-
-      oscillator.frequency.setValueAtTime(
-        140,
-        context.currentTime
-      );
-
-      oscillator.frequency.exponentialRampToValueAtTime(
-        60,
-        context.currentTime + 0.08
-      );
-
-      gain.gain.setValueAtTime(
-        0.12,
-        context.currentTime
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        context.currentTime + 0.08
-      );
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.start();
-      oscillator.stop(
-        context.currentTime + 0.08
-      );
-    } catch {
-      // Audio is optional.
-    }
-  }
-
-  function playStopSound() {
-    try {
-      const context =
-        audioContext.current;
-
-      if (!context) {
-        return;
-      }
-
-      const oscillator =
-        context.createOscillator();
-
-      const gain =
-        context.createGain();
-
-      oscillator.type = "sine";
-
-      oscillator.frequency.setValueAtTime(
-        320,
-        context.currentTime
-      );
-
-      oscillator.frequency.exponentialRampToValueAtTime(
-        180,
-        context.currentTime + 0.12
-      );
-
-      gain.gain.setValueAtTime(
-        0.14,
-        context.currentTime
-      );
-
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        context.currentTime + 0.12
-      );
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-
-      oscillator.start();
-      oscillator.stop(
-        context.currentTime + 0.12
-      );
-    } catch {
-      // Audio is optional.
-    }
-  }
-
-  /* =======================================================
-     REEL BUILDER
-  ======================================================= */
-
-  function buildReel(
-    selected: Monster
-  ): Monster[] {
-    const reel = randomPool(
-      shuntablePokemon,
-      18
-    );
-
-    reel.push(selected);
-
-    return reel;
-  }
-
-  /* =======================================================
+  /* =========================================================
      SHUNT
-  ======================================================= */
+  ========================================================= */
 
   function shunt() {
-    if (
-      spinning ||
-      shuntablePokemon.length === 0
-    ) {
+    if (spinning) {
       return;
     }
 
-    playClickSound();
+    if (!shuntablePokemon.length) {
+      return;
+    }
+
+    const selected =
+      randomItem(
+        shuntablePokemon
+      );
+
+    if (!selected) {
+      return;
+    }
 
     setResult(null);
+    setShowReveal(false);
 
     setSpinning(true);
 
@@ -349,91 +407,133 @@ export default function ShuntMachine() {
     ]);
 
     /*
-     * Pick ONE Pokémon.
+     * Create spinning reels.
      *
-     * All three reels eventually stop
-     * on this same Pokémon.
+     * The selected Pokémon is inserted into
+     * the center position of every reel.
      */
-    const selected =
-      randomPokemon(
-        shuntablePokemon
+    const newReels =
+      Array.from(
+        { length: 3 },
+        () => {
+          const reel =
+            buildReel(
+              shuntablePokemon,
+              REEL_LENGTH
+            );
+
+          /*
+           * Center index.
+           *
+           * With 9 entries:
+           * 0 1 2 3 [4] 5 6 7 8
+           */
+          reel[4] = {
+            ...selected,
+            _key: `winner-${Math.random()}`,
+          };
+
+          return reel;
+        }
       );
 
-    if (!selected) {
-      setSpinning(false);
+    setReelPokemon(
+      newReels
+    );
+
+    /*
+     * Stop reels one after another.
+     */
+    setTimeout(() => {
+      setReelStopped([
+        false,
+        true,
+        true,
+      ]);
+    }, 900);
+
+    setTimeout(() => {
+      setReelStopped([
+        false,
+        false,
+        true,
+      ]);
+    }, 1450);
+
+    setTimeout(() => {
+      setReelStopped([
+        true,
+        true,
+        true,
+      ]);
+    }, SPIN_TIME - 300);
+
+    /*
+     * Final result.
+     */
+    spinTimeout.current =
+      setTimeout(() => {
+        setSpinning(false);
+
+        setReelStopped([
+          true,
+          true,
+          true,
+        ]);
+
+        setResult(
+          selected
+        );
+
+        /*
+         * Small delay before the reveal
+         * for the machine feel.
+         */
+        setTimeout(() => {
+          setShowReveal(true);
+        }, 200);
+      }, SPIN_TIME);
+  }
+
+  /* =========================================================
+     SEASON CHANGE
+  ========================================================= */
+
+  function changeSeason(
+    season: Season
+  ) {
+    if (spinning) {
       return;
     }
 
-    setReelPokemon([
-      buildReel(selected),
-      buildReel(selected),
-      buildReel(selected),
-    ]);
-
-    /*
-     * Each reel stops at a different time,
-     * creating the mechanical slowdown effect.
-     */
-    const reelTimes = [
-      1800,
-      2450,
-      3100,
-    ];
-
-    reelTimes.forEach(
-      (delay, index) => {
-        window.setTimeout(() => {
-          playStopSound();
-
-          setReelStopped(
-            (previous) => {
-              const next = [
-                ...previous,
-              ];
-
-              next[index] = true;
-
-              return next;
-            }
-          );
-
-          /*
-           * Reveal the final shiny only after
-           * the third reel stops.
-           */
-          if (index === 2) {
-            window.setTimeout(() => {
-              setResult(selected);
-              setSpinning(false);
-            }, 150);
-          }
-        }, delay);
-      }
+    setSelectedSeason(
+      season
     );
+
+    setResult(null);
+    setShowReveal(false);
+
+    setReelStopped([
+      true,
+      true,
+      true,
+    ]);
   }
 
-  /* =======================================================
-     RESULT LOCATIONS
-  ======================================================= */
-
-  const resultLocations =
-    result
-      ? getLocations(result)
-      : [];
-
-  /* =======================================================
+  /* =========================================================
      RENDER
-  ======================================================= */
+  ========================================================= */
 
   return (
     <div className="shunt-page">
 
-      {/* ===================================================
+      {/* =====================================================
           HEADER
-      =================================================== */}
+      ===================================================== */}
 
       <div className="shunt-header">
-        <div className="shunt-title-icon">
+
+        <div className="shunt-header-icon">
           ✨
         </div>
 
@@ -445,39 +545,119 @@ export default function ShuntMachine() {
           Don't know what to shunt next?
           Let fate decide.
         </p>
+
       </div>
 
-      {/* ===================================================
+      {/* =====================================================
+          SEASON FILTER
+      ===================================================== */}
+
+      <div className="season-filter">
+
+        <div className="season-filter-label">
+          HUNT SEASON
+        </div>
+
+        <div className="season-buttons">
+
+          {SEASONS.map(
+            (season) => (
+              <button
+                key={season}
+                type="button"
+                disabled={spinning}
+                className={
+                  selectedSeason ===
+                  season
+                    ? "season-button active"
+                    : "season-button"
+                }
+                onClick={() =>
+                  changeSeason(
+                    season
+                  )
+                }
+              >
+
+                <span className="season-icon">
+                  {
+                    SEASON_ICONS[
+                      season
+                    ]
+                  }
+                </span>
+
+                <span>
+                  {season}
+                </span>
+
+              </button>
+            )
+          )}
+
+        </div>
+
+      </div>
+
+      {/* =====================================================
+          CURRENT SEASON
+      ===================================================== */}
+
+      <div className="current-season">
+
+        {
+          SEASON_ICONS[
+            selectedSeason
+          ]
+        }
+
+        <span>
+          {selectedSeason} Hunts
+        </span>
+
+        <strong>
+          {shuntablePokemon.length}
+        </strong>
+
+        <span>
+          available
+        </span>
+
+      </div>
+
+      {/* =====================================================
           MACHINE
-      =================================================== */}
+      ===================================================== */}
 
-      <div className="shunt-machine">
+      <div
+        className={
+          spinning
+            ? "machine spinning"
+            : "machine"
+        }
+      >
 
-        <div className="machine-top-light">
-          <span />
-          <span />
-          <span />
-          <span />
-          <span />
+        <div className="machine-top">
+
+          <div className="machine-title">
+            FATE'S
+          </div>
+
+          <div className="machine-title-large">
+            SHUNT
+          </div>
+
         </div>
 
-        <div className="machine-title">
-          <span>✦</span>
-          NEXT SHUNT
-          <span>✦</span>
-        </div>
+        {/* ---------------------------------------------------
+            REELS
+        --------------------------------------------------- */}
 
-        {/* REELS */}
+        <div className="reels">
 
-        <div
-          className={
-            spinning
-              ? "reels spinning"
-              : "reels"
-          }
-        >
           {reelPokemon.map(
             (reel, reelIndex) => {
+
               const stopped =
                 reelStopped[
                   reelIndex
@@ -485,35 +665,69 @@ export default function ShuntMachine() {
 
               return (
                 <div
-                  key={reelIndex}
+                  key={
+                    `reel-${reelIndex}`
+                  }
                   className={
                     stopped
                       ? "reel stopped"
-                      : "reel moving"
+                      : "reel"
                   }
                 >
-                  <div className="reel-inner">
+
+                  <div className="reel-window">
+
                     {reel.map(
                       (
                         pokemon,
-                        pokemonIndex
-                      ) => (
-                        <div
-                          key={`${reelIndex}-${pokemon.id}-${pokemonIndex}`}
-                          className="reel-pokemon"
-                        >
-                          <img
-                            src={getSprite(
-                              pokemon.id
-                            )}
-                            alt={
-                              pokemon.name
+                        index
+                      ) => {
+
+                        const sprite =
+                          getShinySprite(
+                            pokemon
+                          );
+
+                        const isCenter =
+                          index === 4;
+
+                        return (
+                          <div
+                            key={
+                              pokemon._key
                             }
-                          />
-                        </div>
-                      )
+                            className={
+                              isCenter
+                                ? "reel-item center"
+                                : "reel-item"
+                            }
+                          >
+
+                            {sprite ? (
+                              <img
+                                src={
+                                  sprite
+                                }
+                                alt={getMonsterName(
+                                  pokemon
+                                )}
+                                draggable={
+                                  false
+                                }
+                              />
+                            ) : (
+                              <div className="missing-sprite">
+                                ?
+                              </div>
+                            )}
+
+                          </div>
+                        );
+                      }
                     )}
+
                   </div>
+
                 </div>
               );
             }
@@ -530,1046 +744,1421 @@ export default function ShuntMachine() {
               ◀
             </div>
           </div>
-        </div>
-
-        {/* MACHINE CONTROLS */}
-
-        <div className="machine-bottom">
-
-          <div className="machine-status">
-            {spinning ? (
-              <>
-                <span className="status-light spinning-light" />
-                SEARCHING...
-              </>
-            ) : result ? (
-              <>
-                <span className="status-light result-light" />
-                SHUNT FOUND
-              </>
-            ) : (
-              <>
-                <span className="status-light ready-light" />
-                READY
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className={
-              spinning
-                ? "shunt-button disabled"
-                : "shunt-button"
-            }
-            onClick={shunt}
-            disabled={spinning}
-          >
-            <span className="button-top" />
-
-            <span className="button-text">
-              {result
-                ? "SHUNT AGAIN"
-                : "SHUNT"}
-            </span>
-          </button>
 
         </div>
+
+        {/* ---------------------------------------------------
+            MACHINE BUTTON
+        --------------------------------------------------- */}
+
+        <button
+          type="button"
+          className={
+            spinning
+              ? "shunt-button spinning-button"
+              : "shunt-button"
+          }
+          disabled={
+            spinning ||
+            !shuntablePokemon.length
+          }
+          onClick={
+            shunt
+          }
+        >
+
+          {spinning
+            ? "SHUNTING..."
+            : result
+              ? "SHUNT AGAIN"
+              : "SHUNT"}
+
+        </button>
+
       </div>
 
-      {/* ===================================================
-          RESULT
-      =================================================== */}
+      {/* =====================================================
+          NO DATA
+      ===================================================== */}
 
-      {result && !spinning && (
+      {!shuntablePokemon.length && (
+        <div className="no-results">
+
+          <div className="no-results-icon">
+            ⚠️
+          </div>
+
+          <h2>
+            NO HUNTS AVAILABLE
+          </h2>
+
+          <p>
+            No Pokémon in the database have
+            a location for{" "}
+            <strong>
+              {selectedSeason}
+            </strong>
+            .
+          </p>
+
+        </div>
+      )}
+
+      {/* =====================================================
+          RESULT
+      ===================================================== */}
+
+      {result && showReveal && (
         <div className="result-section">
 
           <div className="result-label">
-            ✦ YOUR NEXT SHUNT ✦
+            FATE HAS CHOSEN
           </div>
 
           <div className="result-card">
 
-            {/* SHINY SPRITE */}
+            <div className="result-number">
 
-            <div className="result-pokemon">
-
-              <div className="result-sparkles">
-                ✦
-              </div>
-
-              <img
-                src={getShinySprite(
-                  result.id
-                )}
-                alt={`${result.name} shiny`}
-              />
-
-              <div className="result-sparkles bottom">
-                ✦
-              </div>
+              #
+              {String(
+                getMonsterId(
+                  result
+                ) || "???"
+              ).padStart(
+                3,
+                "0"
+              )}
 
             </div>
 
-            {/* RESULT INFORMATION */}
+            <div className="result-sprite">
 
-            <div className="result-info">
+              {getShinySprite(
+                result
+              ) ? (
+                <img
+                  src={getShinySprite(
+                    result
+                  )}
+                  alt={getMonsterName(
+                    result
+                  )}
+                  draggable={
+                    false
+                  }
+                />
+              ) : (
+                <div className="result-missing">
+                  ?
+                </div>
+              )}
 
-              <div className="result-number">
-                #
-                {String(
-                  result.id
-                ).padStart(3, "0")}
-              </div>
+            </div>
 
-              <h2>
-                SHINY{" "}
-                {result.name.toUpperCase()}
-              </h2>
+            <h2>
+              {getMonsterName(
+                result
+              )}
+            </h2>
 
-              <p className="result-description">
-                Fate has chosen your next
-                target.
-              </p>
+            <div className="result-subtitle">
+              Your next shiny hunt
+            </div>
 
-              <div className="result-divider" />
+          </div>
 
-              <div className="locations-title">
-                📍 HUNT LOCATIONS
-              </div>
+          {/* =================================================
+              LOCATIONS
+          ================================================= */}
 
-              <div className="locations-list">
+          <div className="locations-section">
 
-                {resultLocations.length === 0 ? (
-                  <div className="location-card">
-                    No hunt locations found.
-                  </div>
-                ) : (
-                  resultLocations.map(
-                    (
-                      location,
-                      index
-                    ) => {
-                      const locationName =
-                        location.location_name_full ||
-                        location.location_name ||
-                        "Unknown Location";
+            <div className="locations-title">
+              <span>
+                📍
+              </span>
 
-                      return (
-                        <div
-                          key={`${locationName}-${index}`}
-                          className="location-card"
-                        >
+              {selectedSeason} Hunt
+              Locations
+            </div>
 
-                          <div className="location-main">
-                            <strong>
-                              {locationName}
-                            </strong>
+            <div className="locations-grid">
 
-                            {location.region_name && (
-                              <span>
-                                {
-                                  location.region_name
-                                }
-                              </span>
-                            )}
-                          </div>
+              {getSeasonLocations(
+                result,
+                selectedSeason
+              ).map(
+                (
+                  location,
+                  index
+                ) => (
+                  <div
+                    className="location-card"
+                    key={`${getLocationName(
+                      location
+                    )}-${index}`}
+                  >
 
-                          <div className="location-details">
+                    <div className="location-region">
+                      {getLocationRegion(
+                        location
+                      )}
+                    </div>
 
-                            {location.season && (
-                              <span>
-                                🍂{" "}
-                                {
-                                  location.season
-                                }
-                              </span>
-                            )}
+                    <div className="location-name">
+                      {getLocationName(
+                        location
+                      )}
+                    </div>
 
-                            {location.type && (
-                              <span>
-                                🎯{" "}
-                                {
-                                  location.type
-                                }
-                              </span>
-                            )}
+                    {location.method && (
+                      <div className="location-detail">
+                        <span>
+                          Method
+                        </span>
 
-                            {location.min_level !==
-                              undefined &&
-                              location.max_level !==
-                                undefined && (
-                                <span>
-                                  Lv.{" "}
-                                  {
-                                    location.min_level
-                                  }
-                                  –
-                                  {
-                                    location.max_level
-                                  }
-                                </span>
-                              )}
+                        <strong>
+                          {
+                            String(
+                              location.method
+                            )
+                          }
+                        </strong>
+                      </div>
+                    )}
 
-                          </div>
+                    {location.levels && (
+                      <div className="location-detail">
+                        <span>
+                          Levels
+                        </span>
 
+                        <strong>
+                          {
+                            String(
+                              location.levels
+                            )
+                          }
+                        </strong>
+                      </div>
+                    )}
+
+                    <div className="time-grid">
+
+                      {location.morning && (
+                        <div>
+                          <span>
+                            🌅
+                          </span>
+
+                          <strong>
+                            {
+                              String(
+                                location.morning
+                              )
+                            }
+                          </strong>
                         </div>
-                      );
-                    }
-                  )
-                )}
+                      )}
 
-              </div>
+                      {location.day && (
+                        <div>
+                          <span>
+                            ☀️
+                          </span>
+
+                          <strong>
+                            {
+                              String(
+                                location.day
+                              )
+                            }
+                          </strong>
+                        </div>
+                      )}
+
+                      {location.night && (
+                        <div>
+                          <span>
+                            🌙
+                          </span>
+
+                          <strong>
+                            {
+                              String(
+                                location.night
+                              )
+                            }
+                          </strong>
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+                )
+              )}
+
             </div>
-          </div>
 
-          {/* RESULT SHUNT AGAIN */}
-
-          <button
-            type="button"
-            className="result-shunt-again"
-            onClick={shunt}
-          >
-            🎰 SHUNT AGAIN
-          </button>
-
-        </div>
-      )}
-
-      {/* ===================================================
-          HELP
-      =================================================== */}
-
-      {!result && !spinning && (
-        <div className="machine-help">
-
-          <div>
-            <span>🎰</span>
-
-            <strong>
-              LET FATE DECIDE
-            </strong>
-
-            <p>
-              Press SHUNT to randomly
-              choose your next shiny
-              target.
-            </p>
-          </div>
-
-          <div>
-            <span>📍</span>
-
-            <strong>
-              LOCATION GUARANTEED
-            </strong>
-
-            <p>
-              Every Pokémon in the
-              machine has at least one
-              known hunt location.
-            </p>
-          </div>
-
-          <div>
-            <span>✨</span>
-
-            <strong>
-              SHINY TARGET
-            </strong>
-
-            <p>
-              The machine only chooses
-              Pokémon you can actually
-              hunt.
-            </p>
           </div>
 
         </div>
       )}
 
-      {/* ===================================================
+      {/* =====================================================
+          FOOTER
+      ===================================================== */}
+
+      <div className="shunt-footer">
+
+        <span>
+          {SEASON_ICONS[
+            selectedSeason
+          ]}
+        </span>
+
+        Only Pokémon with a valid{" "}
+        {selectedSeason.toLowerCase()}{" "}
+        hunt location can be selected.
+
+      </div>
+
+      {/* =====================================================
           STYLES
-      =================================================== */}
+      ===================================================== */}
 
       <style>{`
 
-        * {
+        /* ===================================================
+           PAGE
+        =================================================== */
+
+        .shunt-page {
+          min-height: 100vh;
+
+          padding:
+            70px
+            30px
+            100px;
+
+          color: #dcecff;
+
+          background:
+            radial-gradient(
+              circle at 50% 25%,
+              rgba(20, 78, 124, 0.28),
+              transparent 45%
+            );
+
           box-sizing: border-box;
         }
 
-        .shunt-page {
-          width: 100%;
-          max-width: 1250px;
-          margin: 0 auto;
-          padding: 35px 25px 90px;
-          color: #edf7ff;
-        }
-
-        /* HEADER */
+        /* ===================================================
+           HEADER
+        =================================================== */
 
         .shunt-header {
           text-align: center;
-          margin-bottom: 35px;
+
+          margin:
+            0 auto
+            30px;
+
+          max-width: 800px;
         }
 
-        .shunt-title-icon {
-          font-size: 34px;
-          margin-bottom: 3px;
+        .shunt-header-icon {
+          font-size: 35px;
+
+          margin-bottom: 5px;
         }
 
         .shunt-header h1 {
           margin: 0;
-          font-size: 48px;
-          font-weight: 950;
-          letter-spacing: 4px;
+
+          color: #eaf6ff;
+
+          font-size: 42px;
+          font-weight: 900;
+
+          letter-spacing: 3px;
+
           text-shadow:
             0 0 20px
-            rgba(101, 196, 255, 0.25);
+            rgba(88, 186, 255, 0.35);
         }
 
         .shunt-header p {
-          margin: 8px 0 0;
+          margin:
+            10px 0 0;
+
           color: #8ea9c4;
-          font-size: 17px;
+
+          font-size: 16px;
         }
 
-        /* MACHINE */
+        /* ===================================================
+           SEASON FILTER
+        =================================================== */
 
-        .shunt-machine {
-          position: relative;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 25px 28px 30px;
+        .season-filter {
+          display: flex;
+
+          flex-direction: column;
+
+          align-items: center;
+
+          margin:
+            0 auto
+            28px;
+        }
+
+        .season-filter-label {
+          margin-bottom: 10px;
+
+          color: #8ea9c4;
+
+          font-size: 11px;
+          font-weight: 900;
+
+          letter-spacing: 2px;
+        }
+
+        .season-buttons {
+          display: flex;
+
+          gap: 8px;
+
+          padding: 5px;
+
           border:
-            2px solid
-            rgba(94, 177, 239, 0.55);
-          border-radius: 30px;
+            1px solid
+            rgba(
+              72,
+              135,
+              194,
+              0.4
+            );
+
+          border-radius: 13px;
+
+          background:
+            rgba(
+              3,
+              20,
+              39,
+              0.78
+            );
+
+          box-shadow:
+            0 8px 30px
+            rgba(
+              0,
+              0,
+              0,
+              0.15
+            );
+        }
+
+        .season-button {
+          min-width: 120px;
+
+          padding:
+            11px
+            18px;
+
+          border:
+            1px solid
+            transparent;
+
+          border-radius: 9px;
+
+          color: #9db6ce;
+
+          background:
+            transparent;
+
+          font-size: 13px;
+          font-weight: 900;
+
+          cursor: pointer;
+
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease,
+            transform 0.15s ease;
+        }
+
+        .season-button:hover:not(:disabled) {
+          color: #ffffff;
+
+          background:
+            rgba(
+              50,
+              103,
+              151,
+              0.28
+            );
+        }
+
+        .season-button.active {
+          color: #ffffff;
+
+          border-color:
+            rgba(
+              111,
+              201,
+              255,
+              0.75
+            );
+
           background:
             linear-gradient(
               180deg,
-              rgba(8, 35, 65, 0.98),
-              rgba(2, 16, 34, 0.99)
+              rgba(
+                55,
+                126,
+                181,
+                0.8
+              ),
+              rgba(
+                28,
+                75,
+                117,
+                0.8
+              )
             );
+
           box-shadow:
-            0 25px 70px
-              rgba(0, 0, 0, 0.38),
-            inset 0 0 40px
-              rgba(50, 140, 220, 0.08);
+            0 0 18px
+            rgba(
+              74,
+              177,
+              255,
+              0.18
+            );
         }
 
-        .machine-top-light {
+        .season-button:disabled {
+          opacity: 0.5;
+
+          cursor: not-allowed;
+        }
+
+        .season-icon {
+          margin-right: 6px;
+        }
+
+        /* ===================================================
+           CURRENT SEASON
+        =================================================== */
+
+        .current-season {
           display: flex;
+
+          align-items: center;
           justify-content: center;
-          gap: 14px;
-          margin-bottom: 15px;
+
+          gap: 7px;
+
+          margin-bottom: 22px;
+
+          color: #8ea9c4;
+
+          font-size: 13px;
         }
 
-        .machine-top-light span {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background: #70cfff;
+        .current-season strong {
+          color: #8bd1ff;
+
+          font-size: 15px;
+        }
+
+        /* ===================================================
+           MACHINE
+        =================================================== */
+
+        .machine {
+          position: relative;
+
+          width: min(
+            900px,
+            100%
+          );
+
+          margin:
+            0 auto;
+
+          padding:
+            32px
+            32px
+            40px;
+
+          box-sizing: border-box;
+
+          border:
+            1px solid
+            rgba(
+              79,
+              155,
+              216,
+              0.55
+            );
+
+          border-radius: 24px;
+
+          background:
+            linear-gradient(
+              180deg,
+              rgba(
+                8,
+                31,
+                57,
+                0.96
+              ),
+              rgba(
+                2,
+                15,
+                29,
+                0.98
+              )
+            );
+
           box-shadow:
-            0 0 10px
-            rgba(112, 207, 255, 0.8);
+            0 30px 70px
+            rgba(
+              0,
+              0,
+              0,
+              0.4
+            ),
+            inset 0 1px 0
+            rgba(
+              255,
+              255,
+              255,
+              0.04
+            );
+        }
+
+        .machine.spinning {
+          box-shadow:
+            0 30px 70px
+            rgba(
+              0,
+              0,
+              0,
+              0.4
+            ),
+            0 0 45px
+            rgba(
+              60,
+              170,
+              255,
+              0.12
+            );
+        }
+
+        .machine-top {
+          text-align: center;
+
+          margin-bottom: 25px;
         }
 
         .machine-title {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          gap: 16px;
-          margin-bottom: 20px;
-          color: #bfe8ff;
-          font-size: 16px;
-          font-weight: 950;
-          letter-spacing: 3px;
+          color: #8db9dc;
+
+          font-size: 12px;
+          font-weight: 900;
+
+          letter-spacing: 5px;
         }
 
-        .machine-title span {
-          color: #d4a8ff;
-          font-size: 20px;
+        .machine-title-large {
+          margin-top: 3px;
+
+          color: #edf8ff;
+
+          font-size: 30px;
+          font-weight: 900;
+
+          letter-spacing: 5px;
         }
 
-        /* REELS */
+        /* ===================================================
+           REELS
+        =================================================== */
 
         .reels {
           position: relative;
+
           display: grid;
+
           grid-template-columns:
             repeat(3, 1fr);
-          gap: 13px;
-          height: 360px;
+
+          gap: 12px;
+
+          height: 390px;
+
           overflow: hidden;
-          padding: 15px;
+
+          padding:
+            15px;
+
+          box-sizing: border-box;
+
           border:
-            2px solid
-            rgba(115, 189, 242, 0.42);
-          border-radius: 20px;
-          background: #020d1b;
-          box-shadow:
-            inset 0 0 30px
-            rgba(0, 0, 0, 0.7);
+            1px solid
+            rgba(
+              86,
+              157,
+              211,
+              0.4
+            );
+
+          border-radius: 16px;
+
+          background:
+            rgba(
+              0,
+              9,
+              20,
+              0.8
+            );
         }
 
         .reel {
           position: relative;
+
           overflow: hidden;
+
           border:
             1px solid
-            rgba(102, 171, 223, 0.28);
-          border-radius: 14px;
-          background:
-            linear-gradient(
-              90deg,
-              rgba(0, 0, 0, 0.35),
-              rgba(13, 48, 78, 0.32),
-              rgba(0, 0, 0, 0.35)
+            rgba(
+              78,
+              145,
+              199,
+              0.4
             );
-        }
 
-        .reel::before,
-        .reel::after {
-          content: "";
-          position: absolute;
-          left: 0;
-          right: 0;
-          height: 85px;
-          z-index: 4;
-          pointer-events: none;
-        }
+          border-radius: 12px;
 
-        .reel::before {
-          top: 0;
           background:
             linear-gradient(
               180deg,
-              #020d1b,
-              transparent
+              rgba(
+                18,
+                49,
+                76,
+                0.5
+              ),
+              rgba(
+                1,
+                13,
+                26,
+                0.95
+              )
             );
         }
 
-        .reel::after {
-          bottom: 0;
-          background:
-            linear-gradient(
-              0deg,
-              #020d1b,
-              transparent
-            );
-        }
-
-        .reel-inner {
+        .reel-window {
           display: flex;
+
           flex-direction: column;
+
           align-items: center;
-          gap: 5px;
-          padding-top: 5px;
+
+          transform:
+            translateY(
+              -4px
+            );
         }
 
-        .reel.moving .reel-inner {
+        .reel:not(.stopped)
+          .reel-window {
           animation:
-            reelScroll
-            0.12s
+            reelSpin
+            0.18s
             linear
             infinite;
+          filter:
+            blur(1.5px);
         }
 
-        .reel.stopped .reel-inner {
-          animation: none;
-        }
+        .reel-item {
+          flex:
+            0 0
+            80px;
 
-        .reel-pokemon {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex: 0 0 105px;
           width: 100%;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
         }
 
-        .reel-pokemon img {
-          width: 105px;
-          height: 105px;
+        .reel-item img {
+          width: 70px;
+          height: 70px;
+
           object-fit: contain;
-          image-rendering: pixelated;
-          transition:
-            filter 0.1s ease;
+
+          image-rendering:
+            pixelated;
         }
 
-        .reel.moving .reel-pokemon img {
-          filter: blur(3px);
+        .reel-item.center {
+          transform:
+            scale(1.15);
         }
-
-        /* CENTER WINDOW */
 
         .selection-window {
           position: absolute;
-          left: 8px;
-          right: 8px;
+
           top: 50%;
-          height: 116px;
+
+          left: 15px;
+          right: 15px;
+
+          height: 82px;
+
           transform:
-            translateY(-50%);
-          z-index: 8;
-          pointer-events: none;
+            translateY(
+              -50%
+            );
+
           border:
             2px solid
-            rgba(132, 216, 255, 0.9);
-          border-radius: 15px;
+            rgba(
+              111,
+              205,
+              255,
+              0.85
+            );
+
+          border-radius: 12px;
+
+          pointer-events: none;
+
           box-shadow:
-            0 0 0 3px
-              rgba(3, 17, 31, 0.8),
             0 0 25px
-              rgba(88, 195, 255, 0.22);
-          background:
-            rgba(80, 170, 230, 0.035);
+            rgba(
+              80,
+              185,
+              255,
+              0.12
+            ),
+            inset 0 0 20px
+            rgba(
+              80,
+              185,
+              255,
+              0.06
+            );
         }
 
         .selection-arrow {
           position: absolute;
+
           top: 50%;
+
           transform:
-            translateY(-50%);
-          color: #8edcff;
-          font-size: 17px;
-          text-shadow:
-            0 0 8px
-            rgba(142, 220, 255, 0.8);
+            translateY(
+              -50%
+            );
+
+          color: #9edaff;
+
+          font-size: 14px;
         }
 
         .selection-arrow.left {
-          left: 5px;
+          left: 8px;
         }
 
         .selection-arrow.right {
-          right: 5px;
+          right: 8px;
         }
 
-        @keyframes reelScroll {
-          0% {
-            transform:
-              translateY(-10%);
-          }
-
-          100% {
-            transform:
-              translateY(-65%);
-          }
-        }
-
-        /* MACHINE BOTTOM */
-
-        .machine-bottom {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex-direction: column;
-          gap: 17px;
-          padding-top: 25px;
-        }
-
-        .machine-status {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: #7792ac;
-          font-size: 11px;
-          font-weight: 900;
-          letter-spacing: 2px;
-        }
-
-        .status-light {
-          width: 7px;
-          height: 7px;
-          border-radius: 50%;
-        }
-
-        .ready-light {
-          background: #63d6ff;
-          box-shadow:
-            0 0 9px
-            #63d6ff;
-        }
-
-        .spinning-light {
-          background: #d6a1ff;
-          box-shadow:
-            0 0 9px
-            #d6a1ff;
-          animation:
-            pulse
-            0.3s
-            infinite
-            alternate;
-        }
-
-        .result-light {
-          background: #86f4ad;
-          box-shadow:
-            0 0 9px
-            #86f4ad;
-        }
-
-        @keyframes pulse {
-          from {
-            opacity: 0.35;
-          }
-
-          to {
-            opacity: 1;
-          }
-        }
-
-        /* MAIN BUTTON */
+        /* ===================================================
+           BUTTON
+        =================================================== */
 
         .shunt-button {
-          position: relative;
-          width: 260px;
-          height: 72px;
+          display: block;
+
+          margin:
+            28px auto
+            0;
+
+          min-width: 230px;
+
+          padding:
+            15px
+            30px;
+
           border:
-            2px solid
-            #b07aff;
-          border-radius: 17px;
-          color: white;
+            1px solid
+            rgba(
+              120,
+              211,
+              255,
+              0.75
+            );
+
+          border-radius: 10px;
+
+          color: #ffffff;
+
           background:
             linear-gradient(
               180deg,
-              #8c4bd1,
-              #5b2c91
+              #236995,
+              #16486d
             );
-          font-size: 22px;
-          font-weight: 950;
-          letter-spacing: 3px;
+
+          font-size: 15px;
+          font-weight: 900;
+
+          letter-spacing: 2px;
+
           cursor: pointer;
-          box-shadow:
-            0 8px 0
-              #351c58,
-            0 0 25px
-              rgba(153, 92, 225, 0.3);
-          transition:
-            transform 0.08s ease,
-            box-shadow 0.08s ease;
-        }
 
-        .shunt-button:hover {
-          background:
-            linear-gradient(
-              180deg,
-              #9c5ce2,
-              #6935a4
+          box-shadow:
+            0 8px 25px
+            rgba(
+              0,
+              0,
+              0,
+              0.25
             );
-          box-shadow:
-            0 8px 0
-              #351c58,
-            0 0 35px
-              rgba(153, 92, 225, 0.5);
+
+          transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
         }
 
-        .shunt-button:active {
+        .shunt-button:hover:not(:disabled) {
           transform:
-            translateY(6px);
+            translateY(-2px);
+
           box-shadow:
-            0 2px 0
-              #351c58;
+            0 12px 30px
+            rgba(
+              0,
+              0,
+              0,
+              0.35
+            );
         }
 
-        .shunt-button.disabled {
-          opacity: 0.65;
+        .shunt-button:disabled {
+          opacity: 0.55;
+
           cursor: not-allowed;
         }
 
-        /* RESULT */
+        .spinning-button {
+          animation:
+            buttonPulse
+            0.8s
+            ease-in-out
+            infinite;
+        }
+
+        /* ===================================================
+           RESULT
+        =================================================== */
 
         .result-section {
-          max-width: 900px;
+          width: min(
+            900px,
+            100%
+          );
+
           margin:
-            55px auto 0;
+            45px auto
+            0;
+
           text-align: center;
         }
 
         .result-label {
-          color: #d4b0ff;
-          font-size: 15px;
-          font-weight: 950;
-          letter-spacing: 3px;
-          margin-bottom: 18px;
+          margin-bottom: 12px;
+
+          color: #79caff;
+
+          font-size: 12px;
+          font-weight: 900;
+
+          letter-spacing: 4px;
         }
 
         .result-card {
-          display: grid;
-          grid-template-columns:
-            330px 1fr;
-          overflow: hidden;
-          text-align: left;
+          padding:
+            35px
+            20px;
+
           border:
             1px solid
-            rgba(139, 105, 204, 0.5);
-          border-radius: 24px;
+            rgba(
+              93,
+              180,
+              236,
+              0.5
+            );
+
+          border-radius: 20px;
+
           background:
             linear-gradient(
-              135deg,
-              rgba(30, 16, 61, 0.98),
-              rgba(5, 25, 49, 0.98)
+              180deg,
+              rgba(
+                9,
+                36,
+                63,
+                0.92
+              ),
+              rgba(
+                3,
+                19,
+                34,
+                0.96
+              )
             );
+
           box-shadow:
-            0 20px 55px
-              rgba(0, 0, 0, 0.28),
-            0 0 35px
-              rgba(137, 82, 213, 0.08);
-        }
-
-        .result-pokemon {
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 420px;
-          overflow: hidden;
-          background:
-            radial-gradient(
-              circle,
-              rgba(141, 88, 219, 0.24),
-              transparent 65%
+            0 20px 50px
+            rgba(
+              0,
+              0,
+              0,
+              0.3
+            ),
+            0 0 40px
+            rgba(
+              78,
+              190,
+              255,
+              0.08
             );
-        }
 
-        .result-pokemon::before {
-          content: "";
-          position: absolute;
-          width: 240px;
-          height: 240px;
-          border-radius: 50%;
-          background:
-            rgba(174, 115, 255, 0.08);
-          filter: blur(10px);
-        }
-
-        .result-pokemon img {
-          position: relative;
-          z-index: 2;
-          width: 280px;
-          height: 280px;
-          object-fit: contain;
-          image-rendering: pixelated;
           animation:
-            resultReveal
-            0.65s
-            cubic-bezier(
-              0.2,
-              1.4,
-              0.3,
-              1
-            );
-        }
-
-        @keyframes resultReveal {
-          0% {
-            opacity: 0;
-            transform:
-              scale(0.3)
-              rotate(-10deg);
-          }
-
-          70% {
-            transform:
-              scale(1.08)
-              rotate(2deg);
-          }
-
-          100% {
-            opacity: 1;
-            transform:
-              scale(1)
-              rotate(0);
-          }
-        }
-
-        .result-sparkles {
-          position: absolute;
-          top: 65px;
-          right: 45px;
-          z-index: 3;
-          color: #e4c6ff;
-          font-size: 28px;
-          animation:
-            sparkle
-            1.2s
-            infinite
-            alternate;
-        }
-
-        .result-sparkles.bottom {
-          top: auto;
-          right: auto;
-          bottom: 80px;
-          left: 55px;
-          font-size: 20px;
-        }
-
-        @keyframes sparkle {
-          from {
-            opacity: 0.3;
-            transform:
-              scale(0.8)
-              rotate(0);
-          }
-
-          to {
-            opacity: 1;
-            transform:
-              scale(1.2)
-              rotate(20deg);
-          }
-        }
-
-        .result-info {
-          padding:
-            45px 40px;
+            reveal
+            0.45s
+            ease-out;
         }
 
         .result-number {
-          color: #718aa4;
+          color: #6ca8d0;
+
           font-size: 13px;
           font-weight: 900;
+
           letter-spacing: 2px;
         }
 
-        .result-info h2 {
-          margin:
-            5px 0 8px;
-          color: #f1e7ff;
-          font-size: 35px;
-          font-weight: 950;
-          letter-spacing: 2px;
+        .result-sprite {
+          min-height: 180px;
+
+          display: flex;
+
+          align-items: center;
+          justify-content: center;
         }
 
-        .result-description {
-          margin: 0;
-          color: #91a8bf;
-          font-size: 15px;
+        .result-sprite img {
+          width: 180px;
+          height: 180px;
+
+          object-fit: contain;
+
+          image-rendering:
+            pixelated;
+
+          filter:
+            drop-shadow(
+              0 10px 25px
+              rgba(
+                0,
+                0,
+                0,
+                0.35
+              )
+            );
         }
 
-        .result-divider {
-          height: 1px;
+        .result-card h2 {
           margin:
-            25px 0;
-          background:
-            rgba(150, 105, 220, 0.25);
+            5px 0;
+
+          color: #f0f8ff;
+
+          font-size: 32px;
+          font-weight: 900;
+
+          text-transform:
+            capitalize;
+        }
+
+        .result-subtitle {
+          color: #7f9db8;
+
+          font-size: 14px;
+        }
+
+        /* ===================================================
+           LOCATIONS
+        =================================================== */
+
+        .locations-section {
+          margin-top: 25px;
+
+          text-align: left;
         }
 
         .locations-title {
           margin-bottom: 12px;
-          color: #cba7ff;
-          font-size: 12px;
-          font-weight: 950;
-          letter-spacing: 1.5px;
+
+          color: #a9d9fa;
+
+          font-size: 16px;
+          font-weight: 900;
         }
 
-        .locations-list {
-          display: flex;
-          flex-direction: column;
-          gap: 9px;
-          max-height: 220px;
-          overflow-y: auto;
-          padding-right: 5px;
+        .locations-title span {
+          margin-right: 7px;
         }
 
-        .location-card {
-          padding:
-            12px 14px;
-          border:
-            1px solid
-            rgba(91, 139, 182, 0.3);
-          border-radius: 11px;
-          background:
-            rgba(4, 23, 44, 0.65);
-        }
+        .locations-grid {
+          display: grid;
 
-        .location-main {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          grid-template-columns:
+            repeat(
+              auto-fit,
+              minmax(
+                240px,
+                1fr
+              )
+            );
+
           gap: 10px;
         }
 
-        .location-main strong {
-          color: #e5f2ff;
-          font-size: 14px;
+        .location-card {
+          padding: 17px;
+
+          border:
+            1px solid
+            rgba(
+              74,
+              135,
+              181,
+              0.4
+            );
+
+          border-radius: 12px;
+
+          background:
+            rgba(
+              5,
+              27,
+              48,
+              0.72
+            );
         }
 
-        .location-main span {
-          color: #76b5e7;
-          font-size: 11px;
-          font-weight: 800;
-        }
+        .location-region {
+          color: #6ebfff;
 
-        .location-details {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          margin-top: 7px;
-          color: #7e98b2;
           font-size: 10px;
-        }
-
-        .location-details span {
-          padding:
-            4px 7px;
-          border-radius: 6px;
-          background:
-            rgba(39, 82, 120, 0.25);
-        }
-
-        /* RESULT BUTTON */
-
-        .result-shunt-again {
-          margin-top: 25px;
-          padding:
-            13px 28px;
-          border:
-            1px solid
-            rgba(190, 141, 255, 0.55);
-          border-radius: 11px;
-          color: #eadbff;
-          background:
-            rgba(80, 43, 124, 0.5);
-          font-size: 14px;
           font-weight: 900;
-          letter-spacing: 1px;
-          cursor: pointer;
+
+          letter-spacing: 2px;
+
+          text-transform:
+            uppercase;
         }
 
-        .result-shunt-again:hover {
-          background:
-            rgba(103, 56, 158, 0.7);
+        .location-name {
+          margin-top: 5px;
+
+          color: #e5f3ff;
+
+          font-size: 16px;
+          font-weight: 900;
         }
 
-        /* HELP */
+        .location-detail {
+          display: flex;
 
-        .machine-help {
-          display: grid;
-          grid-template-columns:
-            repeat(3, 1fr);
-          gap: 15px;
-          max-width: 900px;
+          justify-content:
+            space-between;
+
+          gap: 10px;
+
+          margin-top: 10px;
+
+          color: #7895ae;
+
+          font-size: 12px;
+        }
+
+        .location-detail strong {
+          color: #b9d9ee;
+        }
+
+        .time-grid {
+          display: flex;
+
+          gap: 12px;
+
+          margin-top: 12px;
+
+          padding-top: 10px;
+
+          border-top:
+            1px solid
+            rgba(
+              93,
+              145,
+              182,
+              0.2
+            );
+        }
+
+        .time-grid div {
+          display: flex;
+
+          align-items: center;
+
+          gap: 4px;
+
+          color: #9cb9d0;
+
+          font-size: 11px;
+        }
+
+        /* ===================================================
+           NO RESULTS
+        =================================================== */
+
+        .no-results {
+          width: min(
+            700px,
+            100%
+          );
+
           margin:
-            35px auto 0;
-        }
+            40px auto;
 
-        .machine-help > div {
-          padding:
-            20px;
+          padding: 30px;
+
+          text-align: center;
+
           border:
             1px solid
-            rgba(72, 135, 194, 0.28);
+            rgba(
+              217,
+              153,
+              73,
+              0.4
+            );
+
           border-radius: 15px;
+
           background:
-            rgba(4, 24, 47, 0.6);
-          text-align: center;
+            rgba(
+              40,
+              25,
+              10,
+              0.45
+            );
         }
 
-        .machine-help span {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 25px;
+        .no-results-icon {
+          font-size: 30px;
         }
 
-        .machine-help strong {
-          display: block;
-          color: #c4ddf4;
-          font-size: 12px;
-          letter-spacing: 1px;
+        .no-results h2 {
+          color: #e7f2ff;
+
+          font-size: 18px;
         }
 
-        .machine-help p {
+        .no-results p {
+          color: #8ba3b8;
+        }
+
+        /* ===================================================
+           FOOTER
+        =================================================== */
+
+        .shunt-footer {
           margin:
-            8px 0 0;
-          color: #7189a2;
+            25px auto
+            0;
+
+          max-width: 700px;
+
+          text-align: center;
+
+          color: #617d96;
+
           font-size: 12px;
-          line-height: 1.5;
         }
 
-        /* MOBILE */
+        .shunt-footer span {
+          margin-right: 5px;
+        }
 
-        @media (max-width: 750px) {
+        /* ===================================================
+           ANIMATIONS
+        =================================================== */
+
+        @keyframes reelSpin {
+          0% {
+            transform:
+              translateY(
+                -4px
+              );
+          }
+
+          100% {
+            transform:
+              translateY(
+                -84px
+              );
+          }
+        }
+
+        @keyframes buttonPulse {
+          0%,
+          100% {
+            box-shadow:
+              0 8px 25px
+              rgba(
+                0,
+                0,
+                0,
+                0.25
+              );
+          }
+
+          50% {
+            box-shadow:
+              0 8px 30px
+              rgba(
+                70,
+                180,
+                255,
+                0.25
+              );
+          }
+        }
+
+        @keyframes reveal {
+          from {
+            opacity: 0;
+
+            transform:
+              translateY(
+                15px
+              )
+              scale(
+                0.96
+              );
+          }
+
+          to {
+            opacity: 1;
+
+            transform:
+              translateY(0)
+              scale(1);
+          }
+        }
+
+        /* ===================================================
+           MOBILE
+        =================================================== */
+
+        @media (max-width: 700px) {
 
           .shunt-page {
             padding:
-              25px 13px 60px;
+              45px
+              15px
+              70px;
           }
 
           .shunt-header h1 {
-            font-size: 34px;
-            letter-spacing: 2px;
+            font-size: 30px;
           }
 
-          .shunt-header p {
-            font-size: 14px;
+          .season-buttons {
+            width: 100%;
+
+            display: grid;
+
+            grid-template-columns:
+              repeat(2, 1fr);
           }
 
-          .shunt-machine {
+          .season-button {
+            min-width: 0;
+
+            width: 100%;
+          }
+
+          .machine {
             padding:
-              18px 13px 24px;
-            border-radius: 21px;
+              20px
+              15px
+              25px;
           }
 
           .reels {
             height: 300px;
+
             gap: 6px;
+
             padding: 8px;
           }
 
-          .reel-pokemon {
-            flex-basis: 88px;
+          .reel-item {
+            flex-basis: 65px;
           }
 
-          .reel-pokemon img {
-            width: 82px;
-            height: 82px;
+          .reel-item img {
+            width: 55px;
+            height: 55px;
           }
 
           .selection-window {
-            left: 4px;
-            right: 4px;
-            height: 95px;
+            left: 8px;
+            right: 8px;
+
+            height: 67px;
           }
 
-          .shunt-button {
-            width: 220px;
-            height: 64px;
-            font-size: 18px;
+          .result-sprite img {
+            width: 140px;
+            height: 140px;
           }
 
-          .result-card {
-            grid-template-columns: 1fr;
+          .result-card h2 {
+            font-size: 25px;
           }
 
-          .result-pokemon {
-            min-height: 310px;
-          }
-
-          .result-pokemon img {
-            width: 220px;
-            height: 220px;
-          }
-
-          .result-info {
-            padding:
-              28px 22px;
-          }
-
-          .result-info h2 {
-            font-size: 27px;
-          }
-
-          .machine-help {
-            grid-template-columns:
-              1fr;
-          }
         }
 
       `}</style>
+
     </div>
   );
 }
