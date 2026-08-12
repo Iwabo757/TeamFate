@@ -641,6 +641,13 @@ function canManageSite(
       Guides
     </Link>
 
+    <Link
+      to="/horde-hunter"
+      onClick={() => setMobileOpen(false)}
+    >
+      Horde Hunter
+    </Link>
+
     {canManageSite(profile?.role) && (
       <Link
         to="/admin"
