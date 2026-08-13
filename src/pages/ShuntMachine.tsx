@@ -2098,7 +2098,7 @@ export default function ShuntMachine() {
           aria-label="Shunt Machine"
         >
           <div className="machine-name">
-            SHUNT MACHINE
+            Find Your Next Shiny Hunt
           </div>
 
           <div className="machine-frame">
