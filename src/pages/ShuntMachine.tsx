@@ -1,16 +1,6 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
-
 import monsters from "../data/monsters.json";
-
-/* ============================================================
-   TYPES
-============================================================ */
 
 type Season =
   | "All Seasons"
@@ -37,7 +27,6 @@ type LureFilter =
 
 type MonsterLocation = {
   form?: number;
-
   type?: string;
 
   region_id?: number;
@@ -55,24 +44,21 @@ type MonsterLocation = {
   is_horde_3x?: boolean;
   is_horde_5x?: boolean;
 
+  lure?: boolean;
+  is_lure?: boolean;
+  requires_lure?: boolean;
+
   rarity_flags?: number;
 
   rarity_morning?: string;
   rarity_day?: string;
   rarity_night?: string;
-
-  /* Allows the machine to work if the
-     JSON later gets an explicit lure field. */
-  lure?: boolean;
-  is_lure?: boolean;
-  requires_lure?: boolean;
 };
 
 type Monster = {
   id?: number;
   national_dex?: number;
   dex?: number;
-
   name?: string;
 
   locations?: MonsterLocation[];
@@ -90,10 +76,6 @@ type ReelMonster = {
   name: string;
 };
 
-/* ============================================================
-   DATA
-============================================================ */
-
 const pokemonList =
   monsters as Monster[];
 
@@ -103,27 +85,6 @@ const SEASONS: Season[] = [
   "Summer",
   "Autumn",
   "Winter",
-];
-
-const ENCOUNTER_FILTERS: EncounterFilter[] =
-  [
-    "All",
-    "Single",
-    "Fishing",
-    "Horde",
-  ];
-
-const HORDE_FILTERS: HordeFilter[] =
-  [
-    "All",
-    "Horde",
-    "No Horde",
-  ];
-
-const LURE_FILTERS: LureFilter[] = [
-  "All",
-  "Lure",
-  "No Lure",
 ];
 
 const SEASON_ICONS: Record<
@@ -148,23 +109,47 @@ const SEASON_COLORS: Record<
   Winter: "#72ddff",
 };
 
-/* ============================================================
-   SLOT MACHINE SETTINGS
-============================================================ */
+const ENCOUNTER_FILTERS: EncounterFilter[] = [
+  "All",
+  "Single",
+  "Fishing",
+  "Horde",
+];
 
+const HORDE_FILTERS: HordeFilter[] = [
+  "All",
+  "Horde",
+  "No Horde",
+];
+
+const LURE_FILTERS: LureFilter[] = [
+  "All",
+  "Lure",
+  "No Lure",
+];
+
+/*
+ * Height of one slot.
+ *
+ * Three rows are visible:
+ *
+ * TOP
+ * MIDDLE  <- winner
+ * BOTTOM
+ */
 const CELL_HEIGHT = 96;
 
 /*
- * Winner is placed at this exact index.
- *
- * The animation moves the reel until this
- * index is positioned in the center window.
+ * The winning Pokémon is inserted at this
+ * exact index on every reel.
  */
+const START_INDEX = 2;
 const STOP_INDEX = 46;
 
 /*
- * Each reel deliberately takes longer than
- * the previous one.
+ * Reel 1 stops first.
+ * Reel 2 stops second.
+ * Reel 3 stops last.
  */
 const REEL_DURATIONS = [
   1450,
@@ -199,29 +184,29 @@ function getMonsterName(
 }
 
 function normalize(
-  value: unknown
+  value: string
 ): string {
-  return String(value ?? "")
+  return value
     .toLowerCase()
     .replace(/[_-]/g, " ")
     .trim();
 }
 
-/* ============================================================
-   SEASONS
-============================================================ */
-
 function seasonFromKey(
-  value: unknown
+  value: string
 ): Season | null {
   const normalized =
     normalize(value);
 
-  if (normalized === "spring") {
+  if (
+    normalized === "spring"
+  ) {
     return "Spring";
   }
 
-  if (normalized === "summer") {
+  if (
+    normalized === "summer"
+  ) {
     return "Summer";
   }
 
@@ -232,7 +217,9 @@ function seasonFromKey(
     return "Autumn";
   }
 
-  if (normalized === "winter") {
+  if (
+    normalized === "winter"
+  ) {
     return "Winter";
   }
 
@@ -240,48 +227,10 @@ function seasonFromKey(
 }
 
 /* ============================================================
-   LOCATIONS
+   LOCATION DATA
 ============================================================ */
 
-function getAllLocations(
-  pokemon: Monster
-): MonsterLocation[] {
-  if (
-    !Array.isArray(
-      pokemon.locations
-    )
-  ) {
-    return [];
-  }
-
-  return pokemon.locations;
-}
-
-function getLocationName(
-  location: MonsterLocation
-): string {
-  return (
-    location.location_name_full ||
-    location.location_name ||
-    ""
-  );
-}
-
-function getLocationSeason(
-  location: MonsterLocation
-): Season | null {
-  return seasonFromKey(
-    location.season
-  );
-}
-
-/* ============================================================
-   HORDE
-============================================================ */
-
-function isHorde(
-  location: MonsterLocation
-): boolean {
+function isHorde(location: MonsterLocation): boolean {
   if (
     location.is_horde_3x === true ||
     location.is_horde_5x === true
@@ -289,21 +238,11 @@ function isHorde(
     return true;
   }
 
-  const type =
-    normalize(location.type);
-
-  return type.includes("horde");
+  return normalize(location.type || "").includes("horde");
 }
 
-/* ============================================================
-   FISHING
-============================================================ */
-
-function isFishing(
-  location: MonsterLocation
-): boolean {
-  const type =
-    normalize(location.type);
+function isFishing(location: MonsterLocation): boolean {
+  const type = normalize(location.type || "");
 
   return (
     type.includes("fish") ||
@@ -311,17 +250,7 @@ function isFishing(
   );
 }
 
-/* ============================================================
-   LURE
-============================================================ */
-
-function isLure(
-  location: MonsterLocation
-): boolean {
-  /*
-   * Support explicit JSON fields if they
-   * are added later.
-   */
+function isLure(location: MonsterLocation): boolean {
   if (
     location.lure === true ||
     location.is_lure === true ||
@@ -330,46 +259,16 @@ function isLure(
     return true;
   }
 
-  /*
-   * Current data appears to use `type`.
-   * This catches types containing "lure".
-   */
-  const type =
-    normalize(location.type);
-
-  return type.includes("lure");
+  return normalize(location.type || "").includes("lure");
 }
 
-/* ============================================================
-   SINGLE ENCOUNTER
-============================================================ */
-
-function isSingle(
-  location: MonsterLocation
-): boolean {
-  /*
-   * Anything explicitly identified as
-   * horde, fishing, or lure isn't single.
-   */
-  if (isHorde(location)) {
+function isSingle(location: MonsterLocation): boolean {
+  if (isHorde(location) || isFishing(location) || isLure(location)) {
     return false;
   }
 
-  if (isFishing(location)) {
-    return false;
-  }
+  const type = normalize(location.type || "");
 
-  if (isLure(location)) {
-    return false;
-  }
-
-  const type =
-    normalize(location.type);
-
-  /*
-   * If there is no encounter type,
-   * treat it as a normal single location.
-   */
   if (!type) {
     return true;
   }
@@ -385,168 +284,133 @@ function isSingle(
   );
 }
 
-/* ============================================================
-   ENCOUNTER FILTER
-============================================================ */
-
 function matchesEncounter(
   location: MonsterLocation,
   filter: EncounterFilter
 ): boolean {
   switch (filter) {
-    case "All":
-      return true;
-
     case "Single":
       return isSingle(location);
-
     case "Fishing":
       return isFishing(location);
-
     case "Horde":
       return isHorde(location);
-
+    case "All":
     default:
       return true;
   }
 }
-
-/* ============================================================
-   HORDE FILTER
-============================================================ */
 
 function matchesHorde(
   location: MonsterLocation,
   filter: HordeFilter
 ): boolean {
   switch (filter) {
-    case "All":
-      return true;
-
     case "Horde":
       return isHorde(location);
-
     case "No Horde":
       return !isHorde(location);
-
+    case "All":
     default:
       return true;
   }
 }
-
-/* ============================================================
-   LURE FILTER
-============================================================ */
 
 function matchesLure(
   location: MonsterLocation,
   filter: LureFilter
 ): boolean {
   switch (filter) {
-    case "All":
-      return true;
-
     case "Lure":
       return isLure(location);
-
     case "No Lure":
       return !isLure(location);
-
+    case "All":
     default:
       return true;
   }
 }
 
-/* ============================================================
-   FILTERED LOCATIONS
-============================================================ */
-
-function getFilteredLocations(
+function getLocations(
   pokemon: Monster,
-  season: Season,
-  encounter: EncounterFilter,
-  horde: HordeFilter,
-  lure: LureFilter
+  selectedSeason: Season,
+  encounterFilter: EncounterFilter,
+  hordeFilter: HordeFilter,
+  lureFilter: LureFilter
 ): MonsterLocation[] {
-  const locations =
-    getAllLocations(pokemon);
+  if (!Array.isArray(pokemon.locations)) {
+    return [];
+  }
 
   const seen = new Set<string>();
 
-  return locations.filter(
-    (location) => {
-      const name =
-        getLocationName(location);
+  return pokemon.locations.filter((location) => {
+    const name =
+      location.location_name_full ||
+      location.location_name;
 
-      if (!name) {
-        return false;
-      }
-
-      /*
-       * Season filtering.
-       *
-       * Locations with no season are treated
-       * as available in all seasons, matching
-       * your current machine behavior.
-       */
-      const locationSeason =
-        getLocationSeason(location);
-
-      if (
-        season !== "All Seasons" &&
-        locationSeason &&
-        locationSeason !== season
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesEncounter(
-          location,
-          encounter
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesHorde(
-          location,
-          horde
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        !matchesLure(
-          location,
-          lure
-        )
-      ) {
-        return false;
-      }
-
-      /*
-       * Prevent duplicate locations.
-       */
-      const key = [
-        location.region_name ?? "",
-        name,
-        locationSeason ?? "",
-        normalize(location.type),
-        isHorde(location),
-        isLure(location),
-      ].join("|");
-
-      if (seen.has(key)) {
-        return false;
-      }
-
-      seen.add(key);
-
-      return true;
+    if (!name) {
+      return false;
     }
+
+    const locationSeason = seasonFromKey(
+      location.season || ""
+    );
+
+    if (
+      selectedSeason !== "All Seasons" &&
+      locationSeason &&
+      locationSeason !== selectedSeason
+    ) {
+      return false;
+    }
+
+    if (!matchesEncounter(location, encounterFilter)) {
+      return false;
+    }
+
+    if (!matchesHorde(location, hordeFilter)) {
+      return false;
+    }
+
+    if (!matchesLure(location, lureFilter)) {
+      return false;
+    }
+
+    const key = [
+      name,
+      location.region_name || "",
+      locationSeason || "",
+      location.type || "",
+      isHorde(location),
+      isFishing(location),
+      isLure(location),
+    ].join("|");
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function hasValidLocation(
+  pokemon: Monster,
+  season: Season,
+  encounterFilter: EncounterFilter,
+  hordeFilter: HordeFilter,
+  lureFilter: LureFilter
+): boolean {
+  return (
+    getLocations(
+      pokemon,
+      season,
+      encounterFilter,
+      hordeFilter,
+      lureFilter
+    ).length > 0
   );
 }
 
@@ -589,7 +453,8 @@ function randomPokemon(
     candidates =
       pool.filter(
         (pokemon) =>
-          pokemon.id !== excludeId
+          pokemon.id !==
+          excludeId
       );
   }
 
@@ -601,20 +466,19 @@ function randomPokemon(
   ];
 }
 
-/* ============================================================
-   BUILD REEL
-============================================================ */
-
+/*
+ * Builds a reel with the SAME winner
+ * inserted at STOP_INDEX.
+ *
+ * This guarantees all three reels
+ * land on the same Pokémon.
+ */
 function buildReel(
   pool: ReelMonster[],
   winner: ReelMonster
 ): ReelMonster[] {
   const reel: ReelMonster[] = [];
 
-  /*
-   * Everything before the winner is
-   * random.
-   */
   for (
     let i = 0;
     i < STOP_INDEX;
@@ -626,12 +490,13 @@ function buildReel(
   }
 
   /*
-   * EXACT SAME WINNER ON ALL REELS.
+   * EXACT WINNING POSITION.
    */
   reel.push(winner);
 
   /*
-   * Extra cells after the winner.
+   * Extra cells prevent the reel from
+   * ending visually at the bottom.
    */
   reel.push(
     randomPokemon(pool)
@@ -690,7 +555,8 @@ function playClickSound(): void {
 
     gain.gain.exponentialRampToValueAtTime(
       0.001,
-      context.currentTime + 0.08
+      context.currentTime +
+        0.08
     );
 
     oscillator.connect(gain);
@@ -701,14 +567,15 @@ function playClickSound(): void {
     oscillator.start();
 
     oscillator.stop(
-      context.currentTime + 0.08
+      context.currentTime +
+        0.08
     );
 
     window.setTimeout(() => {
       void context.close();
     }, 150);
   } catch {
-    /* Sound is optional. */
+    // Audio is optional.
   }
 }
 
@@ -722,26 +589,14 @@ export default function ShuntMachine() {
       "All Seasons"
     );
 
-  const [
-    encounterFilter,
-    setEncounterFilter,
-  ] = useState<EncounterFilter>(
-    "All"
-  );
+  const [encounterFilter, setEncounterFilter] =
+    useState<EncounterFilter>("All");
 
-  const [
-    hordeFilter,
-    setHordeFilter,
-  ] = useState<HordeFilter>(
-    "All"
-  );
+  const [hordeFilter, setHordeFilter] =
+    useState<HordeFilter>("All");
 
-  const [
-    lureFilter,
-    setLureFilter,
-  ] = useState<LureFilter>(
-    "All"
-  );
+  const [lureFilter, setLureFilter] =
+    useState<LureFilter>("All");
 
   const [spinning, setSpinning] =
     useState(false);
@@ -758,14 +613,28 @@ export default function ShuntMachine() {
       [],
     ]);
 
+  /*
+   * Forces a brand-new DOM reel every
+   * time SHUNT AGAIN is pressed.
+   */
   const [spinId, setSpinId] =
     useState(0);
 
+  /*
+   * True after the reel has finished.
+   *
+   * IMPORTANT:
+   *
+   * This is what keeps the winning
+   * Pokémon physically locked in place.
+   */
   const [reelLocked, setReelLocked] =
     useState(false);
 
   const resultTimer =
-    useRef<number | null>(null);
+    useRef<number | null>(
+      null
+    );
 
   /* ==========================================================
      SHUNTABLE POOL
@@ -776,15 +645,20 @@ export default function ShuntMachine() {
       const seen =
         new Set<number>();
 
-      const pool: ReelMonster[] = [];
+      const pool: ReelMonster[] =
+        [];
 
       pokemonList.forEach(
         (pokemon) => {
           const id =
-            getMonsterId(pokemon);
+            getMonsterId(
+              pokemon
+            );
 
           const name =
-            getMonsterName(pokemon);
+            getMonsterName(
+              pokemon
+            );
 
           if (!id || !name) {
             return;
@@ -795,22 +669,18 @@ export default function ShuntMachine() {
           }
 
           /*
-           * A Pokémon is eligible only if
-           * at least ONE location satisfies
-           * EVERY active filter.
+           * Pokémon without a valid
+           * hunt location can NEVER
+           * be selected.
            */
-          const validLocations =
-            getFilteredLocations(
+          if (
+            !hasValidLocation(
               pokemon,
               season,
               encounterFilter,
               hordeFilter,
               lureFilter
-            );
-
-          if (
-            validLocations.length ===
-            0
+            )
           ) {
             return;
           }
@@ -833,7 +703,7 @@ export default function ShuntMachine() {
     ]);
 
   /* ==========================================================
-     SELECTED MONSTER
+     SELECTED DATA
   ========================================================== */
 
   const selectedMonster =
@@ -845,23 +715,22 @@ export default function ShuntMachine() {
       return (
         pokemonList.find(
           (pokemon) =>
-            getMonsterId(pokemon) ===
-            selected.id
+            getMonsterId(
+              pokemon
+            ) === selected.id
         ) ?? null
       );
     }, [selected]);
 
-  /* ==========================================================
-     SELECTED LOCATIONS
-  ========================================================== */
-
   const selectedLocations =
     useMemo(() => {
-      if (!selectedMonster) {
+      if (
+        !selectedMonster
+      ) {
         return [];
       }
 
-      return getFilteredLocations(
+      return getLocations(
         selectedMonster,
         season,
         encounterFilter,
@@ -894,6 +763,11 @@ export default function ShuntMachine() {
       return;
     }
 
+    /*
+     * Don't touch the reels while
+     * the machine is spinning or
+     * displaying a locked winner.
+     */
     if (
       spinning ||
       reelLocked
@@ -901,6 +775,10 @@ export default function ShuntMachine() {
       return;
     }
 
+    /*
+     * Only create initial reels
+     * when they are empty.
+     */
     if (
       reels.some(
         (reel) =>
@@ -952,77 +830,64 @@ export default function ShuntMachine() {
   }, []);
 
   /* ==========================================================
-     RESET AFTER FILTER CHANGE
+     FILTER RESET
   ========================================================== */
 
-  function resetForFilter(): void {
+  function resetMachineForFilter(): void {
     if (spinning) {
       return;
     }
 
     setSelected(null);
     setReelLocked(false);
-
-    setReels([
-      [],
-      [],
-      [],
-    ]);
+    setReels([[], [], []]);
   }
 
-  function changeSeason(
-    nextSeason: Season
-  ): void {
+  function changeSeason(nextSeason: Season): void {
     if (spinning) {
       return;
     }
 
     setSeason(nextSeason);
-
-    resetForFilter();
+    resetMachineForFilter();
   }
 
-  function changeEncounter(
-    next: EncounterFilter
-  ): void {
+  function changeEncounter(nextFilter: EncounterFilter): void {
     if (spinning) {
       return;
     }
 
-    setEncounterFilter(next);
-
-    resetForFilter();
+    setEncounterFilter(nextFilter);
+    resetMachineForFilter();
   }
 
-  function changeHorde(
-    next: HordeFilter
-  ): void {
+  function changeHorde(nextFilter: HordeFilter): void {
     if (spinning) {
       return;
     }
 
-    setHordeFilter(next);
-
-    resetForFilter();
+    setHordeFilter(nextFilter);
+    resetMachineForFilter();
   }
 
-  function changeLure(
-    next: LureFilter
-  ): void {
+  function changeLure(nextFilter: LureFilter): void {
     if (spinning) {
       return;
     }
 
-    setLureFilter(next);
-
-    resetForFilter();
+    setLureFilter(nextFilter);
+    resetMachineForFilter();
   }
 
   /* ==========================================================
-     SHUNT
+     SHUNT AGAIN
   ========================================================== */
 
-  function shunt(): void {
+  function shuntAgain(): void {
+    /*
+     * Absolutely no new spin while
+     * the previous spin is running.
+     */
     if (spinning) {
       return;
     }
@@ -1037,10 +902,10 @@ export default function ShuntMachine() {
     playClickSound();
 
     /*
-     * Select ONE Pokémon.
+     * Pick ONE winner.
      *
-     * This exact Pokémon is inserted into
-     * all three reels.
+     * That exact Pokémon goes into
+     * all three reels at STOP_INDEX.
      */
     const winner =
       randomPokemon(
@@ -1066,10 +931,23 @@ export default function ShuntMachine() {
         winner
       );
 
+    /*
+     * Hide the previous result.
+     */
     setSelected(null);
 
+    /*
+     * IMPORTANT:
+     *
+     * Unlock the reels BEFORE replacing
+     * them so React renders the new
+     * spinning reel.
+     */
     setReelLocked(false);
 
+    /*
+     * New reel data.
+     */
     setReels([
       reelOne,
       reelTwo,
@@ -1077,14 +955,16 @@ export default function ShuntMachine() {
     ]);
 
     /*
-     * New key forces the CSS animation
-     * to restart every single time.
+     * Force a new DOM animation instance.
      */
     setSpinId(
       (current) =>
         current + 1
     );
 
+    /*
+     * Start animation.
+     */
     setSpinning(true);
 
     if (
@@ -1097,31 +977,35 @@ export default function ShuntMachine() {
     }
 
     /*
-     * The third reel is the slowest,
-     * so we wait for it to finish.
+     * Wait for the THIRD reel.
      */
     resultTimer.current =
       window.setTimeout(
         () => {
           /*
-           * Lock physical position first.
+           * FIRST lock the physical
+           * reel position.
            */
           setReelLocked(true);
 
           /*
-           * Then stop animation.
+           * THEN stop the animation.
+           *
+           * Because reelLocked is true,
+           * the inline transform below
+           * keeps it exactly at STOP_INDEX.
            */
           setSpinning(false);
 
           /*
-           * Show the same winner that
-           * was placed into every reel.
+           * Show the exact same winner.
            */
           setSelected(winner);
 
           playClickSound();
         },
-        REEL_DURATIONS[2] + 100
+        REEL_DURATIONS[2] +
+          100
       );
   }
 
@@ -1149,13 +1033,14 @@ export default function ShuntMachine() {
     >
       <style>{`
 
-        * {
-          box-sizing: border-box;
-        }
+        /* ======================================================
+           PAGE
+        ====================================================== */
 
         .shunt-page {
           width: 100%;
           min-height: 100vh;
+          box-sizing: border-box;
 
           padding:
             24px 14px 60px;
@@ -1191,40 +1076,22 @@ export default function ShuntMachine() {
         }
 
         /* ======================================================
-           FILTER GROUPS
+           SEASON FILTER
         ====================================================== */
 
-        .filter-group {
+        .season-filter {
           display: flex;
-          align-items: center;
           justify-content: center;
+          align-items: center;
           flex-wrap: wrap;
 
-          gap: 7px;
+          gap: 8px;
 
-          margin-bottom: 10px;
+          margin:
+            0 auto 20px;
         }
 
-        .filter-label {
-          width: 100%;
-
-          text-align: center;
-
-          margin-bottom: 2px;
-
-          color: #7899b8;
-
-          font-size: 10px;
-
-          font-weight: 900;
-
-          letter-spacing: 2px;
-
-          text-transform:
-            uppercase;
-        }
-
-        .filter-button {
+        .season-button {
           appearance: none;
 
           border:
@@ -1233,7 +1100,7 @@ export default function ShuntMachine() {
               105,
               183,
               255,
-              0.35
+              0.42
             );
 
           background:
@@ -1247,34 +1114,29 @@ export default function ShuntMachine() {
           color:
             #b9d9f6;
 
-          border-radius:
-            10px;
+          border-radius: 11px;
 
-          min-height:
-            36px;
+          min-height: 40px;
 
           padding:
-            0 13px;
+            0 15px;
 
-          font-size:
-            12px;
+          font-size: 13px;
 
-          font-weight:
-            800;
+          font-weight: 800;
 
-          cursor:
-            pointer;
+          cursor: pointer;
 
           transition:
             transform
-              .15s ease,
+              0.15s ease,
             background
-              .15s ease,
+              0.15s ease,
             border-color
-              .15s ease;
+              0.15s ease;
         }
 
-        .filter-button:hover:not(
+        .season-button:hover:not(
           :disabled
         ) {
           transform:
@@ -1284,9 +1146,8 @@ export default function ShuntMachine() {
             var(--season-color);
         }
 
-        .filter-button.active {
-          color:
-            #fff;
+        .season-button.active {
+          color: #fff;
 
           border-color:
             var(--season-color);
@@ -1309,13 +1170,83 @@ export default function ShuntMachine() {
             );
 
           box-shadow:
-            0 0 16px
+            0 0 18px
             color-mix(
               in srgb,
               var(--season-color)
-                28%,
+                30%,
               transparent
             );
+        }
+
+        /* ======================================================
+           FILTERS
+        ====================================================== */
+
+        .filter-section {
+          margin:
+            0 auto 10px;
+          text-align: center;
+        }
+
+        .filter-title {
+          margin-bottom: 5px;
+          color: #7194b5;
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+        }
+
+        .filter-row {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
+        }
+
+        .filter-button {
+          appearance: none;
+          min-height: 31px;
+          padding: 0 11px;
+          border: 1px solid rgba(105, 183, 255, 0.28);
+          border-radius: 9px;
+          background: rgba(4, 25, 51, 0.72);
+          color: #9fc2df;
+          font-size: 11px;
+          font-weight: 800;
+          cursor: pointer;
+          transition:
+            transform 0.15s ease,
+            border-color 0.15s ease,
+            background 0.15s ease,
+            color 0.15s ease;
+        }
+
+        .filter-button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          border-color: var(--season-color);
+        }
+
+        .filter-button.active {
+          border-color: var(--season-color);
+          background: color-mix(
+            in srgb,
+            var(--season-color) 18%,
+            rgba(4, 25, 51, 0.9)
+          );
+          color: #fff;
+          box-shadow: 0 0 12px color-mix(
+            in srgb,
+            var(--season-color) 18%,
+            transparent
+          );
+        }
+
+        .filter-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.55;
         }
 
         /* ======================================================
@@ -1330,81 +1261,93 @@ export default function ShuntMachine() {
             );
 
           margin:
-            18px auto 0;
+            0 auto;
 
           padding:
-            18px 20px 22px;
+            14px;
 
-          border:
-            2px solid
-            rgba(
-              94,
-              177,
-              239,
-              0.55
-            );
+          box-sizing:
+            border-box;
 
           border-radius:
-            26px;
+            22px;
+
+          border:
+            1px solid
+            color-mix(
+              in srgb,
+              var(--season-color)
+                48%,
+              rgba(
+                77,
+                166,
+                235,
+                0.5
+              )
+            );
 
           background:
             linear-gradient(
               180deg,
               rgba(
-                8,
-                35,
-                65,
+                3,
+                22,
+                45,
                 0.98
               ),
               rgba(
                 2,
-                16,
-                34,
+                15,
+                31,
                 0.99
               )
             );
 
           box-shadow:
-            0 25px 70px
-            rgba(
-              0,
-              0,
-              0,
-              0.38
-            ),
-            inset 0 0 40px
-            rgba(
-              50,
-              140,
-              220,
-              0.08
-            );
+            0 18px 50px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              ),
+            inset 0 0 35px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              );
         }
+
+        /* ======================================================
+           MACHINE NAME
+        ====================================================== */
 
         .machine-name {
           text-align:
             center;
 
-          margin-bottom:
-            12px;
+          margin:
+            0 0 10px;
 
           color:
             var(--season-color);
 
           font-size:
-            18px;
+            17px;
 
           font-weight:
             950;
 
           letter-spacing:
-            2px;
+            0.18em;
 
           text-transform:
             uppercase;
 
           text-shadow:
-            0 0 15px
+            0 0 14px
             color-mix(
               in srgb,
               var(--season-color)
@@ -1412,6 +1355,10 @@ export default function ShuntMachine() {
               transparent
             );
         }
+
+        /* ======================================================
+           REEL FRAME
+        ====================================================== */
 
         .machine-frame {
           position:
@@ -1435,64 +1382,67 @@ export default function ShuntMachine() {
           padding:
             8px;
 
+          border-radius:
+            17px;
+
           border:
-            2px solid
+            1px solid
             rgba(
-              105,
-              183,
+              110,
+              189,
               255,
-              0.4
+              0.25
             );
 
-          border-radius:
-            20px;
-
           background:
-            #010b16;
-
-          overflow:
-            hidden;
+            rgba(
+              0,
+              9,
+              22,
+              0.68
+            );
         }
+
+        /* ======================================================
+           REEL
+        ====================================================== */
 
         .reel {
           position:
             relative;
 
           height:
-            300px;
+            calc(
+              ${CELL_HEIGHT}px *
+              3
+            );
 
           overflow:
             hidden;
 
+          border-radius:
+            12px;
+
           border:
             1px solid
             rgba(
-              120,
+              113,
               190,
-              240,
-              0.28
+              255,
+              0.25
             );
-
-          border-radius:
-            14px;
 
           background:
             linear-gradient(
               180deg,
               rgba(
-                0,
-                14,
-                28,
+                3,
+                22,
+                42,
                 0.98
               ),
               rgba(
-                3,
-                25,
-                45,
-                0.9
-              ),
-              rgba(
-                0,
+                2,
                 14,
                 28,
                 0.98
@@ -1500,29 +1450,84 @@ export default function ShuntMachine() {
             );
         }
 
-        .reel-track {
+        .reel::before,
+        .reel::after {
+          content: "";
+
           position:
             absolute;
 
-          left:
-            0;
+          left: 0;
+          right: 0;
 
-          right:
-            0;
+          height:
+            30%;
 
-          top:
-            0;
+          z-index:
+            4;
 
-          display:
-            flex;
+          pointer-events:
+            none;
+        }
 
-          flex-direction:
-            column;
+        .reel::before {
+          top: 0;
+
+          background:
+            linear-gradient(
+              180deg,
+              rgba(
+                0,
+                8,
+                20,
+                0.92
+              ),
+              transparent
+            );
+        }
+
+        .reel::after {
+          bottom: 0;
+
+          background:
+            linear-gradient(
+              0deg,
+              rgba(
+                0,
+                8,
+                20,
+                0.92
+              ),
+              transparent
+            );
+        }
+
+        /* ======================================================
+           REEL TRACK
+        ====================================================== */
+
+        .reel-track {
+          width: 100%;
 
           will-change:
             transform;
+
+          /*
+           * NORMAL STATE.
+           *
+           * This transform is used when
+           * the machine is sitting still.
+           */
+          transform:
+            translateY(
+              var(--reel-end)
+            );
         }
 
+        /*
+         * While spinning, the animation overrides
+         * the normal transform.
+         */
         .reel-track.spinning {
           animation-name:
             shunt-reel-spin;
@@ -1539,11 +1544,49 @@ export default function ShuntMachine() {
             );
         }
 
+        @keyframes shunt-reel-spin {
+          from {
+            transform:
+              translateY(
+                var(--reel-start)
+              );
+          }
+
+          to {
+            transform:
+              translateY(
+                var(--reel-end)
+              );
+          }
+        }
+
+        /*
+         * Motion blur during spin.
+         */
+        .reel-track.spinning
+          .reel-cell img {
+          filter:
+            blur(
+              1.7px
+            )
+            drop-shadow(
+              0 5px 8px
+              rgba(
+                0,
+                0,
+                0,
+                0.5
+              )
+            );
+
+          transform:
+            scaleY(
+              1.06
+            );
+        }
+
         .reel-cell {
           height:
-            ${CELL_HEIGHT}px;
-
-          min-height:
             ${CELL_HEIGHT}px;
 
           display:
@@ -1554,14 +1597,17 @@ export default function ShuntMachine() {
 
           justify-content:
             center;
+
+          box-sizing:
+            border-box;
         }
 
         .reel-cell img {
           width:
-            76px;
+            70px;
 
           height:
-            76px;
+            70px;
 
           object-fit:
             contain;
@@ -1574,56 +1620,81 @@ export default function ShuntMachine() {
 
           pointer-events:
             none;
+
+          filter:
+            drop-shadow(
+              0 5px 8px
+              rgba(
+                0,
+                0,
+                0,
+                0.5
+              )
+            );
         }
+
+        /* ======================================================
+           WINNING WINDOW
+        ====================================================== */
 
         .selection-window {
           position:
             absolute;
 
+          z-index:
+            5;
+
           left:
-            6px;
+            8px;
 
           right:
-            6px;
+            8px;
 
           top:
             calc(
-              50% -
-              48px
+              8px +
+              ${CELL_HEIGHT}px
             );
 
           height:
-            96px;
+            ${CELL_HEIGHT}px;
 
-          border:
+          pointer-events:
+            none;
+
+          border-top:
+            2px solid
+            var(--season-color);
+
+          border-bottom:
             2px solid
             var(--season-color);
 
           border-radius:
-            14px;
+            10px;
 
           box-shadow:
             0 0 20px
             color-mix(
               in srgb,
               var(--season-color)
-                35%,
+                32%,
               transparent
             ),
-            inset 0 0 18px
-            rgba(
-              100,
-              200,
-              255,
-              0.06
-            );
 
-          pointer-events:
-            none;
-
-          z-index:
-            5;
+            inset
+              0 0 20px
+              color-mix(
+                in srgb,
+                var(--season-color)
+                  9%,
+                transparent
+              );
         }
+
+        /* ======================================================
+           ARROWS
+        ====================================================== */
 
         .selection-arrow {
           position:
@@ -1633,23 +1704,29 @@ export default function ShuntMachine() {
             50%;
 
           transform:
-            translateY(-50%);
+            translateY(
+              -50%
+            );
+
+          z-index:
+            7;
 
           color:
             var(--season-color);
 
           font-size:
-            20px;
+            21px;
 
-          font-weight:
-            900;
-
-          text-shadow:
-            0 0 10px
-            var(--season-color);
-
-          z-index:
-            6;
+          filter:
+            drop-shadow(
+              0 0 8px
+              color-mix(
+                in srgb,
+                var(--season-color)
+                  65%,
+                transparent
+              )
+            );
 
           pointer-events:
             none;
@@ -1657,111 +1734,123 @@ export default function ShuntMachine() {
 
         .selection-arrow.left {
           left:
-            10px;
+            7px;
         }
 
         .selection-arrow.right {
           right:
-            10px;
-
-          transform:
-            translateY(-50%)
-            rotate(180deg);
+            7px;
         }
 
         /* ======================================================
            BUTTON
         ====================================================== */
 
-        .shunt-button,
-        .result-shunt-again {
+        .machine-controls {
           display:
-            block;
+            flex;
 
-          margin:
-            16px auto 0;
+          justify-content:
+            center;
+
+          margin-top:
+            14px;
+        }
+
+        .shunt-button {
+          appearance:
+            none;
 
           min-width:
-            190px;
+            240px;
 
           min-height:
-            46px;
-
-          padding:
-            0 25px;
+            50px;
 
           border:
-            2px solid
+            1px solid
             var(--season-color);
 
           border-radius:
-            999px;
-
-          background:
-            linear-gradient(
-              180deg,
-              rgba(
-                20,
-                66,
-                105,
-                0.96
-              ),
-              rgba(
-                4,
-                25,
-                51,
-                0.96
-              )
-            );
+            13px;
 
           color:
-            #fff;
+            #071421;
+
+          background:
+            var(--season-color);
 
           font-size:
-            14px;
+            15px;
 
           font-weight:
             950;
 
           letter-spacing:
-            1px;
+            0.08em;
 
           cursor:
             pointer;
 
           box-shadow:
-            0 0 20px
+            0 0 22px
             color-mix(
               in srgb,
               var(--season-color)
-                30%,
+                28%,
               transparent
             );
 
           transition:
             transform
-              .15s ease,
+              0.15s ease,
             filter
-              .15s ease;
+              0.15s ease;
         }
 
         .shunt-button:hover:not(
           :disabled
-        ),
-        .result-shunt-again:hover {
+        ) {
           transform:
-            translateY(-2px);
+            translateY(
+              -2px
+            );
 
           filter:
-            brightness(1.15);
+            brightness(
+              1.08
+            );
+        }
+
+        .shunt-button:active:not(
+          :disabled
+        ) {
+          transform:
+            translateY(
+              1px
+            );
         }
 
         .shunt-button:disabled {
-          opacity:
-            0.55;
-
           cursor:
             not-allowed;
+
+          opacity:
+            0.55;
+        }
+
+        .empty-state {
+          margin-top:
+            14px;
+
+          text-align:
+            center;
+
+          color:
+            #87aaca;
+
+          font-size:
+            14px;
         }
 
         /* ======================================================
@@ -1771,7 +1860,7 @@ export default function ShuntMachine() {
         .result {
           width:
             min(
-              900px,
+              760px,
               100%
             );
 
@@ -1779,57 +1868,61 @@ export default function ShuntMachine() {
             24px auto 0;
 
           padding:
-            24px;
+            25px 20px;
+
+          box-sizing:
+            border-box;
 
           text-align:
             center;
 
-          border:
-            2px solid
-            var(--season-color);
-
           border-radius:
-            24px;
+            20px;
+
+          border:
+            1px solid
+            color-mix(
+              in srgb,
+              var(--season-color)
+                38%,
+              rgba(
+                90,
+                171,
+                235,
+                0.4
+              )
+            );
 
           background:
             linear-gradient(
               180deg,
               rgba(
-                8,
-                35,
-                65,
-                0.98
+                4,
+                28,
+                54,
+                0.94
               ),
               rgba(
                 2,
-                16,
-                34,
-                0.99
+                17,
+                35,
+                0.98
               )
-            );
-
-          box-shadow:
-            0 20px 60px
-            rgba(
-              0,
-              0,
-              0,
-              0.3
             );
         }
 
         .result-label {
           color:
-            var(--season-color);
+            #83b7df;
 
           font-size:
-            11px;
+            12px;
 
           font-weight:
-            950;
+            900;
 
           letter-spacing:
-            3px;
+            0.24em;
 
           text-transform:
             uppercase;
@@ -1837,13 +1930,10 @@ export default function ShuntMachine() {
 
         .result-pokemon {
           width:
-            180px;
+            175px;
 
           height:
-            180px;
-
-          margin:
-            8px auto;
+            175px;
 
           object-fit:
             contain;
@@ -1851,44 +1941,44 @@ export default function ShuntMachine() {
           image-rendering:
             pixelated;
 
+          margin:
+            2px auto 0;
+
           filter:
             drop-shadow(
-              0 0 18px
+              0 0 20px
               color-mix(
                 in srgb,
                 var(--season-color)
-                  40%,
+                  35%,
                 transparent
               )
             );
         }
 
         .result-number {
+          margin-top:
+            3px;
+
           color:
-            #7899b8;
+            #8ec6f2;
 
           font-size:
-            12px;
+            14px;
 
           font-weight:
             800;
-
-          letter-spacing:
-            2px;
         }
 
-        .result h2 {
-          margin:
-            4px 0 8px;
-
-          color:
-            #edf7ff;
+        .result-name {
+          margin-top:
+            2px;
 
           font-size:
             clamp(
               28px,
               5vw,
-              42px
+              46px
             );
 
           font-weight:
@@ -1897,45 +1987,39 @@ export default function ShuntMachine() {
           font-style:
             italic;
 
+          text-transform:
+            uppercase;
+
           letter-spacing:
-            2px;
+            0.05em;
         }
 
         .result-description {
-          margin:
-            0;
+          margin-top:
+            4px;
 
           color:
-            #8ea9c4;
+            #8fb7d8;
 
           font-size:
             14px;
         }
 
-        .result-divider {
-          height:
-            1px;
+        /* ======================================================
+           LOCATIONS
+        ====================================================== */
 
-          margin:
-            18px 0;
+        .locations {
+          margin-top:
+            22px;
 
-          background:
-            linear-gradient(
-              90deg,
-              transparent,
-              rgba(
-                110,
-                190,
-                240,
-                0.4
-              ),
-              transparent
-            );
+          text-align:
+            left;
         }
 
         .locations-title {
           margin-bottom:
-            12px;
+            9px;
 
           color:
             var(--season-color);
@@ -1947,7 +2031,10 @@ export default function ShuntMachine() {
             950;
 
           letter-spacing:
-            2px;
+            0.18em;
+
+          text-transform:
+            uppercase;
         }
 
         .location-list {
@@ -1964,280 +2051,117 @@ export default function ShuntMachine() {
             );
 
           gap:
-            9px;
-
-          text-align:
-            left;
-        }
-
-        .location-card {
-          padding:
-            12px;
-
-          border:
-            1px solid
-            rgba(
-              105,
-              183,
-              255,
-              0.22
-            );
-
-          border-radius:
-            12px;
-
-          background:
-            rgba(
-              4,
-              25,
-              51,
-              0.7
-            );
-        }
-
-        .location-main strong {
-          display:
-            block;
-
-          color:
-            #e7f5ff;
-
-          font-size:
-            14px;
-        }
-
-        .location-main span {
-          display:
-            block;
-
-          margin-top:
-            3px;
-
-          color:
-            #7295b4;
-
-          font-size:
-            11px;
-
-          font-weight:
-            700;
-        }
-
-        .location-details {
-          display:
-            flex;
-
-          flex-wrap:
-            wrap;
-
-          gap:
-            5px;
-
-          margin-top:
             8px;
         }
 
-        .location-tag {
+        .location-item {
           padding:
-            3px 7px;
+            10px 12px;
+
+          border-radius:
+            10px;
 
           border:
             1px solid
             rgba(
-              105,
-              183,
-              255,
-              0.25
+              93,
+              174,
+              235,
+              0.22
             );
-
-          border-radius:
-            5px;
-
-          color:
-            #9fd3f8;
 
           background:
             rgba(
-              40,
-              100,
-              150,
-              0.18
+              4,
+              26,
+              49,
+              0.72
             );
-
-          font-size:
-            9px;
-
-          font-weight:
-            900;
-        }
-
-        /* ======================================================
-           EMPTY
-        ====================================================== */
-
-        .empty-message {
-          margin:
-            16px auto 0;
-
-          max-width:
-            500px;
-
-          padding:
-            12px;
-
-          text-align:
-            center;
-
-          border:
-            1px solid
-            rgba(
-              255,
-              100,
-              100,
-              0.35
-            );
-
-          border-radius:
-            12px;
 
           color:
-            #ffb5b5;
-
-          background:
-            rgba(
-              90,
-              20,
-              20,
-              0.25
-            );
+            #cce7fb;
 
           font-size:
-            13px;
+            14px;
 
           font-weight:
             700;
         }
 
         /* ======================================================
-           HELP
+           SEASON GLOW
         ====================================================== */
 
-        .machine-help {
-          display:
-            grid;
-
-          grid-template-columns:
-            repeat(
-              3,
-              1fr
-            );
-
-          gap:
-            10px;
-
-          width:
-            min(
-              900px,
-              100%
-            );
-
-          margin:
-            18px auto 0;
-        }
-
-        .machine-help > div {
-          padding:
-            14px;
-
-          text-align:
-            center;
-
-          border:
-            1px solid
-            rgba(
-              105,
-              183,
-              255,
-              0.2
-            );
-
-          border-radius:
-            14px;
-
-          background:
-            rgba(
-              4,
-              25,
-              51,
-              0.5
-            );
-        }
-
-        .machine-help span {
-          display:
-            block;
-
-          margin-bottom:
-            5px;
-
-          font-size:
-            20px;
-        }
-
-        .machine-help strong {
-          display:
-            block;
-
-          color:
-            #dceeff;
-
-          font-size:
-            11px;
-
-          letter-spacing:
-            1px;
-        }
-
-        .machine-help p {
-          margin:
-            5px 0 0;
-
-          color:
-            #7899b8;
-
-          font-size:
-            11px;
-
-          line-height:
-            1.4;
-        }
-
-        /* ======================================================
-           REEL ANIMATION
-        ====================================================== */
-
-        @keyframes shunt-reel-spin {
-          from {
-            transform:
-              translateY(
-                calc(
-                  ${CELL_HEIGHT}px -
-                  ${STOP_INDEX}px *
-                  ${CELL_HEIGHT}px
-                )
+        .season-spring .machine {
+          box-shadow:
+            0 18px 50px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              ),
+            0 0 35px
+              rgba(
+                255,
+                143,
+                199,
+                0.12
               );
-          }
+        }
 
-          to {
-            transform:
-              translateY(
-                calc(
-                  ${CELL_HEIGHT}px -
-                  ${STOP_INDEX}px *
-                  ${CELL_HEIGHT}px
-                )
+        .season-summer .machine {
+          box-shadow:
+            0 18px 50px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              ),
+            0 0 35px
+              rgba(
+                255,
+                216,
+                77,
+                0.12
               );
-          }
+        }
+
+        .season-autumn .machine {
+          box-shadow:
+            0 18px 50px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              ),
+            0 0 35px
+              rgba(
+                255,
+                154,
+                69,
+                0.12
+              );
+        }
+
+        .season-winter .machine {
+          box-shadow:
+            0 18px 50px
+              rgba(
+                0,
+                0,
+                0,
+                0.32
+              ),
+            0 0 35px
+              rgba(
+                114,
+                221,
+                255,
+                0.12
+              );
         }
 
         /* ======================================================
@@ -2249,31 +2173,44 @@ export default function ShuntMachine() {
         ) {
           .shunt-page {
             padding:
-              12px 8px 45px;
+              18px 10px 50px;
           }
 
-          .filter-group {
+          .season-filter {
             gap:
-              5px;
+              6px;
+
+            margin-bottom:
+              16px;
+          }
+
+          .season-button {
+            min-height:
+              38px;
+
+            padding:
+              0 11px;
+
+            font-size:
+              12px;
+          }
+
+          .filter-row {
+            gap: 5px;
           }
 
           .filter-button {
-            min-height:
-              34px;
-
-            padding:
-              0 10px;
-
-            font-size:
-              11px;
+            min-height: 30px;
+            padding: 0 9px;
+            font-size: 10px;
           }
 
           .machine {
             padding:
-              10px;
+              9px;
 
             border-radius:
-              18px;
+              17px;
           }
 
           .machine-name {
@@ -2286,71 +2223,61 @@ export default function ShuntMachine() {
 
           .machine-frame {
             gap:
-              4px;
+              5px;
 
             padding:
-              4px;
-          }
-
-          .reel {
-            height:
-              225px;
-
-            border-radius:
-              10px;
-          }
-
-          .reel-cell {
-            height:
-              72px;
-
-            min-height:
-              72px;
+              5px;
           }
 
           .reel-cell img {
             width:
-              58px;
+              60px;
 
             height:
-              58px;
+              60px;
           }
 
           .selection-window {
+            left:
+              5px;
+
+            right:
+              5px;
+
             top:
               calc(
-                50% -
-                36px
+                5px +
+                ${CELL_HEIGHT}px
               );
-
-            height:
-              72px;
           }
 
           .selection-arrow {
             font-size:
-              15px;
+              17px;
+          }
+
+          .shunt-button {
+            width:
+              100%;
+
+            min-width:
+              0;
           }
 
           .result {
             padding:
-              18px 12px;
+              22px 14px;
           }
 
           .result-pokemon {
             width:
-              145px;
+              150px;
 
             height:
-              145px;
+              150px;
           }
 
           .location-list {
-            grid-template-columns:
-              1fr;
-          }
-
-          .machine-help {
             grid-template-columns:
               1fr;
           }
@@ -2359,44 +2286,12 @@ export default function ShuntMachine() {
         @media (
           max-width: 430px
         ) {
-          .filter-button {
-            padding:
-              0 8px;
-
-            font-size:
-              10px;
-          }
-
-          .reel {
-            height:
-              190px;
-          }
-
-          .reel-cell {
-            height:
-              62px;
-
-            min-height:
-              62px;
-          }
-
           .reel-cell img {
             width:
-              50px;
+              54px;
 
             height:
-              50px;
-          }
-
-          .selection-window {
-            top:
-              calc(
-                50% -
-                31px
-              );
-
-            height:
-              62px;
+              54px;
           }
 
           .result-pokemon {
@@ -2413,17 +2308,13 @@ export default function ShuntMachine() {
       <div className="shunt-content">
 
         {/* ====================================================
-            FILTERS
+            SEASON FILTER
         ==================================================== */}
 
         <div
-          className="filter-group"
+          className="season-filter"
           aria-label="Season filter"
         >
-          <div className="filter-label">
-            Season
-          </div>
-
           {SEASONS.map(
             (seasonOption) => {
               const active =
@@ -2436,11 +2327,13 @@ export default function ShuntMachine() {
                     seasonOption
                   }
                   type="button"
-                  className={`filter-button ${
-                    active
-                      ? "active"
-                      : ""
-                  }`}
+                  className={
+                    `season-button ${
+                      active
+                        ? "active"
+                        : ""
+                    }`
+                  }
                   onClick={() =>
                     changeSeason(
                       seasonOption
@@ -2470,106 +2363,73 @@ export default function ShuntMachine() {
           )}
         </div>
 
-        <div
-          className="filter-group"
-          aria-label="Encounter filter"
-        >
-          <div className="filter-label">
-            Encounter
-          </div>
+        {/* ====================================================
+            ENCOUNTER FILTER
+        ==================================================== */}
 
-          {ENCOUNTER_FILTERS.map(
-            (filter) => (
+        <div className="filter-section" aria-label="Encounter filter">
+          <div className="filter-title">Encounter</div>
+          <div className="filter-row">
+            {ENCOUNTER_FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
                 className={`filter-button ${
-                  encounterFilter ===
-                  filter
-                    ? "active"
-                    : ""
+                  encounterFilter === filter ? "active" : ""
                 }`}
-                onClick={() =>
-                  changeEncounter(
-                    filter
-                  )
-                }
-                disabled={
-                  spinning
-                }
+                onClick={() => changeEncounter(filter)}
+                disabled={spinning}
               >
                 {filter}
               </button>
-            )
-          )}
+            ))}
+          </div>
         </div>
 
-        <div
-          className="filter-group"
-          aria-label="Horde filter"
-        >
-          <div className="filter-label">
-            Horde
-          </div>
+        {/* ====================================================
+            HORDE FILTER
+        ==================================================== */}
 
-          {HORDE_FILTERS.map(
-            (filter) => (
+        <div className="filter-section" aria-label="Horde filter">
+          <div className="filter-title">Horde</div>
+          <div className="filter-row">
+            {HORDE_FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
                 className={`filter-button ${
-                  hordeFilter ===
-                  filter
-                    ? "active"
-                    : ""
+                  hordeFilter === filter ? "active" : ""
                 }`}
-                onClick={() =>
-                  changeHorde(
-                    filter
-                  )
-                }
-                disabled={
-                  spinning
-                }
+                onClick={() => changeHorde(filter)}
+                disabled={spinning}
               >
                 {filter}
               </button>
-            )
-          )}
+            ))}
+          </div>
         </div>
 
-        <div
-          className="filter-group"
-          aria-label="Lure filter"
-        >
-          <div className="filter-label">
-            Lure
-          </div>
+        {/* ====================================================
+            LURE FILTER
+        ==================================================== */}
 
-          {LURE_FILTERS.map(
-            (filter) => (
+        <div className="filter-section" aria-label="Lure filter">
+          <div className="filter-title">Lure</div>
+          <div className="filter-row">
+            {LURE_FILTERS.map((filter) => (
               <button
                 key={filter}
                 type="button"
                 className={`filter-button ${
-                  lureFilter ===
-                  filter
-                    ? "active"
-                    : ""
+                  lureFilter === filter ? "active" : ""
                 }`}
-                onClick={() =>
-                  changeLure(
-                    filter
-                  )
-                }
-                disabled={
-                  spinning
-                }
+                onClick={() => changeLure(filter)}
+                disabled={spinning}
               >
                 {filter}
               </button>
-            )
-          )}
+            ))}
+          </div>
         </div>
 
         {/* ====================================================
@@ -2578,7 +2438,7 @@ export default function ShuntMachine() {
 
         <section
           className="machine"
-          aria-label="Find Your Next Shiny Hunt"
+          aria-label="Shunt Machine"
         >
           <div className="machine-name">
             Find Your Next Shiny Hunt
@@ -2593,6 +2453,17 @@ export default function ShuntMachine() {
                     reelIndex
                   ] ?? [];
 
+                /*
+                 * Start position.
+                 */
+                const startY =
+                  CELL_HEIGHT -
+                  START_INDEX *
+                    CELL_HEIGHT;
+
+                /*
+                 * Winning position.
+                 */
                 const endY =
                   CELL_HEIGHT -
                   STOP_INDEX *
@@ -2610,17 +2481,49 @@ export default function ShuntMachine() {
                       reelIndex
                     }
                   >
+
                     <div
-                      key={`track-${spinId}-${reelIndex}`}
-                      className={`reel-track ${
-                        spinning
-                          ? "spinning"
-                          : ""
-                      }`}
+                      /*
+                       * NEW KEY EVERY SPIN.
+                       *
+                       * This forces the browser
+                       * to create a new animation.
+                       */
+                      key={
+                        `track-${spinId}-${reelIndex}`
+                      }
+
+                      className={
+                        `reel-track ${
+                          spinning
+                            ? "spinning"
+                            : ""
+                        }`
+                      }
+
                       style={
                         {
+                          "--reel-start":
+                            `${startY}px`,
+
+                          "--reel-end":
+                            `${endY}px`,
+
                           animationDuration:
                             `${duration}ms`,
+
+                          /*
+                           * THIS IS THE IMPORTANT FIX.
+                           *
+                           * When the animation is over,
+                           * keep the transform explicitly
+                           * at the winning position.
+                           */
+                          transform:
+                            reelLocked &&
+                            !spinning
+                              ? `translateY(${endY}px)`
+                              : undefined,
 
                           animationName:
                             spinning
@@ -2632,15 +2535,10 @@ export default function ShuntMachine() {
 
                           animationTimingFunction:
                             "cubic-bezier(0.08, 0.72, 0.18, 1)",
-
-                          transform:
-                            reelLocked &&
-                            !spinning
-                              ? `translateY(${endY}px)`
-                              : undefined,
                         } as CSSProperties
                       }
                     >
+
                       {reel.map(
                         (
                           pokemon,
@@ -2648,7 +2546,9 @@ export default function ShuntMachine() {
                         ) => (
                           <div
                             className="reel-cell"
-                            key={`${pokemon.id}-${index}`}
+                            key={
+                              `${spinId}-${reelIndex}-${index}-${pokemon.id}`
+                            }
                           >
                             <img
                               src={getShinySprite(
@@ -2664,32 +2564,46 @@ export default function ShuntMachine() {
                           </div>
                         )
                       )}
+
                     </div>
+
+                    {reelIndex ===
+                      0 && (
+                      <span className="selection-arrow left">
+                        ▶
+                      </span>
+                    )}
+
+                    {reelIndex ===
+                      2 && (
+                      <span className="selection-arrow right">
+                        ◀
+                      </span>
+                    )}
+
                   </div>
                 );
               }
             )}
 
-            <div className="selection-window" />
+            <div
+              className="selection-window"
+            />
 
-            <div className="selection-arrow left">
-              ▶
-            </div>
-
-            <div className="selection-arrow right">
-              ▶
-            </div>
           </div>
 
           {/* ==================================================
-              SPIN BUTTON
+              SHUNT AGAIN
           ================================================== */}
 
-          {!selected && (
+          <div className="machine-controls">
+
             <button
               type="button"
               className="shunt-button"
-              onClick={shunt}
+              onClick={
+                shuntAgain
+              }
               disabled={
                 spinning ||
                 shuntablePokemon.length ===
@@ -2697,249 +2611,107 @@ export default function ShuntMachine() {
               }
             >
               {spinning
-                ? "FATE IS CHOOSING..."
-                : "🎰 SHUNT"}
+                ? "FATE IS SPINNING..."
+                : "🎰 SHUNT AGAIN"}
             </button>
-          )}
+
+          </div>
 
           {shuntablePokemon.length ===
             0 && (
-            <div className="empty-message">
-              No Pokémon match the
+            <div className="empty-state">
+              No Pokémon with hunt
+              locations match the
               selected filters.
             </div>
           )}
+
         </section>
 
         {/* ====================================================
             RESULT
         ==================================================== */}
 
-        {selected &&
-          selectedMonster && (
-            <section className="result">
+        {selected && (
+          <section
+            className="result"
+            aria-live="polite"
+          >
 
-              <div className="result-label">
-                ✦ FATE HAS CHOSEN ✦
-              </div>
-
-              <img
-                className="result-pokemon"
-                src={getShinyGif(
-                  selected.id
-                )}
-                alt={`${selected.name} shiny`}
-                onError={(event) => {
-                  event.currentTarget.src =
-                    getShinySprite(
-                      selected.id
-                    );
-                }}
-              />
-
-              <div className="result-number">
-                #
-                {String(
-                  selected.id
-                ).padStart(
-                  3,
-                  "0"
-                )}
-              </div>
-
-              <h2>
-                SHINY{" "}
-                {selected.name.toUpperCase()}
-              </h2>
-
-              <p className="result-description">
-                Fate has chosen your
-                next target.
-              </p>
-
-              <div className="result-divider" />
-
-              <div className="locations-title">
-                📍 HUNT LOCATIONS
-              </div>
-
-              <div className="location-list">
-
-                {selectedLocations.map(
-                  (
-                    location,
-                    index
-                  ) => {
-                    const locationName =
-                      getLocationName(
-                        location
-                      );
-
-                    return (
-                      <div
-                        key={`${locationName}-${index}`}
-                        className="location-card"
-                      >
-                        <div className="location-main">
-                          <strong>
-                            {
-                              locationName
-                            }
-                          </strong>
-
-                          {location.region_name && (
-                            <span>
-                              {
-                                location.region_name
-                              }
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="location-details">
-
-                          {location.season && (
-                            <span className="location-tag">
-                              🍂{" "}
-                              {
-                                location.season
-                              }
-                            </span>
-                          )}
-
-                          {location.type && (
-                            <span className="location-tag">
-                              🎯{" "}
-                              {
-                                location.type
-                              }
-                            </span>
-                          )}
-
-                          {isHorde(
-                            location
-                          ) && (
-                            <span className="location-tag">
-                              👥 HORDE
-                            </span>
-                          )}
-
-                          {isFishing(
-                            location
-                          ) && (
-                            <span className="location-tag">
-                              🎣 FISHING
-                            </span>
-                          )}
-
-                          {isLure(
-                            location
-                          ) && (
-                            <span className="location-tag">
-                              🧲 LURE
-                            </span>
-                          )}
-
-                          {location.min_level !==
-                            undefined &&
-                            location.max_level !==
-                              undefined && (
-                              <span className="location-tag">
-                                Lv.{" "}
-                                {
-                                  location.min_level
-                                }
-                                –
-                                {
-                                  location.max_level
-                                }
-                              </span>
-                            )}
-
-                        </div>
-                      </div>
-                    );
-                  }
-                )}
-
-              </div>
-
-              <button
-                type="button"
-                className="result-shunt-again"
-                onClick={
-                  shunt
-                }
-                disabled={
-                  spinning
-                }
-              >
-                🎰 SHUNT AGAIN
-              </button>
-
-            </section>
-          )}
-
-        {/* ====================================================
-            HELP
-        ==================================================== */}
-
-        {!selected &&
-          !spinning && (
-            <div className="machine-help">
-
-              <div>
-                <span>
-                  🎰
-                </span>
-
-                <strong>
-                  LET FATE DECIDE
-                </strong>
-
-                <p>
-                  Press SHUNT to
-                  randomly choose
-                  your next shiny
-                  target.
-                </p>
-              </div>
-
-              <div>
-                <span>
-                  📍
-                </span>
-
-                <strong>
-                  LOCATION GUARANTEED
-                </strong>
-
-                <p>
-                  Every Pokémon
-                  selected has a
-                  location matching
-                  your filters.
-                </p>
-              </div>
-
-              <div>
-                <span>
-                  ✨
-                </span>
-
-                <strong>
-                  FILTER YOUR FATE
-                </strong>
-
-                <p>
-                  Combine season,
-                  encounter, horde,
-                  and lure filters.
-                </p>
-              </div>
-
+            <div className="result-label">
+              ✦ Fate Has Chosen ✦
             </div>
-          )}
+
+            {/* SHINY GIF */}
+
+            <img
+              className="result-pokemon"
+              src={getShinyGif(
+                selected.id
+              )}
+              alt={
+                `Shiny ${selected.name}`
+              }
+              draggable={false}
+            />
+
+            <div className="result-number">
+              #
+              {String(
+                selected.id
+              ).padStart(
+                3,
+                "0"
+              )}
+            </div>
+
+            <div className="result-name">
+              {selected.name}
+            </div>
+
+            <div className="result-description">
+              Your next shiny hunt.
+            </div>
+
+            {/* ==================================================
+                LOCATIONS
+            ================================================== */}
+
+            {selectedLocations.length >
+              0 && (
+              <div className="locations">
+
+                <div className="locations-title">
+                  Hunt Locations
+                </div>
+
+                <div className="location-list">
+
+                  {selectedLocations.map(
+                    (
+                      location,
+                      index
+                    ) => (
+                      <div
+                        className="location-item"
+                        key={
+                          `${location.location_name_full || location.location_name}-${index}`
+                        }
+                      >
+                        📍{" "}
+                        {location.location_name_full ||
+                          location.location_name}
+                      </div>
+                    )
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
+          </section>
+        )}
 
       </div>
     </div>
