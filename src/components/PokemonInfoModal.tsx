@@ -17,6 +17,14 @@ type Props = {
   defaultTab?: Tab;
 };
 
+function getShowdownSpriteName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 type ApiPokemon = {
   id: number;
   name: string;
@@ -338,7 +346,9 @@ export default function PokemonInfoModal({
       ?.flavor_text || "No description available.";
 
   const shinySprite =
-    `https://play.pokemonshowdown.com/sprites/ani-shiny/${pokemon.id}.gif`;
+    `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
+      pokemon.name
+    )}.gif`;
 
   const fallbackSprite =
     `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
