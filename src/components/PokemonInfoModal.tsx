@@ -110,6 +110,9 @@ type EncounterInfo = {
   region: string;
   location: string;
   area: string;
+  method: string;
+  minLevel: number | null;
+  maxLevel: number | null;
   time: string[];
   chance: number | null;
   horde: "Yes" | "No" | "Unknown";
@@ -269,18 +272,34 @@ function getEncounterTime(
   conditionValues: { name: string }[]
 ) {
   const values = conditionValues
-    .map((condition) => condition.name.toLowerCase())
+    .map((condition) =>
+      condition.name.toLowerCase()
+    )
     .filter(Boolean);
 
-  const times = values.filter(
-    (value) =>
-      value.includes("morning") ||
-      value.includes("day") ||
-      value.includes("night")
-  );
+  const times = values
+    .map((value) => {
+      if (value.includes("morning")) {
+        return "Morning";
+      }
+
+      if (value.includes("night")) {
+        return "Night";
+      }
+
+      if (value === "day" || value.includes("day")) {
+        return "Day";
+      }
+
+      return null;
+    })
+    .filter(
+      (value): value is string =>
+        value !== null
+    );
 
   return times.length > 0
-    ? Array.from(new Set(times.map(formatName)))
+    ? Array.from(new Set(times))
     : ["Any Time"];
 }
 
@@ -473,6 +492,20 @@ export default function PokemonInfoModal({
                             area: formatName(
                               entry.location_area.name
                             ),
+                            method: formatName(
+                              detail.method?.name ||
+                                "Unknown"
+                            ),
+                            minLevel:
+                              typeof detail.min_level ===
+                              "number"
+                                ? detail.min_level
+                                : null,
+                            maxLevel:
+                              typeof detail.max_level ===
+                              "number"
+                                ? detail.max_level
+                                : null,
                             time: getEncounterTime(
                               detail.condition_values || []
                             ),
@@ -637,9 +670,7 @@ export default function PokemonInfoModal({
 
             <div className="evolution-stage-list">
               {stage.map((node) => {
-                const name = getEvolutionName(
-                  node.species.url
-                );
+                const name = node.species.name;
 
                 const pokemonId =
                   getEvolutionId(node.species.url);
@@ -866,6 +897,88 @@ export default function PokemonInfoModal({
              font-weight: 700;
              white-space: nowrap;
              opacity: 0.9;
+           }
+
+           .wild-locations-card {
+             width: 100%;
+             max-width: none;
+           }
+
+           .wild-location-table-wrap {
+             width: 100%;
+             overflow-x: auto;
+           }
+
+           .wild-location-table {
+             min-width: 760px;
+             display: flex;
+             flex-direction: column;
+             gap: 5px;
+           }
+
+           .wild-location-header,
+           .wild-location-row {
+             display: grid;
+             grid-template-columns:
+               1.05fr
+               0.8fr
+               2.35fr
+               0.75fr
+               0.9fr
+               0.9fr
+               0.9fr;
+             gap: 5px;
+             align-items: stretch;
+           }
+
+           .wild-location-header > div,
+           .wild-location-row > div {
+             display: flex;
+             align-items: center;
+             justify-content: center;
+             min-height: 46px;
+             padding: 8px 10px;
+             text-align: center;
+             border: 1px solid
+               rgba(150, 190, 220, 0.22);
+             border-radius: 4px;
+             background:
+               rgba(255, 255, 255, 0.035);
+           }
+
+           .wild-location-header > div {
+             font-weight: 700;
+             background:
+               rgba(110, 150, 180, 0.2);
+           }
+
+           .wild-location-row {
+             font-size: 0.9rem;
+           }
+
+           .wild-type-cell {
+             text-transform: capitalize;
+           }
+
+           .wild-region-cell {
+             font-weight: 700;
+             white-space: nowrap;
+           }
+
+           .wild-name-cell {
+             font-weight: 600;
+           }
+
+           .move-level-list {
+             display: flex;
+             flex-direction: column;
+             gap: 6px;
+             width: 100%;
+           }
+
+           .move-level-list .move-card {
+             width: 100%;
+             min-height: 42px;
            }
 
            .evolution-tree-horizontal {
@@ -1140,7 +1253,13 @@ export default function PokemonInfoModal({
                             {formatMoveMethod(method)}
                           </h3>
 
-                          <div className="move-grid">
+                          <div
+                            className={
+                              method === "level-up"
+                                ? "move-level-list"
+                                : "move-grid"
+                            }
+                          >
                             {moves.map(
                               ({
                                 move,
@@ -1270,152 +1389,161 @@ export default function PokemonInfoModal({
                 {activeTab ===
                   "Wild Locations" && (
                   <div className="pokemon-tab-section">
-                    <section className="pokemon-info-card">
-                      <h3>
-                        Wild Locations
-                      </h3>
+                    <section className="pokemon-info-card wild-locations-card">
+                      <h3>Wild Locations</h3>
 
                       {locations.length > 0 ? (
-                        <div className="wild-location-regions">
-                          {Object.entries(
-                            locations.reduce<
-                              Record<
-                                string,
-                                Record<string, EncounterInfo[]>
-                              >
-                            >((regions, encounter) => {
-                              if (!regions[encounter.region]) {
-                                regions[encounter.region] = {};
-                              }
+                        <div className="wild-location-table-wrap">
+                          <div className="wild-location-table">
+                            <div className="wild-location-header">
+                              <div>Type</div>
+                              <div>Region</div>
+                              <div>Location</div>
+                              <div>Levels</div>
+                              <div>Morning</div>
+                              <div>Day</div>
+                              <div>Night</div>
+                            </div>
 
-                              if (
-                                !regions[encounter.region][
-                                  encounter.location
-                                ]
-                              ) {
-                                regions[encounter.region][
-                                  encounter.location
-                                ] = [];
-                              }
-
-                              regions[encounter.region][
-                                encounter.location
-                              ].push(encounter);
-
-                              return regions;
-                            }, {})
-                          )
-                            .sort(([a], [b]) =>
-                              a.localeCompare(b)
-                            )
-                            .map(
-                              ([
-                                region,
-                                regionLocations,
-                              ]) => (
-                                <div
-                                  key={region}
-                                  className="wild-region-section"
+                            {Object.entries(
+                              locations.reduce<
+                                Record<
+                                  string,
+                                  EncounterInfo[]
                                 >
-                                  <h4>
-                                    {region}
-                                  </h4>
+                              >((groups, encounter) => {
+                                const key = [
+                                  encounter.region,
+                                  encounter.location,
+                                  encounter.method,
+                                  encounter.minLevel,
+                                  encounter.maxLevel,
+                                ].join("|");
 
-                                  <div className="wild-location-list">
-                                    {Object.entries(
-                                      regionLocations
+                                if (!groups[key]) {
+                                  groups[key] = [];
+                                }
+
+                                groups[key].push(encounter);
+
+                                return groups;
+                              }, {})
+                            )
+                              .sort(([, a], [, b]) => {
+                                const firstA = a[0];
+                                const firstB = b[0];
+
+                                return (
+                                  firstA.region.localeCompare(
+                                    firstB.region
+                                  ) ||
+                                  firstA.location.localeCompare(
+                                    firstB.location
+                                  ) ||
+                                  firstA.method.localeCompare(
+                                    firstB.method
+                                  )
+                                );
+                              })
+                              .map(([, encounters], index) => {
+                                const first = encounters[0];
+
+                                const timeChance = (
+                                  time: string
+                                ) => {
+                                  const matches =
+                                    encounters.filter(
+                                      (encounter) =>
+                                        encounter.time.includes(
+                                          time
+                                        ) ||
+                                        encounter.time.includes(
+                                          "Any Time"
+                                        )
+                                    );
+
+                                  if (!matches.length) {
+                                    return "—";
+                                  }
+
+                                  const chances = matches
+                                    .map(
+                                      (encounter) =>
+                                        encounter.chance
                                     )
-                                      .sort(([a], [b]) =>
-                                        a.localeCompare(b)
-                                      )
-                                      .map(
-                                        ([
-                                          location,
-                                          encounters,
-                                        ]) => {
-                                          const uniqueEncounters =
-                                            Array.from(
-                                              new Map(
-                                                encounters.map(
-                                                  (encounter) => [
-                                                    `${encounter.area}-${encounter.time.join(",")}-${encounter.chance}-${encounter.horde}`,
-                                                    encounter,
-                                                  ]
-                                                )
-                                              ).values()
-                                            );
+                                    .filter(
+                                      (
+                                        chance
+                                      ): chance is number =>
+                                        chance !== null
+                                    );
 
-                                          return (
-                                            <div
-                                              key={location}
-                                              className="wild-location-card"
-                                            >
-                                              <h5>
-                                                {location}
-                                              </h5>
+                                  if (!chances.length) {
+                                    return "Available";
+                                  }
 
-                                              <div className="wild-encounter-list">
-                                                {uniqueEncounters.map(
-                                                  (
-                                                    encounter,
-                                                    index
-                                                  ) => (
-                                                    <div
-                                                      key={`${encounter.area}-${index}`}
-                                                      className="wild-encounter-row"
-                                                    >
-                                                      <div>
-                                                        <span className="wild-label">
-                                                          Area
-                                                        </span>
-                                                        <strong>
-                                                          {encounter.area}
-                                                        </strong>
-                                                      </div>
+                                  const unique =
+                                    Array.from(
+                                      new Set(chances)
+                                    );
 
-                                                      <div>
-                                                        <span className="wild-label">
-                                                          Time
-                                                        </span>
-                                                        <strong>
-                                                          {encounter.time.join(
-                                                            " / "
-                                                          )}
-                                                        </strong>
-                                                      </div>
+                                  return unique
+                                    .map(
+                                      (chance) =>
+                                        `${chance}%`
+                                    )
+                                    .join(" / ");
+                                };
 
-                                                      <div>
-                                                        <span className="wild-label">
-                                                          Catch %
-                                                        </span>
-                                                        <strong>
-                                                          {encounter.chance !==
-                                                          null
-                                                            ? `${encounter.chance}%`
-                                                            : "—"}
-                                                        </strong>
-                                                      </div>
+                                const levelText =
+                                  first.minLevel !== null &&
+                                  first.maxLevel !== null
+                                    ? first.minLevel ===
+                                      first.maxLevel
+                                      ? `${first.minLevel}`
+                                      : `${first.minLevel}-${first.maxLevel}`
+                                    : "—";
 
-                                                      <div>
-                                                        <span className="wild-label">
-                                                          Horde
-                                                        </span>
-                                                        <strong>
-                                                          {encounter.horde}
-                                                        </strong>
-                                                      </div>
-                                                    </div>
-                                                  )
-                                                )}
-                                              </div>
-                                            </div>
-                                          );
-                                        }
+                                return (
+                                  <div
+                                    key={`${first.region}-${first.location}-${first.method}-${index}`}
+                                    className="wild-location-row"
+                                  >
+                                    <div className="wild-type-cell">
+                                      {first.method}
+                                    </div>
+
+                                    <div className="wild-region-cell">
+                                      [ {first.region} ]
+                                    </div>
+
+                                    <div className="wild-name-cell">
+                                      {first.location}
+                                    </div>
+
+                                    <div>
+                                      {levelText}
+                                    </div>
+
+                                    <div>
+                                      {timeChance(
+                                        "Morning"
                                       )}
+                                    </div>
+
+                                    <div>
+                                      {timeChance("Day")}
+                                    </div>
+
+                                    <div>
+                                      {timeChance(
+                                        "Night"
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              )
-                            )}
+                                );
+                              })}
+                          </div>
                         </div>
                       ) : (
                         <p>
