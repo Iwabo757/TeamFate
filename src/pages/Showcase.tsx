@@ -29,6 +29,9 @@ export default function Showcase() {
   const [loading, setLoading] =
     useState(true);
 
+  const [searchQuery, setSearchQuery] =
+    useState("");
+
   useEffect(() => {
     loadShowcase();
   }, []);
@@ -162,6 +165,53 @@ export default function Showcase() {
     [grouped]
   );
 
+  const normalizedSearch = searchQuery
+    .trim()
+    .toLowerCase();
+
+  const filteredMembers = useMemo(() => {
+    if (!normalizedSearch) {
+      return sortedMembers;
+    }
+
+    return sortedMembers
+      .map(([member, shinies]) => {
+        const memberMatches = member
+          .toLowerCase()
+          .includes(normalizedSearch);
+
+        if (memberMatches) {
+          return [member, shinies] as [
+            string,
+            Shiny[]
+          ];
+        }
+
+        const matchingPokemon = shinies.filter(
+          (shiny) =>
+            shiny.pokemon_name
+              .toLowerCase()
+              .includes(normalizedSearch)
+        );
+
+        return matchingPokemon.length > 0
+          ? [member, matchingPokemon] as [
+              string,
+              Shiny[]
+            ]
+          : null;
+      })
+      .filter(
+        (
+          entry
+        ): entry is [string, Shiny[]] =>
+          entry !== null
+      );
+  }, [
+    normalizedSearch,
+    sortedMembers,
+  ]);
+
   const allShinies = useMemo(
     () =>
       Object.values(grouped).flat(),
@@ -241,66 +291,121 @@ export default function Showcase() {
         </p>
       </div>
 
-      {sortedMembers.map(
-        ([member, shinies]) => (
-          <div
-            key={member}
-            className="showcase-member"
+      <div className="showcase-search">
+        <div className="showcase-search-input">
+          <span
+            className="showcase-search-icon"
+            aria-hidden="true"
           >
-            <h2>
-              {member} (
-              {shinies.length})
-            </h2>
+            🔎
+          </span>
 
-            <div className="showcase-sprites">
-              {shinies.map(
-                (shiny) => (
-                  <button
-                    key={shiny.id}
-                    type="button"
-                    className="showcase-card"
-                    onClick={() =>
-                      setSelectedPokemon(
-                        shiny
-                      )
-                    }
-                    title={
-                      shiny.pokemon_name
-                    }
-                  >
-                    <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
-                      alt={
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) =>
+              setSearchQuery(
+                event.target.value
+              )
+            }
+            placeholder="Search member or Pokémon..."
+            aria-label="Search member or Pokémon"
+          />
+
+          {searchQuery && (
+            <button
+              type="button"
+              className="showcase-search-clear"
+              onClick={() =>
+                setSearchQuery("")
+              }
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        <p className="showcase-search-result">
+          {normalizedSearch
+            ? `${filteredMembers.length} ${
+                filteredMembers.length === 1
+                  ? "member"
+                  : "members"
+              } found`
+            : "Search by member or Pokémon"}
+        </p>
+      </div>
+
+      {filteredMembers.length > 0 ? (
+        filteredMembers.map(
+          ([member, shinies]) => (
+            <div
+              key={member}
+              className="showcase-member"
+            >
+              <h2>
+                {member} (
+                {shinies.length})
+              </h2>
+
+              <div className="showcase-sprites">
+                {shinies.map(
+                  (shiny) => (
+                    <button
+                      key={shiny.id}
+                      type="button"
+                      className="showcase-card"
+                      onClick={() =>
+                        setSelectedPokemon(
+                          shiny
+                        )
+                      }
+                      title={
                         shiny.pokemon_name
                       }
-                      className="showcase-sprite"
-                      onMouseEnter={(
-                        event
-                      ) => {
-                        event.currentTarget.src =
-                          `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-                            shiny.pokemon_name
-                          )}.gif`;
-                      }}
-                      onMouseLeave={(
-                        event
-                      ) => {
-                        event.currentTarget.src =
-                          `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
-                      }}
-                      onError={(
-                        event
-                      ) => {
-                        event.currentTarget.src =
-                          `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
-                      }}
-                    />
-                  </button>
-                )
-              )}
+                    >
+                      <img
+                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
+                        alt={
+                          shiny.pokemon_name
+                        }
+                        className="showcase-sprite"
+                        onMouseEnter={(
+                          event
+                        ) => {
+                          event.currentTarget.src =
+                            `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+                              shiny.pokemon_name
+                            )}.gif`;
+                        }}
+                        onMouseLeave={(
+                          event
+                        ) => {
+                          event.currentTarget.src =
+                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+                        }}
+                        onError={(
+                          event
+                        ) => {
+                          event.currentTarget.src =
+                            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+                        }}
+                      />
+                    </button>
+                  )
+                )}
+              </div>
             </div>
-          </div>
+          )
         )
+      ) : (
+        <div className="showcase-empty">
+          <h2>No results found</h2>
+          <p>
+            Try searching for a member or Pokémon.
+          </p>
+        </div>
       )}
 
       {selectedPokemon && (
