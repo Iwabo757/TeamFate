@@ -508,25 +508,6 @@ export default function PokemonInfoModal({
     );
   }
 
-  function getEvolutionStages(root: EvolutionNode) {
-    const stages: EvolutionNode[][] = [];
-
-    function walk(node: EvolutionNode, depth: number) {
-      if (!stages[depth]) {
-        stages[depth] = [];
-      }
-
-      stages[depth].push(node);
-
-      node.evolves_to.forEach((child) =>
-        walk(child, depth + 1)
-      );
-    }
-
-    walk(root, 0);
-    return stages;
-  }
-
   function getEvolutionMethod(node: EvolutionNode) {
     const details = node.evolution_details?.[0];
 
@@ -553,103 +534,95 @@ export default function PokemonInfoModal({
     return "Special";
   }
 
-  function renderEvolutionTree(root: EvolutionNode) {
-    const stages = getEvolutionStages(root);
+  function renderEvolutionNode(node: EvolutionNode): React.ReactNode {
+    const name = node.species.name;
+    const pokemonId = getEvolutionId(node.species.url);
+
+    const staticSprite = pokemonId
+      ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
+      : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/0.png`;
+
+    const animatedSprite =
+      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
+        name
+      )}.gif`;
 
     return (
-      <div className="evolution-tree-reference">
-        {stages.map((stage, stageIndex) => (
-          <div
-            key={`stage-${stageIndex}`}
-            className="evolution-stage-reference"
-          >
-            {stageIndex > 0 && (
-              <div className="evolution-connectors-reference">
-                {stage.map((node) => {
-                  const method = getEvolutionMethod(node);
+      <div
+        key={node.species.name}
+        className="evolution-node-reference"
+      >
+        <button
+          type="button"
+          className="evolution-card-reference"
+          onClick={() => {
+            if (pokemonId && onPokemonClick) {
+              onPokemonClick(pokemonId);
+            }
+            setActiveTab("Summary");
+          }}
+          title={`View ${formatName(name)} summary`}
+        >
+          <img
+            src={staticSprite}
+            alt={`Shiny ${formatName(name)}`}
+            className="evolution-sprite-reference"
+            onMouseEnter={(event) => {
+              event.currentTarget.src = animatedSprite;
+            }}
+            onMouseLeave={(event) => {
+              event.currentTarget.src = staticSprite;
+            }}
+            onError={(event) => {
+              event.currentTarget.src = staticSprite;
+            }}
+          />
 
-                  return (
-                    <div
-                      key={`connector-${stageIndex}-${node.species.name}`}
-                      className="evolution-connector-reference"
-                    >
-                      <span className="evolution-arrow-reference">
-                        →
-                      </span>
+          <strong>{formatName(name)}</strong>
 
-                      {method && (
-                        <span className="evolution-requirement-reference">
-                          ▥ {method}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+          {pokemonId && (
+            <span className="evolution-dex-number">
+              #{String(pokemonId).padStart(3, "0")}
+            </span>
+          )}
+        </button>
 
-            <div className="evolution-stage-list-reference">
-              {stage.map((node) => {
-                const name = node.species.name;
-                const pokemonId = getEvolutionId(
-                  node.species.url
-                );
+        {node.evolves_to.length > 0 && (
+          <div className="evolution-branches-reference">
+            {node.evolves_to.map((child) => {
+              const method = getEvolutionMethod(child);
 
-                const staticSprite = pokemonId
-                  ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
-                  : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/0.png`;
+              return (
+                <div
+                  key={`${node.species.name}-${child.species.name}`}
+                  className="evolution-branch-reference"
+                >
+                  <div className="evolution-connector-reference">
+                    <span className="evolution-arrow-reference">
+                      →
+                    </span>
 
-                const animatedSprite =
-                  `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
-                    name
-                  )}.gif`;
-
-                return (
-                  <button
-                    type="button"
-                    key={`${stageIndex}-${name}`}
-                    className="evolution-card-reference"
-                    onClick={() => {
-                      if (pokemonId && onPokemonClick) {
-                        onPokemonClick(pokemonId);
-                      }
-                      setActiveTab("Summary");
-                    }}
-                    title={`View ${formatName(name)} summary`}
-                  >
-                    <img
-                      src={staticSprite}
-                      alt={`Shiny ${formatName(name)}`}
-                      className="evolution-sprite-reference"
-                      onMouseEnter={(event) => {
-                        event.currentTarget.src =
-                          animatedSprite;
-                      }}
-                      onMouseLeave={(event) => {
-                        event.currentTarget.src =
-                          staticSprite;
-                      }}
-                      onError={(event) => {
-                        event.currentTarget.src =
-                          staticSprite;
-                      }}
-                    />
-
-                    <strong>
-                      {formatName(name)}
-                    </strong>
-
-                    {pokemonId && (
-                      <span className="evolution-dex-number">
-                        #{String(pokemonId).padStart(3, "0")}
+                    {method && (
+                      <span className="evolution-requirement-reference">
+                        ▥ {method}
                       </span>
                     )}
-                  </button>
-                );
-              })}
-            </div>
+                  </div>
+
+                  {renderEvolutionNode(child)}
+                </div>
+              );
+            })}
           </div>
-        ))}
+        )}
+      </div>
+    );
+  }
+
+  function renderEvolutionTree(root: EvolutionNode) {
+    return (
+      <div className="evolution-tree-reference">
+        {renderEvolutionNode(root)}
       </div>
     );
   }
@@ -857,33 +830,26 @@ export default function PokemonInfoModal({
             white-space: nowrap;
           }
 
-          /* Evolution Tree */
+          /* Evolution Tree: every alternate evolution gets its own vertical branch */
           .evolution-tree-reference {
-            display: flex;
-            align-items: center;
-            justify-content: stretch;
             width: 100%;
             min-width: 0;
-            box-sizing: border-box;
-            gap: clamp(8px, 1.5vw, 24px);
             padding: 10px 18px 20px;
+            box-sizing: border-box;
             overflow: hidden;
           }
 
-          .evolution-stage-reference {
-            display: contents;
-          }
-
-          .evolution-stage-list-reference {
+          .evolution-node-reference {
             display: flex;
-            flex: 1 1 0;
+            align-items: center;
             min-width: 0;
-            gap: 12px;
+            width: 100%;
           }
 
           .evolution-card-reference {
             appearance: none;
-            width: 100%;
+            flex: 0 0 clamp(180px, 18vw, 290px);
+            width: clamp(180px, 18vw, 290px);
             min-width: 0;
             min-height: clamp(170px, 18vw, 210px);
             box-sizing: border-box;
@@ -918,6 +884,7 @@ export default function PokemonInfoModal({
           .evolution-card-reference strong {
             font-size: clamp(1rem, 1.7vw, 1.45rem);
             line-height: 1.1;
+            text-align: center;
           }
 
           .evolution-dex-number {
@@ -926,23 +893,29 @@ export default function PokemonInfoModal({
             font-weight: 700;
           }
 
-          .evolution-connectors-reference {
+          .evolution-branches-reference {
             display: flex;
-            flex: 0 1 clamp(110px, 14vw, 210px);
+            flex: 1 1 auto;
+            flex-direction: column;
+            gap: 14px;
             min-width: 0;
-            max-width: clamp(110px, 14vw, 210px);
+            padding-left: clamp(16px, 2vw, 34px);
+          }
+
+          .evolution-branch-reference {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            min-width: 0;
+            width: 100%;
           }
 
           .evolution-connector-reference {
+            flex: 0 0 clamp(150px, 15vw, 230px);
+            min-width: 0;
             display: flex;
-            flex-direction: row;
             align-items: center;
             justify-content: center;
             gap: clamp(6px, 0.8vw, 14px);
-            min-width: 0;
-            width: 100%;
           }
 
           .evolution-arrow-reference {
@@ -959,6 +932,78 @@ export default function PokemonInfoModal({
             font-size: clamp(0.78rem, 1.25vw, 1.08rem);
             font-weight: 800;
             white-space: nowrap;
+          }
+
+          @media (max-width: 900px) {
+            .evolution-card-reference {
+              flex-basis: clamp(130px, 30vw, 200px);
+              width: clamp(130px, 30vw, 200px);
+              min-height: 150px;
+            }
+
+            .evolution-connector-reference {
+              flex-basis: clamp(90px, 18vw, 150px);
+            }
+
+            .evolution-requirement-reference {
+              white-space: normal;
+              text-align: center;
+            }
+
+            .evolution-branches-reference {
+              padding-left: 10px;
+              gap: 10px;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .evolution-tree-reference {
+              padding: 8px 4px 14px;
+            }
+
+            .evolution-node-reference {
+              align-items: flex-start;
+            }
+
+            .evolution-card-reference {
+              flex-basis: 105px;
+              width: 105px;
+              min-height: 125px;
+              padding: 8px 5px;
+              border-radius: 12px;
+            }
+
+            .evolution-sprite-reference {
+              width: 58px;
+              height: 58px;
+            }
+
+            .evolution-card-reference strong {
+              font-size: 0.84rem;
+            }
+
+            .evolution-dex-number {
+              font-size: 0.72rem;
+            }
+
+            .evolution-connector-reference {
+              flex-basis: 76px;
+              gap: 3px;
+            }
+
+            .evolution-arrow-reference {
+              font-size: 1.65rem;
+            }
+
+            .evolution-requirement-reference {
+              font-size: 0.62rem;
+              line-height: 1.05;
+            }
+
+            .evolution-branches-reference {
+              padding-left: 4px;
+              gap: 8px;
+            }
           }
 
           /* Wild Locations */
