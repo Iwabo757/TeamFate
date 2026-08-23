@@ -11,6 +11,7 @@ const SHEET_URL =
 export interface AlteringCaveData {
   crystal: string;
   encounters: string[];
+  rareEncounters: string[];
   hordes: string[];
   raw: string[][];
 }
@@ -24,221 +25,184 @@ const normalize = (value: unknown): string =>
 const normalizeRow = (row: string[]): string[] =>
   row.map(normalize);
 
-const rowText = (row: string[]): string =>
-  normalizeRow(row)
-    .join(" ")
-    .toLowerCase();
-
 const unique = (items: string[]): string[] =>
   [...new Set(items.map(normalize).filter(Boolean))];
 
-const BLOCKED_VALUES = new Set([
-  "",
-  "active",
-  "current",
-  "singles",
-  "single",
-  "tier",
-  "rotation",
-  "encounter",
-  "encounters",
-  "horde",
-  "hordes",
-  "crystal",
-  "pokemon",
-  "pokémon",
-  "type",
-  "types",
+const isPokemon = (value: string): boolean => {
+  const text = normalize(value);
 
-  "normal",
-  "fire",
-  "water",
-  "electric",
-  "grass",
-  "ice",
-  "fighting",
-  "poison",
-  "ground",
-  "flying",
-  "psychic",
-  "bug",
-  "rock",
-  "ghost",
-  "dragon",
-  "dark",
-  "steel",
-  "fairy",
-]);
+  if (!text) return false;
 
-const isRotationHeader = (value: string): boolean =>
-  /^rotation\s*\d+$/i.test(normalize(value));
+  const blocked = new Set([
+    "active",
+    "current",
+    "singles",
+    "rare singles",
+    "rare single",
+    "hordes",
+    "horde",
+    "tier",
+    "rotation",
+    "normal",
+    "fire",
+    "water",
+    "electric",
+    "grass",
+    "ice",
+    "fighting",
+    "poison",
+    "ground",
+    "flying",
+    "psychic",
+    "bug",
+    "rock",
+    "ghost",
+    "dragon",
+    "dark",
+    "steel",
+    "fairy",
+  ]);
 
-const isTierValue = (value: string): boolean =>
-  /^tier\s*\d*$/i.test(normalize(value));
+  const lower = text.toLowerCase();
 
-const isMetadata = (value: string): boolean => {
-  const text = normalize(value).toLowerCase();
+  if (blocked.has(lower)) return false;
 
-  if (!text) {
-    return true;
+  if (/^rotation\s*\d+$/i.test(text)) {
+    return false;
   }
 
-  if (BLOCKED_VALUES.has(text)) {
-    return true;
+  if (/^tier\s*\d*$/i.test(text)) {
+    return false;
   }
 
-  if (isRotationHeader(text)) {
-    return true;
-  }
-
-  if (isTierValue(text)) {
-    return true;
-  }
-
-  if (
-    text.includes("brought to you") ||
-    text.includes("creator") ||
-    text.includes("editor") ||
-    text.includes("using this data") ||
-    text.includes("discord") ||
-    text.includes("ign:")
-  ) {
-    return true;
-  }
-
-  return false;
+  return true;
 };
 
-const isPokemonValue = (value: string): boolean =>
-  !isMetadata(value);
-
-const isHordeLabel = (value: string): boolean =>
-  normalize(value)
-    .toLowerCase()
-    .includes("horde");
-
-const isEncounterLabel = (value: string): boolean => {
-  const text = normalize(value).toLowerCase();
-
-  return (
-    text.includes("encounter") ||
-    text.includes("single")
-  );
-};
-
-const findHeaderRow = (
+const findRow = (
   rows: string[][],
-): number =>
-  rows.findIndex((row) => {
-    const text = rowText(row);
-
-    return (
-      text.includes("singles") &&
-      text.includes("tier") &&
-      text.includes("rotation")
-    );
-  });
-
-const findRotationColumns = (
-  headerRow: string[],
-): number[] => {
-  const columns: number[] = [];
-
-  headerRow.forEach((value, index) => {
-    if (isRotationHeader(value)) {
-      columns.push(index);
-    }
-  });
-
-  return columns;
-};
-
-const findColumnType = (
-  rows: string[][],
-  column: number,
-): "encounter" | "horde" => {
-  for (const row of rows) {
-    const value = normalize(row[column]);
-
-    if (isHordeLabel(value)) {
-      return "horde";
-    }
-
-    if (isEncounterLabel(value)) {
-      return "encounter";
-    }
-  }
-
-  return "encounter";
-};
-
-const getTableEnd = (
-  rows: string[][],
-  startIndex: number,
+  text: string,
+  start = 0,
+  end = rows.length,
 ): number => {
-  let emptyRows = 0;
+  const target = text.toLowerCase();
 
-  for (
-    let index = startIndex;
-    index < rows.length;
-    index++
-  ) {
-    const row = rows[index];
+  for (let index = start; index < end; index++) {
+    const firstCell = normalize(rows[index]?.[0]).toLowerCase();
 
-    const isEmpty = row.every(
-      (cell) => !normalize(cell),
-    );
-
-    if (isEmpty) {
-      emptyRows++;
-
-      if (emptyRows >= 3) {
-        return index - 2;
-      }
-    } else {
-      emptyRows = 0;
+    if (firstCell === target) {
+      return index;
     }
   }
 
-  return rows.length;
+  return -1;
 };
 
-const findCrystal = (
+const getSectionValues = (
   rows: string[][],
-  headerRowIndex: number,
-): string => {
-  const searchStart = Math.max(
-    0,
-    headerRowIndex - 10,
-  );
+  start: number,
+  end: number,
+  activeColumns: number[],
+): string[] => {
+  const values: string[] = [];
 
-  const searchEnd = Math.min(
-    rows.length,
-    headerRowIndex + 5,
-  );
+  for (let rowIndex = start; rowIndex < end; rowIndex++) {
+    const row = rows[rowIndex];
+
+    if (!row) continue;
+
+    for (const columnIndex of activeColumns) {
+      const value = normalize(row[columnIndex]);
+
+      if (isPokemon(value)) {
+        values.push(value);
+      }
+    }
+  }
+
+  return unique(values);
+};
+
+const findActiveColumns = (
+  rows: string[][],
+  sectionStart: number,
+): number[] => {
+  const columns = new Set<number>();
+
+  /*
+   * Search the rows immediately above the current
+   * Altering Cave table for ACTIVE / CURRENT markers.
+   */
+  const searchStart = Math.max(0, sectionStart - 5);
 
   for (
     let rowIndex = searchStart;
-    rowIndex < searchEnd;
+    rowIndex < sectionStart;
     rowIndex++
   ) {
     const row = rows[rowIndex];
 
-    for (
-      let column = 0;
-      column < row.length;
-      column++
-    ) {
-      const value = normalize(row[column]);
+    row.forEach((cell, columnIndex) => {
+      const value = normalize(cell).toLowerCase();
 
       if (
-        value.toLowerCase() === "crystal"
+        value === "active" ||
+        value === "current"
+      ) {
+        columns.add(columnIndex);
+      }
+    });
+  }
+
+  /*
+   * If the sheet does not explicitly export ACTIVE
+   * markers in CSV, fall back to the first populated
+   * encounter column after column A.
+   */
+  if (!columns.size) {
+    for (
+      let rowIndex = sectionStart;
+      rowIndex < Math.min(rows.length, sectionStart + 3);
+      rowIndex++
+    ) {
+      const row = rows[rowIndex];
+
+      for (
+        let columnIndex = 1;
+        columnIndex < row.length;
+        columnIndex++
+      ) {
+        if (normalize(row[columnIndex])) {
+          columns.add(columnIndex);
+        }
+      }
+
+      if (columns.size) {
+        break;
+      }
+    }
+  }
+
+  return [...columns];
+};
+
+const findCrystal = (
+  rows: string[][],
+): string => {
+  for (const row of rows) {
+    for (
+      let columnIndex = 0;
+      columnIndex < row.length;
+      columnIndex++
+    ) {
+      if (
+        normalize(row[columnIndex])
+          .toLowerCase() === "crystal"
       ) {
         const nextValue = normalize(
-          row[column + 1],
+          row[columnIndex + 1],
         );
 
-        if (isPokemonValue(nextValue)) {
+        if (isPokemon(nextValue)) {
           return nextValue;
         }
       }
@@ -265,147 +229,166 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
   const raw = parsed.data.map(normalizeRow);
 
-  if (!raw.length) {
-    throw new Error(
-      "The Altering Cave spreadsheet contains no data.",
-    );
-  }
+  /*
+   * Spreadsheet rows are zero-indexed here.
+   *
+   * Sheet structure:
+   *
+   * A4  = Current Altering Cave area
+   * A5  = Singles
+   * A11 = Rare Singles
+   * A14 = Hordes
+   *
+   * We only care about A4 through A16.
+   */
 
-  const headerRowIndex = findHeaderRow(raw);
+  const currentStart = 3;
+  const currentEnd = Math.min(16, raw.length);
 
-  if (headerRowIndex === -1) {
-    console.warn(
-      "Could not find the Altering Cave rotation table.",
-    );
+  const currentRows = raw.slice(
+    currentStart,
+    currentEnd,
+  );
 
+  if (!currentRows.length) {
     return {
       crystal: "",
       encounters: [],
+      rareEncounters: [],
       hordes: [],
       raw,
     };
   }
 
-  const headerRow = raw[headerRowIndex];
+  const singlesRow =
+    findRow(
+      raw,
+      "singles",
+      currentStart,
+      currentEnd,
+    );
 
-  const rotationColumns =
-    findRotationColumns(headerRow);
+  const rareSinglesRow =
+    findRow(
+      raw,
+      "rare singles",
+      currentStart,
+      currentEnd,
+    );
 
-  if (!rotationColumns.length) {
+  const hordesRow =
+    findRow(
+      raw,
+      "hordes",
+      currentStart,
+      currentEnd,
+    );
+
+  if (singlesRow === -1) {
     console.warn(
-      "Could not find any rotation columns.",
+      "Could not find the Singles section.",
     );
-
-    return {
-      crystal: findCrystal(
-        raw,
-        headerRowIndex,
-      ),
-      encounters: [],
-      hordes: [],
-      raw,
-    };
   }
 
-  const tableStart =
-    headerRowIndex + 1;
-
-  const tableEnd = getTableEnd(
-    raw,
-    tableStart,
-  );
-
-  const tableRows = raw.slice(
-    tableStart,
-    tableEnd,
-  );
-
-  const encounters: string[] = [];
-  const hordes: string[] = [];
-
-  const columnTypes = new Map<
-    number,
-    "encounter" | "horde"
-  >();
-
-  rotationColumns.forEach((column) => {
-    columnTypes.set(
-      column,
-      findColumnType(
-        raw.slice(
-          Math.max(
-            0,
-            headerRowIndex - 5,
-          ),
-          headerRowIndex + 1,
-        ),
-        column,
-      ),
+  if (rareSinglesRow === -1) {
+    console.warn(
+      "Could not find the Rare Singles section.",
     );
-  });
-
-  for (const row of tableRows) {
-    const rowValues = normalizeRow(row);
-
-    const rowTextValue =
-      rowText(rowValues);
-
-    const rowIsHorde =
-      rowTextValue.includes("horde");
-
-    const rowIsEncounter =
-      rowTextValue.includes(
-        "encounter",
-      ) ||
-      rowTextValue.includes(
-        "single",
-      );
-
-    for (const column of rotationColumns) {
-      const value = normalize(
-        rowValues[column],
-      );
-
-      if (!isPokemonValue(value)) {
-        continue;
-      }
-
-      const columnType =
-        columnTypes.get(column) ??
-        "encounter";
-
-      if (
-        rowIsHorde ||
-        columnType === "horde"
-      ) {
-        hordes.push(value);
-        continue;
-      }
-
-      if (
-        rowIsEncounter ||
-        columnType === "encounter"
-      ) {
-        encounters.push(value);
-      }
-    }
   }
 
-  const crystal = findCrystal(
+  if (hordesRow === -1) {
+    console.warn(
+      "Could not find the Hordes section.",
+    );
+  }
+
+  const activeColumns = findActiveColumns(
     raw,
-    headerRowIndex,
+    singlesRow !== -1
+      ? singlesRow
+      : currentStart,
   );
+
+  /*
+   * Singles:
+   * From the row after "Singles"
+   * until "Rare Singles".
+   */
+  const encounters =
+    singlesRow !== -1
+      ? getSectionValues(
+          raw,
+          singlesRow + 1,
+          rareSinglesRow !== -1
+            ? rareSinglesRow
+            : currentEnd,
+          activeColumns,
+        )
+      : [];
+
+  /*
+   * Rare Singles:
+   * From the row after "Rare Singles"
+   * until "Hordes".
+   */
+  const rareEncounters =
+    rareSinglesRow !== -1
+      ? getSectionValues(
+          raw,
+          rareSinglesRow + 1,
+          hordesRow !== -1
+            ? hordesRow
+            : currentEnd,
+          activeColumns,
+        )
+      : [];
+
+  /*
+   * Hordes:
+   * From the row after "Hordes"
+   * until the end of the current section.
+   */
+  const hordes =
+    hordesRow !== -1
+      ? getSectionValues(
+          raw,
+          hordesRow + 1,
+          currentEnd,
+          activeColumns,
+        )
+      : [];
 
   const finalData: AlteringCaveData = {
-    crystal,
-    encounters: unique(encounters),
-    hordes: unique(hordes),
+    crystal: findCrystal(raw),
+    encounters,
+    rareEncounters,
+    hordes,
     raw,
   };
 
   console.log(
     "ALTERING CAVE PARSED:",
     finalData,
+  );
+
+  console.log(
+    "ACTIVE COLUMNS:",
+    activeColumns,
+  );
+
+  console.log(
+    "SINGLES:",
+    encounters,
+  );
+
+  console.log(
+    "RARE SINGLES:",
+    rareEncounters,
+  );
+
+  console.log(
+    "HORDES:",
+    hordes,
   );
 
   return finalData;
