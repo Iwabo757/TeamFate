@@ -28,44 +28,56 @@ const normalizeRow = (row: string[]): string[] =>
 const unique = (items: string[]): string[] =>
   [...new Set(items.map(normalize).filter(Boolean))];
 
+const BLOCKED_VALUES = new Set([
+  "",
+  "active",
+  "current",
+  "singles",
+  "single",
+  "rare singles",
+  "rare single",
+  "hordes",
+  "horde",
+  "tier",
+  "rotation",
+  "crystal",
+  "pokemon",
+  "pokémon",
+  "type",
+  "types",
+
+  "normal",
+  "fire",
+  "water",
+  "electric",
+  "grass",
+  "ice",
+  "fighting",
+  "poison",
+  "ground",
+  "flying",
+  "psychic",
+  "bug",
+  "rock",
+  "ghost",
+  "dragon",
+  "dark",
+  "steel",
+  "fairy",
+]);
+
 const isPokemon = (value: string): boolean => {
   const text = normalize(value);
 
-  if (!text) return false;
-
-  const blocked = new Set([
-    "active",
-    "current",
-    "singles",
-    "rare singles",
-    "rare single",
-    "hordes",
-    "horde",
-    "tier",
-    "rotation",
-    "normal",
-    "fire",
-    "water",
-    "electric",
-    "grass",
-    "ice",
-    "fighting",
-    "poison",
-    "ground",
-    "flying",
-    "psychic",
-    "bug",
-    "rock",
-    "ghost",
-    "dragon",
-    "dark",
-    "steel",
-    "fairy",
-  ]);
+  if (!text) {
+    return false;
+  }
 
   const lower = text.toLowerCase();
 
-  if (blocked.has(lower)) return false;
+  if (BLOCKED_VALUES.has(lower)) {
+    return false;
+  }
 
   if (/^rotation\s*\d+$/i.test(text)) {
     return false;
@@ -75,71 +87,65 @@ const isPokemon = (value: string): boolean => {
     return false;
   }
 
+  /*
+   * Filters labels such as:
+   *
+   * Zorua (All Hordes)
+   *
+   * We only want the actual Pokémon names.
+   */
+  if (text.includes("(") || text.includes(")")) {
+    return false;
+  }
+
   return true;
 };
 
-const findRow = (
+const findExactRow = (
   rows: string[][],
-  text: string,
-  start = 0,
-  end = rows.length,
+  value: string,
+  start: number,
+  end: number,
 ): number => {
-  const target = text.toLowerCase();
+  const target = value.toLowerCase();
 
-  for (let index = start; index < end; index++) {
-    const firstCell = normalize(rows[index]?.[0]).toLowerCase();
+  for (let rowIndex = start; rowIndex < end; rowIndex++) {
+    const row = rows[rowIndex];
 
-    if (firstCell === target) {
-      return index;
+    if (!row) {
+      continue;
+    }
+
+    for (
+      let columnIndex = 0;
+      columnIndex < row.length;
+      columnIndex++
+    ) {
+      if (
+        normalize(row[columnIndex]).toLowerCase() ===
+        target
+      ) {
+        return rowIndex;
+      }
     }
   }
 
   return -1;
 };
 
-const getSectionValues = (
+const findActiveColumns = (
   rows: string[][],
   start: number,
   end: number,
-  activeColumns: number[],
-): string[] => {
-  const values: string[] = [];
+): number[] => {
+  const columns = new Set<number>();
 
   for (let rowIndex = start; rowIndex < end; rowIndex++) {
     const row = rows[rowIndex];
 
-    if (!row) continue;
-
-    for (const columnIndex of activeColumns) {
-      const value = normalize(row[columnIndex]);
-
-      if (isPokemon(value)) {
-        values.push(value);
-      }
+    if (!row) {
+      continue;
     }
-  }
-
-  return unique(values);
-};
-
-const findActiveColumns = (
-  rows: string[][],
-  sectionStart: number,
-): number[] => {
-  const columns = new Set<number>();
-
-  /*
-   * Search the rows immediately above the current
-   * Altering Cave table for ACTIVE / CURRENT markers.
-   */
-  const searchStart = Math.max(0, sectionStart - 5);
-
-  for (
-    let rowIndex = searchStart;
-    rowIndex < sectionStart;
-    rowIndex++
-  ) {
-    const row = rows[rowIndex];
 
     row.forEach((cell, columnIndex) => {
       const value = normalize(cell).toLowerCase();
@@ -153,36 +159,34 @@ const findActiveColumns = (
     });
   }
 
-  /*
-   * If the sheet does not explicitly export ACTIVE
-   * markers in CSV, fall back to the first populated
-   * encounter column after column A.
-   */
-  if (!columns.size) {
-    for (
-      let rowIndex = sectionStart;
-      rowIndex < Math.min(rows.length, sectionStart + 3);
-      rowIndex++
-    ) {
-      const row = rows[rowIndex];
+  return [...columns];
+};
 
-      for (
-        let columnIndex = 1;
-        columnIndex < row.length;
-        columnIndex++
-      ) {
-        if (normalize(row[columnIndex])) {
-          columns.add(columnIndex);
-        }
-      }
+const getSectionPokemon = (
+  rows: string[][],
+  start: number,
+  end: number,
+  columns: number[],
+): string[] => {
+  const pokemon: string[] = [];
 
-      if (columns.size) {
-        break;
+  for (let rowIndex = start; rowIndex < end; rowIndex++) {
+    const row = rows[rowIndex];
+
+    if (!row) {
+      continue;
+    }
+
+    for (const columnIndex of columns) {
+      const value = normalize(row[columnIndex]);
+
+      if (isPokemon(value)) {
+        pokemon.push(value);
       }
     }
   }
 
-  return [...columns];
+  return unique(pokemon);
 };
 
 const findCrystal = (
@@ -194,10 +198,11 @@ const findCrystal = (
       columnIndex < row.length;
       columnIndex++
     ) {
-      if (
-        normalize(row[columnIndex])
-          .toLowerCase() === "crystal"
-      ) {
+      const value = normalize(
+        row[columnIndex],
+      ).toLowerCase();
+
+      if (value === "crystal") {
         const nextValue = normalize(
           row[columnIndex + 1],
         );
@@ -229,131 +234,158 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
   const raw = parsed.data.map(normalizeRow);
 
+  if (!raw.length) {
+    throw new Error(
+      "The Altering Cave spreadsheet contains no data.",
+    );
+  }
+
   /*
-   * Spreadsheet rows are zero-indexed here.
+   * Google Sheet structure:
    *
-   * Sheet structure:
+   * Row 4  = Singles title
+   * Row 5+ = Singles Pokémon
    *
-   * A4  = Current Altering Cave area
-   * A5  = Singles
-   * A11 = Rare Singles
-   * A14 = Hordes
+   * Row 11 = Rare Singles title
+   * Row 12+ = Rare Singles Pokémon
    *
-   * We only care about A4 through A16.
+   * Row 14 = Hordes title
+   * Row 15+ = Horde Pokémon
+   *
+   * Array indexes are zero-based, so:
+   *
+   * Sheet Row 4  = index 3
+   * Sheet Row 11 = index 10
+   * Sheet Row 14 = index 13
    */
 
-  const currentStart = 3;
-  const currentEnd = Math.min(16, raw.length);
-
-  const currentRows = raw.slice(
-    currentStart,
-    currentEnd,
+  const SECTION_START = 3;
+  const SECTION_END = Math.min(
+    16,
+    raw.length,
   );
 
-  if (!currentRows.length) {
-    return {
-      crystal: "",
-      encounters: [],
-      rareEncounters: [],
-      hordes: [],
-      raw,
-    };
-  }
-
-  const singlesRow =
-    findRow(
-      raw,
-      "singles",
-      currentStart,
-      currentEnd,
-    );
-
-  const rareSinglesRow =
-    findRow(
-      raw,
-      "rare singles",
-      currentStart,
-      currentEnd,
-    );
-
-  const hordesRow =
-    findRow(
-      raw,
-      "hordes",
-      currentStart,
-      currentEnd,
-    );
-
-  if (singlesRow === -1) {
-    console.warn(
-      "Could not find the Singles section.",
-    );
-  }
-
-  if (rareSinglesRow === -1) {
-    console.warn(
-      "Could not find the Rare Singles section.",
-    );
-  }
-
-  if (hordesRow === -1) {
-    console.warn(
-      "Could not find the Hordes section.",
-    );
-  }
-
-  const activeColumns = findActiveColumns(
+  const singlesRow = findExactRow(
     raw,
-    singlesRow !== -1
-      ? singlesRow
-      : currentStart,
+    "singles",
+    SECTION_START,
+    SECTION_END,
+  );
+
+  const rareSinglesRow = findExactRow(
+    raw,
+    "rare singles",
+    SECTION_START,
+    SECTION_END,
+  );
+
+  const hordesRow = findExactRow(
+    raw,
+    "hordes",
+    SECTION_START,
+    SECTION_END,
   );
 
   /*
-   * Singles:
-   * From the row after "Singles"
-   * until "Rare Singles".
+   * Find the column marked ACTIVE or CURRENT.
+   *
+   * We search the current Altering Cave section
+   * instead of scanning the entire spreadsheet.
    */
+  let activeColumns = findActiveColumns(
+    raw,
+    SECTION_START,
+    SECTION_END,
+  );
+
+  /*
+   * Fallback:
+   *
+   * If the CSV does not contain an ACTIVE/CURRENT
+   * marker, use populated columns from the Singles
+   * data while ignoring column A.
+   */
+  if (
+    !activeColumns.length &&
+    singlesRow !== -1
+  ) {
+    const columns = new Set<number>();
+
+    const searchEnd =
+      rareSinglesRow !== -1
+        ? rareSinglesRow
+        : SECTION_END;
+
+    for (
+      let rowIndex = singlesRow + 1;
+      rowIndex < searchEnd;
+      rowIndex++
+    ) {
+      const row = raw[rowIndex];
+
+      if (!row) {
+        continue;
+      }
+
+      for (
+        let columnIndex = 1;
+        columnIndex < row.length;
+        columnIndex++
+      ) {
+        if (isPokemon(row[columnIndex])) {
+          columns.add(columnIndex);
+        }
+      }
+    }
+
+    /*
+     * Only use the first populated column as a fallback.
+     * This prevents every rotation column from being read.
+     */
+    const firstColumn =
+      [...columns].sort((a, b) => a - b)[0];
+
+    if (firstColumn !== undefined) {
+      activeColumns = [firstColumn];
+    }
+  }
+
+  if (!activeColumns.length) {
+    console.warn(
+      "Could not find the current Altering Cave column.",
+    );
+  }
+
   const encounters =
     singlesRow !== -1
-      ? getSectionValues(
+      ? getSectionPokemon(
           raw,
           singlesRow + 1,
           rareSinglesRow !== -1
             ? rareSinglesRow
-            : currentEnd,
+            : SECTION_END,
           activeColumns,
         )
       : [];
 
-  /*
-   * Rare Singles:
-   * From the row after "Rare Singles"
-   * until "Hordes".
-   */
   const rareEncounters =
     rareSinglesRow !== -1
-      ? getSectionValues(
+      ? getSectionPokemon(
           raw,
           rareSinglesRow + 1,
           hordesRow !== -1
             ? hordesRow
-            : currentEnd,
+            : SECTION_END,
           activeColumns,
         )
       : [];
 
-  /*
-   * Hordes:
-   * From the row after "Hordes"
-   * until the end of the current section.
-   */
   const hordes =
     hordesRow !== -1
-      ? getSectionValues(
+      ? getSectionPokemon(
           raw,
           hordesRow + 1,
-          currentEnd,
+          SECTION_END,
           activeColumns,
         )
       : [];
