@@ -263,10 +263,14 @@ type TypeRelations = {
 export default function PokemonInfoModal({
   pokemon,
   onClose,
+  onPokemonClick,
   defaultTab = "Summary",
 }: Props) {
   const [activeTab, setActiveTab] =
     useState<Tab>(defaultTab);
+
+  const [selectedSeason, setSelectedSeason] =
+    useState<string>("All");
 
   const [data, setData] =
     useState<ApiPokemon | null>(null);
@@ -406,6 +410,43 @@ export default function PokemonInfoModal({
     return currentMonster?.locations || [];
   })();
 
+  const availableSeasons = Array.from(
+    new Set(
+      monsterLocations
+        .map((location) => location.season)
+        .filter(Boolean)
+    )
+  ).sort((a, b) => {
+    const order = [
+      "Any",
+      "Spring",
+      "Summer",
+      "Autumn",
+      "Winter",
+    ];
+
+    const aIndex = order.indexOf(a);
+    const bIndex = order.indexOf(b);
+
+    if (aIndex === -1 && bIndex === -1) {
+      return a.localeCompare(b);
+    }
+
+    if (aIndex === -1) return 1;
+    if (bIndex === -1) return -1;
+
+    return aIndex - bIndex;
+  });
+
+  const filteredMonsterLocations =
+    selectedSeason === "All"
+      ? monsterLocations
+      : monsterLocations.filter(
+          (location) =>
+            location.season === "Any" ||
+            location.season === selectedSeason
+        );
+
   const description =
     species?.flavor_text_entries
       ?.find(
@@ -490,12 +531,16 @@ export default function PokemonInfoModal({
       return null;
     }
 
+    if (details.item) {
+      return `Use ${formatName(details.item.name)}`;
+    }
+
     if (details.min_level) {
       return `Level ${details.min_level}`;
     }
 
-    if (details.item) {
-      return formatName(details.item.name);
+    if (details.trigger?.name === "level-up") {
+      return "Level Up";
     }
 
     if (details.trigger) {
@@ -516,11 +561,31 @@ export default function PokemonInfoModal({
             className="evolution-stage"
           >
             {stageIndex > 0 && (
-              <div
-                className="evolution-arrow"
-                aria-hidden="true"
-              >
-                →
+              <div className="evolution-connectors">
+                {stage.map((node) => {
+                  const method =
+                    getEvolutionMethod(node);
+
+                  return (
+                    <div
+                      key={`connector-${stageIndex}-${node.species.name}`}
+                      className="evolution-connector"
+                    >
+                      <span
+                        className="evolution-arrow"
+                        aria-hidden="true"
+                      >
+                        →
+                      </span>
+
+                      {method && (
+                        <span className="evolution-requirement">
+                          {method}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -541,13 +606,19 @@ export default function PokemonInfoModal({
                     name
                   )}.gif`;
 
-                const evolutionMethod =
-                  getEvolutionMethod(node);
-
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={`${stageIndex}-${name}`}
                     className="evolution-card"
+                    onClick={() => {
+                      if (pokemonId && onPokemonClick) {
+                        onPokemonClick(pokemonId);
+                      }
+
+                      setActiveTab("Summary");
+                    }}
+                    title={`View ${formatName(name)} summary`}
                   >
                     <img
                       src={staticSprite}
@@ -570,13 +641,7 @@ export default function PokemonInfoModal({
                     <strong>
                       {formatName(name)}
                     </strong>
-
-                    {evolutionMethod && (
-                      <span>
-                        {evolutionMethod}
-                      </span>
-                    )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -755,7 +820,96 @@ export default function PokemonInfoModal({
              opacity: 0.9;
            }
 
-           .wild-locations-card {
+           .evolution-card {
+            appearance: none;
+            width: 260px;
+            min-height: 220px;
+            border: 0;
+            cursor: pointer;
+            color: inherit;
+            font: inherit;
+            text-align: center;
+          }
+
+          .evolution-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px
+              rgba(0, 0, 0, 0.28);
+          }
+
+          .evolution-connectors {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 18px;
+            min-width: 170px;
+          }
+
+          .evolution-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+          }
+
+          .evolution-requirement {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 6px 10px;
+            border: 1px solid
+              rgba(150, 190, 220, 0.28);
+            border-radius: 7px;
+            background:
+              rgba(255, 255, 255, 0.05);
+            color: #d7e4f2;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+
+          .season-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+          }
+
+          .season-filter-label {
+            font-weight: 700;
+          }
+
+          .season-filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .season-filter-button {
+            padding: 7px 12px;
+            border: 1px solid
+              rgba(150, 190, 220, 0.3);
+            border-radius: 6px;
+            background:
+              rgba(255, 255, 255, 0.04);
+            color: inherit;
+            cursor: pointer;
+            font: inherit;
+          }
+
+          .season-filter-button.active {
+            border-color: rgba(125, 200, 255, 0.9);
+            background:
+              rgba(80, 150, 210, 0.28);
+            box-shadow: inset 0 -2px 0
+              rgba(125, 200, 255, 0.75);
+          }
+
+          .no-season-locations {
+            margin-top: 14px;
+          }
+
+          .wild-locations-card {
             width: 100%;
             max-width: none;
           }
@@ -1219,7 +1373,51 @@ export default function PokemonInfoModal({
                       <h3>Wild Locations</h3>
 
                       {monsterLocations.length > 0 ? (
-                        <div className="wild-location-table-wrap">
+                        <>
+                          {availableSeasons.length > 1 && (
+                            <div className="season-filter-row">
+                              <span className="season-filter-label">
+                                Season
+                              </span>
+
+                              <div className="season-filter-buttons">
+                                <button
+                                  type="button"
+                                  className={`season-filter-button ${
+                                    selectedSeason === "All"
+                                      ? "active"
+                                      : ""
+                                  }`}
+                                  onClick={() =>
+                                    setSelectedSeason("All")
+                                  }
+                                >
+                                  All
+                                </button>
+
+                                {availableSeasons.map(
+                                  (season) => (
+                                    <button
+                                      type="button"
+                                      key={season}
+                                      className={`season-filter-button ${
+                                        selectedSeason === season
+                                          ? "active"
+                                          : ""
+                                      }`}
+                                      onClick={() =>
+                                        setSelectedSeason(season)
+                                      }
+                                    >
+                                      {season}
+                                    </button>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="wild-location-table-wrap">
                           <table className="wild-location-table">
                             <thead>
                               <tr>
@@ -1235,7 +1433,7 @@ export default function PokemonInfoModal({
                             </thead>
 
                             <tbody>
-                              {monsterLocations.map(
+                              {filteredMonsterLocations.map(
                                 (location, index) => (
                                   <tr
                                     key={`${location.location_id}-${location.type}-${location.season}-${index}`}
@@ -1278,7 +1476,14 @@ export default function PokemonInfoModal({
                               )}
                             </tbody>
                           </table>
-                        </div>
+                          </div>
+
+                          {filteredMonsterLocations.length === 0 && (
+                            <p className="no-season-locations">
+                              No locations are available for this season.
+                            </p>
+                          )}
+                        </>
                       ) : (
                         <p>
                           This Pokémon has no recorded
