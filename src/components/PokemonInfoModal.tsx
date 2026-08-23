@@ -752,13 +752,22 @@ export default function PokemonInfoModal({
           .pokemon-info-content {
             flex: 1 1 auto;
             min-height: 0;
-            overflow: hidden;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scrollbar-width: none;
+            padding-right: 2px;
+          }
+
+          .pokemon-info-content::-webkit-scrollbar {
+            width: 0;
+            height: 0;
           }
 
           .pokemon-tab-section {
-            height: 100%;
-            min-height: 0;
-            overflow: hidden;
+            height: auto;
+            min-height: 100%;
+            overflow: visible;
           }
 
           .pokemon-summary {
