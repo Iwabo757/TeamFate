@@ -755,10 +755,10 @@ export default function PokemonInfoModal({
           }
 
           .pokemon-info-content {
-            flex: 0 1 auto !important;
+            flex: 0 0 auto !important;
             min-height: 0;
             height: auto !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             box-sizing: border-box;
           }
 
@@ -766,7 +766,7 @@ export default function PokemonInfoModal({
             height: auto !important;
             min-height: 0;
             max-height: none !important;
-            overflow: hidden !important;
+            overflow: visible !important;
             box-sizing: border-box;
           }
 
@@ -946,6 +946,7 @@ export default function PokemonInfoModal({
             width: 100%;
             height: auto !important;
             min-height: 0;
+            overflow: visible !important;
             max-width: 100%;
             min-width: 0;
             padding: 12px 16px 10px;
@@ -1016,12 +1017,12 @@ export default function PokemonInfoModal({
 
           /* No nested scrolling. The Wild Locations layout stays compact. */
           .wild-reference-table-wrap {
-            flex: 0 1 auto;
+            flex: 0 0 auto;
             width: 100%;
             min-width: 0;
             min-height: 0;
             max-width: 100%;
-            overflow: hidden;
+            overflow: visible;
             overscroll-behavior: none;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
@@ -1257,44 +1258,42 @@ export default function PokemonInfoModal({
           }
 
           /* FINAL LAYOUT AUTHORITY
-             The modal never creates hidden scroll space. */
-          .pokemon-info-overlay,
-          .pokemon-info-modal,
-          .pokemon-info-content,
-          .pokemon-tab-section {
-            overscroll-behavior: none !important;
-          }
-
+             Never clip tab content. The modal grows to the active tab. */
           .pokemon-info-overlay {
-            overflow: hidden !important;
+            overflow: auto !important;
+            align-items: flex-start !important;
+            justify-items: center !important;
+            padding: 10px !important;
           }
 
           .pokemon-info-modal {
             height: auto !important;
-            max-height: calc(100vh - 20px) !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
           }
 
           .pokemon-info-content,
-          .pokemon-tab-section {
+          .pokemon-tab-section,
+          .pokemon-tab-section > * {
             height: auto !important;
-            flex: 0 1 auto !important;
-            overflow: hidden !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
           }
 
           .wild-locations-reference-card,
           .wild-reference-table-wrap {
             height: auto !important;
             max-height: none !important;
-            flex: 0 1 auto !important;
-            overflow: hidden !important;
+            overflow: visible !important;
           }
 
-          /* Keep all seven tabs visible with no horizontal scrollbar. */
           .pokemon-info-tabs {
             overflow: hidden !important;
           }
 
-          /* Compact long tab content so the active page stays inside the viewport. */
+          /* Remove artificial empty space while keeping all real content visible. */
           .pokemon-info-card {
             margin-bottom: 10px;
           }
@@ -1302,7 +1301,6 @@ export default function PokemonInfoModal({
           .pokemon-tab-section > .pokemon-info-card:last-child {
             margin-bottom: 0;
           }
-
         `}</style>
         <button
           className="pokemon-info-close"
