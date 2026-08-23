@@ -1435,6 +1435,131 @@ export default function PokemonInfoModal({
             }
           }
 
+
+          /* FINAL EVOLUTION TREE FIT FIX
+             Flatten stage wrappers so cards + connectors share one responsive row.
+             This prevents clipping while keeping the full chain visible. */
+          .evolution-tree-reference {
+            display: flex;
+            align-items: center;
+            justify-content: stretch;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            gap: clamp(8px, 1.5vw, 24px);
+            padding: 10px 18px 20px;
+            overflow: visible;
+          }
+
+          .evolution-stage-reference {
+            display: contents;
+          }
+
+          .evolution-stage-list-reference {
+            display: flex;
+            flex: 1 1 0;
+            min-width: 0;
+            max-width: none;
+            gap: 12px;
+          }
+
+          .evolution-card-reference {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            min-height: clamp(170px, 18vw, 210px);
+            box-sizing: border-box;
+            padding: clamp(12px, 1.4vw, 22px);
+          }
+
+          .evolution-connectors-reference {
+            display: flex;
+            flex: 0 1 clamp(110px, 14vw, 210px);
+            min-width: 0;
+            max-width: clamp(110px, 14vw, 210px);
+            align-items: center;
+            justify-content: center;
+          }
+
+          .evolution-connector-reference {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(6px, 0.8vw, 14px);
+            min-width: 0;
+            width: 100%;
+          }
+
+          .evolution-arrow-reference {
+            flex: 0 1 auto;
+            white-space: nowrap;
+          }
+
+          .evolution-requirement-reference {
+            min-width: 0;
+            white-space: nowrap;
+            font-size: clamp(0.82rem, 1.25vw, 1.08rem);
+          }
+
+          @media (max-width: 900px) {
+            .evolution-tree-reference {
+              gap: 8px;
+              padding-left: 8px;
+              padding-right: 8px;
+            }
+
+            .evolution-connectors-reference {
+              flex-basis: clamp(72px, 11vw, 110px);
+              max-width: clamp(72px, 11vw, 110px);
+            }
+
+            .evolution-card-reference {
+              min-height: 155px;
+              padding: 12px 8px;
+            }
+
+            .evolution-sprite-reference {
+              width: clamp(55px, 7vw, 80px);
+              height: clamp(55px, 7vw, 80px);
+            }
+
+            .evolution-card-reference strong {
+              font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+            }
+          }
+
+          @media (max-width: 640px) {
+            .evolution-tree-reference {
+              flex-wrap: wrap;
+              justify-content: center;
+            }
+
+            .evolution-stage-reference {
+              display: flex;
+              width: 100%;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+            }
+
+            .evolution-stage-reference:first-child {
+              display: flex;
+            }
+
+            .evolution-stage-list-reference {
+              flex: 1 1 0;
+            }
+
+            .evolution-connectors-reference {
+              flex: 0 0 78px;
+              max-width: 78px;
+            }
+
+            .evolution-requirement-reference {
+              font-size: 0.78rem;
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
