@@ -2224,19 +2224,19 @@ export default function PokemonInfoModal({
                             <span>-- = Not Available</span>
                             <i />
                             <span className="very-common">
-                              10% = Very Common
+                              10% = Rare
                             </span>
                             <i />
                             <span className="common">
-                              20% = Common
+                              20% = Uncommon
                             </span>
                             <i />
                             <span className="uncommon">
-                              30% = Uncommon
+                              30% = Common
                             </span>
                             <i />
                             <span className="rare">
-                              40% = Rare
+                              40% = Very Common
                             </span>
                             <i />
                             <span className="special">
