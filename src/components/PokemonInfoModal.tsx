@@ -1560,6 +1560,129 @@ export default function PokemonInfoModal({
             }
           }
 
+
+          /* Wild Locations: fit the full section without a horizontal scrollbar */
+          .wild-reference-table-wrap {
+            width: 100%;
+            min-width: 0;
+            overflow: visible !important;
+          }
+
+          .wild-reference-table {
+            width: 100%;
+            min-width: 0 !important;
+            max-width: 100%;
+            table-layout: fixed;
+          }
+
+          .wild-reference-table th,
+          .wild-reference-table td {
+            min-width: 0;
+            padding: clamp(7px, 0.8vw, 12px) clamp(5px, 0.9vw, 14px);
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+
+          .wild-reference-table th:nth-child(1),
+          .wild-reference-table td:nth-child(1) {
+            width: 12%;
+          }
+
+          .wild-reference-table th:nth-child(2),
+          .wild-reference-table td:nth-child(2) {
+            width: 24%;
+          }
+
+          .wild-reference-table th:nth-child(3),
+          .wild-reference-table td:nth-child(3) {
+            width: 15%;
+          }
+
+          .wild-reference-table th:nth-child(4),
+          .wild-reference-table td:nth-child(4) {
+            width: 11%;
+          }
+
+          .wild-reference-table th:nth-child(5),
+          .wild-reference-table td:nth-child(5),
+          .wild-reference-table th:nth-child(6),
+          .wild-reference-table td:nth-child(6),
+          .wild-reference-table th:nth-child(7),
+          .wild-reference-table td:nth-child(7) {
+            width: 10%;
+          }
+
+          .wild-reference-table th:nth-child(8),
+          .wild-reference-table td:nth-child(8) {
+            width: 8%;
+          }
+
+          .wild-reference-legend {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-columns: repeat(7, max-content);
+            justify-content: center;
+            align-items: center;
+            gap: clamp(8px, 1.2vw, 20px);
+            white-space: nowrap;
+            overflow: visible !important;
+            font-size: clamp(0.68rem, 1.05vw, 0.88rem);
+            padding: clamp(8px, 1vw, 12px);
+          }
+
+          .wild-reference-legend i {
+            display: none;
+          }
+
+          .horde-3x {
+            color: #ef90ad;
+          }
+
+          .horde-5x {
+            color: #ff6f91;
+          }
+
+          @media (max-width: 1050px) {
+            .wild-reference-table th,
+            .wild-reference-table td {
+              font-size: clamp(0.72rem, 1.35vw, 0.95rem);
+            }
+
+            .wild-method {
+              gap: 4px;
+            }
+
+            .region-ball {
+              margin-right: 4px;
+            }
+
+            .wild-reference-legend {
+              grid-template-columns: repeat(4, max-content);
+            }
+          }
+
+          @media (max-width: 700px) {
+            .wild-reference-legend {
+              grid-template-columns: repeat(2, max-content);
+              justify-content: start;
+              white-space: normal;
+            }
+
+            .wild-reference-table th,
+            .wild-reference-table td {
+              font-size: 0.68rem;
+              padding: 7px 3px;
+            }
+
+            .wild-region-cell,
+            .wild-location-cell,
+            .wild-method {
+              text-align: center !important;
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
@@ -2120,8 +2243,12 @@ export default function PokemonInfoModal({
                               Special = Special Encounter
                             </span>
                             <i />
-                            <span className="horde-value">
+                            <span className="horde-value horde-3x">
                               3× = Horde (3 Pokémon)
+                            </span>
+                            <i />
+                            <span className="horde-value horde-5x">
+                              5× = Horde (5 Pokémon)
                             </span>
                           </div>
                         </>
