@@ -2,6 +2,52 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import HomeTicker from "../components/HomeTicker";
 
+type GameTime = {
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
+
+function getPokeMMOTime(): GameTime {
+  const now = new Date();
+
+  /*
+   * PokeMMO uses a 24-hour in-game cycle
+   * that completes every 6 real-world hours.
+   *
+   * 1 real second = 4 in-game seconds.
+   */
+  const gameDayMilliseconds =
+    24 * 60 * 60 * 1000;
+
+  const gameMilliseconds =
+    (now.getTime() * 4) %
+    gameDayMilliseconds;
+
+  const hours = Math.floor(
+    gameMilliseconds /
+      (60 * 60 * 1000)
+  );
+
+  const minutes = Math.floor(
+    (gameMilliseconds %
+      (60 * 60 * 1000)) /
+      (60 * 1000)
+  );
+
+  const seconds = Math.floor(
+    (gameMilliseconds %
+      (60 * 1000)) /
+      1000
+  );
+
+  return {
+    hours,
+    minutes,
+    seconds,
+  };
+}
+
 export default function Home() {
   const [memberCount, setMemberCount] =
     useState(0);
@@ -10,7 +56,9 @@ export default function Home() {
     useState(0);
 
   const [gameTime, setGameTime] =
-    useState(new Date());
+    useState<GameTime>(() =>
+      getPokeMMOTime()
+    );
 
   const [topHunter, setTopHunter] =
     useState({
@@ -26,25 +74,27 @@ export default function Home() {
 
   /* =========================================
      LIVE POKEMMO TIME
-
-     PokeMMO's day/night cycle is synchronized
-     with real-world UTC time.
   ========================================= */
 
   useEffect(() => {
     const updateGameTime = () => {
-      setGameTime(new Date());
+      setGameTime(
+        getPokeMMOTime()
+      );
     };
 
     updateGameTime();
 
-    const timer = setInterval(
+    const timer = window.setInterval(
       updateGameTime,
       1000
     );
 
-    return () =>
-      clearInterval(timer);
+    return () => {
+      window.clearInterval(
+        timer
+      );
+    };
   }, []);
 
   /* =========================================
@@ -55,12 +105,16 @@ export default function Home() {
     loadStats();
 
     const refreshTimer =
-      setInterval(() => {
-        loadStats();
-      }, 30000);
+      window.setInterval(
+        loadStats,
+        30000
+      );
 
-    return () =>
-      clearInterval(refreshTimer);
+    return () => {
+      window.clearInterval(
+        refreshTimer
+      );
+    };
   }, []);
 
   /* =========================================
@@ -72,19 +126,34 @@ export default function Home() {
   }, []);
 
   async function loadWelcome() {
-    const { data } = await supabase
-      .from("homepage_message")
-      .select("*")
-      .single();
+    const { data, error } =
+      await supabase
+        .from("homepage_message")
+        .select("*")
+        .single();
+
+    if (error) {
+      console.error(
+        "Failed to load welcome message:",
+        error
+      );
+
+      return;
+    }
 
     if (data) {
-      setWelcome(data);
+      setWelcome({
+        title:
+          data.title ?? "",
+        message:
+          data.message ?? "",
+      });
     }
   }
 
   async function loadStats() {
     try {
-      const { count: members } =
+      const { count: members, error: membersError } =
         await supabase
           .from("profiles")
           .select("*", {
@@ -92,11 +161,15 @@ export default function Home() {
             head: true,
           });
 
+      if (membersError) {
+        throw membersError;
+      }
+
       setMemberCount(
-        members || 0
+        members ?? 0
       );
 
-      const { count: shinies } =
+      const { count: shinies, error: shiniesError } =
         await supabase
           .from("shiny_catches")
           .select("*", {
@@ -104,11 +177,18 @@ export default function Home() {
             head: true,
           });
 
+      if (shiniesError) {
+        throw shiniesError;
+      }
+
       setShinyCount(
-        shinies || 0
+        shinies ?? 0
       );
 
-      const { data: catches } =
+      const {
+        data: catches,
+        error: catchesError,
+      } =
         await supabase
           .from("shiny_catches")
           .select(`
@@ -118,6 +198,10 @@ export default function Home() {
             )
           `);
 
+      if (catchesError) {
+        throw catchesError;
+      }
+
       const totals: Record<
         string,
         number
@@ -126,11 +210,12 @@ export default function Home() {
       catches?.forEach(
         (entry: any) => {
           const name =
-            entry.profiles?.nickname ||
+            entry.profiles?.nickname ??
             "Unknown";
 
           totals[name] =
-            (totals[name] || 0) + 1;
+            (totals[name] ?? 0) +
+            1;
         }
       );
 
@@ -146,9 +231,17 @@ export default function Home() {
           name: leader[0],
           count: leader[1],
         });
+      } else {
+        setTopHunter({
+          name: "None",
+          count: 0,
+        });
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(
+        "Failed to load home stats:",
+        error
+      );
     }
   }
 
@@ -157,37 +250,49 @@ export default function Home() {
   ========================================= */
 
   const formattedGameTime =
-    gameTime.toLocaleTimeString(
-      "en-US",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-        timeZone: "UTC",
-      }
-    );
+    `${String(
+      gameTime.hours
+    ).padStart(
+      2,
+      "0"
+    )}:${String(
+      gameTime.minutes
+    ).padStart(
+      2,
+      "0"
+    )}:${String(
+      gameTime.seconds
+    ).padStart(
+      2,
+      "0"
+    )}`;
 
-  const gameHour =
-    Number(
-      gameTime.toLocaleTimeString(
-        "en-US",
-        {
-          hour: "2-digit",
-          hourCycle: "h23",
-          timeZone: "UTC",
-        }
-      )
-    );
+  let gamePeriod:
+    | "🌅 Morning"
+    | "☀️ Day"
+    | "🌙 Night" =
+    "🌙 Night";
 
-  const gamePeriod =
-    gameHour >= 6 &&
-    gameHour < 18
-      ? "☀️ Day"
-      : "🌙 Night";
+  if (
+    gameTime.hours >= 4 &&
+    gameTime.hours < 11
+  ) {
+    gamePeriod =
+      "🌅 Morning";
+  } else if (
+    gameTime.hours >= 11 &&
+    gameTime.hours < 21
+  ) {
+    gamePeriod =
+      "☀️ Day";
+  }
 
   return (
     <div className="home-page">
+
+      {/* ===============================
+          WELCOME
+      ================================ */}
 
       <div className="welcome-card">
         <h2>
@@ -199,7 +304,15 @@ export default function Home() {
         </p>
       </div>
 
+      {/* ===============================
+          HOME TICKER
+      ================================ */}
+
       <HomeTicker />
+
+      {/* ===============================
+          STATS
+      ================================ */}
 
       <div className="stats">
 
@@ -215,7 +328,7 @@ export default function Home() {
           </span>
         </div>
 
-        {/* GAME TIME */}
+        {/* IN-GAME TIME */}
 
         <div className="card game-time-card">
           <h2>
@@ -260,6 +373,7 @@ export default function Home() {
         </div>
 
       </div>
+
     </div>
   );
 }
