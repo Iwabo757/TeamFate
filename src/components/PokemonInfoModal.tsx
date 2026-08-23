@@ -270,7 +270,7 @@ export default function PokemonInfoModal({
     useState<Tab>(defaultTab);
 
   const [selectedSeason, setSelectedSeason] =
-    useState<string>("All");
+    useState<string>("Spring");
 
   const [data, setData] =
     useState<ApiPokemon | null>(null);
@@ -410,42 +410,45 @@ export default function PokemonInfoModal({
     return currentMonster?.locations || [];
   })();
 
-  const availableSeasons = Array.from(
-    new Set(
-      monsterLocations
-        .map((location) => location.season)
-        .filter(Boolean)
-    )
-  ).sort((a, b) => {
-    const order = [
-      "Any",
-      "Spring",
-      "Summer",
-      "Autumn",
-      "Winter",
-    ];
+  const seasonOrder = [
+    "Spring",
+    "Summer",
+    "Autumn",
+    "Winter",
+  ];
 
-    const aIndex = order.indexOf(a);
-    const bIndex = order.indexOf(b);
+  const availableSeasons = seasonOrder.filter(
+    (season) =>
+      monsterLocations.some(
+        (location) => location.season === season
+      )
+  );
 
-    if (aIndex === -1 && bIndex === -1) {
-      return a.localeCompare(b);
+  const effectiveSeasons =
+    availableSeasons.length > 0
+      ? availableSeasons
+      : seasonOrder;
+
+  useEffect(() => {
+    if (
+      !effectiveSeasons.includes(
+        selectedSeason
+      )
+    ) {
+      setSelectedSeason(effectiveSeasons[0]);
     }
-
-    if (aIndex === -1) return 1;
-    if (bIndex === -1) return -1;
-
-    return aIndex - bIndex;
-  });
+  }, [
+    pokemon.id,
+    selectedSeason,
+    effectiveSeasons.join("|"),
+  ]);
 
   const filteredMonsterLocations =
-    selectedSeason === "All"
-      ? monsterLocations
-      : monsterLocations.filter(
-          (location) =>
-            location.season === "Any" ||
-            location.season === selectedSeason
-        );
+    monsterLocations.filter(
+      (location) =>
+        location.season === "Any" ||
+        location.season === selectedSeason
+    );
 
   const description =
     species?.flavor_text_entries
@@ -842,71 +845,102 @@ export default function PokemonInfoModal({
             flex-direction: column;
             justify-content: center;
             gap: 18px;
-            min-width: 170px;
+            min-width: max-content;
           }
 
           .evolution-connector {
-            display: flex;
+            display: inline-flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
             gap: 12px;
-          }
-
-          .evolution-requirement {
-            display: inline-flex;
-            align-items: center;
-            min-height: 34px;
-            padding: 6px 10px;
-            border: 1px solid
-              rgba(150, 190, 220, 0.28);
-            border-radius: 7px;
-            background:
-              rgba(255, 255, 255, 0.05);
-            color: #d7e4f2;
-            font-weight: 700;
             white-space: nowrap;
           }
 
-          .season-filter-row {
+          .evolution-arrow {
+            flex: 0 0 auto;
+          }
+
+          .season-filter-panel {
+            margin-bottom: 20px;
+            padding: 14px 16px;
+            border: 1px solid
+              rgba(120, 175, 235, 0.3);
+            border-radius: 12px;
+            background:
+              linear-gradient(
+                135deg,
+                rgba(65, 115, 180, 0.16),
+                rgba(255, 255, 255, 0.035)
+              );
+          }
+
+          .season-filter-heading {
             display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
+            align-items: baseline;
+            gap: 10px;
+            margin-bottom: 12px;
           }
 
           .season-filter-label {
+            font-size: 0.9rem;
             font-weight: 700;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+          }
+
+          .season-filter-current {
+            color: #8fc7ff;
+            font-size: 1.15rem;
           }
 
           .season-filter-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 10px;
           }
 
           .season-filter-button {
-            padding: 7px 12px;
+            min-width: 110px;
+            padding: 11px 16px;
             border: 1px solid
-              rgba(150, 190, 220, 0.3);
-            border-radius: 6px;
+              rgba(150, 190, 220, 0.24);
+            border-radius: 9px;
             background:
-              rgba(255, 255, 255, 0.04);
+              rgba(255, 255, 255, 0.045);
             color: inherit;
-            cursor: pointer;
             font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition:
+              transform 0.15s ease,
+              border-color 0.15s ease,
+              background 0.15s ease,
+              box-shadow 0.15s ease;
+          }
+
+          .season-filter-button:hover {
+            transform: translateY(-1px);
+            border-color:
+              rgba(125, 195, 255, 0.7);
           }
 
           .season-filter-button.active {
-            border-color: rgba(125, 200, 255, 0.9);
+            border-color: #7bc4ff;
             background:
-              rgba(80, 150, 210, 0.28);
-            box-shadow: inset 0 -2px 0
-              rgba(125, 200, 255, 0.75);
-          }
-
-          .no-season-locations {
-            margin-top: 14px;
+              linear-gradient(
+                180deg,
+                rgba(82, 153, 226, 0.75),
+                rgba(43, 96, 164, 0.82)
+              );
+            color: #fff;
+            box-shadow:
+              0 0 0 2px
+                rgba(123, 196, 255, 0.22),
+              0 8px 22px
+                rgba(37, 103, 180, 0.35);
+            transform: translateY(-1px);
           }
 
           .wild-locations-card {
@@ -1374,48 +1408,44 @@ export default function PokemonInfoModal({
 
                       {monsterLocations.length > 0 ? (
                         <>
-                          {availableSeasons.length > 1 && (
-                            <div className="season-filter-row">
+                          <div className="season-filter-panel">
+                            <div className="season-filter-heading">
                               <span className="season-filter-label">
-                                Season
+                                Viewing Season
                               </span>
-
-                              <div className="season-filter-buttons">
-                                <button
-                                  type="button"
-                                  className={`season-filter-button ${
-                                    selectedSeason === "All"
-                                      ? "active"
-                                      : ""
-                                  }`}
-                                  onClick={() =>
-                                    setSelectedSeason("All")
-                                  }
-                                >
-                                  All
-                                </button>
-
-                                {availableSeasons.map(
-                                  (season) => (
-                                    <button
-                                      type="button"
-                                      key={season}
-                                      className={`season-filter-button ${
-                                        selectedSeason === season
-                                          ? "active"
-                                          : ""
-                                      }`}
-                                      onClick={() =>
-                                        setSelectedSeason(season)
-                                      }
-                                    >
-                                      {season}
-                                    </button>
-                                  )
-                                )}
-                              </div>
+                              <strong className="season-filter-current">
+                                {selectedSeason}
+                              </strong>
                             </div>
-                          )}
+
+                            <div
+                              className="season-filter-buttons"
+                              role="group"
+                              aria-label="Choose season"
+                            >
+                              {effectiveSeasons.map(
+                                (season) => (
+                                  <button
+                                    type="button"
+                                    key={season}
+                                    aria-pressed={
+                                      selectedSeason === season
+                                    }
+                                    className={`season-filter-button ${
+                                      selectedSeason === season
+                                        ? "active"
+                                        : ""
+                                    }`}
+                                    onClick={() =>
+                                      setSelectedSeason(season)
+                                    }
+                                  >
+                                    {season}
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
 
                           <div className="wild-location-table-wrap">
                           <table className="wild-location-table">
