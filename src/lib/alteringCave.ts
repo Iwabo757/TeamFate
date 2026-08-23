@@ -25,37 +25,31 @@ const normalizeRow = (row: string[]): string[] =>
   row.map(normalize);
 
 const rowText = (row: string[]): string =>
-  normalizeRow(row).join(" ").toLowerCase();
+  normalizeRow(row)
+    .join(" ")
+    .toLowerCase();
 
 const unique = (items: string[]): string[] =>
   [...new Set(items.map(normalize).filter(Boolean))];
 
-/*
- * Values that belong to the spreadsheet structure
- * and should never be returned as Pokémon.
- */
 const BLOCKED_VALUES = new Set([
   "",
   "active",
   "current",
   "singles",
+  "single",
   "tier",
   "rotation",
-  "rotation 1",
-  "rotation 2",
-  "rotation 3",
-  "rotation 4",
-  "rotation 5",
-  "rotation 6",
   "encounter",
   "encounters",
   "horde",
   "hordes",
   "crystal",
-  "type",
-  "types",
   "pokemon",
   "pokémon",
+  "type",
+  "types",
+
   "normal",
   "fire",
   "water",
@@ -76,60 +70,182 @@ const BLOCKED_VALUES = new Set([
   "fairy",
 ]);
 
-const isDataValue = (value: string): boolean => {
-  const text = normalize(value);
-
-  if (!text) return false;
-
-  const lower = text.toLowerCase();
-
-  if (BLOCKED_VALUES.has(lower)) {
-    return false;
-  }
-
-  /*
-   * Exclude labels such as:
-   * Rotation 1
-   * Tier 2
-   * etc.
-   */
-  if (
-    /^rotation\s*\d*$/i.test(text) ||
-    /^tier\s*\d*$/i.test(text)
-  ) {
-    return false;
-  }
-
-  /*
-   * Ignore obvious metadata.
-   */
-  if (
-    lower.includes("brought to you") ||
-    lower.includes("creator") ||
-    lower.includes("editor") ||
-    lower.includes("using this data") ||
-    lower.includes("discord") ||
-    lower.includes("ign:")
-  ) {
-    return false;
-  }
-
-  return true;
-};
-
 const isRotationHeader = (value: string): boolean =>
   /^rotation\s*\d+$/i.test(normalize(value));
 
+const isTierValue = (value: string): boolean =>
+  /^tier\s*\d*$/i.test(normalize(value));
+
+const isMetadata = (value: string): boolean => {
+  const text = normalize(value).toLowerCase();
+
+  if (!text) {
+    return true;
+  }
+
+  if (BLOCKED_VALUES.has(text)) {
+    return true;
+  }
+
+  if (isRotationHeader(text)) {
+    return true;
+  }
+
+  if (isTierValue(text)) {
+    return true;
+  }
+
+  if (
+    text.includes("brought to you") ||
+    text.includes("creator") ||
+    text.includes("editor") ||
+    text.includes("using this data") ||
+    text.includes("discord") ||
+    text.includes("ign:")
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const isPokemonValue = (value: string): boolean =>
+  !isMetadata(value);
+
 const isHordeLabel = (value: string): boolean =>
-  normalize(value).toLowerCase().includes("horde");
+  normalize(value)
+    .toLowerCase()
+    .includes("horde");
 
 const isEncounterLabel = (value: string): boolean => {
-  const lower = normalize(value).toLowerCase();
+  const text = normalize(value).toLowerCase();
 
   return (
-    lower.includes("encounter") ||
-    lower.includes("single")
+    text.includes("encounter") ||
+    text.includes("single")
   );
+};
+
+const findHeaderRow = (
+  rows: string[][],
+): number =>
+  rows.findIndex((row) => {
+    const text = rowText(row);
+
+    return (
+      text.includes("singles") &&
+      text.includes("tier") &&
+      text.includes("rotation")
+    );
+  });
+
+const findRotationColumns = (
+  headerRow: string[],
+): number[] => {
+  const columns: number[] = [];
+
+  headerRow.forEach((value, index) => {
+    if (isRotationHeader(value)) {
+      columns.push(index);
+    }
+  });
+
+  return columns;
+};
+
+const findColumnType = (
+  rows: string[][],
+  column: number,
+): "encounter" | "horde" => {
+  for (const row of rows) {
+    const value = normalize(row[column]);
+
+    if (isHordeLabel(value)) {
+      return "horde";
+    }
+
+    if (isEncounterLabel(value)) {
+      return "encounter";
+    }
+  }
+
+  return "encounter";
+};
+
+const getTableEnd = (
+  rows: string[][],
+  startIndex: number,
+): number => {
+  let emptyRows = 0;
+
+  for (
+    let index = startIndex;
+    index < rows.length;
+    index++
+  ) {
+    const row = rows[index];
+
+    const isEmpty = row.every(
+      (cell) => !normalize(cell),
+    );
+
+    if (isEmpty) {
+      emptyRows++;
+
+      if (emptyRows >= 3) {
+        return index - 2;
+      }
+    } else {
+      emptyRows = 0;
+    }
+  }
+
+  return rows.length;
+};
+
+const findCrystal = (
+  rows: string[][],
+  headerRowIndex: number,
+): string => {
+  const searchStart = Math.max(
+    0,
+    headerRowIndex - 10,
+  );
+
+  const searchEnd = Math.min(
+    rows.length,
+    headerRowIndex + 5,
+  );
+
+  for (
+    let rowIndex = searchStart;
+    rowIndex < searchEnd;
+    rowIndex++
+  ) {
+    const row = rows[rowIndex];
+
+    for (
+      let column = 0;
+      column < row.length;
+      column++
+    ) {
+      const value = normalize(row[column]);
+
+      if (
+        value.toLowerCase() === "crystal"
+      ) {
+        const nextValue = normalize(
+          row[column + 1],
+        );
+
+        if (isPokemonValue(nextValue)) {
+          return nextValue;
+        }
+      }
+    }
+  }
+
+  return "";
 };
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
@@ -155,27 +271,11 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     );
   }
 
-  /*
-   * Find the actual rotation header.
-   *
-   * From your spreadsheet structure this is the row
-   * containing values like:
-   *
-   * Singles | Tier | Rotation 1 | ...
-   */
-  const headerRowIndex = raw.findIndex((row) => {
-    const text = rowText(row);
-
-    return (
-      text.includes("singles") &&
-      text.includes("tier") &&
-      text.includes("rotation")
-    );
-  });
+  const headerRowIndex = findHeaderRow(raw);
 
   if (headerRowIndex === -1) {
     console.warn(
-      "Could not locate Altering Cave rotation headers.",
+      "Could not find the Altering Cave rotation table.",
     );
 
     return {
@@ -188,155 +288,91 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
   const headerRow = raw[headerRowIndex];
 
-  /*
-   * Locate all rotation columns.
-   */
-  const rotationColumns: number[] = [];
+  const rotationColumns =
+    findRotationColumns(headerRow);
 
-  headerRow.forEach((cell, index) => {
-    if (isRotationHeader(cell)) {
-      rotationColumns.push(index);
-    }
-  });
-
-  /*
-   * If the sheet currently only exposes a single
-   * Rotation column in a slightly different format,
-   * fall back to any column containing "rotation".
-   */
   if (!rotationColumns.length) {
-    headerRow.forEach((cell, index) => {
-      if (normalize(cell).toLowerCase().includes("rotation")) {
-        rotationColumns.push(index);
-      }
-    });
+    console.warn(
+      "Could not find any rotation columns.",
+    );
+
+    return {
+      crystal: findCrystal(
+        raw,
+        headerRowIndex,
+      ),
+      encounters: [],
+      hordes: [],
+      raw,
+    };
   }
 
-  /*
-   * Determine where the actual data starts.
-   */
-  const dataStart = headerRowIndex + 1;
+  const tableStart =
+    headerRowIndex + 1;
 
-  /*
-   * Find the end of this table.
-   *
-   * We stop after a substantial run of completely empty
-   * rows instead of accidentally parsing the next sheet section.
-   */
-  let dataEnd = raw.length;
-  let emptyRows = 0;
-
-  for (let i = dataStart; i < raw.length; i++) {
-    const row = raw[i];
-
-    if (row.every((cell) => !normalize(cell))) {
-      emptyRows++;
-
-      if (emptyRows >= 3) {
-        dataEnd = i - 2;
-        break;
-      }
-    } else {
-      emptyRows = 0;
-    }
-  }
+  const tableEnd = getTableEnd(
+    raw,
+    tableStart,
+  );
 
   const tableRows = raw.slice(
-    dataStart,
-    dataEnd,
+    tableStart,
+    tableEnd,
   );
 
   const encounters: string[] = [];
   const hordes: string[] = [];
-  let crystal = "";
 
-  /*
-   * Find useful labels in the header area.
-   *
-   * Some versions of the spreadsheet may use nearby rows
-   * to label encounter / horde columns.
-   */
-  const contextRows = raw.slice(
-    Math.max(0, headerRowIndex - 3),
-    headerRowIndex + 1,
-  );
-
-  /*
-   * Build column metadata.
-   */
   const columnTypes = new Map<
     number,
-    "encounter" | "horde" | "unknown"
+    "encounter" | "horde"
   >();
 
   rotationColumns.forEach((column) => {
-    let type: "encounter" | "horde" | "unknown" =
-      "unknown";
-
-    for (const contextRow of contextRows) {
-      const value = normalize(contextRow[column]);
-
-      if (isHordeLabel(value)) {
-        type = "horde";
-        break;
-      }
-
-      if (isEncounterLabel(value)) {
-        type = "encounter";
-      }
-    }
-
-    columnTypes.set(column, type);
+    columnTypes.set(
+      column,
+      findColumnType(
+        raw.slice(
+          Math.max(
+            0,
+            headerRowIndex - 5,
+          ),
+          headerRowIndex + 1,
+        ),
+        column,
+      ),
+    );
   });
 
-  /*
-   * Parse only the rotation columns.
-   */
   for (const row of tableRows) {
     const rowValues = normalizeRow(row);
 
-    /*
-     * Check for row labels that may identify
-     * encounter or horde sections.
-     */
-    const rowLabel = rowValues.find((value) => {
-      const lower = value.toLowerCase();
-
-      return (
-        lower === "encounters" ||
-        lower === "encounter" ||
-        lower === "hordes" ||
-        lower === "horde" ||
-        lower === "crystal"
-      );
-    });
+    const rowTextValue =
+      rowText(rowValues);
 
     const rowIsHorde =
-      rowLabel !== undefined &&
-      isHordeLabel(rowLabel);
+      rowTextValue.includes("horde");
 
     const rowIsEncounter =
-      rowLabel !== undefined &&
-      isEncounterLabel(rowLabel);
-
-    const rowIsCrystal =
-      rowLabel !== undefined &&
-      normalize(rowLabel).toLowerCase() === "crystal";
+      rowTextValue.includes(
+        "encounter",
+      ) ||
+      rowTextValue.includes(
+        "single",
+      );
 
     for (const column of rotationColumns) {
-      const value = normalize(rowValues[column]);
+      const value = normalize(
+        rowValues[column],
+      );
 
-      if (!isDataValue(value)) {
-        continue;
-      }
-
-      if (rowIsCrystal && !crystal) {
-        crystal = value;
+      if (!isPokemonValue(value)) {
         continue;
       }
 
       const columnType =
-        columnTypes.get(column) ?? "unknown";
+        columnTypes.get(column) ??
+        "encounter";
 
       if (
         rowIsHorde ||
@@ -351,69 +387,26 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
         columnType === "encounter"
       ) {
         encounters.push(value);
-        continue;
-      }
-
-      /*
-       * Default unknown rotation data to encounters.
-       * This is safer than losing valid Pokémon data.
-       */
-      encounters.push(value);
-    }
-  }
-
-  /*
-   * Secondary crystal search.
-   *
-   * Search around the ACTIVE / Current rows only,
-   * never across the entire spreadsheet.
-   */
-  if (!crystal) {
-    const activeAreaStart = Math.max(
-      0,
-      headerRowIndex - 5,
-    );
-
-    const activeArea = raw.slice(
-      activeAreaStart,
-      headerRowIndex,
-    );
-
-    for (const row of activeArea) {
-      for (let i = 0; i < row.length; i++) {
-        const cell = normalize(row[i]).toLowerCase();
-
-        if (cell === "crystal") {
-          const nextValue = normalize(row[i + 1]);
-
-          if (isDataValue(nextValue)) {
-            crystal = nextValue;
-            break;
-          }
-        }
-      }
-
-      if (crystal) {
-        break;
       }
     }
   }
 
-  const finalEncounters = unique(encounters);
-  const finalHordes = unique(hordes);
-
-  console.log("ALTERING CAVE PARSED:", {
+  const crystal = findCrystal(
+    raw,
     headerRowIndex,
-    rotationColumns,
-    crystal,
-    encounters: finalEncounters,
-    hordes: finalHordes,
-  });
+  );
 
-  return {
+  const finalData: AlteringCaveData = {
     crystal,
-    encounters: finalEncounters,
-    hordes: finalHordes,
+    encounters: unique(encounters),
+    hordes: unique(hordes),
     raw,
   };
+
+  console.log(
+    "ALTERING CAVE PARSED:",
+    finalData,
+  );
+
+  return finalData;
 }
