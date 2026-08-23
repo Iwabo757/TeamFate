@@ -1907,6 +1907,35 @@ export default function PokemonInfoModal({
             }
           }
 
+          /* FINAL WILD LOCATIONS LAYOUT - only the table rows scroll */
+          .pokemon-info-content { flex: 1 1 auto; min-height: 0; overflow: hidden !important; }
+          .pokemon-tab-section { height: 100%; min-height: 0; overflow: hidden !important; }
+          .wild-locations-reference-card { height: 100%; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden !important; }
+          .wild-locations-reference-card > h3,
+          .season-reference-label,
+          .season-reference-buttons,
+          .wild-reference-legend,
+          .no-season-locations { flex: 0 0 auto; }
+          .wild-reference-table-wrap { flex: 1 1 auto; min-height: 0; height: auto !important; max-height: none !important; width: 100%; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; scrollbar-gutter: stable; }
+          .wild-reference-table { width: 100%; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
+          .wild-reference-table thead th { position: sticky; top: 0; z-index: 10; }
+          .wild-reference-table th,
+          .wild-reference-table td { min-width: 0 !important; white-space: normal !important; overflow-wrap: anywhere; }
+
+          /* Pokédex number directly under the name. */
+          .pokemon-info-header { flex: 0 0 auto; padding-top: 8px !important; padding-bottom: 6px !important; }
+          .pokemon-info-header h2 { margin: 0 !important; line-height: 1 !important; }
+          .pokemon-info-number { margin-top: 3px !important; line-height: 1 !important; }
+
+          /* Shorter tabs leave more vertical room for the table. */
+          .pokemon-info-tabs { flex: 0 0 58px; height: 58px !important; min-height: 58px !important; overflow: hidden !important; }
+          .pokemon-info-tabs button { height: 58px !important; min-height: 58px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+
+          @media (max-width: 900px) {
+            .pokemon-info-tabs, .pokemon-info-tabs button { height: 50px !important; min-height: 50px !important; }
+            .season-reference-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
@@ -1917,13 +1946,13 @@ export default function PokemonInfoModal({
 
         <header className="pokemon-info-header">
           <div>
-            <div className="pokemon-info-number">
-              #{String(pokemon.id).padStart(3, "0")}
-            </div>
-
             <h2>
               {formatName(pokemon.name)}
             </h2>
+
+            <div className="pokemon-info-number">
+              #{String(pokemon.id).padStart(3, "0")}
+            </div>
           </div>
 
           <span
