@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import HomeTicker from "../components/HomeTicker";
+import { getAlteringCaveData } from "../lib/alteringCave";
 
 type GameTime = {
   hours: number;
@@ -97,6 +98,30 @@ export default function Home() {
     };
   }, []);
 
+  /* =========================================
+     LIVE Altering Cave 
+  ========================================= */
+
+useEffect(() => {
+  async function loadAlteringCave() {
+    try {
+      const data =
+        await getAlteringCaveData();
+
+      console.log(
+        "ALTERING CAVE RAW DATA:",
+        data.raw
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load Altering Cave:",
+        error
+      );
+    }
+  }
+
+  loadAlteringCave();
+}, []);
   /* =========================================
      LOAD STATS
   ========================================= */
