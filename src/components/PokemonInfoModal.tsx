@@ -1178,72 +1178,6 @@ export default function PokemonInfoModal({
             flex: 0 0 auto;
           }
 
-          @media (max-width: 900px) {
-            .pokemon-info-modal {
-              width: calc(100vw - 12px);
-              min-height: calc(100vh - 12px);
-              height: auto !important;
-              max-height: none !important;
-            }
-
-            .pokemon-summary {
-              grid-template-columns: 1fr;
-            }
-
-            .pokemon-large-sprite {
-              width: 180px;
-              height: 180px;
-            }
-
-            .pokemon-summary-right {
-              grid-template-columns: 1fr;
-            }
-
-            .pokemon-info-tabs,
-            .pokemon-info-tabs button {
-              height: 50px;
-              min-height: 50px;
-            }
-
-            .season-reference-buttons {
-              grid-template-columns: repeat(2, minmax(0, 1fr));
-              gap: 8px;
-            }
-
-            .evolution-tree-reference {
-              gap: 6px;
-              padding-left: 4px;
-              padding-right: 4px;
-            }
-
-            .evolution-connectors-reference {
-            min-width: 0;
-            max-width: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 8px;
-          }
-
-          @media (max-width: 640px) {
-            .pokemon-info-tabs button {
-              font-size: 0.68rem;
-              padding: 0 4px;
-            }
-
-            .evolution-tree-reference {
-              gap: 4px;
-              padding: 3px;
-            }
-
-            .evolution-connectors-reference {
-            min-width: 0;
-            max-width: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 8px;
-          }
 
           /* Final layout guard: no tab content may be clipped by the modal. */
           .pokemon-info-modal,
@@ -1331,6 +1265,123 @@ export default function PokemonInfoModal({
 
             .evolution-card-reference {
               min-height: 92px;
+            }
+          }
+
+
+          /* Dynamic modal sizing: the modal grows with the active tab. */
+          .pokemon-info-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1000;
+            display: block !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            padding: 10px !important;
+            box-sizing: border-box !important;
+          }
+
+          .pokemon-info-modal {
+            width: min(1120px, calc(100vw - 20px)) !important;
+            min-height: calc(100vh - 20px) !important;
+            height: max-content !important;
+            max-height: none !important;
+            margin: 0 auto !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-self: flex-start !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+          }
+
+          .pokemon-info-header,
+          .pokemon-info-tabs,
+          .pokemon-info-content,
+          .pokemon-tab-section {
+            flex: 0 0 auto !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+          }
+
+          .pokemon-info-content {
+            width: 100% !important;
+            display: block !important;
+            padding-bottom: 18px !important;
+          }
+
+          .pokemon-tab-section {
+            display: block !important;
+            width: 100% !important;
+          }
+
+          .pokemon-info-card {
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+          }
+
+          /* Keep PC tabs compact without limiting their content. */
+          @media (min-width: 901px) {
+            .pokemon-info-tabs {
+              flex: 0 0 52px !important;
+              height: 52px !important;
+              min-height: 52px !important;
+              overflow: hidden !important;
+            }
+
+            .pokemon-info-tabs button {
+              height: 52px !important;
+              min-height: 52px !important;
+              padding: 0 5px !important;
+              font-size: clamp(0.72rem, 0.95vw, 0.92rem) !important;
+            }
+          }
+
+          /* On mobile, tabs can scroll horizontally while the modal content expands vertically. */
+          @media (max-width: 900px) {
+            .pokemon-info-overlay {
+              padding: 6px !important;
+            }
+
+            .pokemon-info-modal {
+              width: calc(100vw - 12px) !important;
+              min-height: calc(100vh - 12px) !important;
+            }
+
+            .pokemon-info-tabs {
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              scrollbar-width: none;
+            }
+
+            .pokemon-info-tabs::-webkit-scrollbar {
+              display: none;
+            }
+
+            .pokemon-info-tabs button {
+              flex: 0 0 auto !important;
+              min-width: max-content !important;
+              padding: 0 14px !important;
+              font-size: 0.82rem !important;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .pokemon-info-modal {
+              min-height: calc(100vh - 12px) !important;
+            }
+
+            .evolution-tree-reference {
+              display: flex !important;
+              flex-direction: column !important;
+              align-items: stretch !important;
+              height: auto !important;
+              overflow: visible !important;
             }
           }
 
