@@ -508,6 +508,25 @@ export default function PokemonInfoModal({
     );
   }
 
+  function getEvolutionStages(root: EvolutionNode) {
+    const stages: EvolutionNode[][] = [];
+
+    function walk(node: EvolutionNode, depth: number) {
+      if (!stages[depth]) {
+        stages[depth] = [];
+      }
+
+      stages[depth].push(node);
+
+      node.evolves_to.forEach((child) =>
+        walk(child, depth + 1)
+      );
+    }
+
+    walk(root, 0);
+    return stages;
+  }
+
   function getEvolutionMethod(node: EvolutionNode) {
     const details = node.evolution_details?.[0];
 
@@ -534,9 +553,14 @@ export default function PokemonInfoModal({
     return "Special";
   }
 
-  function renderEvolutionNode(node: EvolutionNode): React.ReactNode {
+  function renderEvolutionCard(
+    node: EvolutionNode,
+    stageIndex: number
+  ) {
     const name = node.species.name;
-    const pokemonId = getEvolutionId(node.species.url);
+    const pokemonId = getEvolutionId(
+      node.species.url
+    );
 
     const staticSprite = pokemonId
       ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
@@ -548,81 +572,99 @@ export default function PokemonInfoModal({
       )}.gif`;
 
     return (
-      <div
-        key={node.species.name}
-        className="evolution-node-reference"
+      <button
+        type="button"
+        key={`${stageIndex}-${name}`}
+        className="evolution-card-reference"
+        onClick={() => {
+          if (pokemonId && onPokemonClick) {
+            onPokemonClick(pokemonId);
+          }
+
+          setActiveTab("Summary");
+        }}
+        title={`View ${formatName(name)} summary`}
       >
-        <button
-          type="button"
-          className="evolution-card-reference"
-          onClick={() => {
-            if (pokemonId && onPokemonClick) {
-              onPokemonClick(pokemonId);
-            }
-            setActiveTab("Summary");
+        <img
+          src={staticSprite}
+          alt={`Shiny ${formatName(name)}`}
+          className="evolution-sprite-reference"
+          onMouseEnter={(event) => {
+            event.currentTarget.src =
+              animatedSprite;
           }}
-          title={`View ${formatName(name)} summary`}
-        >
-          <img
-            src={staticSprite}
-            alt={`Shiny ${formatName(name)}`}
-            className="evolution-sprite-reference"
-            onMouseEnter={(event) => {
-              event.currentTarget.src = animatedSprite;
-            }}
-            onMouseLeave={(event) => {
-              event.currentTarget.src = staticSprite;
-            }}
-            onError={(event) => {
-              event.currentTarget.src = staticSprite;
-            }}
-          />
+          onMouseLeave={(event) => {
+            event.currentTarget.src =
+              staticSprite;
+          }}
+          onError={(event) => {
+            event.currentTarget.src =
+              staticSprite;
+          }}
+        />
 
-          <strong>{formatName(name)}</strong>
+        <strong>
+          {formatName(name)}
+        </strong>
 
-          {pokemonId && (
-            <span className="evolution-dex-number">
-              #{String(pokemonId).padStart(3, "0")}
-            </span>
-          )}
-        </button>
-
-        {node.evolves_to.length > 0 && (
-          <div className="evolution-branches-reference">
-            {node.evolves_to.map((child) => {
-              const method = getEvolutionMethod(child);
-
-              return (
-                <div
-                  key={`${node.species.name}-${child.species.name}`}
-                  className="evolution-branch-reference"
-                >
-                  <div className="evolution-connector-reference">
-                    <span className="evolution-arrow-reference">
-                      →
-                    </span>
-
-                    {method && (
-                      <span className="evolution-requirement-reference">
-                        ▥ {method}
-                      </span>
-                    )}
-                  </div>
-
-                  {renderEvolutionNode(child)}
-                </div>
-              );
-            })}
-          </div>
+        {pokemonId && (
+          <span className="evolution-dex-number">
+            #{String(pokemonId).padStart(3, "0")}
+          </span>
         )}
-      </div>
+      </button>
     );
   }
 
   function renderEvolutionTree(root: EvolutionNode) {
+    const stages = getEvolutionStages(root);
+
     return (
       <div className="evolution-tree-reference">
-        {renderEvolutionNode(root)}
+        {stages.map((stage, stageIndex) => (
+          <>
+            {stageIndex > 0 && (
+              <div
+                key={`connectors-${stageIndex}`}
+                className="evolution-connectors-reference"
+              >
+                {stage.map((node) => {
+                  const method =
+                    getEvolutionMethod(node);
+
+                  return (
+                    <div
+                      key={`connector-${stageIndex}-${node.species.name}`}
+                      className="evolution-connector-reference"
+                    >
+                      <span className="evolution-arrow-reference">
+                        →
+                      </span>
+
+                      {method && (
+                        <span className="evolution-requirement-reference">
+                          ▥ {method}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <div
+              key={`stage-${stageIndex}`}
+              className="evolution-stage-list-reference"
+            >
+              {stage.map((node) =>
+                renderEvolutionCard(
+                  node,
+                  stageIndex
+                )
+              )}
+            </div>
+          </>
+        ))}
       </div>
     );
   }
@@ -667,29 +709,24 @@ export default function PokemonInfoModal({
         }
       >
         <style>{`
-          /* Full viewport modal: no page scrolling, no hidden content. */
           .pokemon-info-overlay {
             position: fixed;
             inset: 0;
             z-index: 1000;
             display: grid;
             place-items: center;
-            padding: 10px;
-            overflow: hidden;
-            box-sizing: border-box;
+            padding: 18px;
             background: rgba(1, 8, 18, 0.72);
             backdrop-filter: blur(8px);
           }
 
           .pokemon-info-modal {
-            width: min(1120px, calc(100vw - 20px));
-            height: auto !important;
-            min-height: 0 !important;
-            max-height: calc(100vh - 20px) !important;
+            width: min(1120px, 94vw);
+            height: min(900px, 94vh);
+            max-height: 94vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden !important;
-            box-sizing: border-box;
+            overflow: hidden;
           }
 
           .pokemon-info-header {
@@ -708,11 +745,10 @@ export default function PokemonInfoModal({
             line-height: 1 !important;
           }
 
-          /* Compact desktop tabs */
           .pokemon-info-tabs {
-            flex: 0 0 42px;
-            height: 42px;
-            min-height: 42px;
+            flex: 0 0 58px;
+            height: 58px;
+            min-height: 58px;
             display: flex;
             flex-wrap: nowrap;
             overflow: hidden;
@@ -721,46 +757,23 @@ export default function PokemonInfoModal({
           .pokemon-info-tabs button {
             flex: 1 1 0;
             min-width: 0;
-            height: 42px;
-            min-height: 42px;
-            padding: 0 10px;
+            height: 58px;
+            min-height: 58px;
+            padding: 0 8px;
             white-space: nowrap;
-            font-size: 0.82rem;
-            font-weight: 700;
-            line-height: 1;
-          }
-
-          @media (min-width: 1200px) {
-            .pokemon-info-tabs,
-            .pokemon-info-tabs button {
-              height: 40px;
-              min-height: 40px;
-            }
-
-            .pokemon-info-tabs {
-              flex-basis: 40px;
-            }
-
-            .pokemon-info-tabs button {
-              padding: 0 12px;
-              font-size: 0.85rem;
-            }
+            font-size: clamp(0.78rem, 1.1vw, 1rem);
           }
 
           .pokemon-info-content {
-            flex: 0 0 auto !important;
+            flex: 1 1 auto;
             min-height: 0;
-            height: auto !important;
-            overflow: visible !important;
-            box-sizing: border-box;
+            overflow: hidden;
           }
 
           .pokemon-tab-section {
-            height: auto !important;
+            height: 100%;
             min-height: 0;
-            max-height: none !important;
-            overflow: visible !important;
-            box-sizing: border-box;
+            overflow: hidden;
           }
 
           .pokemon-summary {
@@ -813,7 +826,7 @@ export default function PokemonInfoModal({
 
           .move-level-list .move-card {
             width: 100%;
-            min-height: 34px;
+            min-height: 42px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -830,191 +843,133 @@ export default function PokemonInfoModal({
             white-space: nowrap;
           }
 
-          /* Evolution Tree: every alternate evolution gets its own vertical branch */
+          /* Evolution Tree */
           .evolution-tree-reference {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
             width: 100%;
             min-width: 0;
-            padding: 10px 18px 20px;
+            max-width: 100%;
             box-sizing: border-box;
+            gap: clamp(6px, 0.9vw, 14px);
+            padding: 8px;
             overflow: hidden;
           }
 
-          .evolution-node-reference {
-            display: flex;
-            align-items: center;
+          .evolution-stage-list-reference {
+            flex: 1 1 0;
             min-width: 0;
-            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
           }
 
           .evolution-card-reference {
             appearance: none;
-            flex: 0 0 clamp(180px, 18vw, 290px);
-            width: clamp(180px, 18vw, 290px);
+            width: 100%;
             min-width: 0;
-            min-height: clamp(170px, 18vw, 210px);
+            min-height: clamp(112px, 11vw, 150px);
             box-sizing: border-box;
-            padding: clamp(12px, 1.4vw, 22px);
+            padding: clamp(7px, 0.8vw, 12px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 7px;
+            gap: 3px;
             border: 1px solid rgba(54, 132, 202, 0.32);
-            border-radius: 16px;
-            background: linear-gradient(145deg, rgba(12, 31, 55, 0.98), rgba(8, 23, 42, 0.98));
+            border-radius: 12px;
+            background: linear-gradient(
+              145deg,
+              rgba(12, 31, 55, 0.98),
+              rgba(8, 23, 42, 0.98)
+            );
             color: inherit;
             font: inherit;
             cursor: pointer;
+            overflow: hidden;
           }
 
           .evolution-card-reference:hover,
           .evolution-card-reference:focus-visible {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             border-color: #1487ff;
             outline: none;
           }
 
           .evolution-sprite-reference {
-            width: clamp(70px, 8vw, 105px);
-            height: clamp(70px, 8vw, 105px);
+            width: clamp(48px, 5.5vw, 76px);
+            height: clamp(48px, 5.5vw, 76px);
             object-fit: contain;
             image-rendering: pixelated;
+            flex: 0 0 auto;
           }
 
           .evolution-card-reference strong {
-            font-size: clamp(1rem, 1.7vw, 1.45rem);
-            line-height: 1.1;
+            width: 100%;
+            min-width: 0;
+            overflow-wrap: anywhere;
             text-align: center;
+            font-size: clamp(0.78rem, 1.15vw, 1.05rem);
+            line-height: 1.05;
           }
 
           .evolution-dex-number {
             color: #b9c5d6;
-            font-size: clamp(0.8rem, 1.2vw, 1rem);
+            font-size: clamp(0.7rem, 0.9vw, 0.86rem);
             font-weight: 700;
           }
 
-          .evolution-branches-reference {
+          .evolution-connectors-reference {
+            flex: 0 1 clamp(76px, 9vw, 130px);
+            min-width: 0;
+            max-width: clamp(76px, 9vw, 130px);
             display: flex;
-            flex: 1 1 auto;
             flex-direction: column;
-            gap: 14px;
-            min-width: 0;
-            padding-left: clamp(16px, 2vw, 34px);
-          }
-
-          .evolution-branch-reference {
-            display: flex;
-            align-items: center;
-            min-width: 0;
-            width: 100%;
+            justify-content: center;
+            gap: 8px;
           }
 
           .evolution-connector-reference {
-            flex: 0 0 clamp(150px, 15vw, 230px);
-            min-width: 0;
+            flex: 1 1 0;
+            min-height: clamp(112px, 11vw, 150px);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: clamp(6px, 0.8vw, 14px);
+            gap: 4px;
+            min-width: 0;
+            width: 100%;
           }
 
           .evolution-arrow-reference {
             flex: 0 0 auto;
             color: #d9e2ee;
-            font-size: clamp(2rem, 3vw, 3rem);
+            font-size: clamp(1.45rem, 2vw, 2.2rem);
             line-height: 1;
             white-space: nowrap;
           }
 
           .evolution-requirement-reference {
             min-width: 0;
+            max-width: 100%;
             color: #d8e1ec;
-            font-size: clamp(0.78rem, 1.25vw, 1.08rem);
+            font-size: clamp(0.62rem, 0.8vw, 0.82rem);
             font-weight: 800;
-            white-space: nowrap;
-          }
-
-          @media (max-width: 900px) {
-            .evolution-card-reference {
-              flex-basis: clamp(130px, 30vw, 200px);
-              width: clamp(130px, 30vw, 200px);
-              min-height: 150px;
-            }
-
-            .evolution-connector-reference {
-              flex-basis: clamp(90px, 18vw, 150px);
-            }
-
-            .evolution-requirement-reference {
-              white-space: normal;
-              text-align: center;
-            }
-
-            .evolution-branches-reference {
-              padding-left: 10px;
-              gap: 10px;
-            }
-          }
-
-          @media (max-width: 640px) {
-            .evolution-tree-reference {
-              padding: 8px 4px 14px;
-            }
-
-            .evolution-node-reference {
-              align-items: flex-start;
-            }
-
-            .evolution-card-reference {
-              flex-basis: 105px;
-              width: 105px;
-              min-height: 125px;
-              padding: 8px 5px;
-              border-radius: 12px;
-            }
-
-            .evolution-sprite-reference {
-              width: 58px;
-              height: 58px;
-            }
-
-            .evolution-card-reference strong {
-              font-size: 0.84rem;
-            }
-
-            .evolution-dex-number {
-              font-size: 0.72rem;
-            }
-
-            .evolution-connector-reference {
-              flex-basis: 76px;
-              gap: 3px;
-            }
-
-            .evolution-arrow-reference {
-              font-size: 1.65rem;
-            }
-
-            .evolution-requirement-reference {
-              font-size: 0.62rem;
-              line-height: 1.05;
-            }
-
-            .evolution-branches-reference {
-              padding-left: 4px;
-              gap: 8px;
-            }
+            line-height: 1.1;
+            text-align: center;
+            overflow-wrap: anywhere;
           }
 
           /* Wild Locations */
           .wild-locations-reference-card {
             width: 100%;
-            height: auto !important;
+            height: 100%;
             min-height: 0;
-            overflow: visible !important;
             max-width: 100%;
             min-width: 0;
-            padding: 12px 16px 10px;
+            padding: 18px 22px 12px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -1042,13 +997,13 @@ export default function PokemonInfoModal({
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px;
-            margin-bottom: 7px;
+            margin-bottom: 10px;
           }
 
           .season-reference-button {
             min-width: 0;
-            min-height: 34px;
-            padding: 4px 7px;
+            min-height: 42px;
+            padding: 6px 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1080,15 +1035,17 @@ export default function PokemonInfoModal({
           .season-reference-button.active.autumn { background: rgba(121, 59, 0, 0.24); box-shadow: 0 0 0 1px rgba(255, 133, 0, 0.28); }
           .season-reference-button.active.winter { background: rgba(0, 104, 135, 0.22); box-shadow: 0 0 0 1px rgba(44, 200, 232, 0.3); }
 
-          /* No nested scrolling. The Wild Locations layout stays compact. */
+          /* Only this table box scrolls vertically. */
           .wild-reference-table-wrap {
-            flex: 0 0 auto;
+            flex: 1 1 auto;
             width: 100%;
             min-width: 0;
             min-height: 0;
             max-width: 100%;
-            overflow: visible;
-            overscroll-behavior: none;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
           }
@@ -1201,7 +1158,7 @@ export default function PokemonInfoModal({
             justify-content: center;
             align-items: center;
             gap: 8px 16px;
-            margin-top: 7px;
+            margin-top: 10px;
             padding: 8px 12px;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
@@ -1219,9 +1176,9 @@ export default function PokemonInfoModal({
 
           @media (max-width: 900px) {
             .pokemon-info-modal {
-              width: calc(100vw - 16px);
-              height: auto !important;
-              max-height: calc(100vh - 16px) !important;
+              width: min(96vw, 720px);
+              height: 96vh;
+              max-height: 96vh;
             }
 
             .pokemon-summary {
@@ -1237,18 +1194,10 @@ export default function PokemonInfoModal({
               grid-template-columns: 1fr;
             }
 
-            .pokemon-info-tabs {
-              flex-basis: 48px;
-              height: 48px;
-              min-height: 48px;
-            }
-
+            .pokemon-info-tabs,
             .pokemon-info-tabs button {
-              height: 48px;
-              min-height: 48px;
-              padding: 0 7px;
-              font-size: 0.78rem;
-              font-weight: 800;
+              height: 50px;
+              min-height: 50px;
             }
 
             .season-reference-buttons {
@@ -1257,28 +1206,32 @@ export default function PokemonInfoModal({
             }
 
             .evolution-tree-reference {
-              gap: 8px;
-              padding-left: 8px;
-              padding-right: 8px;
+              gap: 6px;
+              padding-left: 4px;
+              padding-right: 4px;
             }
 
             .evolution-connectors-reference {
-              flex-basis: clamp(72px, 11vw, 110px);
-              max-width: clamp(72px, 11vw, 110px);
+              flex-basis: clamp(60px, 10vw, 90px);
+              max-width: clamp(60px, 10vw, 90px);
+            }
+
+            .evolution-card-reference,
+            .evolution-connector-reference {
+              min-height: 104px;
             }
 
             .evolution-card-reference {
-              min-height: 155px;
-              padding: 12px 8px;
+              padding: 7px 5px;
             }
 
             .evolution-sprite-reference {
-              width: clamp(55px, 7vw, 80px);
-              height: clamp(55px, 7vw, 80px);
+              width: clamp(44px, 7vw, 64px);
+              height: clamp(44px, 7vw, 64px);
             }
 
             .evolution-card-reference strong {
-              font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+              font-size: clamp(0.72rem, 1.8vw, 0.98rem);
             }
 
             .wild-reference-table th,
@@ -1289,51 +1242,51 @@ export default function PokemonInfoModal({
           }
 
           @media (max-width: 640px) {
-            .pokemon-info-tabs {
-              flex-basis: 54px;
-              height: 54px;
-              min-height: 54px;
-            }
-
             .pokemon-info-tabs button {
-              height: 54px;
-              min-height: 54px;
-              padding: 0 3px;
-              font-size: clamp(0.62rem, 2.35vw, 0.82rem);
-              font-weight: 800;
-              letter-spacing: -0.02em;
-              white-space: normal;
-              line-height: 1.05;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
+              font-size: 0.68rem;
+              padding: 0 4px;
             }
 
             .evolution-tree-reference {
-              flex-wrap: wrap;
-              justify-content: center;
-            }
-
-            .evolution-stage-reference {
-              display: flex;
-              width: 100%;
-              align-items: center;
-              justify-content: center;
-              gap: 10px;
-            }
-
-            .evolution-stage-list-reference {
-              flex: 1 1 0;
+              gap: 4px;
+              padding: 3px;
             }
 
             .evolution-connectors-reference {
-              flex: 0 0 78px;
-              max-width: 78px;
+              flex: 0 1 52px;
+              max-width: 52px;
+              gap: 5px;
+            }
+
+            .evolution-card-reference,
+            .evolution-connector-reference {
+              min-height: 88px;
+            }
+
+            .evolution-card-reference {
+              border-radius: 9px;
+              padding: 5px 3px;
+            }
+
+            .evolution-sprite-reference {
+              width: 42px;
+              height: 42px;
+            }
+
+            .evolution-card-reference strong {
+              font-size: 0.68rem;
+            }
+
+            .evolution-dex-number {
+              font-size: 0.62rem;
+            }
+
+            .evolution-arrow-reference {
+              font-size: 1.25rem;
             }
 
             .evolution-requirement-reference {
-              font-size: 0.72rem;
+              font-size: 0.58rem;
             }
 
             .wild-locations-reference-card {
@@ -1345,112 +1298,6 @@ export default function PokemonInfoModal({
               justify-content: flex-start;
             }
           }
-
-          /* FINAL LAYOUT AUTHORITY
-             Never clip tab content. The modal grows to the active tab. */
-          .pokemon-info-overlay {
-            overflow: auto !important;
-            align-items: flex-start !important;
-            justify-items: center !important;
-            padding: 10px !important;
-          }
-
-          .pokemon-info-modal {
-            height: auto !important;
-            min-height: 0 !important;
-            max-height: none !important;
-            overflow: visible !important;
-          }
-
-          .pokemon-info-content,
-          .pokemon-tab-section,
-          .pokemon-tab-section > * {
-            height: auto !important;
-            max-height: none !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-          }
-
-          .wild-locations-reference-card,
-          .wild-reference-table-wrap {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-          }
-
-          .pokemon-info-tabs {
-            overflow: hidden !important;
-          }
-
-          /* Remove artificial empty space while keeping all real content visible. */
-          .pokemon-info-card {
-            margin-bottom: 10px;
-          }
-
-          .pokemon-tab-section > .pokemon-info-card:last-child {
-            margin-bottom: 0;
-          }
-
-          /* FINAL TAB OVERRIDES */
-          .pokemon-info-tabs {
-            overflow: hidden !important;
-          }
-
-          @media (min-width: 1200px) {
-            .pokemon-info-tabs {
-              flex: 0 0 40px !important;
-              height: 40px !important;
-              min-height: 40px !important;
-            }
-
-            .pokemon-info-tabs button {
-              height: 40px !important;
-              min-height: 40px !important;
-              font-size: 0.85rem !important;
-              padding: 0 12px !important;
-              white-space: nowrap !important;
-            }
-          }
-
-          @media (min-width: 641px) and (max-width: 1199px) {
-            .pokemon-info-tabs {
-              flex: 0 0 46px !important;
-              height: 46px !important;
-              min-height: 46px !important;
-            }
-
-            .pokemon-info-tabs button {
-              height: 46px !important;
-              min-height: 46px !important;
-              font-size: 0.78rem !important;
-              padding: 0 7px !important;
-              white-space: nowrap !important;
-            }
-          }
-
-          @media (max-width: 640px) {
-            .pokemon-info-tabs {
-              flex: 0 0 54px !important;
-              height: 54px !important;
-              min-height: 54px !important;
-            }
-
-            .pokemon-info-tabs button {
-              height: 54px !important;
-              min-height: 54px !important;
-              padding: 0 3px !important;
-              font-size: clamp(0.62rem, 2.35vw, 0.82rem) !important;
-              font-weight: 800 !important;
-              letter-spacing: -0.02em !important;
-              white-space: normal !important;
-              line-height: 1.05 !important;
-              display: flex !important;
-              align-items: center !important;
-              justify-content: center !important;
-              text-align: center !important;
-            }
-          }
-
         `}</style>
         <button
           className="pokemon-info-close"
