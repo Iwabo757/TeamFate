@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import PokemonInfoModal from "../components/PokemonInfoModal";
 
 type Shiny = {
   id: string;
@@ -213,90 +214,41 @@ export default function Showcase() {
         )
       )}
 
-      {selectedPokemon && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setSelectedPokemon(
-              null
-            )
-          }
-        >
-          <div
-            className="pokemon-modal"
-            onClick={(e) =>
-              e.stopPropagation()
+      {selectedPokemon && (() => {
+        const matchingShinies = Object.values(grouped)
+          .flat()
+          .filter(
+            (shiny) =>
+              shiny.pokemon_id ===
+              selectedPokemon.pokemon_id
+          );
+
+        const owners = matchingShinies.reduce<
+          Record<string, number>
+        >((totals, shiny) => {
+          totals[shiny.owner] =
+            (totals[shiny.owner] || 0) + 1;
+
+          return totals;
+        }, {});
+
+        return (
+          <PokemonInfoModal
+            pokemon={{
+              id: selectedPokemon.pokemon_id,
+              name: selectedPokemon.pokemon_name,
+              caught: true,
+              owners,
+              screenshots: [],
+              totalCopies: matchingShinies.length,
+            }}
+            onClose={() =>
+              setSelectedPokemon(null)
             }
-          >
-            <button
-              className="close-btn"
-              onClick={() =>
-                setSelectedPokemon(
-                  null
-                )
-              }
-            >
-              ×
-            </button>
-
-            <div className="modal-header">
-              <h2>
-                Pokémon #
-                {
-                  selectedPokemon.pokemon_id
-                }
-              </h2>
-
-              <span className="status-badge">
-                Shiny
-              </span>
-            </div>
-
-            <div className="modal-body">
-              <div className="modal-left">
-                <img
-                  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-                    selectedPokemon.pokemon_name
-                  )}.gif`}
-                  alt="Pokemon"
-                  className="modal-sprite"
-                  onError={(
-                    e
-                  ) => {
-                    e.currentTarget.src =
-                      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`;
-                  }}
-                />
-              </div>
-
-              <div className="modal-right">
-                <div className="detail-card">
-                  <h3>
-                    Owner
-                  </h3>
-                  <p>
-                    {
-                      selectedPokemon.owner
-                    }
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>
-                    National Dex
-                  </h3>
-                  <p>
-                    #
-                    {
-                      selectedPokemon.pokemon_id
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            defaultTab="Team Fate"
+          />
+        );
+      })()}
     </div>
   );
 }

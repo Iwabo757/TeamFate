@@ -1,8 +1,4 @@
 import { useEffect, useState } from "react";
-import {
-  getPokeMMOLocations,
-  type PokeMMOLocation,
-} from "../data/pokemmoLocations";
 
 type DexPokemon = {
   id: number;
@@ -18,6 +14,7 @@ type Props = {
   pokemon: DexPokemon;
   onClose: () => void;
   onPokemonClick?: (pokemonId: number) => void;
+  defaultTab?: Tab;
 };
 
 type ApiPokemon = {
@@ -47,7 +44,6 @@ type ApiPokemon = {
   moves: {
     move: {
       name: string;
-      url: string
     };
     version_group_details: {
       level_learned_at: number;
@@ -81,66 +77,20 @@ type ApiSpecies = {
   };
 };
 
-
-type DetailedMove = {
-  name: string;
-  type: string;
-  power: number | null;
-  pp: number | null;
-  accuracy: number | null;
-  method: string;
-  level: number;
-};
-
-
 type EvolutionNode = {
   species: {
     name: string;
     url: string;
   };
-
   evolves_to: EvolutionNode[];
-
   evolution_details: {
     min_level: number | null;
-
     item: {
       name: string;
     } | null;
-
-    held_item: {
-      name: string;
-    } | null;
-
     trigger: {
       name: string;
     } | null;
-
-    gender: number | null;
-
-    known_move: {
-      name: string;
-    } | null;
-
-    known_move_type: {
-      name: string;
-    } | null;
-
-    location: {
-      name: string;
-    } | null;
-
-    min_happiness: number | null;
-
-    min_affection: number | null;
-
-    min_beauty: number | null;
-
-    time_of_day: string;
-
-    turn_upside_down: boolean;
-
-    relative_physical_stats: number | null;
   }[];
 };
 
@@ -203,7 +153,6 @@ function formatName(name: string) {
     .join(" ");
 }
 
-
 function formatMoveMethod(name: string) {
   if (name === "level-up") return "Level Up";
   if (name === "machine") return "TM / HM";
@@ -234,304 +183,13 @@ function getEvolutionName(url: string) {
   return parts[parts.length - 2];
 }
 
-function getPokemonIdFromUrl(
-  url: string
-) {
-  const parts = url
-    .split("/")
-    .filter(Boolean);
-
-  return Number(
-    parts[parts.length - 1]
-  );
-}
-
-function getEvolutionRequirement(
-  node: EvolutionNode
-) {
-  const details =
-    node.evolution_details || [];
-
-  if (!details.length) {
-    return "Special";
-  }
-
-  return details
-    .map((detail) => {
-      const requirements: string[] = [];
-
-      // Trigger
-      if (detail.trigger?.name) {
-        const trigger =
-          detail.trigger.name;
-
-        if (trigger === "trade") {
-          requirements.push("Trade");
-        } else if (
-          trigger === "use-item"
-        ) {
-          // Item is displayed below.
-        } else if (
-          trigger !== "level-up"
-        ) {
-          requirements.push(
-            formatName(trigger)
-          );
-        }
-      }
-
-      // Level
-      if (detail.min_level !== null) {
-        requirements.push(
-          `Level ${detail.min_level}`
-        );
-      }
-
-      // Evolution item
-      if (detail.item?.name) {
-        requirements.push(
-          `Use ${formatName(
-            detail.item.name
-          )}`
-        );
-      }
-
-      // Held item
-      if (detail.held_item?.name) {
-        requirements.push(
-          `Hold ${formatName(
-            detail.held_item.name
-          )}`
-        );
-      }
-
-      // Friendship
-      if (
-        detail.min_happiness !== null
-      ) {
-        requirements.push(
-          `Friendship ${detail.min_happiness}+`
-        );
-      }
-
-      // Affection
-      if (
-        detail.min_affection !== null
-      ) {
-        requirements.push(
-          `Affection ${detail.min_affection}+`
-        );
-      }
-
-      // Beauty
-      if (
-        detail.min_beauty !== null
-      ) {
-        requirements.push(
-          `Beauty ${detail.min_beauty}+`
-        );
-      }
-
-      // Time of day
-      if (detail.time_of_day) {
-        requirements.push(
-          `During ${formatName(
-            detail.time_of_day
-          )}`
-        );
-      }
-
-      // Gender
-      if (detail.gender !== null) {
-        if (detail.gender === 1) {
-          requirements.push("Male");
-        } else if (
-          detail.gender === 2
-        ) {
-          requirements.push("Female");
-        }
-      }
-
-      // Known move
-      if (detail.known_move?.name) {
-        requirements.push(
-          `Know ${formatName(
-            detail.known_move.name
-          )}`
-        );
-      }
-
-      // Known move type
-      if (
-        detail.known_move_type?.name
-      ) {
-        requirements.push(
-          `Know a ${formatName(
-            detail.known_move_type.name
-          )}-type move`
-        );
-      }
-
-      // Location
-      if (detail.location?.name) {
-        requirements.push(
-          `At ${formatName(
-            detail.location.name
-          )}`
-        );
-      }
-
-      // Special physical-stat requirement
-      if (
-        detail.relative_physical_stats !==
-        null
-      ) {
-        if (
-          detail.relative_physical_stats ===
-          1
-        ) {
-          requirements.push(
-            "Attack > Defense"
-          );
-        } else if (
-          detail.relative_physical_stats ===
-          -1
-        ) {
-          requirements.push(
-            "Defense > Attack"
-          );
-        } else if (
-          detail.relative_physical_stats ===
-          0
-        ) {
-          requirements.push(
-            "Attack = Defense"
-          );
-        }
-      }
-
-      // Turn upside down
-      if (detail.turn_upside_down) {
-        requirements.push(
-          "Turn console upside down"
-        );
-      }
-
-      return requirements.length
-        ? requirements.join(" • ")
-        : "Special";
-    })
-    .join(" / ");
-}
-
-function calculateTypeMatchups(
-  types: string[],
-  relations: Record<string, TypeRelations>
-) {
-  const allTypes = [
-    "normal",
-    "fire",
-    "water",
-    "electric",
-    "grass",
-    "ice",
-    "fighting",
-    "poison",
-    "ground",
-    "flying",
-    "psychic",
-    "bug",
-    "rock",
-    "ghost",
-    "dragon",
-    "dark",
-    "steel",
-    "fairy",
-  ];
-
-  return allTypes.map((attackType) => {
-    let multiplier = 1;
-
-    for (const defendingType of types) {
-      const relation =
-        relations[defendingType];
-
-      if (!relation) continue;
-
-      if (
-        relation.double_damage_from.some(
-          (type) =>
-            type.name === attackType
-        )
-      ) {
-        multiplier *= 2;
-      }
-
-      if (
-        relation.half_damage_from.some(
-          (type) =>
-            type.name === attackType
-        )
-      ) {
-        multiplier *= 0.5;
-      }
-
-      if (
-        relation.no_damage_from.some(
-          (type) =>
-            type.name === attackType
-        )
-      ) {
-        multiplier *= 0;
-      }
-    }
-
-    return {
-      type: attackType,
-      multiplier,
-    };
-  });
-}
-
-function getMatchupLabel(
-  multiplier: number
-) {
-  if (multiplier === 0) {
-    return "Immune";
-  }
-
-  if (multiplier === 0.25) {
-    return "¼×";
-  }
-
-  if (multiplier === 0.5) {
-    return "½×";
-  }
-
-  if (multiplier === 1) {
-    return "1×";
-  }
-
-  if (multiplier === 2) {
-    return "2×";
-  }
-
-  if (multiplier === 4) {
-    return "4×";
-  }
-
-  return `${multiplier}×`;
-}
-
-
 export default function PokemonInfoModal({
   pokemon,
   onClose,
-  onPokemonClick,
+  defaultTab = "Summary",
 }: Props) {
-
   const [activeTab, setActiveTab] =
-    useState<Tab>("Summary");
+    useState<Tab>(defaultTab);
 
   const [data, setData] =
     useState<ApiPokemon | null>(null);
@@ -545,25 +203,8 @@ export default function PokemonInfoModal({
   const [typeRelations, setTypeRelations] =
     useState<Record<string, TypeRelations>>({});
 
-const [locations, setLocations] =
-  useState<PokeMMOLocation[]>([]);
-
-const [selectedSeason, setSelectedSeason] =
-  useState<
-    "Spring" |
-    "Summer" |
-    "Autumn" |
-    "Winter"
-  >("Spring");
-
-const [moveDetails, setMoveDetails] =
-  useState<DetailedMove[]>([]);
-
-const [movesLoading, setMovesLoading] =
-  useState(false);
-
-const [movesLoaded, setMovesLoaded] =
-  useState(false);
+  const [locations, setLocations] =
+    useState<string[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -571,20 +212,13 @@ const [movesLoaded, setMovesLoaded] =
   const [error, setError] =
     useState<string | null>(null);
 
-useEffect(() => {
-  setActiveTab("Summary");
+  useEffect(() => {
+    loadPokemon();
+  }, [pokemon.id]);
 
-  setData(null);
-  setSpecies(null);
-  setEvolution(null);
-  setTypeRelations({});
-  setLocations([]);
-  setMoveDetails([]);
-  setMovesLoaded(false);
-  setMovesLoading(false);
-
-  loadPokemon();
-}, [pokemon.id]);
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [pokemon.id, defaultTab]);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -628,9 +262,6 @@ useEffect(() => {
 
       setData(pokemonData);
       setSpecies(speciesData);
-setLocations(
-  getPokeMMOLocations(pokemon.id)
-);
 
       if (speciesData.evolution_chain?.url) {
         const evolutionResponse =
@@ -666,7 +297,28 @@ setLocations(
 
       setTypeRelations(relations);
 
+      try {
+        const locationResponse =
+          await fetch(
+            `https://pokeapi.co/api/v2/pokemon/${pokemon.id}/encounters`
+          );
 
+        if (locationResponse.ok) {
+          const locationData =
+            await locationResponse.json();
+
+          setLocations(
+            locationData.map(
+              (entry: any) =>
+                formatName(
+                  entry.location_area.name
+                )
+            )
+          );
+        }
+      } catch {
+        setLocations([]);
+      }
     } catch (err) {
       console.error(err);
       setError(
@@ -677,93 +329,6 @@ setLocations(
     }
   }
 
-async function loadMoveDetails() {
-  if (!data || movesLoaded || movesLoading) {
-    return;
-  }
-
-  setMovesLoading(true);
-
-  try {
-    const results = await Promise.all(
-      data.moves.map(async (moveEntry) => {
-        try {
-          const response = await fetch(
-            moveEntry.move.url
-          );
-
-          if (!response.ok) {
-            return [];
-          }
-
-          const moveData =
-            await response.json();
-
-          const relevantDetails =
-            moveEntry.version_group_details.filter(
-              (detail) =>
-                [
-                  "level-up",
-                  "machine",
-                  "egg",
-                  "tutor",
-                ].includes(
-                  detail.move_learn_method.name
-                )
-            );
-
-          return relevantDetails.map(
-            (detail) => ({
-              name: moveData.name,
-              type: moveData.type.name,
-              power: moveData.power,
-              pp: moveData.pp,
-              accuracy: moveData.accuracy,
-              method:
-                detail.move_learn_method.name,
-              level:
-                detail.level_learned_at,
-            })
-          );
-        } catch (error) {
-          console.error(
-            "Failed to load move:",
-            moveEntry.move.name,
-            error
-          );
-
-          return [];
-        }
-      })
-    );
-
-const allMoves = results.flat();
-
-/* Remove duplicate moves from different PokeAPI version groups */
-const uniqueMoves = Array.from(
-  new Map(
-    allMoves.map((move) => {
-      const key =
-        move.method === "level-up"
-          ? `${move.method}-${move.name}-${move.level}`
-          : `${move.method}-${move.name}`;
-
-      return [key, move];
-    })
-  ).values()
-);
-
-setMoveDetails(uniqueMoves);
-setMovesLoaded(true);
-  } catch (error) {
-    console.error(
-      "Failed to load move details:",
-      error
-    );
-  } finally {
-    setMovesLoading(false);
-  }
-}
   const description =
     species?.flavor_text_entries
       ?.find(
@@ -772,11 +337,11 @@ setMovesLoaded(true);
       )
       ?.flavor_text || "No description available.";
 
-const shinySprite =
-`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${pokemon.id}.gif`;
+  const shinySprite =
+    `https://play.pokemonshowdown.com/sprites/ani-shiny/${pokemon.id}.gif`;
 
-const fallbackSprite =
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
+  const fallbackSprite =
+    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
 
   const weaknesses = new Set<string>();
   const resistances = new Set<string>();
@@ -820,113 +385,63 @@ const fallbackSprite =
     );
   }
 
-function renderEvolutionTree(
-  node: EvolutionNode
-): React.ReactNode {
-  const renderNode = (
-    currentNode: EvolutionNode,
+  function renderEvolution(
+    node: EvolutionNode,
     depth = 0
-  ): React.ReactNode => {
+  ): React.ReactNode {
     const name = getEvolutionName(
-      currentNode.species.url
+      node.species.url
     );
 
-    const evolutions =
-      currentNode.evolves_to || [];
-
-const evolutionId =
-  getPokemonIdFromUrl(
-    currentNode.species.url
-  );
-
-const evolutionStatic =
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${evolutionId}.png`;
-
-const evolutionGif =
-`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${evolutionId}.gif`;
+    const evolutionDetails =
+      node.evolution_details?.[0];
 
     return (
       <div
         key={`${name}-${depth}`}
-        className="evolution-level"
+        className="evolution-node"
       >
+        <div className="evolution-card">
+          <img
+            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${name}.png`}
+            alt={name}
+          />
 
-<button
-  type="button"
-  className="evolution-card"
-  onClick={() => {
-    onPokemonClick?.(evolutionId);
-  }}
->
-  <div className="evolution-number">
-    #{String(evolutionId).padStart(3, "0")}
-  </div>
+          <strong>
+            {formatName(name)}
+          </strong>
 
-  <div className="evolution-sprite-wrapper">
-    <img
-      src={evolutionStatic}
-      alt={formatName(name)}
-      className="evolution-sprite evolution-sprite-static"
-    />
+          {evolutionDetails && (
+            <span>
+              {evolutionDetails.min_level
+                ? `Level ${evolutionDetails.min_level}`
+                : evolutionDetails.item
+                ? formatName(
+                    evolutionDetails.item.name
+                  )
+                : evolutionDetails.trigger
+                ? formatName(
+                    evolutionDetails.trigger.name
+                  )
+                : "Special"}
+            </span>
+          )}
+        </div>
 
-    <img
-      src={evolutionGif}
-      alt={formatName(name)}
-      className="evolution-sprite evolution-sprite-gif"
-    />
-  </div>
-
-  <strong>
-    {formatName(name)}
-  </strong>
-</button>
-
-
-        {evolutions.length > 0 && (
-          <div className="evolution-branches">
-            {evolutions.map(
-              (
-                nextEvolution,
-                index
-              ) => {
-                const requirement =
-                  getEvolutionRequirement(
-                    nextEvolution
-                  );
-
-                return (
-                  <div
-                    key={`${name}-evolution-${index}`}
-                    className="evolution-branch"
-                  >
-                    <div className="evolution-arrow">
-                      <span className="evolution-line" />
-                      <span className="evolution-requirement">
-                        {requirement}
-                      </span>
-                      <span className="evolution-arrow-head">
-                        →
-                      </span>
-                    </div>
-
-                    <div className="evolution-next">
-                      {renderNode(
-                        nextEvolution,
-                        depth + 1
-                      )}
-                    </div>
-                  </div>
-                );
-              }
+        {node.evolves_to.length > 0 && (
+          <div className="evolution-children">
+            {node.evolves_to.map(
+              (child) =>
+                renderEvolution(
+                  child,
+                  depth + 1
+                )
             )}
           </div>
         )}
       </div>
     );
-  };
-
-  return renderNode(node);
-}
+  }
 
   return (
     <div
@@ -972,23 +487,19 @@ const evolutionGif =
 
         <nav className="pokemon-info-tabs">
           {tabs.map((tab) => (
-<button
-  key={tab}
-  className={
-    activeTab === tab
-      ? "active"
-      : ""
-  }
-  onClick={() => {
-    setActiveTab(tab);
-
-    if (tab === "Moves") {
-      loadMoveDetails();
-    }
-  }}
->
-  {tab}
-</button>
+            <button
+              key={tab}
+              className={
+                activeTab === tab
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setActiveTab(tab)
+              }
+            >
+              {tab}
+            </button>
           ))}
         </nav>
 
@@ -1160,122 +671,66 @@ const evolutionGif =
                   </div>
                 )}
 
-{activeTab === "Moves" && (
-  <div className="pokemon-tab-section">
-    <h3>Moves</h3>
+                {activeTab === "Moves" && (
+                  <div className="pokemon-tab-section">
+                    <h3>Moves</h3>
 
-    {movesLoading && (
-      <div className="pokemon-info-loading">
-        Loading move information...
-      </div>
-    )}
+                    {[
+                      "level-up",
+                      "machine",
+                      "egg",
+                      "tutor",
+                    ].map((method) => {
+                      const moves =
+                        data.moves.filter(
+                          (move) =>
+                            move.version_group_details.some(
+                              (detail) =>
+                                detail
+                                  .move_learn_method
+                                  .name ===
+                                method
+                            )
+                        );
 
-    {!movesLoading &&
-      movesLoaded &&
-      moveDetails.length === 0 && (
-        <div className="pokemon-info-error">
-          No move information available.
-        </div>
-      )}
+                      if (!moves.length)
+                        return null;
 
-{movesLoading && (
-  <div className="pokemon-tab-loading">
-    Loading move information...
-  </div>
-)}
-{!movesLoading &&
-  movesLoaded &&
-  moveDetails.length === 0 && (
-    <div className="pokemon-no-moves">
-      No move information available.
-    </div>
-  )}
-    {(
-      [
-        "level-up",
-        "machine",
-        "egg",
-        "tutor",
-      ] as const
-    ).map((method) => {
-      const moves = moveDetails
-        .filter(
-          (move) => move.method === method
-        )
-        .sort((a, b) => {
-          if (method === "level-up") {
-            return a.level - b.level;
-          }
+                      return (
+                        <section
+                          key={method}
+                          className="pokemon-info-card"
+                        >
+                          <h3>
+                            {formatMoveMethod(
+                              method
+                            )}
+                          </h3>
 
-          return a.name.localeCompare(b.name);
-        });
-
-      if (!moves.length) return null;
-
-      return (
-        <section
-          key={method}
-          className="pokemon-info-card"
-        >
-          <h3>
-            {formatMoveMethod(method)}
-          </h3>
-
-          <div className="pokemon-moves-table">
-            <div className="pokemon-moves-header">
-              <span>
-                {method === "level-up"
-                  ? "Level"
-                  : "—"}
-              </span>
-
-              <span>Move</span>
-              <span>Type</span>
-              <span>Power</span>
-              <span>PP</span>
-              <span>Acc.</span>
-            </div>
-
-            {moves.map((move, index) => (
-              <div
-                key={`${move.name}-${method}-${index}`}
-                className="pokemon-move-row"
-              >
-                <span>
-                  {method === "level-up"
-                    ? move.level === 0
-                      ? "Start"
-                      : `Lv. ${move.level}`
-                    : "—"}
-                </span>
-
-                <span className="move-name">
-                  {formatName(move.name)}
-                </span>
-
-                <span>
-                  {renderTypeBadge(move.type)}
-                </span>
-
-                <span>
-                  {move.power ?? "—"}
-                </span>
-
-                <span>
-                  {move.pp ?? "—"}
-                </span>
-
-                <span>
-                  {move.accuracy ?? "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-      );
-    })}
-  </div>
-)}
+                          <div className="move-grid">
+                            {moves.map(
+                              (move) => (
+                                <div
+                                  key={
+                                    move.move
+                                      .name
+                                  }
+                                  className="move-card"
+                                >
+                                  {formatName(
+                                    move
+                                      .move
+                                      .name
+                                  )}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </section>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {activeTab === "Base Stats" && (
                   <div className="pokemon-tab-section">
@@ -1328,241 +783,113 @@ const evolutionGif =
                   </div>
                 )}
 
-{activeTab === "Type Matchups" && (
-  <div className="pokemon-tab-section">
-    <h3>Type Matchups</h3>
+                {activeTab ===
+                  "Type Matchups" && (
+                  <div className="pokemon-tab-section">
+                    <section className="pokemon-info-card">
+                      <h3>Weak To</h3>
 
-    {data && (
-      <>
-        <div className="pokemon-type-matchup-grid">
-          {calculateTypeMatchups(
-            data.types
-              .sort(
-                (a, b) =>
-                  a.slot - b.slot
-              )
-              .map(
-                (type) =>
-                  type.type.name
-              ),
-            typeRelations
-          ).map((matchup) => (
-            <div
-              key={matchup.type}
-              className={`type-matchup-card matchup-${String(
-                matchup.multiplier
-              ).replace(".", "-")}`}
-            >
-              <div
-                className="type-matchup-name"
-              >
-                {renderTypeBadge(
-                  matchup.type
-                )}
-              </div>
+                      <div className="type-matchup-list">
+                        {Array.from(
+                          weaknesses
+                        ).map(
+                          renderTypeBadge
+                        )}
+                      </div>
+                    </section>
 
-              <div className="type-matchup-value">
-                {getMatchupLabel(
-                  matchup.multiplier
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                    <section className="pokemon-info-card">
+                      <h3>Resists</h3>
 
-        <div className="type-matchup-legend">
-          <span>
-            <strong>4×</strong> Super Weak
-          </span>
+                      <div className="type-matchup-list">
+                        {Array.from(
+                          resistances
+                        ).map(
+                          renderTypeBadge
+                        )}
+                      </div>
+                    </section>
 
-          <span>
-            <strong>2×</strong> Weak
-          </span>
+                    <section className="pokemon-info-card">
+                      <h3>Immune To</h3>
 
-          <span>
-            <strong>1×</strong> Normal
-          </span>
-
-          <span>
-            <strong>½×</strong> Resistant
-          </span>
-
-          <span>
-            <strong>¼×</strong> Highly Resistant
-          </span>
-
-          <span>
-            <strong>0×</strong> Immune
-          </span>
-        </div>
-      </>
-    )}
-  </div>
-)}
-
-{activeTab === "Wild Locations" && (
-  <div className="pokemon-tab-section">
-
-    <section className="pokemon-info-card">
-
-      <h3>Wild Locations</h3>
-
-      {/* SEASON SELECTOR */}
-<div className="wild-season-tabs">
-  {(["Spring", "Summer", "Autumn", "Winter"] as const).map(
-    (season) => (
-      <button
-        key={season}
-        type="button"
-        className={`wild-season-tab ${
-          selectedSeason === season ? "active" : ""
-        }`}
-        onClick={() => setSelectedSeason(season)}
-      >
-        <span className="wild-season-icon">
-          {season === "Spring" && "🌸"}
-          {season === "Summer" && "☀️"}
-          {season === "Autumn" && "🍂"}
-          {season === "Winter" && "❄️"}
-        </span>
-
-        {season}
-      </button>
-    )
-  )}
-</div>
-
-      {locations.length > 0 ? (
-
-        <div className="locations-table-wrapper">
-
-          <table className="locations-table">
-
-            <thead>
-              <tr>
-                <th>Region</th>
-                <th>Location</th>
-                <th>Method</th>
-                <th>Levels</th>
-                <th>Morning</th>
-                <th>Day</th>
-                <th>Night</th>
-                <th>Horde</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {locations
-                .filter(
-                  (location) =>
-                    location.season === "Any" ||
-                    location.season ===
-                      selectedSeason
-                )
-                .map(
-                  (location, index) => (
-                    <tr
-                      key={`${location.location_id}-${location.type}-${location.season}-${index}`}
-                    >
-
-                      <td>
-                        {location.region_name}
-                      </td>
-
-                      <td>
-                        <strong>
-                          {
-                            location.location_name_full
-                          }
-                        </strong>
-                      </td>
-
-                      <td>
-                        {location.type}
-                      </td>
-
-                      <td>
-                        {location.min_level ===
-                        location.max_level
-                          ? location.min_level
-                          : `${location.min_level}–${location.max_level}`}
-                      </td>
-
-                      <td>
-                        {
-                          location.rarity_morning
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          location.rarity_day
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          location.rarity_night
-                        }
-                      </td>
-
-                      <td>
-
-                        {location.is_horde_5x
-                          ? "5×"
-                          : location.is_horde_3x
-                          ? "3×"
-                          : "—"}
-
-                      </td>
-
-                    </tr>
-                  )
+                      <div className="type-matchup-list">
+                        {Array.from(
+                          immunities
+                        ).map(
+                          renderTypeBadge
+                        )}
+                      </div>
+                    </section>
+                  </div>
                 )}
 
-            </tbody>
+                {activeTab ===
+                  "Wild Locations" && (
+                  <div className="pokemon-tab-section">
+                    <section className="pokemon-info-card">
+                      <h3>
+                        Encounter Locations
+                      </h3>
 
-          </table>
+                      {locations.length > 0 ? (
+                        <div className="location-grid">
+                          {Array.from(
+                            new Set(locations)
+                          ).map(
+                            (location) => (
+                              <div
+                                key={
+                                  location
+                                }
+                                className="location-card"
+                              >
+                                {location}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      ) : (
+                        <p>
+                          No standard encounter
+                          locations available.
+                        </p>
+                      )}
 
-        </div>
+                      <small>
+                        Encounter data is based
+                        on the standard Pokémon
+                        API and may differ from
+                        PokeMMO.
+                      </small>
+                    </section>
+                  </div>
+                )}
 
-      ) : (
+                {activeTab ===
+                  "Evolution Tree" && (
+                  <div className="pokemon-tab-section">
+                    <section className="pokemon-info-card">
+                      <h3>
+                        Evolution Tree
+                      </h3>
 
-        <p>
-          This Pokémon has no recorded
-          PokeMMO wild locations.
-        </p>
+                      {evolution ? (
+                        <div className="evolution-tree">
+                          {renderEvolution(
+                            evolution.chain
+                          )}
+                        </div>
+                      ) : (
+                        <p>
+                          No evolution data
+                          available.
+                        </p>
+                      )}
+                    </section>
+                  </div>
+                )}
 
-      )}
-
-    </section>
-
-  </div>
-)}
-
-
-
-{activeTab === "Evolution Tree" && (
-  <div className="pokemon-tab-section">
-    <h3>Evolution Tree</h3>
-
-    <section className="pokemon-info-card">
-      {evolution ? (
-        <div className="evolution-tree">
-          {renderEvolutionTree(
-            evolution.chain
-          )}
-        </div>
-      ) : (
-        <div className="pokemon-no-evolution">
-          This Pokémon does not have an
-          evolution chain.
-        </div>
-      )}
-    </section>
-  </div>
-)}
                 {activeTab ===
                   "Team Fate" && (
                   <div className="pokemon-tab-section">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import PokemonInfoModal from "../components/PokemonInfoModal";
 
 type ShinyCatch = {
   id: string;
@@ -16,9 +17,16 @@ type LeaderboardEntry = {
   shinies: ShinyCatch[];
 };
 
-function getGifName(
-  name: string
-) {
+type FilterType =
+  | "week"
+  | "month"
+  | "3months"
+  | "6months"
+  | "1year"
+  | "2years"
+  | "all";
+
+function getGifName(name: string) {
   return name
     .toLowerCase()
     .replace(/ /g, "")
@@ -32,23 +40,17 @@ export default function Leaderboard() {
   const [loading, setLoading] =
     useState(true);
 
-type FilterType =
-  | "week"
-  | "month"
-  | "3months"
-  | "6months"
-  | "1year"
-  | "2years"
-  | "all";
-
-const [filter, setFilter] =
-  useState<FilterType>("all");
+  const [filter, setFilter] =
+    useState<FilterType>("all");
 
   const [leaderboard, setLeaderboard] =
     useState<LeaderboardEntry[]>([]);
 
   const [selectedPokemon, setSelectedPokemon] =
     useState<ShinyCatch | null>(null);
+
+  const [allShinies, setAllShinies] =
+    useState<ShinyCatch[]>([]);
 
   useEffect(() => {
     loadLeaderboard();
@@ -103,55 +105,70 @@ const [filter, setFilter] =
     setLoading(true);
 
     try {
-const { data: profiles } =
-  await supabase
-    .from("profiles")
-    .select(
-      "id,nickname,username,avatar_url"
-    );
+      const { data: profiles, error: profilesError } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id,nickname,username,avatar_url"
+          );
 
-const profileMap: Record<
-  string,
-  {
-    name: string;
-    avatar?: string;
-  }
-> = {};
+      if (profilesError) {
+        throw profilesError;
+      }
 
-profiles?.forEach(
-  (profile: any) => {
-    profileMap[
-      profile.id
-    ] = {
-      name:
-        profile.nickname ||
-        profile.username ||
-        "Unknown",
+      const profileMap: Record<
+        string,
+        {
+          name: string;
+          avatar?: string;
+        }
+      > = {};
 
-      avatar:
-        profile.avatar_url,
-    };
-  }
-);
+      profiles?.forEach(
+        (profile: any) => {
+          profileMap[
+            profile.id
+          ] = {
+            name:
+              profile.nickname ||
+              profile.username ||
+              "Unknown",
 
-const { data: pokemonData } =
-  await supabase
-    .from("pokemon")
-    .select("id,name");
+            avatar:
+              profile.avatar_url,
+          };
+        }
+      );
 
-const pokemonMap: Record<
-  number,
-  string
-> = {};
+      const {
+        data: pokemonData,
+        error: pokemonError,
+      } =
+        await supabase
+          .from("pokemon")
+          .select("id,name");
 
-pokemonData?.forEach(
-  (poke: any) => {
-    pokemonMap[
-      Number(poke.id)
-    ] = poke.name;
-  }
-);
-      const { data: catches } =
+      if (pokemonError) {
+        throw pokemonError;
+      }
+
+      const pokemonMap: Record<
+        number,
+        string
+      > = {};
+
+      pokemonData?.forEach(
+        (pokemon: any) => {
+          pokemonMap[
+            Number(pokemon.id)
+          ] = pokemon.name;
+        }
+      );
+
+      const {
+        data: catches,
+        error: catchesError,
+      } =
         await supabase
           .from("shiny_catches")
           .select(`
@@ -161,20 +178,62 @@ pokemonData?.forEach(
             date_found
           `);
 
-      if (!catches) return;
+      if (catchesError) {
+        throw catchesError;
+      }
+
+      if (!catches) {
+        setLeaderboard([]);
+        setAllShinies([]);
+        return;
+      }
+
+      const formattedAllShinies =
+        catches.map(
+          (catchData: any) => {
+            const trainerInfo =
+              profileMap[
+                catchData.profile_id
+              ] || {
+                name: "Unknown",
+              };
+
+            return {
+              id: catchData.id,
+              pokemon_id: Number(
+                catchData.pokemon_id
+              ),
+              pokemon_name:
+                pokemonMap[
+                  Number(
+                    catchData.pokemon_id
+                  )
+                ] || "Unknown",
+              owner:
+                trainerInfo.name,
+              date_found:
+                catchData.date_found,
+            };
+          }
+        );
+
+      setAllShinies(
+        formattedAllShinies
+      );
 
       const cutoff =
         getCutoff();
 
-      const filtered =
-        catches.filter(
-          (catchData: any) => {
-            if (!cutoff)
+      const filteredShinies =
+        formattedAllShinies.filter(
+          (shiny) => {
+            if (!cutoff) {
               return true;
+            }
 
             return (
               new Date(
-                catchData.date_found
+                shiny.date_found
               ) >= cutoff
             );
           }
@@ -185,51 +244,43 @@ pokemonData?.forEach(
         LeaderboardEntry
       > = {};
 
-      filtered.forEach(
-        (catchData: any) => {
+      filteredShinies.forEach(
+        (shiny) => {
+          const profileEntry =
+            Object.entries(
+              profileMap
+            ).find(
+              ([, profile]) =>
+                profile.name ===
+                shiny.owner
+            );
 
-const trainerInfo =
-  profileMap[
-    catchData.profile_id
-  ] || {
-    name: "Unknown",
-  };
+          const avatar =
+            profileEntry
+              ? profileEntry[1].avatar
+              : undefined;
 
-const trainer =
-  trainerInfo.name;
-
-          if (
-            !groups[trainer]
-          ) {
-groups[trainer] = {
-  trainer,
-  avatar:
-    trainerInfo.avatar,
-  count: 0,
-  shinies: [],
-};
+          if (!groups[shiny.owner]) {
+            groups[
+              shiny.owner
+            ] = {
+              trainer:
+                shiny.owner,
+              avatar,
+              count: 0,
+              shinies: [],
+            };
           }
 
           groups[
-            trainer
+            shiny.owner
           ].count++;
 
-groups[
-  trainer
-].shinies.push({
-  id: catchData.id,
-  pokemon_id:
-    catchData.pokemon_id,
-  pokemon_name:
-    pokemonMap[
-      Number(
-        catchData.pokemon_id
-      )
-    ] || "unknown",
-  owner: trainer,
-  date_found:
-    catchData.date_found,
-});
+          groups[
+            shiny.owner
+          ].shinies.push(
+            shiny
+          );
         }
       );
 
@@ -245,12 +296,57 @@ groups[
       setLeaderboard(
         sorted
       );
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(
+        "Failed to load leaderboard:",
+        error
+      );
+
+      setLeaderboard([]);
+      setAllShinies([]);
     } finally {
       setLoading(false);
     }
   }
+
+  const filterOptions: [
+    FilterType,
+    string
+  ][] = [
+    ["week", "Week"],
+    ["month", "Month"],
+    ["3months", "3 Months"],
+    ["6months", "6 Months"],
+    ["1year", "1 Year"],
+    ["2years", "2 Years"],
+    ["all", "All Time"],
+  ];
+
+  const champion =
+    leaderboard[0];
+
+  const matchingShinies =
+    selectedPokemon
+      ? allShinies.filter(
+          (shiny) =>
+            shiny.pokemon_id ===
+            selectedPokemon.pokemon_id
+        )
+      : [];
+
+  const owners =
+    matchingShinies.reduce<
+      Record<string, number>
+    >(
+      (totals, shiny) => {
+        totals[shiny.owner] =
+          (totals[shiny.owner] || 0) +
+          1;
+
+        return totals;
+      },
+      {}
+    );
 
   if (loading) {
     return (
@@ -260,120 +356,108 @@ groups[
     );
   }
 
-const filterOptions: [
-  FilterType,
-  string
-][] = [
-  ["week", "Week"],
-  ["month", "Month"],
-  ["3months", "3 Months"],
-  ["6months", "6 Months"],
-  ["1year", "1 Year"],
-  ["2years", "2 Years"],
-  ["all", "All Time"],
-];
-
-  const champion =
-    leaderboard[0];
-
   return (
     <div className="leaderboard-page">
+
       <div className="dex-header">
         <h1>
           🏆 Shiny Leaderboard
         </h1>
 
         <p>
-          Top shiny hunters
-          ranked by selected
-          period.
+          Top shiny hunters ranked
+          by selected period.
         </p>
       </div>
 
-<div className="leaderboard-filters">
-  {filterOptions.map(
-    ([value, label]) => (
-      <button
-        key={value}
-        onClick={() =>
-          setFilter(value)
-        }
-        className={`leader-filter ${
-          filter === value
-            ? "active"
-            : ""
-        }`}
-      >
-        {label}
-      </button>
-    )
-  )}
-</div>
+      <div className="leaderboard-filters">
+        {filterOptions.map(
+          ([value, label]) => (
+            <button
+              key={value}
+              onClick={() =>
+                setFilter(value)
+              }
+              className={`leader-filter ${
+                filter === value
+                  ? "active"
+                  : ""
+              }`}
+            >
+              {label}
+            </button>
+          )
+        )}
+      </div>
 
-{champion && (
-  <div className="leaderboard-champion">
-<h2>
-  👑 Current Champion
-</h2>
+      {champion && (
+        <div className="leaderboard-champion">
 
-{champion.avatar && (
-  <img
-    src={champion.avatar}
-    alt={champion.trainer}
-    className="champion-avatar"
-  />
-)}
+          <h2>
+            👑 Current Champion
+          </h2>
 
-<div className="champion-name">
-  {champion.trainer}
-</div>
+          {champion.avatar && (
+            <img
+              src={champion.avatar}
+              alt={champion.trainer}
+              className="champion-avatar"
+            />
+          )}
 
-<div className="champion-count">
-  {champion.count} Shinies
-</div>
+          <div className="champion-name">
+            {champion.trainer}
+          </div>
 
-<div className="champion-period">
-  {filter === "all"
-    ? "All Time Champion"
-    : `${filter} Champion`}
-</div>
+          <div className="champion-count">
+            {champion.count} Shinies
+          </div>
+
+          <div className="champion-period">
+            {filter === "all"
+              ? "All Time Champion"
+              : `${
+                  filterOptions.find(
+                    ([value]) =>
+                      value === filter
+                  )?.[1] || filter
+                } Champion`}
+          </div>
+
         </div>
       )}
 
       {leaderboard.map(
-        (
-          entry,
-          index
-        ) => (
+        (entry, index) => (
           <div
-            key={
-              entry.trainer
-            }
+            key={entry.trainer}
             className="showcase-member"
           >
-<div className="leaderboard-user-header">
-  {entry.avatar && (
-    <img
-      src={entry.avatar}
-      alt={entry.trainer}
-      className="leaderboard-user-avatar"
-    />
-  )}
 
-  <h2>
-    #{index + 1} {entry.trainer} ({entry.count})
-  </h2>
-</div>
+            <div className="leaderboard-user-header">
+
+              {entry.avatar && (
+                <img
+                  src={entry.avatar}
+                  alt={entry.trainer}
+                  className="leaderboard-user-avatar"
+                />
+              )}
+
+              <h2>
+                #{index + 1}{" "}
+                {entry.trainer} (
+                {entry.count})
+              </h2>
+
+            </div>
 
             <div className="showcase-sprites">
+
               {entry.shinies.map(
-                (
-                  shiny
-                ) => (
+                (shiny) => (
                   <div
-                    key={
-                      shiny.id
-                    }
+                    key={shiny.id}
                     className="showcase-card"
                     onClick={() =>
                       setSelectedPokemon(
@@ -381,131 +465,65 @@ const filterOptions: [
                       )
                     }
                   >
-<img
-  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
-  alt=""
-  className="showcase-sprite"
-  onMouseEnter={(e) => {
-    e.currentTarget.src =
-      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-        shiny.pokemon_name
-      )}.gif`;
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.src =
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
-  }}
-  onError={(e) => {
-    e.currentTarget.src =
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
-  }}
-/>
+
+                    <img
+                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`}
+                      alt={
+                        shiny.pokemon_name
+                      }
+                      className="showcase-sprite"
+                      onMouseEnter={(
+                        event
+                      ) => {
+                        event.currentTarget.src =
+                          `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+                            shiny.pokemon_name
+                          )}.gif`;
+                      }}
+                      onMouseLeave={(
+                        event
+                      ) => {
+                        event.currentTarget.src =
+                          `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+                      }}
+                      onError={(
+                        event
+                      ) => {
+                        event.currentTarget.src =
+                          `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${shiny.pokemon_id}.png`;
+                      }}
+                    />
 
                   </div>
                 )
               )}
+
             </div>
+
           </div>
         )
       )}
 
       {selectedPokemon && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
-            setSelectedPokemon(
-              null
-            )
+        <PokemonInfoModal
+          pokemon={{
+            id:
+              selectedPokemon.pokemon_id,
+            name:
+              selectedPokemon.pokemon_name,
+            caught: true,
+            owners,
+            screenshots: [],
+            totalCopies:
+              matchingShinies.length,
+          }}
+          onClose={() =>
+            setSelectedPokemon(null)
           }
-        >
-          <div
-            className="pokemon-modal"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
-          >
-            <button
-              className="close-btn"
-              onClick={() =>
-                setSelectedPokemon(
-                  null
-                )
-              }
-            >
-              ×
-            </button>
-
-            <div className="modal-header">
-              <h2>
-                Pokémon #
-                {
-                  selectedPokemon.pokemon_id
-                }
-              </h2>
-
-              <span className="status-badge">
-                Shiny
-              </span>
-            </div>
-
-            <div className="modal-body">
-              <div className="modal-left">
-<img
-  src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-    selectedPokemon.pokemon_name
-  )}.gif`}
-  alt=""
-  className="modal-sprite"
-  onError={(e) => {
-    e.currentTarget.src =
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`;
-  }}
-/>
-              </div>
-
-              <div className="modal-right">
-                <div className="detail-card">
-                  <h3>
-                    Trainer
-                  </h3>
-
-                  <p>
-                    {
-                      selectedPokemon.owner
-                    }
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>
-                    Date Found
-                  </h3>
-
-                  <p>
-                    {
-                      selectedPokemon.date_found
-                    }
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>
-                    National
-                    Dex
-                  </h3>
-
-                  <p>
-                    #
-                    {
-                      selectedPokemon.pokemon_id
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+          defaultTab="Team Fate"
+        />
       )}
+
     </div>
   );
 }
