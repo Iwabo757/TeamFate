@@ -4798,10 +4798,9 @@ textarea:focus {
   max-height: 72px !important;
 
   object-fit: contain;
-
   image-rendering: pixelated;
 
-  pointer-events: none;
+  cursor: pointer;
 }
 
 /* Smaller screens */
