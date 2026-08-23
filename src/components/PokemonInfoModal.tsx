@@ -768,9 +768,11 @@ export default function PokemonInfoModal({
             flex: 1 1 auto;
             min-height: 0;
             overflow: hidden;
+            display: flex;
           }
 
           .pokemon-tab-section {
+            flex: 1 1 auto;
             height: 100%;
             min-height: 0;
             overflow: hidden;
@@ -849,6 +851,8 @@ export default function PokemonInfoModal({
             align-items: stretch;
             justify-content: center;
             width: 100%;
+            height: 100%;
+            min-height: 0;
             min-width: 0;
             max-width: 100%;
             box-sizing: border-box;
@@ -860,17 +864,19 @@ export default function PokemonInfoModal({
           .evolution-stage-list-reference {
             flex: 1 1 0;
             min-width: 0;
+            min-height: 0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            gap: 8px;
+            justify-content: stretch;
+            gap: 6px;
           }
 
           .evolution-card-reference {
             appearance: none;
             width: 100%;
             min-width: 0;
-            min-height: clamp(112px, 11vw, 150px);
+            min-height: 0;
+            flex: 1 1 0;
             box-sizing: border-box;
             padding: clamp(7px, 0.8vw, 12px);
             display: flex;
@@ -899,8 +905,8 @@ export default function PokemonInfoModal({
           }
 
           .evolution-sprite-reference {
-            width: clamp(48px, 5.5vw, 76px);
-            height: clamp(48px, 5.5vw, 76px);
+            width: clamp(40px, 4.6vw, 64px);
+            height: clamp(40px, 4.6vw, 64px);
             object-fit: contain;
             image-rendering: pixelated;
             flex: 0 0 auto;
@@ -933,7 +939,7 @@ export default function PokemonInfoModal({
 
           .evolution-connector-reference {
             flex: 1 1 0;
-            min-height: clamp(112px, 11vw, 150px);
+            min-height: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -1218,7 +1224,7 @@ export default function PokemonInfoModal({
 
             .evolution-card-reference,
             .evolution-connector-reference {
-              min-height: 104px;
+              min-height: 0;
             }
 
             .evolution-card-reference {
@@ -1260,7 +1266,7 @@ export default function PokemonInfoModal({
 
             .evolution-card-reference,
             .evolution-connector-reference {
-              min-height: 88px;
+              min-height: 0;
             }
 
             .evolution-card-reference {
