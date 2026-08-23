@@ -1336,6 +1336,105 @@ export default function PokemonInfoModal({
               gap: 12px;
             }
           }
+
+          /* Evolution Tree: always fit the available width without horizontal scrolling */
+          .evolution-tree-reference {
+            width: 100%;
+            min-width: 0;
+            min-height: 0;
+            padding: 10px 12px 20px;
+            gap: clamp(10px, 2vw, 28px);
+            overflow: hidden;
+          }
+
+          .evolution-stage-reference {
+            min-width: 0;
+            flex: 1 1 0;
+            gap: clamp(10px, 2vw, 28px);
+          }
+
+          .evolution-stage-list-reference {
+            min-width: 0;
+            flex: 1 1 auto;
+          }
+
+          .evolution-card-reference {
+            width: clamp(145px, 18vw, 230px);
+            min-width: 0;
+            min-height: clamp(155px, 16vw, 210px);
+            padding: clamp(12px, 1.5vw, 22px)
+              clamp(10px, 1.3vw, 20px)
+              clamp(10px, 1vw, 16px);
+          }
+
+          .evolution-sprite-reference {
+            width: clamp(70px, 8vw, 105px);
+            height: clamp(70px, 8vw, 105px);
+          }
+
+          .evolution-card-reference strong {
+            font-size: clamp(1rem, 1.7vw, 1.45rem);
+          }
+
+          .evolution-dex-number {
+            font-size: clamp(0.8rem, 1.2vw, 1rem);
+          }
+
+          .evolution-connectors-reference {
+            flex: 1 1 0;
+            min-width: clamp(85px, 12vw, 210px);
+          }
+
+          .evolution-arrow-reference {
+            font-size: clamp(2rem, 3vw, 3rem);
+          }
+
+          .evolution-requirement-reference {
+            font-size: clamp(0.78rem, 1.35vw, 1.08rem);
+          }
+
+          @media (max-width: 900px) {
+            .evolution-tree-reference {
+              gap: 8px;
+              padding-left: 4px;
+              padding-right: 4px;
+            }
+
+            .evolution-stage-reference {
+              gap: 8px;
+            }
+
+            .evolution-card-reference {
+              width: clamp(110px, 22vw, 160px);
+              min-height: 145px;
+            }
+
+            .evolution-connectors-reference {
+              min-width: clamp(65px, 10vw, 100px);
+            }
+          }
+
+          @media (max-width: 640px) {
+            .evolution-tree-reference {
+              flex-direction: column;
+              align-items: stretch;
+            }
+
+            .evolution-stage-reference {
+              width: 100%;
+              justify-content: center;
+            }
+
+            .evolution-connectors-reference {
+              min-width: 72px;
+              flex: 0 1 90px;
+            }
+
+            .evolution-card-reference {
+              width: min(42vw, 145px);
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
