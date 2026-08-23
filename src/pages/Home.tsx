@@ -105,13 +105,11 @@ export default function Home() {
 useEffect(() => {
   async function loadAlteringCave() {
     try {
-      const data =
-        await getAlteringCaveData();
+      const data = await getAlteringCaveData();
 
-      console.log(
-        "ALTERING CAVE RAW DATA:",
-        data.raw
-      );
+      data.raw.forEach((row, index) => {
+        console.log(`ROW ${index}:`, row);
+      });
     } catch (error) {
       console.error(
         "Failed to load Altering Cave:",
@@ -122,6 +120,7 @@ useEffect(() => {
 
   loadAlteringCave();
 }, []);
+
   /* =========================================
      LOAD STATS
   ========================================= */
