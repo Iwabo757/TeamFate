@@ -713,20 +713,27 @@ export default function PokemonInfoModal({
             position: fixed;
             inset: 0;
             z-index: 1000;
-            display: grid;
-            place-items: center;
-            padding: 18px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            overflow-x: hidden;
             background: rgba(1, 8, 18, 0.72);
             backdrop-filter: blur(8px);
           }
 
           .pokemon-info-modal {
-            width: min(1120px, 94vw);
-            height: min(900px, 94vh);
-            max-height: 94vh;
+            width: min(1120px, calc(100vw - 20px));
+            min-height: calc(100vh - 20px);
+            height: auto !important;
+            max-height: none !important;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            box-sizing: border-box;
+            overflow: visible !important;
           }
 
           .pokemon-info-header {
@@ -765,17 +772,18 @@ export default function PokemonInfoModal({
           }
 
           .pokemon-info-content {
-            flex: 1 1 auto;
+            flex: 0 0 auto !important;
             min-height: 0;
-            overflow: hidden;
-            display: flex;
+            height: auto !important;
+            overflow: visible !important;
           }
 
           .pokemon-tab-section {
-            flex: 1 1 auto;
-            height: 100%;
+            width: 100%;
+            height: auto !important;
             min-height: 0;
-            overflow: hidden;
+            box-sizing: border-box;
+            overflow: visible !important;
           }
 
           .pokemon-summary {
@@ -847,38 +855,34 @@ export default function PokemonInfoModal({
 
           /* Evolution Tree */
           .evolution-tree-reference {
-            display: flex;
-            align-items: stretch;
-            justify-content: center;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(72px, 0.34fr) minmax(0, 1fr) minmax(72px, 0.34fr) minmax(0, 1fr);
+            align-items: center;
             width: 100%;
-            height: 100%;
-            min-height: 0;
             min-width: 0;
             max-width: 100%;
             box-sizing: border-box;
-            gap: clamp(6px, 0.9vw, 14px);
+            gap: clamp(6px, 1vw, 14px);
             padding: 8px;
-            overflow: hidden;
+            overflow: visible !important;
           }
 
           .evolution-stage-list-reference {
             flex: 1 1 0;
             min-width: 0;
-            min-height: 0;
             display: flex;
             flex-direction: column;
-            justify-content: stretch;
-            gap: 6px;
+            justify-content: center;
+            gap: 8px;
           }
 
           .evolution-card-reference {
             appearance: none;
             width: 100%;
             min-width: 0;
-            min-height: 0;
-            flex: 1 1 0;
+            min-height: clamp(96px, 9vw, 130px);
             box-sizing: border-box;
-            padding: clamp(7px, 0.8vw, 12px);
+            padding: clamp(6px, 0.7vw, 10px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -894,7 +898,7 @@ export default function PokemonInfoModal({
             color: inherit;
             font: inherit;
             cursor: pointer;
-            overflow: hidden;
+            overflow: visible !important;
           }
 
           .evolution-card-reference:hover,
@@ -905,8 +909,8 @@ export default function PokemonInfoModal({
           }
 
           .evolution-sprite-reference {
-            width: clamp(40px, 4.6vw, 64px);
-            height: clamp(40px, 4.6vw, 64px);
+            width: clamp(48px, 5.5vw, 76px);
+            height: clamp(48px, 5.5vw, 76px);
             object-fit: contain;
             image-rendering: pixelated;
             flex: 0 0 auto;
@@ -928,9 +932,8 @@ export default function PokemonInfoModal({
           }
 
           .evolution-connectors-reference {
-            flex: 0 1 clamp(76px, 9vw, 130px);
             min-width: 0;
-            max-width: clamp(76px, 9vw, 130px);
+            max-width: none;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -938,8 +941,7 @@ export default function PokemonInfoModal({
           }
 
           .evolution-connector-reference {
-            flex: 1 1 0;
-            min-height: 0;
+            min-height: clamp(96px, 9vw, 130px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -971,7 +973,7 @@ export default function PokemonInfoModal({
           /* Wild Locations */
           .wild-locations-reference-card {
             width: 100%;
-            height: 100%;
+            height: auto !important;
             min-height: 0;
             max-width: 100%;
             min-width: 0;
@@ -979,7 +981,7 @@ export default function PokemonInfoModal({
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: visible !important;
           }
 
           .wild-locations-reference-card > h3,
@@ -1043,15 +1045,11 @@ export default function PokemonInfoModal({
 
           /* Only this table box scrolls vertically. */
           .wild-reference-table-wrap {
-            flex: 1 1 auto;
             width: 100%;
             min-width: 0;
             min-height: 0;
             max-width: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            overscroll-behavior: contain;
-            scrollbar-gutter: stable;
+            overflow: visible;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
           }
@@ -1170,7 +1168,7 @@ export default function PokemonInfoModal({
             border-radius: 12px;
             color: #aeb7c3;
             font-size: clamp(0.68rem, 1vw, 0.88rem);
-            overflow: hidden;
+            overflow: visible !important;
           }
 
           .wild-reference-legend i {
@@ -1182,9 +1180,10 @@ export default function PokemonInfoModal({
 
           @media (max-width: 900px) {
             .pokemon-info-modal {
-              width: min(96vw, 720px);
-              height: 96vh;
-              max-height: 96vh;
+              width: calc(100vw - 12px);
+              min-height: calc(100vh - 12px);
+              height: auto !important;
+              max-height: none !important;
             }
 
             .pokemon-summary {
@@ -1218,33 +1217,12 @@ export default function PokemonInfoModal({
             }
 
             .evolution-connectors-reference {
-              flex-basis: clamp(60px, 10vw, 90px);
-              max-width: clamp(60px, 10vw, 90px);
-            }
-
-            .evolution-card-reference,
-            .evolution-connector-reference {
-              min-height: 0;
-            }
-
-            .evolution-card-reference {
-              padding: 7px 5px;
-            }
-
-            .evolution-sprite-reference {
-              width: clamp(44px, 7vw, 64px);
-              height: clamp(44px, 7vw, 64px);
-            }
-
-            .evolution-card-reference strong {
-              font-size: clamp(0.72rem, 1.8vw, 0.98rem);
-            }
-
-            .wild-reference-table th,
-            .wild-reference-table td {
-              padding: 8px 4px;
-              font-size: clamp(0.64rem, 1.35vw, 0.9rem);
-            }
+            min-width: 0;
+            max-width: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
           }
 
           @media (max-width: 640px) {
@@ -1259,51 +1237,103 @@ export default function PokemonInfoModal({
             }
 
             .evolution-connectors-reference {
-              flex: 0 1 52px;
-              max-width: 52px;
-              gap: 5px;
+            min-width: 0;
+            max-width: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+          }
+
+          /* Final layout guard: no tab content may be clipped by the modal. */
+          .pokemon-info-modal,
+          .pokemon-info-content,
+          .pokemon-tab-section,
+          .pokemon-info-card,
+          .evolution-tree-reference,
+          .evolution-stage-list-reference,
+          .wild-locations-reference-card {
+            max-height: none !important;
+          }
+
+          @media (min-width: 901px) {
+            .pokemon-info-tabs {
+              height: 52px;
+              min-height: 52px;
             }
 
-            .evolution-card-reference,
+            .pokemon-info-tabs button {
+              height: 52px;
+              min-height: 52px;
+              font-size: clamp(0.72rem, 0.95vw, 0.92rem);
+              padding: 0 5px;
+            }
+          }
+
+          @media (max-width: 900px) {
+            .pokemon-info-overlay {
+              align-items: flex-start;
+              padding: 6px;
+            }
+
+            .pokemon-info-modal {
+              width: calc(100vw - 12px);
+              min-height: calc(100vh - 12px);
+            }
+
+            .pokemon-info-tabs {
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              scrollbar-width: none;
+            }
+
+            .pokemon-info-tabs::-webkit-scrollbar {
+              display: none;
+            }
+
+            .pokemon-info-tabs button {
+              flex: 0 0 auto;
+              min-width: max-content;
+              padding: 0 14px;
+              font-size: 0.82rem;
+            }
+
+            .evolution-tree-reference {
+              grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr) 56px minmax(0, 1fr);
+              gap: 4px;
+              padding: 4px;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .evolution-tree-reference {
+              display: flex;
+              flex-direction: column;
+              align-items: stretch;
+              gap: 8px;
+            }
+
+            .evolution-connectors-reference {
+              flex-direction: row;
+              width: 100%;
+              min-height: 48px;
+              gap: 6px;
+            }
+
             .evolution-connector-reference {
-              min-height: 0;
+              min-height: 48px;
+              flex-direction: row;
+            }
+
+            .evolution-stage-list-reference {
+              width: 100%;
             }
 
             .evolution-card-reference {
-              border-radius: 9px;
-              padding: 5px 3px;
-            }
-
-            .evolution-sprite-reference {
-              width: 42px;
-              height: 42px;
-            }
-
-            .evolution-card-reference strong {
-              font-size: 0.68rem;
-            }
-
-            .evolution-dex-number {
-              font-size: 0.62rem;
-            }
-
-            .evolution-arrow-reference {
-              font-size: 1.25rem;
-            }
-
-            .evolution-requirement-reference {
-              font-size: 0.58rem;
-            }
-
-            .wild-locations-reference-card {
-              padding-left: 10px;
-              padding-right: 10px;
-            }
-
-            .wild-reference-legend {
-              justify-content: flex-start;
+              min-height: 92px;
             }
           }
+
         `}</style>
         <button
           className="pokemon-info-close"
