@@ -1773,6 +1773,140 @@ export default function PokemonInfoModal({
             }
           }
 
+
+          /* ============================================================
+             COMPACT HEADER + WILD LOCATIONS LAYOUT
+             ============================================================ */
+
+          /* Pull the modal header content slightly upward and keep the
+             Pokédex number directly below the Pokémon name. */
+          .pokemon-modal-header,
+          .pokemon-header-reference,
+          .pokemon-info-header {
+            padding-top: 10px !important;
+            padding-bottom: 8px !important;
+          }
+
+          .pokemon-name-reference,
+          .pokemon-title-reference,
+          .pokemon-modal-header h1,
+          .pokemon-modal-header h2 {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            line-height: 1.05 !important;
+          }
+
+          .pokemon-number-reference,
+          .pokemon-dex-number-reference,
+          .pokemon-modal-header .dex-number,
+          .pokemon-modal-header .pokemon-number {
+            display: block;
+            margin-top: 2px !important;
+            margin-bottom: 0 !important;
+            line-height: 1.05 !important;
+          }
+
+          /* Shrink the tab bar so Wild Locations gets more vertical room. */
+          .pokemon-tabs-reference,
+          .pokemon-tabs,
+          .modal-tabs {
+            min-height: 58px !important;
+            height: 58px !important;
+          }
+
+          .pokemon-tab-reference,
+          .pokemon-tabs button,
+          .modal-tabs button {
+            min-height: 58px !important;
+            height: 58px !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            font-size: clamp(0.9rem, 1.2vw, 1.1rem) !important;
+          }
+
+          /* The modal/page itself never gets a Wild Locations scrollbar. */
+          .wild-locations-reference-card,
+          .wild-locations-section-reference {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden !important;
+            box-sizing: border-box;
+          }
+
+          /* Keep the Wild Locations content compact and let the table use
+             the available vertical space. */
+          .wild-locations-reference-card {
+            padding-top: 18px !important;
+            padding-bottom: 12px !important;
+          }
+
+          /* This is the ONLY scrolling element in Wild Locations. */
+          .wild-reference-table-wrap {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            height: min(48vh, 460px);
+            max-height: 460px;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            box-sizing: border-box;
+          }
+
+          .wild-reference-table {
+            width: 100%;
+            min-width: 0 !important;
+            max-width: 100%;
+            table-layout: fixed;
+          }
+
+          /* Sticky headers remain visible while ONLY the rows scroll. */
+          .wild-reference-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+          }
+
+          .wild-reference-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 21;
+          }
+
+          /* Prevent the table from forcing the page wider. */
+          .wild-reference-table th,
+          .wild-reference-table td {
+            min-width: 0 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            box-sizing: border-box;
+          }
+
+          /* Keep filters and legend fixed outside the scrolling table. */
+          .wild-reference-season-filter,
+          .wild-reference-legend {
+            flex: 0 0 auto;
+            overflow: hidden !important;
+          }
+
+          @media (max-width: 900px) {
+            .pokemon-tabs-reference,
+            .pokemon-tabs,
+            .modal-tabs,
+            .pokemon-tab-reference,
+            .pokemon-tabs button,
+            .modal-tabs button {
+              min-height: 50px !important;
+              height: 50px !important;
+            }
+
+            .wild-reference-table-wrap {
+              height: min(50vh, 420px);
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
