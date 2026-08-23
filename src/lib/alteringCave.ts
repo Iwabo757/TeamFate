@@ -21,39 +21,115 @@ const normalize = (value: unknown): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-const normalizedRow = (row: string[]): string[] =>
+const normalizeRow = (row: string[]): string[] =>
   row.map(normalize);
 
 const rowText = (row: string[]): string =>
-  normalizedRow(row).join(" ").toLowerCase();
+  normalizeRow(row).join(" ").toLowerCase();
 
 const unique = (items: string[]): string[] =>
   [...new Set(items.map(normalize).filter(Boolean))];
 
-const isPokemonLike = (value: string): boolean => {
+/*
+ * Values that belong to the spreadsheet structure
+ * and should never be returned as Pokémon.
+ */
+const BLOCKED_VALUES = new Set([
+  "",
+  "active",
+  "current",
+  "singles",
+  "tier",
+  "rotation",
+  "rotation 1",
+  "rotation 2",
+  "rotation 3",
+  "rotation 4",
+  "rotation 5",
+  "rotation 6",
+  "encounter",
+  "encounters",
+  "horde",
+  "hordes",
+  "crystal",
+  "type",
+  "types",
+  "pokemon",
+  "pokémon",
+  "normal",
+  "fire",
+  "water",
+  "electric",
+  "grass",
+  "ice",
+  "fighting",
+  "poison",
+  "ground",
+  "flying",
+  "psychic",
+  "bug",
+  "rock",
+  "ghost",
+  "dragon",
+  "dark",
+  "steel",
+  "fairy",
+]);
+
+const isDataValue = (value: string): boolean => {
   const text = normalize(value);
 
   if (!text) return false;
 
-  const blocked = [
-    "encounter",
-    "encounters",
-    "horde",
-    "hordes",
-    "crystal",
-    "altering cave",
-    "rotation",
-    "rotations",
-    "pokemon",
-    "pokémon",
-    "current",
-    "date",
-    "time",
-    "notes",
-    "location",
-  ];
+  const lower = text.toLowerCase();
 
-  return !blocked.includes(text.toLowerCase());
+  if (BLOCKED_VALUES.has(lower)) {
+    return false;
+  }
+
+  /*
+   * Exclude labels such as:
+   * Rotation 1
+   * Tier 2
+   * etc.
+   */
+  if (
+    /^rotation\s*\d*$/i.test(text) ||
+    /^tier\s*\d*$/i.test(text)
+  ) {
+    return false;
+  }
+
+  /*
+   * Ignore obvious metadata.
+   */
+  if (
+    lower.includes("brought to you") ||
+    lower.includes("creator") ||
+    lower.includes("editor") ||
+    lower.includes("using this data") ||
+    lower.includes("discord") ||
+    lower.includes("ign:")
+  ) {
+    return false;
+  }
+
+  return true;
+};
+
+const isRotationHeader = (value: string): boolean =>
+  /^rotation\s*\d+$/i.test(normalize(value));
+
+const isHordeLabel = (value: string): boolean =>
+  normalize(value).toLowerCase().includes("horde");
+
+const isEncounterLabel = (value: string): boolean => {
+  const lower = normalize(value).toLowerCase();
+
+  return (
+    lower.includes("encounter") ||
+    lower.includes("single")
+  );
 };
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
@@ -71,227 +147,254 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     skipEmptyLines: false,
   });
 
-  const raw = parsed.data
-    .map(normalizedRow)
-    .filter((row) => row.some(Boolean));
+  const raw = parsed.data.map(normalizeRow);
 
-  if (raw.length === 0) {
+  if (!raw.length) {
     throw new Error(
-      "The Altering Cave spreadsheet contains no data",
+      "The Altering Cave spreadsheet contains no data.",
     );
   }
 
   /*
-   * Find the actual Altering Cave section.
-   * The sheet begins with credits and metadata,
-   * so we do not assume row 0 contains the headers.
+   * Find the actual rotation header.
+   *
+   * From your spreadsheet structure this is the row
+   * containing values like:
+   *
+   * Singles | Tier | Rotation 1 | ...
    */
-  let sectionStart = raw.findIndex((row) =>
-    rowText(row).includes("altering cave"),
+  const headerRowIndex = raw.findIndex((row) => {
+    const text = rowText(row);
+
+    return (
+      text.includes("singles") &&
+      text.includes("tier") &&
+      text.includes("rotation")
+    );
+  });
+
+  if (headerRowIndex === -1) {
+    console.warn(
+      "Could not locate Altering Cave rotation headers.",
+    );
+
+    return {
+      crystal: "",
+      encounters: [],
+      hordes: [],
+      raw,
+    };
+  }
+
+  const headerRow = raw[headerRowIndex];
+
+  /*
+   * Locate all rotation columns.
+   */
+  const rotationColumns: number[] = [];
+
+  headerRow.forEach((cell, index) => {
+    if (isRotationHeader(cell)) {
+      rotationColumns.push(index);
+    }
+  });
+
+  /*
+   * If the sheet currently only exposes a single
+   * Rotation column in a slightly different format,
+   * fall back to any column containing "rotation".
+   */
+  if (!rotationColumns.length) {
+    headerRow.forEach((cell, index) => {
+      if (normalize(cell).toLowerCase().includes("rotation")) {
+        rotationColumns.push(index);
+      }
+    });
+  }
+
+  /*
+   * Determine where the actual data starts.
+   */
+  const dataStart = headerRowIndex + 1;
+
+  /*
+   * Find the end of this table.
+   *
+   * We stop after a substantial run of completely empty
+   * rows instead of accidentally parsing the next sheet section.
+   */
+  let dataEnd = raw.length;
+  let emptyRows = 0;
+
+  for (let i = dataStart; i < raw.length; i++) {
+    const row = raw[i];
+
+    if (row.every((cell) => !normalize(cell))) {
+      emptyRows++;
+
+      if (emptyRows >= 3) {
+        dataEnd = i - 2;
+        break;
+      }
+    } else {
+      emptyRows = 0;
+    }
+  }
+
+  const tableRows = raw.slice(
+    dataStart,
+    dataEnd,
   );
 
-  if (sectionStart === -1) {
-    sectionStart = 0;
-  }
-
-  /*
-   * Find another Altering Cave heading if one exists.
-   * Otherwise use the remainder of the sheet.
-   */
-  let sectionEnd = raw.length;
-
-  for (let i = sectionStart + 1; i < raw.length; i++) {
-    if (rowText(raw[i]).includes("altering cave")) {
-      sectionEnd = i;
-      break;
-    }
-  }
-
-  const section = raw.slice(sectionStart, sectionEnd);
-
-  let crystal = "";
   const encounters: string[] = [];
   const hordes: string[] = [];
+  let crystal = "";
 
   /*
-   * Search the section for labels and nearby values.
+   * Find useful labels in the header area.
+   *
+   * Some versions of the spreadsheet may use nearby rows
+   * to label encounter / horde columns.
    */
-  for (let i = 0; i < section.length; i++) {
-    const row = normalizedRow(section[i]);
-
-    for (let j = 0; j < row.length; j++) {
-      const cell = row[j];
-      const lower = cell.toLowerCase();
-
-      /*
-       * Crystal
-       */
-      if (
-        !crystal &&
-        (
-          lower === "crystal" ||
-          lower.includes("current crystal")
-        )
-      ) {
-        const possibleCrystal =
-          row[j + 1] ||
-          row.find(
-            (value, index) =>
-              index !== j &&
-              value &&
-              !value.toLowerCase().includes("crystal"),
-          ) ||
-          "";
-
-        if (possibleCrystal) {
-          crystal = possibleCrystal;
-        }
-      }
-
-      /*
-       * Encounters
-       */
-      if (
-        lower === "encounter" ||
-        lower === "encounters"
-      ) {
-        encounters.push(
-          ...row
-            .slice(j + 1)
-            .filter(isPokemonLike),
-        );
-
-        for (
-          let nextRow = i + 1;
-          nextRow < Math.min(i + 15, section.length);
-          nextRow++
-        ) {
-          const next = normalizedRow(section[nextRow]);
-          const nextText = next.join(" ").toLowerCase();
-
-          if (
-            nextText.includes("horde") ||
-            nextText.includes("crystal") ||
-            nextText.includes("rotation")
-          ) {
-            break;
-          }
-
-          encounters.push(
-            ...next.filter(isPokemonLike),
-          );
-        }
-      }
-
-      /*
-       * Hordes
-       */
-      if (
-        lower === "horde" ||
-        lower === "hordes"
-      ) {
-        hordes.push(
-          ...row
-            .slice(j + 1)
-            .filter(isPokemonLike),
-        );
-
-        for (
-          let nextRow = i + 1;
-          nextRow < Math.min(i + 15, section.length);
-          nextRow++
-        ) {
-          const next = normalizedRow(section[nextRow]);
-          const nextText = next.join(" ").toLowerCase();
-
-          if (
-            nextText.includes("encounter") ||
-            nextText.includes("crystal") ||
-            nextText.includes("rotation")
-          ) {
-            break;
-          }
-
-          hordes.push(
-            ...next.filter(isPokemonLike),
-          );
-        }
-      }
-    }
-  }
+  const contextRows = raw.slice(
+    Math.max(0, headerRowIndex - 3),
+    headerRowIndex + 1,
+  );
 
   /*
-   * Secondary parser:
-   * Look for table headers containing Crystal,
-   * Encounter, or Horde.
+   * Build column metadata.
    */
-  for (let i = 0; i < section.length; i++) {
-    const headers = normalizedRow(section[i]);
+  const columnTypes = new Map<
+    number,
+    "encounter" | "horde" | "unknown"
+  >();
 
-    const lowerHeaders = headers.map((header) =>
-      header.toLowerCase(),
-    );
+  rotationColumns.forEach((column) => {
+    let type: "encounter" | "horde" | "unknown" =
+      "unknown";
 
-    const crystalColumn = lowerHeaders.findIndex((header) =>
-      header.includes("crystal"),
-    );
+    for (const contextRow of contextRows) {
+      const value = normalize(contextRow[column]);
 
-    const encounterColumn = lowerHeaders.findIndex(
-      (header) =>
-        header.includes("encounter") &&
-        !header.includes("horde"),
-    );
-
-    const hordeColumn = lowerHeaders.findIndex((header) =>
-      header.includes("horde"),
-    );
-
-    if (
-      crystalColumn === -1 &&
-      encounterColumn === -1 &&
-      hordeColumn === -1
-    ) {
-      continue;
-    }
-
-    for (
-      let dataRow = i + 1;
-      dataRow < Math.min(i + 25, section.length);
-      dataRow++
-    ) {
-      const row = normalizedRow(section[dataRow]);
-
-      if (row.every((cell) => !cell)) {
+      if (isHordeLabel(value)) {
+        type = "horde";
         break;
       }
 
+      if (isEncounterLabel(value)) {
+        type = "encounter";
+      }
+    }
+
+    columnTypes.set(column, type);
+  });
+
+  /*
+   * Parse only the rotation columns.
+   */
+  for (const row of tableRows) {
+    const rowValues = normalizeRow(row);
+
+    /*
+     * Check for row labels that may identify
+     * encounter or horde sections.
+     */
+    const rowLabel = rowValues.find((value) => {
+      const lower = value.toLowerCase();
+
+      return (
+        lower === "encounters" ||
+        lower === "encounter" ||
+        lower === "hordes" ||
+        lower === "horde" ||
+        lower === "crystal"
+      );
+    });
+
+    const rowIsHorde =
+      rowLabel !== undefined &&
+      isHordeLabel(rowLabel);
+
+    const rowIsEncounter =
+      rowLabel !== undefined &&
+      isEncounterLabel(rowLabel);
+
+    const rowIsCrystal =
+      rowLabel !== undefined &&
+      normalize(rowLabel).toLowerCase() === "crystal";
+
+    for (const column of rotationColumns) {
+      const value = normalize(rowValues[column]);
+
+      if (!isDataValue(value)) {
+        continue;
+      }
+
+      if (rowIsCrystal && !crystal) {
+        crystal = value;
+        continue;
+      }
+
+      const columnType =
+        columnTypes.get(column) ?? "unknown";
+
       if (
-        !crystal &&
-        crystalColumn !== -1 &&
-        row[crystalColumn] &&
-        isPokemonLike(row[crystalColumn])
+        rowIsHorde ||
+        columnType === "horde"
       ) {
-        crystal = row[crystalColumn];
+        hordes.push(value);
+        continue;
       }
 
       if (
-        encounterColumn !== -1 &&
-        row[encounterColumn] &&
-        isPokemonLike(row[encounterColumn])
+        rowIsEncounter ||
+        columnType === "encounter"
       ) {
-        encounters.push(
-          row[encounterColumn],
-        );
+        encounters.push(value);
+        continue;
       }
 
-      if (
-        hordeColumn !== -1 &&
-        row[hordeColumn] &&
-        isPokemonLike(row[hordeColumn])
-      ) {
-        hordes.push(
-          row[hordeColumn],
-        );
+      /*
+       * Default unknown rotation data to encounters.
+       * This is safer than losing valid Pokémon data.
+       */
+      encounters.push(value);
+    }
+  }
+
+  /*
+   * Secondary crystal search.
+   *
+   * Search around the ACTIVE / Current rows only,
+   * never across the entire spreadsheet.
+   */
+  if (!crystal) {
+    const activeAreaStart = Math.max(
+      0,
+      headerRowIndex - 5,
+    );
+
+    const activeArea = raw.slice(
+      activeAreaStart,
+      headerRowIndex,
+    );
+
+    for (const row of activeArea) {
+      for (let i = 0; i < row.length; i++) {
+        const cell = normalize(row[i]).toLowerCase();
+
+        if (cell === "crystal") {
+          const nextValue = normalize(row[i + 1]);
+
+          if (isDataValue(nextValue)) {
+            crystal = nextValue;
+            break;
+          }
+        }
+      }
+
+      if (crystal) {
+        break;
       }
     }
   }
@@ -299,27 +402,13 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   const finalEncounters = unique(encounters);
   const finalHordes = unique(hordes);
 
-console.log(
-  "ALTERING CAVE ROWS:",
-  section.map((row, index) => ({
-    index,
-    values: row,
-  })),
-);
-
-  console.log(
-    "ALTERING CAVE SECTION:",
-    section,
-  );
-
-  console.log(
-    "ALTERING CAVE PARSED:",
-    {
-      crystal,
-      encounters: finalEncounters,
-      hordes: finalHordes,
-    },
-  );
+  console.log("ALTERING CAVE PARSED:", {
+    headerRowIndex,
+    rotationColumns,
+    crystal,
+    encounters: finalEncounters,
+    hordes: finalHordes,
+  });
 
   return {
     crystal,
