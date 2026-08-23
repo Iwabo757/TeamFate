@@ -735,10 +735,11 @@ export default function PokemonInfoModal({
             line-height: 1 !important;
           }
 
+          /* Compact desktop tabs */
           .pokemon-info-tabs {
-            flex: 0 0 58px;
-            height: 58px;
-            min-height: 58px;
+            flex: 0 0 42px;
+            height: 42px;
+            min-height: 42px;
             display: flex;
             flex-wrap: nowrap;
             overflow: hidden;
@@ -747,11 +748,30 @@ export default function PokemonInfoModal({
           .pokemon-info-tabs button {
             flex: 1 1 0;
             min-width: 0;
-            height: 58px;
-            min-height: 58px;
-            padding: 0 8px;
+            height: 42px;
+            min-height: 42px;
+            padding: 0 10px;
             white-space: nowrap;
-            font-size: clamp(0.78rem, 1.1vw, 1rem);
+            font-size: 0.82rem;
+            font-weight: 700;
+            line-height: 1;
+          }
+
+          @media (min-width: 1200px) {
+            .pokemon-info-tabs,
+            .pokemon-info-tabs button {
+              height: 40px;
+              min-height: 40px;
+            }
+
+            .pokemon-info-tabs {
+              flex-basis: 40px;
+            }
+
+            .pokemon-info-tabs button {
+              padding: 0 12px;
+              font-size: 0.85rem;
+            }
           }
 
           .pokemon-info-content {
@@ -1172,10 +1192,18 @@ export default function PokemonInfoModal({
               grid-template-columns: 1fr;
             }
 
-            .pokemon-info-tabs,
+            .pokemon-info-tabs {
+              flex-basis: 48px;
+              height: 48px;
+              min-height: 48px;
+            }
+
             .pokemon-info-tabs button {
-              height: 50px;
-              min-height: 50px;
+              height: 48px;
+              min-height: 48px;
+              padding: 0 7px;
+              font-size: 0.78rem;
+              font-weight: 800;
             }
 
             .season-reference-buttons {
@@ -1216,9 +1244,25 @@ export default function PokemonInfoModal({
           }
 
           @media (max-width: 640px) {
+            .pokemon-info-tabs {
+              flex-basis: 54px;
+              height: 54px;
+              min-height: 54px;
+            }
+
             .pokemon-info-tabs button {
-              font-size: 0.68rem;
-              padding: 0 4px;
+              height: 54px;
+              min-height: 54px;
+              padding: 0 3px;
+              font-size: clamp(0.62rem, 2.35vw, 0.82rem);
+              font-weight: 800;
+              letter-spacing: -0.02em;
+              white-space: normal;
+              line-height: 1.05;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              text-align: center;
             }
 
             .evolution-tree-reference {
@@ -1301,6 +1345,67 @@ export default function PokemonInfoModal({
           .pokemon-tab-section > .pokemon-info-card:last-child {
             margin-bottom: 0;
           }
+
+          /* FINAL TAB OVERRIDES */
+          .pokemon-info-tabs {
+            overflow: hidden !important;
+          }
+
+          @media (min-width: 1200px) {
+            .pokemon-info-tabs {
+              flex: 0 0 40px !important;
+              height: 40px !important;
+              min-height: 40px !important;
+            }
+
+            .pokemon-info-tabs button {
+              height: 40px !important;
+              min-height: 40px !important;
+              font-size: 0.85rem !important;
+              padding: 0 12px !important;
+              white-space: nowrap !important;
+            }
+          }
+
+          @media (min-width: 641px) and (max-width: 1199px) {
+            .pokemon-info-tabs {
+              flex: 0 0 46px !important;
+              height: 46px !important;
+              min-height: 46px !important;
+            }
+
+            .pokemon-info-tabs button {
+              height: 46px !important;
+              min-height: 46px !important;
+              font-size: 0.78rem !important;
+              padding: 0 7px !important;
+              white-space: nowrap !important;
+            }
+          }
+
+          @media (max-width: 640px) {
+            .pokemon-info-tabs {
+              flex: 0 0 54px !important;
+              height: 54px !important;
+              min-height: 54px !important;
+            }
+
+            .pokemon-info-tabs button {
+              height: 54px !important;
+              min-height: 54px !important;
+              padding: 0 3px !important;
+              font-size: clamp(0.62rem, 2.35vw, 0.82rem) !important;
+              font-weight: 800 !important;
+              letter-spacing: -0.02em !important;
+              white-space: normal !important;
+              line-height: 1.05 !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: center !important;
+              text-align: center !important;
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
