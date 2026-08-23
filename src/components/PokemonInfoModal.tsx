@@ -1683,6 +1683,96 @@ export default function PokemonInfoModal({
             }
           }
 
+
+          /* Wild Locations: fixed page layout with an internal vertical table scroll */
+          .wild-locations-reference-card {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+          }
+
+          .wild-reference-table-wrap {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            height: min(46vh, 430px);
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            border: 1px solid rgba(50, 103, 150, 0.4);
+            border-radius: 12px;
+            scrollbar-gutter: stable;
+          }
+
+          .wild-reference-table {
+            width: 100%;
+            min-width: 0 !important;
+            max-width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 0;
+          }
+
+          .wild-reference-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: rgba(19, 49, 80, 0.98);
+            box-shadow: 0 1px 0 rgba(70, 125, 175, 0.45);
+          }
+
+          .wild-reference-table th,
+          .wild-reference-table td {
+            min-width: 0;
+            box-sizing: border-box;
+            white-space: normal !important;
+            overflow-wrap: anywhere;
+            word-break: normal;
+          }
+
+          .wild-reference-table th:nth-child(1),
+          .wild-reference-table td:nth-child(1) { width: 12%; }
+
+          .wild-reference-table th:nth-child(2),
+          .wild-reference-table td:nth-child(2) { width: 24%; }
+
+          .wild-reference-table th:nth-child(3),
+          .wild-reference-table td:nth-child(3) { width: 14%; }
+
+          .wild-reference-table th:nth-child(4),
+          .wild-reference-table td:nth-child(4) { width: 10%; }
+
+          .wild-reference-table th:nth-child(5),
+          .wild-reference-table td:nth-child(5),
+          .wild-reference-table th:nth-child(6),
+          .wild-reference-table td:nth-child(6),
+          .wild-reference-table th:nth-child(7),
+          .wild-reference-table td:nth-child(7) { width: 10%; }
+
+          .wild-reference-table th:nth-child(8),
+          .wild-reference-table td:nth-child(8) { width: 10%; }
+
+          .wild-reference-legend {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: visible !important;
+            white-space: normal;
+          }
+
+          @media (max-width: 900px) {
+            .wild-reference-table-wrap {
+              height: min(50vh, 390px);
+            }
+
+            .wild-reference-table th,
+            .wild-reference-table td {
+              padding: 8px 4px;
+              font-size: clamp(0.64rem, 1.35vw, 0.9rem);
+            }
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
