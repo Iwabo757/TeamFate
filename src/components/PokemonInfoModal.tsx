@@ -395,60 +395,124 @@ export default function PokemonInfoModal({
     );
   }
 
-  function renderEvolution(
-    node: EvolutionNode,
-    depth = 0
-  ): React.ReactNode {
-    const name = getEvolutionName(
-      node.species.url
-    );
+  function getEvolutionStages(root: EvolutionNode) {
+    const stages: EvolutionNode[][] = [];
 
-    const evolutionDetails =
-      node.evolution_details?.[0];
+    function walk(node: EvolutionNode, depth: number) {
+      if (!stages[depth]) {
+        stages[depth] = [];
+      }
+
+      stages[depth].push(node);
+
+      node.evolves_to.forEach((child) =>
+        walk(child, depth + 1)
+      );
+    }
+
+    walk(root, 0);
+    return stages;
+  }
+
+  function getEvolutionMethod(node: EvolutionNode) {
+    const details = node.evolution_details?.[0];
+
+    if (!details) {
+      return null;
+    }
+
+    if (details.min_level) {
+      return `Level ${details.min_level}`;
+    }
+
+    if (details.item) {
+      return formatName(details.item.name);
+    }
+
+    if (details.trigger) {
+      return formatName(details.trigger.name);
+    }
+
+    return "Special";
+  }
+
+  function renderEvolutionTree(root: EvolutionNode) {
+    const stages = getEvolutionStages(root);
 
     return (
-      <div
-        key={`${name}-${depth}`}
-        className="evolution-node"
-      >
-        <div className="evolution-card">
-          <img
-            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${name}.png`}
-            alt={name}
-          />
-
-          <strong>
-            {formatName(name)}
-          </strong>
-
-          {evolutionDetails && (
-            <span>
-              {evolutionDetails.min_level
-                ? `Level ${evolutionDetails.min_level}`
-                : evolutionDetails.item
-                ? formatName(
-                    evolutionDetails.item.name
-                  )
-                : evolutionDetails.trigger
-                ? formatName(
-                    evolutionDetails.trigger.name
-                  )
-                : "Special"}
-            </span>
-          )}
-        </div>
-
-        {node.evolves_to.length > 0 && (
-          <div className="evolution-children">
-            {node.evolves_to.map(
-              (child) =>
-                renderEvolution(
-                  child,
-                  depth + 1
-                )
+      <div className="evolution-tree evolution-tree-horizontal">
+        {stages.map((stage, stageIndex) => (
+          <div
+            key={`stage-${stageIndex}`}
+            className="evolution-stage"
+          >
+            {stageIndex > 0 && (
+              <div
+                className="evolution-arrow"
+                aria-hidden="true"
+              >
+                →
+              </div>
             )}
+
+            <div className="evolution-stage-list">
+              {stage.map((node) => {
+                const name = getEvolutionName(
+                  node.species.url
+                );
+
+                const pokemonId =
+                  getEvolutionName(node.species.url);
+
+                const staticSprite =
+                  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`;
+
+                const animatedSprite =
+                  `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
+                    name
+                  )}.gif`;
+
+                const evolutionMethod =
+                  getEvolutionMethod(node);
+
+                return (
+                  <div
+                    key={`${stageIndex}-${name}`}
+                    className="evolution-card"
+                  >
+                    <img
+                      src={staticSprite}
+                      alt={`Shiny ${formatName(name)}`}
+                      className="evolution-sprite"
+                      onMouseEnter={(event) => {
+                        event.currentTarget.src =
+                          animatedSprite;
+                      }}
+                      onMouseLeave={(event) => {
+                        event.currentTarget.src =
+                          staticSprite;
+                      }}
+                      onError={(event) => {
+                        event.currentTarget.src =
+                          staticSprite;
+                      }}
+                    />
+
+                    <strong>
+                      {formatName(name)}
+                    </strong>
+
+                    {evolutionMethod && (
+                      <span>
+                        {evolutionMethod}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
+        ))}
       </div>
     );
   }
@@ -464,6 +528,151 @@ export default function PokemonInfoModal({
           e.stopPropagation()
         }
       >
+        <style>{`
+          .pokemon-info-modal {
+            width: min(1120px, 94vw);
+            max-height: 94vh;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .pokemon-info-tabs {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+          }
+
+          .pokemon-info-content {
+            flex: 1;
+            min-height: 0;
+          }
+
+          .pokemon-summary {
+            display: grid;
+            grid-template-columns: minmax(210px, 0.75fr) minmax(0, 2.25fr);
+            gap: 18px;
+            align-items: stretch;
+            min-height: 0;
+          }
+
+          .pokemon-summary-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-width: 0;
+          }
+
+          .pokemon-large-sprite {
+            width: min(220px, 18vw);
+            height: min(220px, 18vw);
+            max-width: 220px;
+            max-height: 220px;
+            object-fit: contain;
+          }
+
+          .pokemon-summary-right {
+            display: grid;
+            grid-template-columns: 1.1fr 1.15fr 1fr;
+            gap: 12px;
+            align-items: stretch;
+          }
+
+          .pokemon-summary-right .pokemon-info-card {
+            margin: 0;
+            padding: 14px;
+          }
+
+          .pokemon-summary-right .pokemon-info-card h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+          }
+
+          .pokemon-summary-right .pokemon-info-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+          }
+
+          .pokemon-summary-right .ability-list {
+            gap: 6px;
+          }
+
+          .evolution-tree-horizontal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            overflow-x: auto;
+            padding: 12px 4px;
+          }
+
+          .evolution-stage {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 0 0 auto;
+          }
+
+          .evolution-arrow {
+            font-size: 2rem;
+            line-height: 1;
+            font-weight: 800;
+            opacity: 0.8;
+          }
+
+          .evolution-stage-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .evolution-card {
+            min-width: 130px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+          }
+
+          .evolution-sprite {
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+          }
+
+          .evolution-sprite:hover {
+            transform: scale(1.08);
+          }
+
+          @media (max-width: 900px) {
+            .pokemon-info-modal {
+              width: min(96vw, 720px);
+              max-height: 96vh;
+            }
+
+            .pokemon-summary {
+              grid-template-columns: 1fr;
+            }
+
+            .pokemon-large-sprite {
+              width: 180px;
+              height: 180px;
+            }
+
+            .pokemon-summary-right {
+              grid-template-columns: 1fr;
+            }
+
+            .evolution-tree-horizontal {
+              justify-content: flex-start;
+            }
+          }
+        `}</style>
         <button
           className="pokemon-info-close"
           onClick={onClose}
@@ -885,11 +1094,9 @@ export default function PokemonInfoModal({
                       </h3>
 
                       {evolution ? (
-                        <div className="evolution-tree">
-                          {renderEvolution(
-                            evolution.chain
-                          )}
-                        </div>
+                        renderEvolutionTree(
+                          evolution.chain
+                        )
                       ) : (
                         <p>
                           No evolution data
