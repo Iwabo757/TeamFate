@@ -694,28 +694,77 @@ export default function PokemonInfoModal({
         }
       >
         <style>{`
+          .pokemon-info-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: grid;
+            place-items: center;
+            padding: 18px;
+            background: rgba(1, 8, 18, 0.72);
+            backdrop-filter: blur(8px);
+          }
+
           .pokemon-info-modal {
             width: min(1120px, 94vw);
+            height: min(900px, 94vh);
             max-height: 94vh;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+          }
+
+          .pokemon-info-header {
+            flex: 0 0 auto;
+            padding-top: 8px !important;
+            padding-bottom: 6px !important;
+          }
+
+          .pokemon-info-header h2 {
+            margin: 0 !important;
+            line-height: 1 !important;
+          }
+
+          .pokemon-info-number {
+            margin-top: 3px !important;
+            line-height: 1 !important;
           }
 
           .pokemon-info-tabs {
+            flex: 0 0 58px;
+            height: 58px;
+            min-height: 58px;
+            display: flex;
             flex-wrap: nowrap;
-            overflow-x: auto;
+            overflow: hidden;
+          }
+
+          .pokemon-info-tabs button {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 58px;
+            min-height: 58px;
+            padding: 0 8px;
+            white-space: nowrap;
+            font-size: clamp(0.78rem, 1.1vw, 1rem);
           }
 
           .pokemon-info-content {
-            flex: 1;
+            flex: 1 1 auto;
             min-height: 0;
+            overflow: hidden;
+          }
+
+          .pokemon-tab-section {
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
           }
 
           .pokemon-summary {
             display: grid;
             grid-template-columns: minmax(210px, 0.75fr) minmax(0, 2.25fr);
             gap: 18px;
-            align-items: stretch;
             min-height: 0;
           }
 
@@ -730,8 +779,6 @@ export default function PokemonInfoModal({
           .pokemon-large-sprite {
             width: min(220px, 18vw);
             height: min(220px, 18vw);
-            max-width: 220px;
-            max-height: 220px;
             object-fit: contain;
           }
 
@@ -739,17 +786,11 @@ export default function PokemonInfoModal({
             display: grid;
             grid-template-columns: 1.1fr 1.15fr 1fr;
             gap: 12px;
-            align-items: stretch;
           }
 
           .pokemon-summary-right .pokemon-info-card {
             margin: 0;
             padding: 14px;
-          }
-
-          .pokemon-summary-right .pokemon-info-card h3 {
-            margin-top: 0;
-            margin-bottom: 8px;
           }
 
           .pokemon-summary-right .pokemon-info-grid {
@@ -761,62 +802,352 @@ export default function PokemonInfoModal({
             gap: 6px;
           }
 
-          .evolution-tree-horizontal {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 14px;
-            width: 100%;
-            overflow-x: auto;
-            padding: 12px 4px;
-          }
-
-          .evolution-stage {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex: 0 0 auto;
-          }
-
-          .evolution-arrow {
-            font-size: 2rem;
-            line-height: 1;
-            font-weight: 800;
-            opacity: 0.8;
-          }
-
-          .evolution-stage-list {
+          .move-level-list {
             display: flex;
             flex-direction: column;
+            gap: 6px;
+            width: 100%;
+          }
+
+          .move-level-list .move-card {
+            width: 100%;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 10px;
           }
 
-          .evolution-card {
-            min-width: 130px;
-            padding: 10px;
+          .move-name {
+            min-width: 0;
+          }
+
+          .move-level {
+            flex: 0 0 auto;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+
+          /* Evolution Tree */
+          .evolution-tree-reference {
+            display: flex;
+            align-items: center;
+            justify-content: stretch;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            gap: clamp(8px, 1.5vw, 24px);
+            padding: 10px 18px 20px;
+            overflow: hidden;
+          }
+
+          .evolution-stage-reference {
+            display: contents;
+          }
+
+          .evolution-stage-list-reference {
+            display: flex;
+            flex: 1 1 0;
+            min-width: 0;
+            gap: 12px;
+          }
+
+          .evolution-card-reference {
+            appearance: none;
+            width: 100%;
+            min-width: 0;
+            min-height: clamp(170px, 18vw, 210px);
+            box-sizing: border-box;
+            padding: clamp(12px, 1.4vw, 22px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 7px;
+            border: 1px solid rgba(54, 132, 202, 0.32);
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(12, 31, 55, 0.98), rgba(8, 23, 42, 0.98));
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
           }
 
-          .evolution-sprite {
-            width: 96px;
-            height: 96px;
+          .evolution-card-reference:hover,
+          .evolution-card-reference:focus-visible {
+            transform: translateY(-3px);
+            border-color: #1487ff;
+            outline: none;
+          }
+
+          .evolution-sprite-reference {
+            width: clamp(70px, 8vw, 105px);
+            height: clamp(70px, 8vw, 105px);
             object-fit: contain;
             image-rendering: pixelated;
-            cursor: pointer;
-            transition: transform 0.15s ease;
           }
 
-          .evolution-sprite:hover {
-            transform: scale(1.08);
+          .evolution-card-reference strong {
+            font-size: clamp(1rem, 1.7vw, 1.45rem);
+            line-height: 1.1;
+          }
+
+          .evolution-dex-number {
+            color: #b9c5d6;
+            font-size: clamp(0.8rem, 1.2vw, 1rem);
+            font-weight: 700;
+          }
+
+          .evolution-connectors-reference {
+            display: flex;
+            flex: 0 1 clamp(110px, 14vw, 210px);
+            min-width: 0;
+            max-width: clamp(110px, 14vw, 210px);
+            align-items: center;
+            justify-content: center;
+          }
+
+          .evolution-connector-reference {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(6px, 0.8vw, 14px);
+            min-width: 0;
+            width: 100%;
+          }
+
+          .evolution-arrow-reference {
+            flex: 0 0 auto;
+            color: #d9e2ee;
+            font-size: clamp(2rem, 3vw, 3rem);
+            line-height: 1;
+            white-space: nowrap;
+          }
+
+          .evolution-requirement-reference {
+            min-width: 0;
+            color: #d8e1ec;
+            font-size: clamp(0.78rem, 1.25vw, 1.08rem);
+            font-weight: 800;
+            white-space: nowrap;
+          }
+
+          /* Wild Locations */
+          .wild-locations-reference-card {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            max-width: 100%;
+            min-width: 0;
+            padding: 18px 22px 12px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+          }
+
+          .wild-locations-reference-card > h3,
+          .season-reference-label,
+          .season-reference-buttons,
+          .wild-reference-legend,
+          .no-season-locations {
+            flex: 0 0 auto;
+          }
+
+          .season-reference-label {
+            margin: 4px 0 8px;
+            color: #aebbcf;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+          }
+
+          .season-reference-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+          }
+
+          .season-reference-button {
+            min-width: 0;
+            min-height: 42px;
+            padding: 6px 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            border: 1px solid rgba(142, 169, 199, 0.3);
+            border-radius: 10px;
+            background: rgba(7, 24, 44, 0.85);
+            color: #d7e1ef;
+            font: inherit;
+            font-size: clamp(0.76rem, 1vw, 0.94rem);
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            cursor: pointer;
+          }
+
+          .season-reference-icon {
+            font-size: 1.12rem;
+            line-height: 1;
+          }
+
+          .season-reference-button.spring { border-color: #d968aa; color: #f4a0d1; }
+          .season-reference-button.summer { border-color: #ffae00; color: #ffd23f; }
+          .season-reference-button.autumn { border-color: #ff8500; color: #ffad4f; }
+          .season-reference-button.winter { border-color: #2cc8e8; color: #79ddf5; }
+
+          .season-reference-button.active.spring { background: rgba(146, 42, 101, 0.22); box-shadow: 0 0 0 1px rgba(217, 104, 170, 0.28); }
+          .season-reference-button.active.summer { background: rgba(117, 77, 0, 0.38); box-shadow: 0 0 14px rgba(255, 174, 0, 0.35); }
+          .season-reference-button.active.autumn { background: rgba(121, 59, 0, 0.24); box-shadow: 0 0 0 1px rgba(255, 133, 0, 0.28); }
+          .season-reference-button.active.winter { background: rgba(0, 104, 135, 0.22); box-shadow: 0 0 0 1px rgba(44, 200, 232, 0.3); }
+
+          /* Only this table box scrolls vertically. */
+          .wild-reference-table-wrap {
+            flex: 1 1 auto;
+            width: 100%;
+            min-width: 0;
+            min-height: 0;
+            max-width: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            border: 1px solid rgba(50, 103, 150, 0.4);
+            border-radius: 12px;
+          }
+
+          .wild-reference-table {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            background: rgba(5, 18, 34, 0.42);
+          }
+
+          .wild-reference-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: rgba(19, 49, 80, 0.98);
+            box-shadow: 0 1px 0 rgba(70, 125, 175, 0.45);
+          }
+
+          .wild-reference-table th,
+          .wild-reference-table td {
+            min-width: 0;
+            box-sizing: border-box;
+            padding: clamp(7px, 0.8vw, 12px) clamp(4px, 0.8vw, 12px);
+            color: #d6dce6;
+            text-align: center;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            border-top: 1px solid rgba(55, 91, 125, 0.38);
+          }
+
+          .wild-reference-table th {
+            color: #aebed4;
+            font-size: clamp(0.68rem, 1vw, 0.84rem);
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+          }
+
+          .wild-reference-table th:nth-child(1),
+          .wild-reference-table td:nth-child(1) { width: 12%; }
+          .wild-reference-table th:nth-child(2),
+          .wild-reference-table td:nth-child(2) { width: 24%; }
+          .wild-reference-table th:nth-child(3),
+          .wild-reference-table td:nth-child(3) { width: 14%; }
+          .wild-reference-table th:nth-child(4),
+          .wild-reference-table td:nth-child(4) { width: 10%; }
+          .wild-reference-table th:nth-child(5),
+          .wild-reference-table td:nth-child(5),
+          .wild-reference-table th:nth-child(6),
+          .wild-reference-table td:nth-child(6),
+          .wild-reference-table th:nth-child(7),
+          .wild-reference-table td:nth-child(7) { width: 10%; }
+          .wild-reference-table th:nth-child(8),
+          .wild-reference-table td:nth-child(8) { width: 10%; }
+
+          .wild-region-cell,
+          .wild-location-cell {
+            text-align: left !important;
+          }
+
+          .wild-region-cell {
+            font-size: clamp(0.78rem, 1.2vw, 1.02rem);
+          }
+
+          .region-ball {
+            display: inline-block;
+            margin-right: 6px;
+            color: #f0f3f7;
+            font-size: 1.1rem;
+          }
+
+          .wild-location-cell {
+            font-weight: 900;
+          }
+
+          .wild-method {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 0;
+          }
+
+          .wild-method > span {
+            color: #5fd13f;
+            font-size: 1.1rem;
+          }
+
+          .rarity.very-common { color: #ff9d3f; font-weight: 800; }
+          .rarity.common { color: #e9d54b; font-weight: 800; }
+          .rarity.uncommon { color: #61b7ef; font-weight: 800; }
+          .rarity.rare { color: #df8ed2; font-weight: 800; }
+          .rarity.special { color: #df9ce3; font-weight: 800; }
+          .rarity.default { color: #aeb7c3; }
+
+          .horde-value { color: #ef90ad; font-weight: 900; }
+          .horde-3x { color: #ef90ad; }
+          .horde-5x { color: #ff6f91; }
+
+          .wild-reference-legend {
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px 16px;
+            margin-top: 10px;
+            padding: 8px 12px;
+            border: 1px solid rgba(50, 103, 150, 0.4);
+            border-radius: 12px;
+            color: #aeb7c3;
+            font-size: clamp(0.68rem, 1vw, 0.88rem);
+            overflow: hidden;
+          }
+
+          .wild-reference-legend i {
+            width: 1px;
+            height: 14px;
+            background: rgba(126, 156, 190, 0.5);
+            flex: 0 0 auto;
           }
 
           @media (max-width: 900px) {
             .pokemon-info-modal {
               width: min(96vw, 720px);
+              height: 96vh;
               max-height: 96vh;
             }
 
@@ -833,675 +1164,17 @@ export default function PokemonInfoModal({
               grid-template-columns: 1fr;
             }
 
-            .move-card {
-             display: flex;
-             align-items: center;
-             justify-content: space-between;
-             gap: 10px;
-           }
-
-           .move-name {
-             min-width: 0;
-           }
-
-           .move-level {
-             flex: 0 0 auto;
-             font-weight: 700;
-             white-space: nowrap;
-             opacity: 0.9;
-           }
-
-           .evolution-card {
-            appearance: none;
-            width: 260px;
-            min-height: 220px;
-            border: 0;
-            cursor: pointer;
-            color: inherit;
-            font: inherit;
-            text-align: center;
-          }
-
-          .evolution-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px
-              rgba(0, 0, 0, 0.28);
-          }
-
-          .evolution-connectors {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 18px;
-            min-width: max-content;
-          }
-
-          .evolution-connector {
-            display: inline-flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            white-space: nowrap;
-          }
-
-          .evolution-arrow {
-            flex: 0 0 auto;
-          }
-
-          .season-filter-panel {
-            margin-bottom: 20px;
-            padding: 14px 16px;
-            border: 1px solid
-              rgba(120, 175, 235, 0.3);
-            border-radius: 12px;
-            background:
-              linear-gradient(
-                135deg,
-                rgba(65, 115, 180, 0.16),
-                rgba(255, 255, 255, 0.035)
-              );
-          }
-
-          .season-filter-heading {
-            display: flex;
-            align-items: baseline;
-            gap: 10px;
-            margin-bottom: 12px;
-          }
-
-          .season-filter-label {
-            font-size: 0.9rem;
-            font-weight: 700;
-            opacity: 0.75;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-          }
-
-          .season-filter-current {
-            color: #8fc7ff;
-            font-size: 1.15rem;
-          }
-
-          .season-filter-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-          }
-
-          .season-filter-button {
-            min-width: 110px;
-            padding: 11px 16px;
-            border: 1px solid
-              rgba(150, 190, 220, 0.24);
-            border-radius: 9px;
-            background:
-              rgba(255, 255, 255, 0.045);
-            color: inherit;
-            font: inherit;
-            font-weight: 700;
-            cursor: pointer;
-            transition:
-              transform 0.15s ease,
-              border-color 0.15s ease,
-              background 0.15s ease,
-              box-shadow 0.15s ease;
-          }
-
-          .season-filter-button:hover {
-            transform: translateY(-1px);
-            border-color:
-              rgba(125, 195, 255, 0.7);
-          }
-
-          .season-filter-button.active {
-            border-color: #7bc4ff;
-            background:
-              linear-gradient(
-                180deg,
-                rgba(82, 153, 226, 0.75),
-                rgba(43, 96, 164, 0.82)
-              );
-            color: #fff;
-            box-shadow:
-              0 0 0 2px
-                rgba(123, 196, 255, 0.22),
-              0 8px 22px
-                rgba(37, 103, 180, 0.35);
-            transform: translateY(-1px);
-          }
-
-          .wild-locations-card {
-            width: 100%;
-            max-width: none;
-          }
-
-          .wild-location-table-wrap {
-            width: 100%;
-            overflow-x: auto;
-          }
-
-          .wild-location-table {
-            width: 100%;
-            min-width: 900px;
-            border-collapse: separate;
-            border-spacing: 5px;
-          }
-
-          .wild-location-table th,
-          .wild-location-table td {
-            min-height: 46px;
-            padding: 10px;
-            text-align: center;
-            vertical-align: middle;
-            border: 1px solid
-              rgba(150, 190, 220, 0.22);
-            border-radius: 4px;
-            background:
-              rgba(255, 255, 255, 0.035);
-          }
-
-          .wild-location-table th {
-            font-weight: 700;
-            background:
-              rgba(110, 150, 180, 0.2);
-          }
-
-          .wild-location-table td:nth-child(2) {
-            text-align: left;
-          }
-
-          .move-level-list {
-             display: flex;
-             flex-direction: column;
-             gap: 6px;
-             width: 100%;
-           }
-
-           .move-level-list .move-card {
-             width: 100%;
-             min-height: 42px;
-           }
-
-           .evolution-tree-horizontal {
-              justify-content: flex-start;
-            }
-          }
-
-          /* Reference layout: Evolution Tree */
-          .evolution-tree-reference {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 28px;
-            width: 100%;
-            min-height: 300px;
-            padding: 10px 18px 20px;
-            overflow-x: auto;
-          }
-
-          .evolution-stage-reference {
-            display: flex;
-            align-items: center;
-            gap: 28px;
-            flex: 0 0 auto;
-          }
-
-          .evolution-stage-list-reference {
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-          }
-
-          .evolution-card-reference {
-            appearance: none;
-            width: 230px;
-            min-height: 210px;
-            padding: 22px 20px 16px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            border: 1px solid rgba(54, 132, 202, 0.32);
-            border-radius: 16px;
-            background: linear-gradient(
-              145deg,
-              rgba(12, 31, 55, 0.98),
-              rgba(8, 23, 42, 0.98)
-            );
-            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
-            color: inherit;
-            font: inherit;
-            cursor: pointer;
-            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
-          }
-
-          .evolution-card-reference:hover,
-          .evolution-card-reference:focus-visible {
-            transform: translateY(-3px);
-            border-color: #1487ff;
-            box-shadow: 0 0 0 2px rgba(25, 137, 255, 0.22), 0 12px 30px rgba(0, 0, 0, 0.32);
-            outline: none;
-          }
-
-          .evolution-sprite-reference {
-            width: 105px;
-            height: 105px;
-            object-fit: contain;
-            image-rendering: pixelated;
-          }
-
-          .evolution-card-reference strong {
-            font-size: 1.45rem;
-            line-height: 1.1;
-          }
-
-          .evolution-dex-number {
-            color: #b9c5d6;
-            font-size: 1rem;
-            font-weight: 700;
-          }
-
-          .evolution-connectors-reference {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 210px;
-          }
-
-          .evolution-connector-reference {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            width: 100%;
-          }
-
-          .evolution-arrow-reference {
-            width: 100%;
-            color: #d9e2ee;
-            font-size: 3rem;
-            line-height: 1;
-            text-align: center;
-          }
-
-          .evolution-requirement-reference {
-            color: #d8e1ec;
-            font-size: 1.08rem;
-            font-weight: 800;
-            white-space: nowrap;
-          }
-
-          .evolution-requirement-reference::first-letter {
-            color: #25a7ff;
-          }
-
-          /* Reference layout: Wild Locations */
-          .wild-locations-reference-card {
-            width: 100%;
-            max-width: none;
-            padding: 28px 30px 14px;
-          }
-
-          .season-reference-label {
-            margin: 4px 0 10px;
-            color: #aebbcf;
-            font-size: 0.82rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-          }
-
-          .season-reference-buttons {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(150px, 1fr));
-            gap: 28px;
-            margin-bottom: 16px;
-          }
-
-          .season-reference-button {
-            min-height: 54px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            border: 1px solid rgba(142, 169, 199, 0.3);
-            border-radius: 14px;
-            background: rgba(7, 24, 44, 0.85);
-            color: #d7e1ef;
-            font: inherit;
-            font-size: 1rem;
-            font-weight: 900;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-          }
-
-          .season-reference-button:hover {
-            transform: translateY(-2px);
-          }
-
-          .season-reference-icon {
-            font-size: 1.55rem;
-            line-height: 1;
-          }
-
-          .season-reference-button.spring { border-color: #d968aa; color: #f4a0d1; }
-          .season-reference-button.summer { border-color: #ffae00; color: #ffd23f; }
-          .season-reference-button.autumn { border-color: #ff8500; color: #ffad4f; }
-          .season-reference-button.winter { border-color: #2cc8e8; color: #79ddf5; }
-
-          .season-reference-button.active.spring {
-            background: rgba(146, 42, 101, 0.22);
-            box-shadow: 0 0 0 1px rgba(217, 104, 170, 0.28);
-          }
-          .season-reference-button.active.summer {
-            background: linear-gradient(180deg, rgba(117, 77, 0, 0.52), rgba(58, 38, 0, 0.42));
-            box-shadow: 0 0 14px rgba(255, 174, 0, 0.45), inset 0 0 0 1px rgba(255, 214, 69, 0.42);
-          }
-          .season-reference-button.active.autumn {
-            background: rgba(121, 59, 0, 0.24);
-            box-shadow: 0 0 0 1px rgba(255, 133, 0, 0.28);
-          }
-          .season-reference-button.active.winter {
-            background: rgba(0, 104, 135, 0.22);
-            box-shadow: 0 0 0 1px rgba(44, 200, 232, 0.3);
-          }
-
-          .wild-reference-table-wrap {
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid rgba(50, 103, 150, 0.4);
-            border-radius: 12px;
-          }
-
-          .wild-reference-table {
-            width: 100%;
-            min-width: 900px;
-            border-collapse: collapse;
-            background: rgba(5, 18, 34, 0.42);
-          }
-
-          .wild-reference-table th {
-            padding: 12px 14px;
-            background: rgba(19, 49, 80, 0.72);
-            color: #aebed4;
-            font-size: 0.84rem;
-            font-weight: 900;
-            letter-spacing: 0.06em;
-            text-align: center;
-            text-transform: uppercase;
-          }
-
-          .wild-reference-table td {
-            padding: 10px 14px;
-            border-top: 1px solid rgba(55, 91, 125, 0.38);
-            color: #d6dce6;
-            text-align: center;
-            white-space: nowrap;
-          }
-
-          .wild-region-cell,
-          .wild-location-cell,
-          .wild-method {
-            text-align: left !important;
-          }
-
-          .wild-region-cell {
-            display: table-cell;
-            font-size: 1.02rem;
-          }
-
-          .region-ball {
-            display: inline-block;
-            margin-right: 9px;
-            color: #f0f3f7;
-            font-size: 1.25rem;
-            vertical-align: -1px;
-          }
-
-          .wild-location-cell {
-            font-weight: 900;
-          }
-
-          .wild-method {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-          }
-
-          .wild-method > span {
-            color: #5fd13f;
-            font-size: 1.2rem;
-          }
-
-          .rarity.very-common { color: #ff9d3f; font-weight: 800; }
-          .rarity.common { color: #e9d54b; font-weight: 800; }
-          .rarity.uncommon { color: #61b7ef; font-weight: 800; }
-          .rarity.rare { color: #df8ed2; font-weight: 800; }
-          .rarity.special { color: #df9ce3; font-weight: 800; }
-          .rarity.default { color: #aeb7c3; }
-
-          .horde-value {
-            color: #ef90ad;
-            font-weight: 900;
-          }
-
-          .wild-reference-legend {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-            margin-top: 10px;
-            padding: 12px 16px;
-            border: 1px solid rgba(50, 103, 150, 0.4);
-            border-radius: 12px;
-            color: #aeb7c3;
-            font-size: 0.88rem;
-            white-space: nowrap;
-            overflow-x: auto;
-          }
-
-          .wild-reference-legend i {
-            width: 1px;
-            height: 16px;
-            background: rgba(126, 156, 190, 0.5);
-            flex: 0 0 auto;
-          }
-
-          @media (max-width: 900px) {
-            .evolution-tree-reference {
-              justify-content: flex-start;
-              gap: 18px;
-              padding-left: 6px;
-            }
-
-            .evolution-stage-reference {
-              gap: 18px;
-            }
-
-            .evolution-card-reference {
-              width: 185px;
-              min-height: 185px;
-            }
-
-            .evolution-connectors-reference {
-              flex-basis: 150px;
+            .pokemon-info-tabs,
+            .pokemon-info-tabs button {
+              height: 50px;
+              min-height: 50px;
             }
 
             .season-reference-buttons {
-              grid-template-columns: repeat(2, minmax(120px, 1fr));
-              gap: 12px;
-            }
-          }
-
-          /* Evolution Tree: always fit the available width without horizontal scrolling */
-          .evolution-tree-reference {
-            width: 100%;
-            min-width: 0;
-            min-height: 0;
-            padding: 10px 12px 20px;
-            gap: clamp(10px, 2vw, 28px);
-            overflow: hidden;
-          }
-
-          .evolution-stage-reference {
-            min-width: 0;
-            flex: 1 1 0;
-            gap: clamp(10px, 2vw, 28px);
-          }
-
-          .evolution-stage-list-reference {
-            min-width: 0;
-            flex: 1 1 auto;
-          }
-
-          .evolution-card-reference {
-            width: clamp(145px, 18vw, 230px);
-            min-width: 0;
-            min-height: clamp(155px, 16vw, 210px);
-            padding: clamp(12px, 1.5vw, 22px)
-              clamp(10px, 1.3vw, 20px)
-              clamp(10px, 1vw, 16px);
-          }
-
-          .evolution-sprite-reference {
-            width: clamp(70px, 8vw, 105px);
-            height: clamp(70px, 8vw, 105px);
-          }
-
-          .evolution-card-reference strong {
-            font-size: clamp(1rem, 1.7vw, 1.45rem);
-          }
-
-          .evolution-dex-number {
-            font-size: clamp(0.8rem, 1.2vw, 1rem);
-          }
-
-          .evolution-connectors-reference {
-            flex: 1 1 0;
-            min-width: clamp(85px, 12vw, 210px);
-          }
-
-          .evolution-arrow-reference {
-            font-size: clamp(2rem, 3vw, 3rem);
-          }
-
-          .evolution-requirement-reference {
-            font-size: clamp(0.78rem, 1.35vw, 1.08rem);
-          }
-
-          @media (max-width: 900px) {
-            .evolution-tree-reference {
-              gap: 8px;
-              padding-left: 4px;
-              padding-right: 4px;
-            }
-
-            .evolution-stage-reference {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
               gap: 8px;
             }
 
-            .evolution-card-reference {
-              width: clamp(110px, 22vw, 160px);
-              min-height: 145px;
-            }
-
-            .evolution-connectors-reference {
-              min-width: clamp(65px, 10vw, 100px);
-            }
-          }
-
-          @media (max-width: 640px) {
-            .evolution-tree-reference {
-              flex-direction: column;
-              align-items: stretch;
-            }
-
-            .evolution-stage-reference {
-              width: 100%;
-              justify-content: center;
-            }
-
-            .evolution-connectors-reference {
-              min-width: 72px;
-              flex: 0 1 90px;
-            }
-
-            .evolution-card-reference {
-              width: min(42vw, 145px);
-            }
-          }
-
-
-          /* FINAL EVOLUTION TREE FIT FIX
-             Flatten stage wrappers so cards + connectors share one responsive row.
-             This prevents clipping while keeping the full chain visible. */
-          .evolution-tree-reference {
-            display: flex;
-            align-items: center;
-            justify-content: stretch;
-            width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-            gap: clamp(8px, 1.5vw, 24px);
-            padding: 10px 18px 20px;
-            overflow: visible;
-          }
-
-          .evolution-stage-reference {
-            display: contents;
-          }
-
-          .evolution-stage-list-reference {
-            display: flex;
-            flex: 1 1 0;
-            min-width: 0;
-            max-width: none;
-            gap: 12px;
-          }
-
-          .evolution-card-reference {
-            width: 100%;
-            min-width: 0;
-            max-width: none;
-            min-height: clamp(170px, 18vw, 210px);
-            box-sizing: border-box;
-            padding: clamp(12px, 1.4vw, 22px);
-          }
-
-          .evolution-connectors-reference {
-            display: flex;
-            flex: 0 1 clamp(110px, 14vw, 210px);
-            min-width: 0;
-            max-width: clamp(110px, 14vw, 210px);
-            align-items: center;
-            justify-content: center;
-          }
-
-          .evolution-connector-reference {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: clamp(6px, 0.8vw, 14px);
-            min-width: 0;
-            width: 100%;
-          }
-
-          .evolution-arrow-reference {
-            flex: 0 1 auto;
-            white-space: nowrap;
-          }
-
-          .evolution-requirement-reference {
-            min-width: 0;
-            white-space: nowrap;
-            font-size: clamp(0.82rem, 1.25vw, 1.08rem);
-          }
-
-          @media (max-width: 900px) {
             .evolution-tree-reference {
               gap: 8px;
               padding-left: 8px;
@@ -1526,9 +1199,20 @@ export default function PokemonInfoModal({
             .evolution-card-reference strong {
               font-size: clamp(0.95rem, 1.8vw, 1.2rem);
             }
+
+            .wild-reference-table th,
+            .wild-reference-table td {
+              padding: 8px 4px;
+              font-size: clamp(0.64rem, 1.35vw, 0.9rem);
+            }
           }
 
           @media (max-width: 640px) {
+            .pokemon-info-tabs button {
+              font-size: 0.68rem;
+              padding: 0 4px;
+            }
+
             .evolution-tree-reference {
               flex-wrap: wrap;
               justify-content: center;
@@ -1542,10 +1226,6 @@ export default function PokemonInfoModal({
               gap: 10px;
             }
 
-            .evolution-stage-reference:first-child {
-              display: flex;
-            }
-
             .evolution-stage-list-reference {
               flex: 1 1 0;
             }
@@ -1556,386 +1236,18 @@ export default function PokemonInfoModal({
             }
 
             .evolution-requirement-reference {
-              font-size: 0.78rem;
-            }
-          }
-
-
-          /* Wild Locations: fit the full section without a horizontal scrollbar */
-          .wild-reference-table-wrap {
-            width: 100%;
-            min-width: 0;
-            overflow: visible !important;
-          }
-
-          .wild-reference-table {
-            width: 100%;
-            min-width: 0 !important;
-            max-width: 100%;
-            table-layout: fixed;
-          }
-
-          .wild-reference-table th,
-          .wild-reference-table td {
-            min-width: 0;
-            padding: clamp(7px, 0.8vw, 12px) clamp(5px, 0.9vw, 14px);
-            white-space: normal;
-            overflow-wrap: anywhere;
-          }
-
-          .wild-reference-table th:nth-child(1),
-          .wild-reference-table td:nth-child(1) {
-            width: 12%;
-          }
-
-          .wild-reference-table th:nth-child(2),
-          .wild-reference-table td:nth-child(2) {
-            width: 24%;
-          }
-
-          .wild-reference-table th:nth-child(3),
-          .wild-reference-table td:nth-child(3) {
-            width: 15%;
-          }
-
-          .wild-reference-table th:nth-child(4),
-          .wild-reference-table td:nth-child(4) {
-            width: 11%;
-          }
-
-          .wild-reference-table th:nth-child(5),
-          .wild-reference-table td:nth-child(5),
-          .wild-reference-table th:nth-child(6),
-          .wild-reference-table td:nth-child(6),
-          .wild-reference-table th:nth-child(7),
-          .wild-reference-table td:nth-child(7) {
-            width: 10%;
-          }
-
-          .wild-reference-table th:nth-child(8),
-          .wild-reference-table td:nth-child(8) {
-            width: 8%;
-          }
-
-          .wild-reference-legend {
-            width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-            display: grid;
-            grid-template-columns: repeat(7, max-content);
-            justify-content: center;
-            align-items: center;
-            gap: clamp(8px, 1.2vw, 20px);
-            white-space: nowrap;
-            overflow: visible !important;
-            font-size: clamp(0.68rem, 1.05vw, 0.88rem);
-            padding: clamp(8px, 1vw, 12px);
-          }
-
-          .wild-reference-legend i {
-            display: none;
-          }
-
-          .horde-3x {
-            color: #ef90ad;
-          }
-
-          .horde-5x {
-            color: #ff6f91;
-          }
-
-          @media (max-width: 1050px) {
-            .wild-reference-table th,
-            .wild-reference-table td {
-              font-size: clamp(0.72rem, 1.35vw, 0.95rem);
+              font-size: 0.72rem;
             }
 
-            .wild-method {
-              gap: 4px;
-            }
-
-            .region-ball {
-              margin-right: 4px;
+            .wild-locations-reference-card {
+              padding-left: 10px;
+              padding-right: 10px;
             }
 
             .wild-reference-legend {
-              grid-template-columns: repeat(4, max-content);
+              justify-content: flex-start;
             }
           }
-
-          @media (max-width: 700px) {
-            .wild-reference-legend {
-              grid-template-columns: repeat(2, max-content);
-              justify-content: start;
-              white-space: normal;
-            }
-
-            .wild-reference-table th,
-            .wild-reference-table td {
-              font-size: 0.68rem;
-              padding: 7px 3px;
-            }
-
-            .wild-region-cell,
-            .wild-location-cell,
-            .wild-method {
-              text-align: center !important;
-            }
-          }
-
-
-          /* Wild Locations: fixed page layout with an internal vertical table scroll */
-          .wild-locations-reference-card {
-            width: 100%;
-            max-width: 100%;
-            min-width: 0;
-            box-sizing: border-box;
-          }
-
-          .wild-reference-table-wrap {
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            height: min(46vh, 430px);
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            border: 1px solid rgba(50, 103, 150, 0.4);
-            border-radius: 12px;
-            scrollbar-gutter: stable;
-          }
-
-          .wild-reference-table {
-            width: 100%;
-            min-width: 0 !important;
-            max-width: 100%;
-            table-layout: fixed;
-            border-collapse: separate;
-            border-spacing: 0;
-          }
-
-          .wild-reference-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 5;
-            background: rgba(19, 49, 80, 0.98);
-            box-shadow: 0 1px 0 rgba(70, 125, 175, 0.45);
-          }
-
-          .wild-reference-table th,
-          .wild-reference-table td {
-            min-width: 0;
-            box-sizing: border-box;
-            white-space: normal !important;
-            overflow-wrap: anywhere;
-            word-break: normal;
-          }
-
-          .wild-reference-table th:nth-child(1),
-          .wild-reference-table td:nth-child(1) { width: 12%; }
-
-          .wild-reference-table th:nth-child(2),
-          .wild-reference-table td:nth-child(2) { width: 24%; }
-
-          .wild-reference-table th:nth-child(3),
-          .wild-reference-table td:nth-child(3) { width: 14%; }
-
-          .wild-reference-table th:nth-child(4),
-          .wild-reference-table td:nth-child(4) { width: 10%; }
-
-          .wild-reference-table th:nth-child(5),
-          .wild-reference-table td:nth-child(5),
-          .wild-reference-table th:nth-child(6),
-          .wild-reference-table td:nth-child(6),
-          .wild-reference-table th:nth-child(7),
-          .wild-reference-table td:nth-child(7) { width: 10%; }
-
-          .wild-reference-table th:nth-child(8),
-          .wild-reference-table td:nth-child(8) { width: 10%; }
-
-          .wild-reference-legend {
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            box-sizing: border-box;
-            overflow: visible !important;
-            white-space: normal;
-          }
-
-          @media (max-width: 900px) {
-            .wild-reference-table-wrap {
-              height: min(50vh, 390px);
-            }
-
-            .wild-reference-table th,
-            .wild-reference-table td {
-              padding: 8px 4px;
-              font-size: clamp(0.64rem, 1.35vw, 0.9rem);
-            }
-          }
-
-
-          /* ============================================================
-             COMPACT HEADER + WILD LOCATIONS LAYOUT
-             ============================================================ */
-
-          /* Pull the modal header content slightly upward and keep the
-             Pokédex number directly below the Pokémon name. */
-          .pokemon-modal-header,
-          .pokemon-header-reference,
-          .pokemon-info-header {
-            padding-top: 10px !important;
-            padding-bottom: 8px !important;
-          }
-
-          .pokemon-name-reference,
-          .pokemon-title-reference,
-          .pokemon-modal-header h1,
-          .pokemon-modal-header h2 {
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-            line-height: 1.05 !important;
-          }
-
-          .pokemon-number-reference,
-          .pokemon-dex-number-reference,
-          .pokemon-modal-header .dex-number,
-          .pokemon-modal-header .pokemon-number {
-            display: block;
-            margin-top: 2px !important;
-            margin-bottom: 0 !important;
-            line-height: 1.05 !important;
-          }
-
-          /* Shrink the tab bar so Wild Locations gets more vertical room. */
-          .pokemon-tabs-reference,
-          .pokemon-tabs,
-          .modal-tabs {
-            min-height: 58px !important;
-            height: 58px !important;
-          }
-
-          .pokemon-tab-reference,
-          .pokemon-tabs button,
-          .modal-tabs button {
-            min-height: 58px !important;
-            height: 58px !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
-            font-size: clamp(0.9rem, 1.2vw, 1.1rem) !important;
-          }
-
-          /* The modal/page itself never gets a Wild Locations scrollbar. */
-          .wild-locations-reference-card,
-          .wild-locations-section-reference {
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden !important;
-            box-sizing: border-box;
-          }
-
-          /* Keep the Wild Locations content compact and let the table use
-             the available vertical space. */
-          .wild-locations-reference-card {
-            padding-top: 18px !important;
-            padding-bottom: 12px !important;
-          }
-
-          /* This is the ONLY scrolling element in Wild Locations. */
-          .wild-reference-table-wrap {
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            height: min(48vh, 460px);
-            max-height: 460px;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            overscroll-behavior: contain;
-            scrollbar-gutter: stable;
-            box-sizing: border-box;
-          }
-
-          .wild-reference-table {
-            width: 100%;
-            min-width: 0 !important;
-            max-width: 100%;
-            table-layout: fixed;
-          }
-
-          /* Sticky headers remain visible while ONLY the rows scroll. */
-          .wild-reference-table thead {
-            position: sticky;
-            top: 0;
-            z-index: 20;
-          }
-
-          .wild-reference-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 21;
-          }
-
-          /* Prevent the table from forcing the page wider. */
-          .wild-reference-table th,
-          .wild-reference-table td {
-            min-width: 0 !important;
-            white-space: normal !important;
-            overflow-wrap: anywhere;
-            box-sizing: border-box;
-          }
-
-          /* Keep filters and legend fixed outside the scrolling table. */
-          .wild-reference-season-filter,
-          .wild-reference-legend {
-            flex: 0 0 auto;
-            overflow: hidden !important;
-          }
-
-          @media (max-width: 900px) {
-            .pokemon-tabs-reference,
-            .pokemon-tabs,
-            .modal-tabs,
-            .pokemon-tab-reference,
-            .pokemon-tabs button,
-            .modal-tabs button {
-              min-height: 50px !important;
-              height: 50px !important;
-            }
-
-            .wild-reference-table-wrap {
-              height: min(50vh, 420px);
-            }
-          }
-
-          /* FINAL WILD LOCATIONS LAYOUT - only the table rows scroll */
-          .pokemon-info-content { flex: 1 1 auto; min-height: 0; overflow: hidden !important; }
-          .pokemon-tab-section { height: 100%; min-height: 0; overflow: hidden !important; }
-          .wild-locations-reference-card { height: 100%; min-height: 0; display: flex; flex-direction: column; box-sizing: border-box; overflow: hidden !important; }
-          .wild-locations-reference-card > h3,
-          .season-reference-label,
-          .season-reference-buttons,
-          .wild-reference-legend,
-          .no-season-locations { flex: 0 0 auto; }
-          .wild-reference-table-wrap { flex: 1 1 auto; min-height: 0; height: auto !important; max-height: none !important; width: 100%; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; scrollbar-gutter: stable; }
-          .wild-reference-table { width: 100%; min-width: 0 !important; max-width: 100%; table-layout: fixed; }
-          .wild-reference-table thead th { position: sticky; top: 0; z-index: 10; }
-          .wild-reference-table th,
-          .wild-reference-table td { min-width: 0 !important; white-space: normal !important; overflow-wrap: anywhere; }
-
-          /* Pokédex number directly under the name. */
-          .pokemon-info-header { flex: 0 0 auto; padding-top: 8px !important; padding-bottom: 6px !important; }
-          .pokemon-info-header h2 { margin: 0 !important; line-height: 1 !important; }
-          .pokemon-info-number { margin-top: 3px !important; line-height: 1 !important; }
-
-          /* Shorter tabs leave more vertical room for the table. */
-          .pokemon-info-tabs { flex: 0 0 58px; height: 58px !important; min-height: 58px !important; overflow: hidden !important; }
-          .pokemon-info-tabs button { height: 58px !important; min-height: 58px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
-
-          @media (max-width: 900px) {
-            .pokemon-info-tabs, .pokemon-info-tabs button { height: 50px !important; min-height: 50px !important; }
-            .season-reference-buttons { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-          }
-
         `}</style>
         <button
           className="pokemon-info-close"
