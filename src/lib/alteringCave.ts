@@ -299,6 +299,14 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   const finalEncounters = unique(encounters);
   const finalHordes = unique(hordes);
 
+console.log(
+  "ALTERING CAVE ROWS:",
+  section.map((row, index) => ({
+    index,
+    values: row,
+  })),
+);
+
   console.log(
     "ALTERING CAVE SECTION:",
     section,
