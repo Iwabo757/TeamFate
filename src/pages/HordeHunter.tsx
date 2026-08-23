@@ -7,6 +7,12 @@ type Season =
   | "Autumn"
   | "Winter";
 
+type TimeOfDay =
+  | "All Times"
+  | "Morning"
+  | "Day"
+  | "Night";
+
 type Region =
   | "All Regions"
   | "Kanto"
@@ -82,6 +88,13 @@ const SEASONS: Season[] = [
   "Summer",
   "Autumn",
   "Winter",
+];
+
+const TIMES_OF_DAY: TimeOfDay[] = [
+  "All Times",
+  "Morning",
+  "Day",
+  "Night",
 ];
 
 const REGIONS: Region[] = [
@@ -161,6 +174,12 @@ function getNumericChance(
   return Number.isFinite(number)
     ? number
     : null;
+}
+
+function hasTimeChance(
+  value: string
+): boolean {
+  return getNumericChance(value) !== null;
 }
 
 function getHordeChance(
@@ -282,6 +301,13 @@ export default function HordeHunter() {
     seasonExclusiveOnly,
     setSeasonExclusiveOnly,
   ] = useState(false);
+
+  const [
+    selectedTimeOfDay,
+    setSelectedTimeOfDay,
+  ] = useState<TimeOfDay>(
+    "All Times"
+  );
 
   const [
     search,
@@ -581,28 +607,36 @@ export default function HordeHunter() {
       const query =
         normalize(search);
 
-      if (!query) {
-        return hordeEntries;
-      }
+      return hordeEntries.filter((entry) => {
+        const matchesSearch =
+          !query ||
+          normalize(entry.pokemonName).includes(query) ||
+          normalize(entry.locationName).includes(query) ||
+          normalize(entry.locationFullName).includes(query) ||
+          normalize(entry.region).includes(query);
 
-      return hordeEntries.filter(
-        (entry) =>
-          normalize(
-            entry.pokemonName
-          ).includes(query) ||
-          normalize(
-            entry.locationName
-          ).includes(query) ||
-          normalize(
-            entry.locationFullName
-          ).includes(query) ||
-          normalize(
-            entry.region
-          ).includes(query)
-      );
+        if (!matchesSearch) {
+          return false;
+        }
+
+        if (selectedTimeOfDay === "All Times") {
+          return true;
+        }
+
+        if (selectedTimeOfDay === "Morning") {
+          return hasTimeChance(entry.morning);
+        }
+
+        if (selectedTimeOfDay === "Day") {
+          return hasTimeChance(entry.day);
+        }
+
+        return hasTimeChance(entry.night);
+      });
     }, [
       hordeEntries,
       search,
+      selectedTimeOfDay,
     ]);
 
   /* =======================================================
@@ -726,6 +760,13 @@ export default function HordeHunter() {
           !previous[routeKey],
       })
     );
+  }
+
+  function handleTimeOfDayChange(
+    timeOfDay: TimeOfDay
+  ) {
+    setSelectedTimeOfDay(timeOfDay);
+    setOpenRoutes({});
   }
 
   function handleSeasonChange(
@@ -852,6 +893,56 @@ export default function HordeHunter() {
               );
             }
           )}
+
+        </div>
+      </div>
+
+      {/* TIME OF DAY */}
+
+      <div className="horde-filter-section">
+
+        <div className="horde-filter-label">
+          TIME OF DAY
+        </div>
+
+        <div className="horde-filter-row horde-time-row">
+
+          {TIMES_OF_DAY.map((timeOfDay) => {
+            const active =
+              selectedTimeOfDay === timeOfDay;
+
+            const icon =
+              timeOfDay === "Morning"
+                ? "🌅"
+                : timeOfDay === "Day"
+                  ? "☀️"
+                  : timeOfDay === "Night"
+                    ? "🌙"
+                    : "🕒";
+
+            return (
+              <button
+                key={timeOfDay}
+                type="button"
+                onClick={() =>
+                  handleTimeOfDayChange(
+                    timeOfDay
+                  )
+                }
+                className={
+                  active
+                    ? "horde-filter-button active"
+                    : "horde-filter-button"
+                }
+              >
+                <span className="horde-time-icon">
+                  {icon}
+                </span>
+
+                {timeOfDay}
+              </button>
+            );
+          })}
 
         </div>
       </div>
