@@ -694,24 +694,29 @@ export default function PokemonInfoModal({
         }
       >
         <style>{`
+          /* Full viewport modal: no page scrolling, no hidden content. */
           .pokemon-info-overlay {
             position: fixed;
             inset: 0;
             z-index: 1000;
             display: grid;
             place-items: center;
-            padding: 18px;
+            padding: 10px;
+            overflow: hidden;
+            box-sizing: border-box;
             background: rgba(1, 8, 18, 0.72);
             backdrop-filter: blur(8px);
           }
 
           .pokemon-info-modal {
-            width: min(1120px, 94vw);
-            height: min(900px, 94vh);
-            max-height: 94vh;
+            width: min(1120px, calc(100vw - 20px));
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: calc(100vh - 20px) !important;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden !important;
+            box-sizing: border-box;
           }
 
           .pokemon-info-header {
@@ -750,24 +755,19 @@ export default function PokemonInfoModal({
           }
 
           .pokemon-info-content {
-            flex: 1 1 auto;
+            flex: 0 1 auto !important;
             min-height: 0;
-            overflow-y: auto;
-            overflow-x: hidden;
-            overscroll-behavior: contain;
-            scrollbar-width: none;
-            padding-right: 2px;
-          }
-
-          .pokemon-info-content::-webkit-scrollbar {
-            width: 0;
-            height: 0;
+            height: auto !important;
+            overflow: hidden !important;
+            box-sizing: border-box;
           }
 
           .pokemon-tab-section {
-            height: auto;
-            min-height: 100%;
-            overflow: visible;
+            height: auto !important;
+            min-height: 0;
+            max-height: none !important;
+            overflow: hidden !important;
+            box-sizing: border-box;
           }
 
           .pokemon-summary {
@@ -820,7 +820,7 @@ export default function PokemonInfoModal({
 
           .move-level-list .move-card {
             width: 100%;
-            min-height: 42px;
+            min-height: 34px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -944,11 +944,11 @@ export default function PokemonInfoModal({
           /* Wild Locations */
           .wild-locations-reference-card {
             width: 100%;
-            height: 100%;
+            height: auto !important;
             min-height: 0;
             max-width: 100%;
             min-width: 0;
-            padding: 18px 22px 12px;
+            padding: 12px 16px 10px;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -976,13 +976,13 @@ export default function PokemonInfoModal({
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 7px;
           }
 
           .season-reference-button {
             min-width: 0;
-            min-height: 42px;
-            padding: 6px 8px;
+            min-height: 34px;
+            padding: 4px 7px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -1014,17 +1014,15 @@ export default function PokemonInfoModal({
           .season-reference-button.active.autumn { background: rgba(121, 59, 0, 0.24); box-shadow: 0 0 0 1px rgba(255, 133, 0, 0.28); }
           .season-reference-button.active.winter { background: rgba(0, 104, 135, 0.22); box-shadow: 0 0 0 1px rgba(44, 200, 232, 0.3); }
 
-          /* Only this table box scrolls vertically. */
+          /* No nested scrolling. The Wild Locations layout stays compact. */
           .wild-reference-table-wrap {
-            flex: 1 1 auto;
+            flex: 0 1 auto;
             width: 100%;
             min-width: 0;
             min-height: 0;
             max-width: 100%;
-            overflow-y: auto;
-            overflow-x: hidden;
-            overscroll-behavior: contain;
-            scrollbar-gutter: stable;
+            overflow: hidden;
+            overscroll-behavior: none;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
           }
@@ -1137,7 +1135,7 @@ export default function PokemonInfoModal({
             justify-content: center;
             align-items: center;
             gap: 8px 16px;
-            margin-top: 10px;
+            margin-top: 7px;
             padding: 8px 12px;
             border: 1px solid rgba(50, 103, 150, 0.4);
             border-radius: 12px;
@@ -1155,9 +1153,9 @@ export default function PokemonInfoModal({
 
           @media (max-width: 900px) {
             .pokemon-info-modal {
-              width: min(96vw, 720px);
-              height: 96vh;
-              max-height: 96vh;
+              width: calc(100vw - 16px);
+              height: auto !important;
+              max-height: calc(100vh - 16px) !important;
             }
 
             .pokemon-summary {
@@ -1257,6 +1255,54 @@ export default function PokemonInfoModal({
               justify-content: flex-start;
             }
           }
+
+          /* FINAL LAYOUT AUTHORITY
+             The modal never creates hidden scroll space. */
+          .pokemon-info-overlay,
+          .pokemon-info-modal,
+          .pokemon-info-content,
+          .pokemon-tab-section {
+            overscroll-behavior: none !important;
+          }
+
+          .pokemon-info-overlay {
+            overflow: hidden !important;
+          }
+
+          .pokemon-info-modal {
+            height: auto !important;
+            max-height: calc(100vh - 20px) !important;
+          }
+
+          .pokemon-info-content,
+          .pokemon-tab-section {
+            height: auto !important;
+            flex: 0 1 auto !important;
+            overflow: hidden !important;
+          }
+
+          .wild-locations-reference-card,
+          .wild-reference-table-wrap {
+            height: auto !important;
+            max-height: none !important;
+            flex: 0 1 auto !important;
+            overflow: hidden !important;
+          }
+
+          /* Keep all seven tabs visible with no horizontal scrollbar. */
+          .pokemon-info-tabs {
+            overflow: hidden !important;
+          }
+
+          /* Compact long tab content so the active page stays inside the viewport. */
+          .pokemon-info-card {
+            margin-bottom: 10px;
+          }
+
+          .pokemon-tab-section > .pokemon-info-card:last-child {
+            margin-bottom: 0;
+          }
+
         `}</style>
         <button
           className="pokemon-info-close"
