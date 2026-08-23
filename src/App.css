@@ -4730,3 +4730,95 @@ textarea:focus {
   border: 1px solid
     rgba(90, 170, 230, 0.4);
 }
+
+/* ========================================
+   SHOWCASE + LEADERBOARD POKEMON SPRITES
+   Removes oversized boxes and keeps sprites compact
+======================================== */
+
+.showcase-sprites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.showcase-card {
+  appearance: none;
+  -webkit-appearance: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+
+  padding: 4px !important;
+  margin: 0 !important;
+
+  background: transparent !important;
+  background-image: none !important;
+
+  border: none !important;
+  border-radius: 0 !important;
+
+  box-shadow: none !important;
+
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.showcase-card:hover {
+  transform: scale(1.12);
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.showcase-card:focus,
+.showcase-card:focus-visible {
+  outline: none;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.showcase-sprite {
+  display: block;
+
+  width: 72px !important;
+  height: 72px !important;
+
+  max-width: 72px !important;
+  max-height: 72px !important;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+
+  pointer-events: none;
+}
+
+/* Smaller screens */
+@media (max-width: 768px) {
+  .showcase-sprites {
+    gap: 5px;
+  }
+
+  .showcase-card {
+    padding: 2px !important;
+  }
+
+  .showcase-sprite {
+    width: 58px !important;
+    height: 58px !important;
+
+    max-width: 58px !important;
+    max-height: 58px !important;
+  }
+}
