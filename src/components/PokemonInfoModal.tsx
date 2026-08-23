@@ -557,33 +557,29 @@ export default function PokemonInfoModal({
     const stages = getEvolutionStages(root);
 
     return (
-      <div className="evolution-tree evolution-tree-horizontal">
+      <div className="evolution-tree-reference">
         {stages.map((stage, stageIndex) => (
           <div
             key={`stage-${stageIndex}`}
-            className="evolution-stage"
+            className="evolution-stage-reference"
           >
             {stageIndex > 0 && (
-              <div className="evolution-connectors">
+              <div className="evolution-connectors-reference">
                 {stage.map((node) => {
-                  const method =
-                    getEvolutionMethod(node);
+                  const method = getEvolutionMethod(node);
 
                   return (
                     <div
                       key={`connector-${stageIndex}-${node.species.name}`}
-                      className="evolution-connector"
+                      className="evolution-connector-reference"
                     >
-                      <span
-                        className="evolution-arrow"
-                        aria-hidden="true"
-                      >
+                      <span className="evolution-arrow-reference">
                         →
                       </span>
 
                       {method && (
-                        <span className="evolution-requirement">
-                          {method}
+                        <span className="evolution-requirement-reference">
+                          ▥ {method}
                         </span>
                       )}
                     </div>
@@ -592,17 +588,16 @@ export default function PokemonInfoModal({
               </div>
             )}
 
-            <div className="evolution-stage-list">
+            <div className="evolution-stage-list-reference">
               {stage.map((node) => {
                 const name = node.species.name;
+                const pokemonId = getEvolutionId(
+                  node.species.url
+                );
 
-                const pokemonId =
-                  getEvolutionId(node.species.url);
-
-                const staticSprite =
-                  pokemonId
-                    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
-                    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/0.png`;
+                const staticSprite = pokemonId
+                  ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
+                  : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/0.png`;
 
                 const animatedSprite =
                   `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
@@ -613,12 +608,11 @@ export default function PokemonInfoModal({
                   <button
                     type="button"
                     key={`${stageIndex}-${name}`}
-                    className="evolution-card"
+                    className="evolution-card-reference"
                     onClick={() => {
                       if (pokemonId && onPokemonClick) {
                         onPokemonClick(pokemonId);
                       }
-
                       setActiveTab("Summary");
                     }}
                     title={`View ${formatName(name)} summary`}
@@ -626,7 +620,7 @@ export default function PokemonInfoModal({
                     <img
                       src={staticSprite}
                       alt={`Shiny ${formatName(name)}`}
-                      className="evolution-sprite"
+                      className="evolution-sprite-reference"
                       onMouseEnter={(event) => {
                         event.currentTarget.src =
                           animatedSprite;
@@ -644,6 +638,12 @@ export default function PokemonInfoModal({
                     <strong>
                       {formatName(name)}
                     </strong>
+
+                    {pokemonId && (
+                      <span className="evolution-dex-number">
+                        #{String(pokemonId).padStart(3, "0")}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -652,6 +652,34 @@ export default function PokemonInfoModal({
         ))}
       </div>
     );
+  }
+
+  function getSeasonClass(season: string) {
+    return season.toLowerCase();
+  }
+
+  function getRarityClass(value: string) {
+    const normalized = value.toLowerCase();
+
+    if (normalized.includes("special")) return "special";
+    if (normalized.includes("10")) return "very-common";
+    if (normalized.includes("20")) return "common";
+    if (normalized.includes("30")) return "uncommon";
+    if (normalized.includes("40")) return "rare";
+
+    return "default";
+  }
+
+  function getMethodIcon(method: string) {
+    const normalized = method.toLowerCase();
+
+    if (normalized.includes("grass")) return "🌿";
+    if (normalized.includes("water")) return "💧";
+    if (normalized.includes("surf")) return "🌊";
+    if (normalized.includes("fish")) return "🎣";
+    if (normalized.includes("cave")) return "🪨";
+
+    return "✦";
   }
 
   return (
@@ -997,6 +1025,315 @@ export default function PokemonInfoModal({
 
            .evolution-tree-horizontal {
               justify-content: flex-start;
+            }
+          }
+
+          /* Reference layout: Evolution Tree */
+          .evolution-tree-reference {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+            width: 100%;
+            min-height: 300px;
+            padding: 10px 18px 20px;
+            overflow-x: auto;
+          }
+
+          .evolution-stage-reference {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            flex: 0 0 auto;
+          }
+
+          .evolution-stage-list-reference {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+          }
+
+          .evolution-card-reference {
+            appearance: none;
+            width: 230px;
+            min-height: 210px;
+            padding: 22px 20px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            border: 1px solid rgba(54, 132, 202, 0.32);
+            border-radius: 16px;
+            background: linear-gradient(
+              145deg,
+              rgba(12, 31, 55, 0.98),
+              rgba(8, 23, 42, 0.98)
+            );
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+          }
+
+          .evolution-card-reference:hover,
+          .evolution-card-reference:focus-visible {
+            transform: translateY(-3px);
+            border-color: #1487ff;
+            box-shadow: 0 0 0 2px rgba(25, 137, 255, 0.22), 0 12px 30px rgba(0, 0, 0, 0.32);
+            outline: none;
+          }
+
+          .evolution-sprite-reference {
+            width: 105px;
+            height: 105px;
+            object-fit: contain;
+            image-rendering: pixelated;
+          }
+
+          .evolution-card-reference strong {
+            font-size: 1.45rem;
+            line-height: 1.1;
+          }
+
+          .evolution-dex-number {
+            color: #b9c5d6;
+            font-size: 1rem;
+            font-weight: 700;
+          }
+
+          .evolution-connectors-reference {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 210px;
+          }
+
+          .evolution-connector-reference {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+          }
+
+          .evolution-arrow-reference {
+            width: 100%;
+            color: #d9e2ee;
+            font-size: 3rem;
+            line-height: 1;
+            text-align: center;
+          }
+
+          .evolution-requirement-reference {
+            color: #d8e1ec;
+            font-size: 1.08rem;
+            font-weight: 800;
+            white-space: nowrap;
+          }
+
+          .evolution-requirement-reference::first-letter {
+            color: #25a7ff;
+          }
+
+          /* Reference layout: Wild Locations */
+          .wild-locations-reference-card {
+            width: 100%;
+            max-width: none;
+            padding: 28px 30px 14px;
+          }
+
+          .season-reference-label {
+            margin: 4px 0 10px;
+            color: #aebbcf;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+          }
+
+          .season-reference-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(150px, 1fr));
+            gap: 28px;
+            margin-bottom: 16px;
+          }
+
+          .season-reference-button {
+            min-height: 54px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            border: 1px solid rgba(142, 169, 199, 0.3);
+            border-radius: 14px;
+            background: rgba(7, 24, 44, 0.85);
+            color: #d7e1ef;
+            font: inherit;
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+          }
+
+          .season-reference-button:hover {
+            transform: translateY(-2px);
+          }
+
+          .season-reference-icon {
+            font-size: 1.55rem;
+            line-height: 1;
+          }
+
+          .season-reference-button.spring { border-color: #d968aa; color: #f4a0d1; }
+          .season-reference-button.summer { border-color: #ffae00; color: #ffd23f; }
+          .season-reference-button.autumn { border-color: #ff8500; color: #ffad4f; }
+          .season-reference-button.winter { border-color: #2cc8e8; color: #79ddf5; }
+
+          .season-reference-button.active.spring {
+            background: rgba(146, 42, 101, 0.22);
+            box-shadow: 0 0 0 1px rgba(217, 104, 170, 0.28);
+          }
+          .season-reference-button.active.summer {
+            background: linear-gradient(180deg, rgba(117, 77, 0, 0.52), rgba(58, 38, 0, 0.42));
+            box-shadow: 0 0 14px rgba(255, 174, 0, 0.45), inset 0 0 0 1px rgba(255, 214, 69, 0.42);
+          }
+          .season-reference-button.active.autumn {
+            background: rgba(121, 59, 0, 0.24);
+            box-shadow: 0 0 0 1px rgba(255, 133, 0, 0.28);
+          }
+          .season-reference-button.active.winter {
+            background: rgba(0, 104, 135, 0.22);
+            box-shadow: 0 0 0 1px rgba(44, 200, 232, 0.3);
+          }
+
+          .wild-reference-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid rgba(50, 103, 150, 0.4);
+            border-radius: 12px;
+          }
+
+          .wild-reference-table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+            background: rgba(5, 18, 34, 0.42);
+          }
+
+          .wild-reference-table th {
+            padding: 12px 14px;
+            background: rgba(19, 49, 80, 0.72);
+            color: #aebed4;
+            font-size: 0.84rem;
+            font-weight: 900;
+            letter-spacing: 0.06em;
+            text-align: center;
+            text-transform: uppercase;
+          }
+
+          .wild-reference-table td {
+            padding: 10px 14px;
+            border-top: 1px solid rgba(55, 91, 125, 0.38);
+            color: #d6dce6;
+            text-align: center;
+            white-space: nowrap;
+          }
+
+          .wild-region-cell,
+          .wild-location-cell,
+          .wild-method {
+            text-align: left !important;
+          }
+
+          .wild-region-cell {
+            display: table-cell;
+            font-size: 1.02rem;
+          }
+
+          .region-ball {
+            display: inline-block;
+            margin-right: 9px;
+            color: #f0f3f7;
+            font-size: 1.25rem;
+            vertical-align: -1px;
+          }
+
+          .wild-location-cell {
+            font-weight: 900;
+          }
+
+          .wild-method {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .wild-method > span {
+            color: #5fd13f;
+            font-size: 1.2rem;
+          }
+
+          .rarity.very-common { color: #ff9d3f; font-weight: 800; }
+          .rarity.common { color: #e9d54b; font-weight: 800; }
+          .rarity.uncommon { color: #61b7ef; font-weight: 800; }
+          .rarity.rare { color: #df8ed2; font-weight: 800; }
+          .rarity.special { color: #df9ce3; font-weight: 800; }
+          .rarity.default { color: #aeb7c3; }
+
+          .horde-value {
+            color: #ef90ad;
+            font-weight: 900;
+          }
+
+          .wild-reference-legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 10px;
+            padding: 12px 16px;
+            border: 1px solid rgba(50, 103, 150, 0.4);
+            border-radius: 12px;
+            color: #aeb7c3;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            overflow-x: auto;
+          }
+
+          .wild-reference-legend i {
+            width: 1px;
+            height: 16px;
+            background: rgba(126, 156, 190, 0.5);
+            flex: 0 0 auto;
+          }
+
+          @media (max-width: 900px) {
+            .evolution-tree-reference {
+              justify-content: flex-start;
+              gap: 18px;
+              padding-left: 6px;
+            }
+
+            .evolution-stage-reference {
+              gap: 18px;
+            }
+
+            .evolution-card-reference {
+              width: 185px;
+              min-height: 185px;
+            }
+
+            .evolution-connectors-reference {
+              flex-basis: 150px;
+            }
+
+            .season-reference-buttons {
+              grid-template-columns: repeat(2, minmax(120px, 1fr));
+              gap: 12px;
             }
           }
         `}</style>
@@ -1403,109 +1740,131 @@ export default function PokemonInfoModal({
                 {activeTab ===
                   "Wild Locations" && (
                   <div className="pokemon-tab-section">
-                    <section className="pokemon-info-card wild-locations-card">
+                    <section className="pokemon-info-card wild-locations-reference-card">
                       <h3>Wild Locations</h3>
 
                       {monsterLocations.length > 0 ? (
                         <>
-                          <div className="season-filter-panel">
-                            <div className="season-filter-heading">
-                              <span className="season-filter-label">
-                                Viewing Season
-                              </span>
-                              <strong className="season-filter-current">
-                                {selectedSeason}
-                              </strong>
-                            </div>
-
-                            <div
-                              className="season-filter-buttons"
-                              role="group"
-                              aria-label="Choose season"
-                            >
-                              {effectiveSeasons.map(
-                                (season) => (
-                                  <button
-                                    type="button"
-                                    key={season}
-                                    aria-pressed={
-                                      selectedSeason === season
-                                    }
-                                    className={`season-filter-button ${
-                                      selectedSeason === season
-                                        ? "active"
-                                        : ""
-                                    }`}
-                                    onClick={() =>
-                                      setSelectedSeason(season)
-                                    }
-                                  >
-                                    {season}
-                                  </button>
-                                )
-                              )}
-                            </div>
+                          <div className="season-reference-label">
+                            Season Filter
                           </div>
 
-                          <div className="wild-location-table-wrap">
-                          <table className="wild-location-table">
-                            <thead>
-                              <tr>
-                                <th>Region</th>
-                                <th>Location</th>
-                                <th>Method</th>
-                                <th>Levels</th>
-                                <th>Morning</th>
-                                <th>Day</th>
-                                <th>Night</th>
-                                <th>Horde</th>
-                              </tr>
-                            </thead>
+                          <div
+                            className="season-reference-buttons"
+                            role="group"
+                            aria-label="Choose season"
+                          >
+                            {effectiveSeasons.map((season) => (
+                              <button
+                                type="button"
+                                key={season}
+                                aria-pressed={
+                                  selectedSeason === season
+                                }
+                                className={`season-reference-button ${getSeasonClass(
+                                  season
+                                )} ${
+                                  selectedSeason === season
+                                    ? "active"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  setSelectedSeason(season)
+                                }
+                              >
+                                <span className="season-reference-icon">
+                                  {season === "Spring"
+                                    ? "✿"
+                                    : season === "Summer"
+                                    ? "☀"
+                                    : season === "Autumn"
+                                    ? "♧"
+                                    : "❄"}
+                                </span>
+                                {season}
+                              </button>
+                            ))}
+                          </div>
 
-                            <tbody>
-                              {filteredMonsterLocations.map(
-                                (location, index) => (
-                                  <tr
-                                    key={`${location.location_id}-${location.type}-${location.season}-${index}`}
-                                  >
-                                    <td>
-                                      {location.region_name}
-                                    </td>
-                                    <td>
-                                      <strong>
+                          <div className="wild-reference-table-wrap">
+                            <table className="wild-reference-table">
+                              <thead>
+                                <tr>
+                                  <th>Region</th>
+                                  <th>Location</th>
+                                  <th>Method</th>
+                                  <th>Levels</th>
+                                  <th>Morning</th>
+                                  <th>Day</th>
+                                  <th>Night</th>
+                                  <th>Horde</th>
+                                </tr>
+                              </thead>
+
+                              <tbody>
+                                {filteredMonsterLocations.map(
+                                  (location, index) => (
+                                    <tr
+                                      key={`${location.location_id}-${location.type}-${location.season}-${index}`}
+                                    >
+                                      <td className="wild-region-cell">
+                                        <span className="region-ball">
+                                          ◓
+                                        </span>
+                                        {location.region_name}
+                                      </td>
+                                      <td className="wild-location-cell">
                                         {location.location_name_full}
-                                      </strong>
-                                    </td>
-                                    <td>
-                                      {location.type}
-                                    </td>
-                                    <td>
-                                      {location.min_level ===
-                                      location.max_level
-                                        ? location.min_level
-                                        : `${location.min_level}-${location.max_level}`}
-                                    </td>
-                                    <td>
-                                      {location.rarity_morning}
-                                    </td>
-                                    <td>
-                                      {location.rarity_day}
-                                    </td>
-                                    <td>
-                                      {location.rarity_night}
-                                    </td>
-                                    <td>
-                                      {location.is_horde_5x
-                                        ? "5×"
-                                        : location.is_horde_3x
-                                        ? "3×"
-                                        : "—"}
-                                    </td>
-                                  </tr>
-                                )
-                              )}
-                            </tbody>
-                          </table>
+                                      </td>
+                                      <td>
+                                        <span className="wild-method">
+                                          <span>
+                                            {getMethodIcon(
+                                              location.type
+                                            )}
+                                          </span>
+                                          {formatName(location.type)}
+                                        </span>
+                                      </td>
+                                      <td>
+                                        {location.min_level ===
+                                        location.max_level
+                                          ? location.min_level
+                                          : `${location.min_level}-${location.max_level}`}
+                                      </td>
+                                      <td
+                                        className={`rarity ${getRarityClass(
+                                          location.rarity_morning
+                                        )}`}
+                                      >
+                                        {location.rarity_morning}
+                                      </td>
+                                      <td
+                                        className={`rarity ${getRarityClass(
+                                          location.rarity_day
+                                        )}`}
+                                      >
+                                        {location.rarity_day}
+                                      </td>
+                                      <td
+                                        className={`rarity ${getRarityClass(
+                                          location.rarity_night
+                                        )}`}
+                                      >
+                                        {location.rarity_night}
+                                      </td>
+                                      <td className="horde-value">
+                                        {location.is_horde_5x
+                                          ? "5×"
+                                          : location.is_horde_3x
+                                          ? "3×"
+                                          : "—"}
+                                      </td>
+                                    </tr>
+                                  )
+                                )}
+                              </tbody>
+                            </table>
                           </div>
 
                           {filteredMonsterLocations.length === 0 && (
@@ -1513,6 +1872,34 @@ export default function PokemonInfoModal({
                               No locations are available for this season.
                             </p>
                           )}
+
+                          <div className="wild-reference-legend">
+                            <span>-- = Not Available</span>
+                            <i />
+                            <span className="very-common">
+                              10% = Very Common
+                            </span>
+                            <i />
+                            <span className="common">
+                              20% = Common
+                            </span>
+                            <i />
+                            <span className="uncommon">
+                              30% = Uncommon
+                            </span>
+                            <i />
+                            <span className="rare">
+                              40% = Rare
+                            </span>
+                            <i />
+                            <span className="special">
+                              Special = Special Encounter
+                            </span>
+                            <i />
+                            <span className="horde-value">
+                              3× = Horde (3 Pokémon)
+                            </span>
+                          </div>
                         </>
                       ) : (
                         <p>
