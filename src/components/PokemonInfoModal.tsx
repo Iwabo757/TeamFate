@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import monstersData from "../data/monsters.json";
 
 type DexPokemon = {
   id: number;
@@ -106,41 +107,32 @@ type ApiEvolution = {
   chain: EvolutionNode;
 };
 
-type EncounterInfo = {
-  region: string;
-  location: string;
-  area: string;
-  method: string;
-  minLevel: number | null;
-  maxLevel: number | null;
-  time: string[];
-  chance: number | null;
-  horde: "Yes" | "No" | "Unknown";
+type MonsterLocation = {
+  form: number;
+  type: string;
+  region_id: number;
+  region_name: string;
+  location_id: number;
+  location_name: string;
+  location_name_full: string;
+  min_level: number;
+  max_level: number;
+  season: string;
+  is_horde_3x: boolean;
+  is_horde_5x: boolean;
+  rarity_flags: number;
+  rarity_morning: string;
+  rarity_day: string;
+  rarity_night: string;
 };
 
-type LocationAreaApi = {
-  location: {
-    name: string;
-    url: string;
-  };
-};
-
-type LocationApi = {
-  region: {
-    name: string;
-  } | null;
-};
-
-type TypeRelations = {
-  double_damage_from: {
-    name: string;
-  }[];
-  half_damage_from: {
-    name: string;
-  }[];
-  no_damage_from: {
-    name: string;
-  }[];
+type Monster = {
+  id?: number;
+  pokemon_id?: number;
+  dex_number?: number;
+  national_id?: number;
+  name: string;
+  locations?: MonsterLocation[];
 };
 
 const tabs = [
@@ -254,12 +246,6 @@ function cleanFlavorText(text: string) {
   return text.replace(/\n|\f/g, " ");
 }
 
-function getEvolutionName(url: string) {
-  const parts = url.split("/");
-  return parts[parts.length - 2];
-}
-
-
 function getEvolutionId(url: string) {
   const parts = url.split("/").filter(Boolean);
   const value = parts[parts.length - 1];
@@ -268,58 +254,11 @@ function getEvolutionId(url: string) {
   return Number.isFinite(id) ? id : null;
 }
 
-function getEncounterTime(
-  conditionValues: { name: string }[]
-) {
-  const values = conditionValues
-    .map((condition) =>
-      condition.name.toLowerCase()
-    )
-    .filter(Boolean);
-
-  const times = values
-    .map((value) => {
-      if (value.includes("morning")) {
-        return "Morning";
-      }
-
-      if (value.includes("night")) {
-        return "Night";
-      }
-
-      if (value === "day" || value.includes("day")) {
-        return "Day";
-      }
-
-      return null;
-    })
-    .filter(
-      (value): value is string =>
-        value !== null
-    );
-
-  return times.length > 0
-    ? Array.from(new Set(times))
-    : ["Any Time"];
-}
-
-function getHordeAvailability(
-  methodName: string,
-  conditionValues: { name: string }[]
-): "Yes" | "No" | "Unknown" {
-  const values = [
-    methodName,
-    ...conditionValues.map((condition) => condition.name),
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  if (values.includes("horde")) {
-    return "Yes";
-  }
-
-  return "Unknown";
-}
+type TypeRelations = {
+  double_damage_from: { name: string }[];
+  half_damage_from: { name: string }[];
+  no_damage_from: { name: string }[];
+};
 
 export default function PokemonInfoModal({
   pokemon,
@@ -341,8 +280,6 @@ export default function PokemonInfoModal({
   const [typeRelations, setTypeRelations] =
     useState<Record<string, TypeRelations>>({});
 
-  const [locations, setLocations] =
-    useState<EncounterInfo[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -435,111 +372,6 @@ export default function PokemonInfoModal({
 
       setTypeRelations(relations);
 
-      try {
-        const locationResponse =
-          await fetch(
-            `https://pokeapi.co/api/v2/pokemon/${pokemon.id}/encounters`
-          );
-
-        if (locationResponse.ok) {
-          const locationData: any[] =
-            await locationResponse.json();
-
-          const encounterEntries =
-            await Promise.all(
-              locationData.map(
-                async (entry) => {
-                  try {
-                    const areaResponse =
-                      await fetch(
-                        entry.location_area.url
-                      );
-
-                    if (!areaResponse.ok) {
-                      return [];
-                    }
-
-                    const areaData: LocationAreaApi =
-                      await areaResponse.json();
-
-                    const locationResponse =
-                      await fetch(
-                        areaData.location.url
-                      );
-
-                    if (!locationResponse.ok) {
-                      return [];
-                    }
-
-                    const locationData: LocationApi =
-                      await locationResponse.json();
-
-                    const region =
-                      locationData.region
-                        ? formatName(
-                            locationData.region.name
-                          )
-                        : "Unknown Region";
-
-                    return entry.version_details.flatMap(
-                      (version: any) =>
-                        version.encounter_details.map(
-                          (detail: any): EncounterInfo => ({
-                            region,
-                            location: formatName(
-                              areaData.location.name
-                            ),
-                            area: formatName(
-                              entry.location_area.name
-                            ),
-                            method: formatName(
-                              detail.method?.name ||
-                                "Unknown"
-                            ),
-                            minLevel:
-                              typeof detail.min_level ===
-                              "number"
-                                ? detail.min_level
-                                : null,
-                            maxLevel:
-                              typeof detail.max_level ===
-                              "number"
-                                ? detail.max_level
-                                : null,
-                            time: getEncounterTime(
-                              detail.condition_values || []
-                            ),
-                            chance:
-                              typeof detail.chance ===
-                              "number"
-                                ? detail.chance
-                                : typeof version.max_chance ===
-                                  "number"
-                                ? version.max_chance
-                                : null,
-                            horde: getHordeAvailability(
-                              detail.method?.name || "",
-                              detail.condition_values || []
-                            ),
-                          })
-                        )
-                    );
-                  } catch {
-                    return [];
-                  }
-                }
-              )
-            );
-
-          setLocations(
-            encounterEntries.flat()
-          );
-        } else {
-          setLocations([]);
-        }
-      } catch {
-        setLocations([]);
-      }
     } catch (err) {
       console.error(err);
       setError(
@@ -549,6 +381,30 @@ export default function PokemonInfoModal({
       setLoading(false);
     }
   }
+
+  const monsterLocations = (() => {
+    const monsters = monstersData as Monster[];
+
+    const currentMonster = monsters.find((monster) => {
+      const monsterId =
+        monster.id ??
+        monster.pokemon_id ??
+        monster.dex_number ??
+        monster.national_id;
+
+      return (
+        monsterId === pokemon.id ||
+        monster.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "") ===
+          pokemon.name
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "")
+      );
+    });
+
+    return currentMonster?.locations || [];
+  })();
 
   const description =
     species?.flavor_text_entries
@@ -900,76 +756,46 @@ export default function PokemonInfoModal({
            }
 
            .wild-locations-card {
-             width: 100%;
-             max-width: none;
-           }
+            width: 100%;
+            max-width: none;
+          }
 
-           .wild-location-table-wrap {
-             width: 100%;
-             overflow-x: auto;
-           }
+          .wild-location-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+          }
 
-           .wild-location-table {
-             min-width: 760px;
-             display: flex;
-             flex-direction: column;
-             gap: 5px;
-           }
+          .wild-location-table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: separate;
+            border-spacing: 5px;
+          }
 
-           .wild-location-header,
-           .wild-location-row {
-             display: grid;
-             grid-template-columns:
-               1.05fr
-               0.8fr
-               2.35fr
-               0.75fr
-               0.9fr
-               0.9fr
-               0.9fr;
-             gap: 5px;
-             align-items: stretch;
-           }
+          .wild-location-table th,
+          .wild-location-table td {
+            min-height: 46px;
+            padding: 10px;
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid
+              rgba(150, 190, 220, 0.22);
+            border-radius: 4px;
+            background:
+              rgba(255, 255, 255, 0.035);
+          }
 
-           .wild-location-header > div,
-           .wild-location-row > div {
-             display: flex;
-             align-items: center;
-             justify-content: center;
-             min-height: 46px;
-             padding: 8px 10px;
-             text-align: center;
-             border: 1px solid
-               rgba(150, 190, 220, 0.22);
-             border-radius: 4px;
-             background:
-               rgba(255, 255, 255, 0.035);
-           }
+          .wild-location-table th {
+            font-weight: 700;
+            background:
+              rgba(110, 150, 180, 0.2);
+          }
 
-           .wild-location-header > div {
-             font-weight: 700;
-             background:
-               rgba(110, 150, 180, 0.2);
-           }
+          .wild-location-table td:nth-child(2) {
+            text-align: left;
+          }
 
-           .wild-location-row {
-             font-size: 0.9rem;
-           }
-
-           .wild-type-cell {
-             text-transform: capitalize;
-           }
-
-           .wild-region-cell {
-             font-weight: 700;
-             white-space: nowrap;
-           }
-
-           .wild-name-cell {
-             font-weight: 600;
-           }
-
-           .move-level-list {
+          .move-level-list {
              display: flex;
              flex-direction: column;
              gap: 6px;
@@ -1392,163 +1218,71 @@ export default function PokemonInfoModal({
                     <section className="pokemon-info-card wild-locations-card">
                       <h3>Wild Locations</h3>
 
-                      {locations.length > 0 ? (
+                      {monsterLocations.length > 0 ? (
                         <div className="wild-location-table-wrap">
-                          <div className="wild-location-table">
-                            <div className="wild-location-header">
-                              <div>Type</div>
-                              <div>Region</div>
-                              <div>Location</div>
-                              <div>Levels</div>
-                              <div>Morning</div>
-                              <div>Day</div>
-                              <div>Night</div>
-                            </div>
+                          <table className="wild-location-table">
+                            <thead>
+                              <tr>
+                                <th>Region</th>
+                                <th>Location</th>
+                                <th>Method</th>
+                                <th>Levels</th>
+                                <th>Morning</th>
+                                <th>Day</th>
+                                <th>Night</th>
+                                <th>Horde</th>
+                              </tr>
+                            </thead>
 
-                            {Object.entries(
-                              locations.reduce<
-                                Record<
-                                  string,
-                                  EncounterInfo[]
-                                >
-                              >((groups, encounter) => {
-                                const key = [
-                                  encounter.region,
-                                  encounter.location,
-                                  encounter.method,
-                                  encounter.minLevel,
-                                  encounter.maxLevel,
-                                ].join("|");
-
-                                if (!groups[key]) {
-                                  groups[key] = [];
-                                }
-
-                                groups[key].push(encounter);
-
-                                return groups;
-                              }, {})
-                            )
-                              .sort(([, a], [, b]) => {
-                                const firstA = a[0];
-                                const firstB = b[0];
-
-                                return (
-                                  firstA.region.localeCompare(
-                                    firstB.region
-                                  ) ||
-                                  firstA.location.localeCompare(
-                                    firstB.location
-                                  ) ||
-                                  firstA.method.localeCompare(
-                                    firstB.method
-                                  )
-                                );
-                              })
-                              .map(([, encounters], index) => {
-                                const first = encounters[0];
-
-                                const timeChance = (
-                                  time: string
-                                ) => {
-                                  const matches =
-                                    encounters.filter(
-                                      (encounter) =>
-                                        encounter.time.includes(
-                                          time
-                                        ) ||
-                                        encounter.time.includes(
-                                          "Any Time"
-                                        )
-                                    );
-
-                                  if (!matches.length) {
-                                    return "—";
-                                  }
-
-                                  const chances = matches
-                                    .map(
-                                      (encounter) =>
-                                        encounter.chance
-                                    )
-                                    .filter(
-                                      (
-                                        chance
-                                      ): chance is number =>
-                                        chance !== null
-                                    );
-
-                                  if (!chances.length) {
-                                    return "Available";
-                                  }
-
-                                  const unique =
-                                    Array.from(
-                                      new Set(chances)
-                                    );
-
-                                  return unique
-                                    .map(
-                                      (chance) =>
-                                        `${chance}%`
-                                    )
-                                    .join(" / ");
-                                };
-
-                                const levelText =
-                                  first.minLevel !== null &&
-                                  first.maxLevel !== null
-                                    ? first.minLevel ===
-                                      first.maxLevel
-                                      ? `${first.minLevel}`
-                                      : `${first.minLevel}-${first.maxLevel}`
-                                    : "—";
-
-                                return (
-                                  <div
-                                    key={`${first.region}-${first.location}-${first.method}-${index}`}
-                                    className="wild-location-row"
+                            <tbody>
+                              {monsterLocations.map(
+                                (location, index) => (
+                                  <tr
+                                    key={`${location.location_id}-${location.type}-${location.season}-${index}`}
                                   >
-                                    <div className="wild-type-cell">
-                                      {first.method}
-                                    </div>
-
-                                    <div className="wild-region-cell">
-                                      [ {first.region} ]
-                                    </div>
-
-                                    <div className="wild-name-cell">
-                                      {first.location}
-                                    </div>
-
-                                    <div>
-                                      {levelText}
-                                    </div>
-
-                                    <div>
-                                      {timeChance(
-                                        "Morning"
-                                      )}
-                                    </div>
-
-                                    <div>
-                                      {timeChance("Day")}
-                                    </div>
-
-                                    <div>
-                                      {timeChance(
-                                        "Night"
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                          </div>
+                                    <td>
+                                      {location.region_name}
+                                    </td>
+                                    <td>
+                                      <strong>
+                                        {location.location_name_full}
+                                      </strong>
+                                    </td>
+                                    <td>
+                                      {location.type}
+                                    </td>
+                                    <td>
+                                      {location.min_level ===
+                                      location.max_level
+                                        ? location.min_level
+                                        : `${location.min_level}-${location.max_level}`}
+                                    </td>
+                                    <td>
+                                      {location.rarity_morning}
+                                    </td>
+                                    <td>
+                                      {location.rarity_day}
+                                    </td>
+                                    <td>
+                                      {location.rarity_night}
+                                    </td>
+                                    <td>
+                                      {location.is_horde_5x
+                                        ? "5×"
+                                        : location.is_horde_3x
+                                        ? "3×"
+                                        : "—"}
+                                    </td>
+                                  </tr>
+                                )
+                              )}
+                            </tbody>
+                          </table>
                         </div>
                       ) : (
                         <p>
-                          No standard encounter
-                          locations available.
+                          This Pokémon has no recorded
+                          PokeMMO wild locations.
                         </p>
                       )}
                     </section>
