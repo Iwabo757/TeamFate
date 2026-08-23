@@ -106,6 +106,28 @@ type ApiEvolution = {
   chain: EvolutionNode;
 };
 
+type EncounterInfo = {
+  region: string;
+  location: string;
+  area: string;
+  time: string[];
+  chance: number | null;
+  horde: "Yes" | "No" | "Unknown";
+};
+
+type LocationAreaApi = {
+  location: {
+    name: string;
+    url: string;
+  };
+};
+
+type LocationApi = {
+  region: {
+    name: string;
+  } | null;
+};
+
 type TypeRelations = {
   double_damage_from: {
     name: string;
@@ -169,6 +191,49 @@ function formatMoveMethod(name: string) {
   return formatName(name);
 }
 
+function getMoveLearnDetail(
+  versionDetails: {
+    level_learned_at: number;
+    move_learn_method: {
+      name: string;
+    };
+    version_group: {
+      name: string;
+    };
+  }[],
+  method: string
+) {
+  const matching = versionDetails.filter(
+    (detail) =>
+      detail.move_learn_method.name === method
+  );
+
+  if (!matching.length) {
+    return null;
+  }
+
+  for (const versionGroup of [
+    "black-white",
+    "black-2-white-2",
+  ]) {
+    const detail = matching.find(
+      (entry) =>
+        entry.version_group.name === versionGroup
+    );
+
+    if (detail) {
+      return detail;
+    }
+  }
+
+  return matching
+    .slice()
+    .sort(
+      (a, b) =>
+        b.level_learned_at - a.level_learned_at
+    )[0];
+}
+
 function formatStatName(name: string) {
   const names: Record<string, string> = {
     hp: "HP",
@@ -189,6 +254,52 @@ function cleanFlavorText(text: string) {
 function getEvolutionName(url: string) {
   const parts = url.split("/");
   return parts[parts.length - 2];
+}
+
+
+function getEvolutionId(url: string) {
+  const parts = url.split("/").filter(Boolean);
+  const value = parts[parts.length - 1];
+  const id = Number(value);
+
+  return Number.isFinite(id) ? id : null;
+}
+
+function getEncounterTime(
+  conditionValues: { name: string }[]
+) {
+  const values = conditionValues
+    .map((condition) => condition.name.toLowerCase())
+    .filter(Boolean);
+
+  const times = values.filter(
+    (value) =>
+      value.includes("morning") ||
+      value.includes("day") ||
+      value.includes("night")
+  );
+
+  return times.length > 0
+    ? Array.from(new Set(times.map(formatName)))
+    : ["Any Time"];
+}
+
+function getHordeAvailability(
+  methodName: string,
+  conditionValues: { name: string }[]
+): "Yes" | "No" | "Unknown" {
+  const values = [
+    methodName,
+    ...conditionValues.map((condition) => condition.name),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  if (values.includes("horde")) {
+    return "Yes";
+  }
+
+  return "Unknown";
 }
 
 export default function PokemonInfoModal({
@@ -212,7 +323,7 @@ export default function PokemonInfoModal({
     useState<Record<string, TypeRelations>>({});
 
   const [locations, setLocations] =
-    useState<string[]>([]);
+    useState<EncounterInfo[]>([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -312,17 +423,86 @@ export default function PokemonInfoModal({
           );
 
         if (locationResponse.ok) {
-          const locationData =
+          const locationData: any[] =
             await locationResponse.json();
 
+          const encounterEntries =
+            await Promise.all(
+              locationData.map(
+                async (entry) => {
+                  try {
+                    const areaResponse =
+                      await fetch(
+                        entry.location_area.url
+                      );
+
+                    if (!areaResponse.ok) {
+                      return [];
+                    }
+
+                    const areaData: LocationAreaApi =
+                      await areaResponse.json();
+
+                    const locationResponse =
+                      await fetch(
+                        areaData.location.url
+                      );
+
+                    if (!locationResponse.ok) {
+                      return [];
+                    }
+
+                    const locationData: LocationApi =
+                      await locationResponse.json();
+
+                    const region =
+                      locationData.region
+                        ? formatName(
+                            locationData.region.name
+                          )
+                        : "Unknown Region";
+
+                    return entry.version_details.flatMap(
+                      (version: any) =>
+                        version.encounter_details.map(
+                          (detail: any): EncounterInfo => ({
+                            region,
+                            location: formatName(
+                              areaData.location.name
+                            ),
+                            area: formatName(
+                              entry.location_area.name
+                            ),
+                            time: getEncounterTime(
+                              detail.condition_values || []
+                            ),
+                            chance:
+                              typeof detail.chance ===
+                              "number"
+                                ? detail.chance
+                                : typeof version.max_chance ===
+                                  "number"
+                                ? version.max_chance
+                                : null,
+                            horde: getHordeAvailability(
+                              detail.method?.name || "",
+                              detail.condition_values || []
+                            ),
+                          })
+                        )
+                    );
+                  } catch {
+                    return [];
+                  }
+                }
+              )
+            );
+
           setLocations(
-            locationData.map(
-              (entry: any) =>
-                formatName(
-                  entry.location_area.name
-                )
-            )
+            encounterEntries.flat()
           );
+        } else {
+          setLocations([]);
         }
       } catch {
         setLocations([]);
@@ -462,10 +642,12 @@ export default function PokemonInfoModal({
                 );
 
                 const pokemonId =
-                  getEvolutionName(node.species.url);
+                  getEvolutionId(node.species.url);
 
                 const staticSprite =
-                  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`;
+                  pokemonId
+                    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
+                    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/0.png`;
 
                 const animatedSprite =
                   `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
@@ -668,7 +850,25 @@ export default function PokemonInfoModal({
               grid-template-columns: 1fr;
             }
 
-            .evolution-tree-horizontal {
+            .move-card {
+             display: flex;
+             align-items: center;
+             justify-content: space-between;
+             gap: 10px;
+           }
+
+           .move-name {
+             min-width: 0;
+           }
+
+           .move-level {
+             flex: 0 0 auto;
+             font-weight: 700;
+             white-space: nowrap;
+             opacity: 0.9;
+           }
+
+           .evolution-tree-horizontal {
               justify-content: flex-start;
             }
           }
@@ -900,20 +1100,36 @@ export default function PokemonInfoModal({
                       "egg",
                       "tutor",
                     ].map((method) => {
-                      const moves =
-                        data.moves.filter(
-                          (move) =>
-                            move.version_group_details.some(
-                              (detail) =>
-                                detail
-                                  .move_learn_method
-                                  .name ===
-                                method
-                            )
-                        );
+                      const moves = data.moves
+                        .map((move) => ({
+                          move,
+                          learnDetail: getMoveLearnDetail(
+                            move.version_group_details,
+                            method
+                          ),
+                        }))
+                        .filter(
+                          (entry) =>
+                            entry.learnDetail !== null
+                        )
+                        .sort((a, b) => {
+                          if (method === "level-up") {
+                            return (
+                              (a.learnDetail
+                                ?.level_learned_at || 0) -
+                              (b.learnDetail
+                                ?.level_learned_at || 0)
+                            );
+                          }
 
-                      if (!moves.length)
+                          return a.move.move.name.localeCompare(
+                            b.move.move.name
+                          );
+                        });
+
+                      if (!moves.length) {
                         return null;
+                      }
 
                       return (
                         <section
@@ -921,25 +1137,33 @@ export default function PokemonInfoModal({
                           className="pokemon-info-card"
                         >
                           <h3>
-                            {formatMoveMethod(
-                              method
-                            )}
+                            {formatMoveMethod(method)}
                           </h3>
 
                           <div className="move-grid">
                             {moves.map(
-                              (move) => (
+                              ({
+                                move,
+                                learnDetail,
+                              }) => (
                                 <div
-                                  key={
-                                    move.move
-                                      .name
-                                  }
+                                  key={move.move.name}
                                   className="move-card"
                                 >
-                                  {formatName(
-                                    move
-                                      .move
-                                      .name
+                                  <span className="move-name">
+                                    {formatName(
+                                      move.move.name
+                                    )}
+                                  </span>
+
+                                  {method === "level-up" && (
+                                    <span className="move-level">
+                                      Lv.{" "}
+                                      {
+                                        learnDetail
+                                          ?.level_learned_at
+                                      }
+                                    </span>
                                   )}
                                 </div>
                               )
@@ -1048,25 +1272,150 @@ export default function PokemonInfoModal({
                   <div className="pokemon-tab-section">
                     <section className="pokemon-info-card">
                       <h3>
-                        Encounter Locations
+                        Wild Locations
                       </h3>
 
                       {locations.length > 0 ? (
-                        <div className="location-grid">
-                          {Array.from(
-                            new Set(locations)
-                          ).map(
-                            (location) => (
-                              <div
-                                key={
-                                  location
-                                }
-                                className="location-card"
+                        <div className="wild-location-regions">
+                          {Object.entries(
+                            locations.reduce<
+                              Record<
+                                string,
+                                Record<string, EncounterInfo[]>
                               >
-                                {location}
-                              </div>
+                            >((regions, encounter) => {
+                              if (!regions[encounter.region]) {
+                                regions[encounter.region] = {};
+                              }
+
+                              if (
+                                !regions[encounter.region][
+                                  encounter.location
+                                ]
+                              ) {
+                                regions[encounter.region][
+                                  encounter.location
+                                ] = [];
+                              }
+
+                              regions[encounter.region][
+                                encounter.location
+                              ].push(encounter);
+
+                              return regions;
+                            }, {})
+                          )
+                            .sort(([a], [b]) =>
+                              a.localeCompare(b)
                             )
-                          )}
+                            .map(
+                              ([
+                                region,
+                                regionLocations,
+                              ]) => (
+                                <div
+                                  key={region}
+                                  className="wild-region-section"
+                                >
+                                  <h4>
+                                    {region}
+                                  </h4>
+
+                                  <div className="wild-location-list">
+                                    {Object.entries(
+                                      regionLocations
+                                    )
+                                      .sort(([a], [b]) =>
+                                        a.localeCompare(b)
+                                      )
+                                      .map(
+                                        ([
+                                          location,
+                                          encounters,
+                                        ]) => {
+                                          const uniqueEncounters =
+                                            Array.from(
+                                              new Map(
+                                                encounters.map(
+                                                  (encounter) => [
+                                                    `${encounter.area}-${encounter.time.join(",")}-${encounter.chance}-${encounter.horde}`,
+                                                    encounter,
+                                                  ]
+                                                )
+                                              ).values()
+                                            );
+
+                                          return (
+                                            <div
+                                              key={location}
+                                              className="wild-location-card"
+                                            >
+                                              <h5>
+                                                {location}
+                                              </h5>
+
+                                              <div className="wild-encounter-list">
+                                                {uniqueEncounters.map(
+                                                  (
+                                                    encounter,
+                                                    index
+                                                  ) => (
+                                                    <div
+                                                      key={`${encounter.area}-${index}`}
+                                                      className="wild-encounter-row"
+                                                    >
+                                                      <div>
+                                                        <span className="wild-label">
+                                                          Area
+                                                        </span>
+                                                        <strong>
+                                                          {encounter.area}
+                                                        </strong>
+                                                      </div>
+
+                                                      <div>
+                                                        <span className="wild-label">
+                                                          Time
+                                                        </span>
+                                                        <strong>
+                                                          {encounter.time.join(
+                                                            " / "
+                                                          )}
+                                                        </strong>
+                                                      </div>
+
+                                                      <div>
+                                                        <span className="wild-label">
+                                                          Catch %
+                                                        </span>
+                                                        <strong>
+                                                          {encounter.chance !==
+                                                          null
+                                                            ? `${encounter.chance}%`
+                                                            : "—"}
+                                                        </strong>
+                                                      </div>
+
+                                                      <div>
+                                                        <span className="wild-label">
+                                                          Horde
+                                                        </span>
+                                                        <strong>
+                                                          {encounter.horde}
+                                                        </strong>
+                                                      </div>
+                                                    </div>
+                                                  )
+                                                )}
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+                                      )}
+                                  </div>
+                                </div>
+                              )
+                            )}
                         </div>
                       ) : (
                         <p>
@@ -1074,13 +1423,6 @@ export default function PokemonInfoModal({
                           locations available.
                         </p>
                       )}
-
-                      <small>
-                        Encounter data is based
-                        on the standard Pokémon
-                        API and may differ from
-                        PokeMMO.
-                      </small>
                     </section>
                   </div>
                 )}
