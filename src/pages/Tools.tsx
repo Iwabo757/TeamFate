@@ -23,6 +23,13 @@ export default function Tools() {
       icon: "🎰",
       path: "/shunt-machine",
     },
+    {
+      title: "Altering Cave",
+      description:
+        "View the current Pokémon rotation in Altering Cave, including singles, rare encounters, and hordes.",
+      icon: "🪨",
+      path: "/altering-cave",
+    },
   ];
 
   return (
@@ -94,12 +101,9 @@ export default function Tools() {
 
         .tools-header h1 {
           margin: 0;
-
           font-size: 46px;
           font-weight: 950;
-
           letter-spacing: 4px;
-
           color: #edf7ff;
 
           text-shadow:
@@ -109,9 +113,7 @@ export default function Tools() {
 
         .tools-header p {
           margin: 10px 0 0;
-
           color: #819bb5;
-
           font-size: 15px;
         }
 
@@ -140,7 +142,6 @@ export default function Tools() {
           position: relative;
 
           display: flex;
-
           flex-direction: column;
 
           min-height: 265px;
@@ -345,18 +346,19 @@ export default function Tools() {
         }
 
         /* =========================
-           SHUNT MACHINE
-           CENTER THE THIRD CARD
+           DESKTOP GRID
         ========================= */
 
+        /*
+         * With four tools, use a normal
+         * 2 x 2 grid.
+         */
         .tool-card:last-child {
-          grid-column: 1 / -1;
+          grid-column: auto;
 
-          width: calc(
-            50% - 10px
-          );
+          width: auto;
 
-          justify-self: center;
+          justify-self: stretch;
         }
 
         /* =========================

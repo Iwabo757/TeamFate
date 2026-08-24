@@ -68,9 +68,9 @@ import AdminRecruitment from "./pages/AdminRecruitment";
 
 import HordeHunter from "./pages/HordeHunter";
 import ShuntMachine from "./pages/ShuntMachine";
+import AlteringCave from "./pages/AlteringCave";
 
 import Tools from "./pages/Tools";
-
 
 type ProfileData = {
   id: string;
@@ -376,7 +376,8 @@ function canManageSite(
       path.startsWith("/tools") ||
       path.startsWith("/guides") ||
       path.startsWith("/horde-hunter") ||
-      path.startsWith("/shunt-machine")
+      path.startsWith("/shunt-machine") ||
+      path.startsWith("/altering-cave")
     ) {
       return [
         {
@@ -394,6 +395,9 @@ function canManageSite(
         {
           label: "Shunt Machine",
           path: "/shunt-machine",
+        },        {
+          label: "Altering Cave",
+          path: "/altering-cave",
         },
       ];
     }
@@ -904,6 +908,11 @@ function canManageSite(
   path="/shunt-machine"
   element={<ShuntMachine />}
 />
+<Route
+  path="/altering-cave"
+  element={<AlteringCave />}
+/>
+
 <Route
   path="/tools"
   element={<Tools />}

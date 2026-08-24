@@ -4936,3 +4936,157 @@ textarea:focus {
     font-size: 0.72rem;
   }
 }
+/* =========================================
+   ALTERING CAVE PAGE
+========================================= */
+
+.altering-cave-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.altering-cave-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.altering-cave-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.altering-cave-header p {
+  margin: 6px 0 12px;
+  opacity: 0.7;
+}
+
+.altering-cave-status {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.altering-cave-card {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.altering-cave-section {
+  width: 100%;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.altering-cave-section h2 {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.altering-cave-sprites {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+/* No box around individual Pokémon */
+.altering-cave-pokemon {
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+
+  width: 48px;
+  height: 48px;
+
+  padding: 0;
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+
+.altering-cave-pokemon img {
+  width: 42px;
+  height: 42px;
+
+  object-fit: contain;
+
+  image-rendering: pixelated;
+
+  pointer-events: none;
+}
+
+.altering-cave-pokemon:hover {
+  transform: scale(1.2);
+
+  filter: drop-shadow(
+    0 0 6px
+    rgba(120, 190, 255, 0.8)
+  );
+}
+
+.altering-cave-pokemon:active {
+  transform: scale(1.05);
+}
+
+.altering-cave-error {
+  margin: 15px 0;
+}
+
+.altering-cave-retry {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+  .altering-cave-page {
+    padding: 16px 10px;
+  }
+
+  .altering-cave-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .altering-cave-section {
+    margin-bottom: 20px;
+  }
+
+  .altering-cave-pokemon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .altering-cave-pokemon img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .altering-cave-sprites {
+    gap: 1px 3px;
+  }
+}

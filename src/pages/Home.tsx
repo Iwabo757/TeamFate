@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import HomeTicker from "../components/HomeTicker";
-import PokemonInfoModal from "../components/PokemonInfoModal";
-import { getAlteringCaveData } from "../lib/alteringCave";
 
 type GameTime = {
   hours: number;
@@ -10,31 +8,15 @@ type GameTime = {
   seconds: number;
 };
 
-type AlteringCaveData = Awaited<
-  ReturnType<typeof getAlteringCaveData>
->;
-
-type HomePokemon = {
-  id: number;
-  name: string;
-  region?: string | null;
-  caught: boolean;
-  owners: string[];
-};
-
-type ModalPokemon = {
-  id: number;
-  name: string;
-  region?: string;
-  caught: boolean;
-  owners: Record<string, number>;
-  screenshots: string[];
-  totalCopies: number;
-};
-
 function getPokeMMOTime(): GameTime {
   const now = new Date();
 
+  /*
+   * PokeMMO uses a 24-hour in-game cycle
+   * that completes every 6 real-world hours.
+   *
+   * 1 real second = 4 in-game seconds.
+   */
   const gameDayMilliseconds =
     24 * 60 * 60 * 1000;
 
@@ -66,109 +48,29 @@ function getPokeMMOTime(): GameTime {
   };
 }
 
-function normalizePokemonName(
-  name: string
-): string {
-  return name
-    .replace(/\s*\([^)]*\)/g, "")
-    .trim()
-    .toLowerCase();
-}
-
-function buildOwners(
-  owners: string[]
-): Record<string, number> {
-  return owners.reduce(
-    (
-      result,
-      owner
-    ) => {
-      result[owner] =
-        (result[owner] ?? 0) + 1;
-
-      return result;
-    },
-    {} as Record<string, number>
-  );
-}
-
-function convertToModalPokemon(
-  pokemon: HomePokemon
-): ModalPokemon {
-  return {
-    id: pokemon.id,
-    name: pokemon.name,
-    region:
-      pokemon.region ?? undefined,
-    caught: pokemon.caught,
-    owners: buildOwners(
-      pokemon.owners
-    ),
-    screenshots: [],
-    totalCopies:
-      pokemon.owners.length,
-  };
-}
-
 export default function Home() {
-  const [
-    memberCount,
-    setMemberCount,
-  ] = useState(0);
+  const [memberCount, setMemberCount] =
+    useState(0);
 
-  const [
-    shinyCount,
-    setShinyCount,
-  ] = useState(0);
+  const [shinyCount, setShinyCount] =
+    useState(0);
 
-  const [
-    gameTime,
-    setGameTime,
-  ] = useState<GameTime>(() =>
-    getPokeMMOTime()
-  );
+  const [gameTime, setGameTime] =
+    useState<GameTime>(() =>
+      getPokeMMOTime()
+    );
 
-  const [
-    alteringCave,
-    setAlteringCave,
-  ] = useState<
-    AlteringCaveData | null
-  >(null);
+  const [topHunter, setTopHunter] =
+    useState({
+      name: "None",
+      count: 0,
+    });
 
-  const [
-    alteringCaveLoading,
-    setAlteringCaveLoading,
-  ] = useState(true);
-
-  const [
-    topHunter,
-    setTopHunter,
-  ] = useState({
-    name: "None",
-    count: 0,
-  });
-
-  const [
-    welcome,
-    setWelcome,
-  ] = useState({
-    title: "",
-    message: "",
-  });
-
-  const [
-    pokemonMap,
-    setPokemonMap,
-  ] = useState<
-    Record<string, HomePokemon>
-  >({});
-
-  const [
-    selectedPokemon,
-    setSelectedPokemon,
-  ] = useState<HomePokemon | null>(
-    null
-  );
+  const [welcome, setWelcome] =
+    useState({
+      title: "",
+      message: "",
+    });
 
   /* =========================================
      LIVE POKEMMO TIME
@@ -197,171 +99,6 @@ export default function Home() {
   }, []);
 
   /* =========================================
-     LOAD ALTERING CAVE
-  ========================================= */
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function loadAlteringCave() {
-      try {
-        const data =
-          await getAlteringCaveData();
-
-        if (!mounted) {
-          return;
-        }
-
-        setAlteringCave(data);
-      } catch (error) {
-        console.error(
-          "Failed to load Altering Cave:",
-          error
-        );
-      } finally {
-        if (mounted) {
-          setAlteringCaveLoading(
-            false
-          );
-        }
-      }
-    }
-
-    loadAlteringCave();
-
-    const refreshTimer =
-      window.setInterval(
-        loadAlteringCave,
-        60000
-      );
-
-    return () => {
-      mounted = false;
-
-      window.clearInterval(
-        refreshTimer
-      );
-    };
-  }, []);
-
-  /* =========================================
-     LOAD POKEMON MAP
-  ========================================= */
-
-  useEffect(() => {
-    loadPokemonMap();
-  }, []);
-
-  async function loadPokemonMap() {
-    try {
-      const {
-        data: pokemonData,
-        error: pokemonError,
-      } = await supabase
-        .from("pokemon")
-        .select(
-          "id, name, region"
-        );
-
-      if (pokemonError) {
-        throw pokemonError;
-      }
-
-      const {
-        data: catches,
-        error: catchesError,
-      } = await supabase
-        .from("shiny_catches")
-        .select(`
-          pokemon_id,
-          profile_id,
-          profiles (
-            nickname
-          )
-        `);
-
-      if (catchesError) {
-        throw catchesError;
-      }
-
-      const ownersByPokemon:
-        Record<number, string[]> = {};
-
-      catches?.forEach(
-        (catchEntry: any) => {
-          const pokemonId =
-            Number(
-              catchEntry.pokemon_id
-            );
-
-          const owner =
-            catchEntry.profiles
-              ?.nickname ??
-            "Unknown";
-
-          if (
-            !ownersByPokemon[
-              pokemonId
-            ]
-          ) {
-            ownersByPokemon[
-              pokemonId
-            ] = [];
-          }
-
-          ownersByPokemon[
-            pokemonId
-          ].push(owner);
-        }
-      );
-
-      const nextPokemonMap:
-        Record<
-          string,
-          HomePokemon
-        > = {};
-
-      pokemonData?.forEach(
-        (pokemon: any) => {
-          const pokemonId =
-            Number(
-              pokemon.id
-            );
-
-          const owners =
-            ownersByPokemon[
-              pokemonId
-            ] ?? [];
-
-          nextPokemonMap[
-            normalizePokemonName(
-              pokemon.name
-            )
-          ] = {
-            id: pokemonId,
-            name: pokemon.name,
-            region:
-              pokemon.region ??
-              null,
-            caught:
-              owners.length > 0,
-            owners,
-          };
-        }
-      );
-
-      setPokemonMap(
-        nextPokemonMap
-      );
-    } catch (error) {
-      console.error(
-        "Failed to load Pokémon data:",
-        error
-      );
-    }
-  }
-
-  /* =========================================
      LOAD STATS
   ========================================= */
 
@@ -383,6 +120,10 @@ export default function Home() {
 
   async function loadStats() {
     try {
+      /* ===============================
+         MEMBER COUNT
+      ================================ */
+
       const {
         count: members,
         error: membersError,
@@ -400,6 +141,10 @@ export default function Home() {
       setMemberCount(
         members ?? 0
       );
+
+      /* ===============================
+         SHINY COUNT
+      ================================ */
 
       const {
         count: shinies,
@@ -419,6 +164,10 @@ export default function Home() {
         shinies ?? 0
       );
 
+      /* ===============================
+         TOP SHINY TRAINER
+      ================================ */
+
       const {
         data: catches,
         error: catchesError,
@@ -435,17 +184,15 @@ export default function Home() {
         throw catchesError;
       }
 
-      const totals:
-        Record<
-          string,
-          number
-        > = {};
+      const totals: Record<
+        string,
+        number
+      > = {};
 
       catches?.forEach(
         (entry: any) => {
           const name =
-            entry.profiles
-              ?.nickname ??
+            entry.profiles?.nickname ??
             "Unknown";
 
           totals[name] =
@@ -455,9 +202,7 @@ export default function Home() {
       );
 
       const leader =
-        Object.entries(
-          totals
-        )
+        Object.entries(totals)
           .sort(
             (a, b) =>
               b[1] - a[1]
@@ -519,106 +264,6 @@ export default function Home() {
   }
 
   /* =========================================
-     POKEMON HELPERS
-  ========================================= */
-
-  function getPokemon(
-    name: string
-  ): HomePokemon | null {
-    const normalizedName =
-      normalizePokemonName(
-        name
-      );
-
-    return (
-      pokemonMap[
-        normalizedName
-      ] ?? null
-    );
-  }
-
-  function openPokemon(
-    pokemon: HomePokemon
-  ) {
-    setSelectedPokemon(
-      pokemon
-    );
-  }
-
-  function openPokemonById(
-    pokemonId: number
-  ) {
-    const pokemon =
-      Object.values(
-        pokemonMap
-      ).find(
-        (entry) =>
-          entry.id === pokemonId
-      );
-
-    if (pokemon) {
-      setSelectedPokemon(
-        pokemon
-      );
-    }
-  }
-
-  function PokemonSprite({
-    name,
-  }: {
-    name: string;
-  }) {
-    const pokemon =
-      getPokemon(name);
-
-    if (!pokemon) {
-      return null;
-    }
-
-    return (
-      <button
-        type="button"
-        className="altering-pokemon-sprite"
-        onClick={() =>
-          openPokemon(
-            pokemon
-          )
-        }
-        title={`View ${pokemon.name}`}
-        aria-label={`View ${pokemon.name}`}
-      >
-        <img
-          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
-          alt={`Shiny ${pokemon.name}`}
-          loading="lazy"
-        />
-      </button>
-    );
-  }
-
-  function PokemonSpriteGroup({
-    pokemon,
-  }: {
-    pokemon: string[];
-  }) {
-    return (
-      <div className="altering-sprite-grid">
-        {pokemon.map(
-          (
-            pokemonName,
-            index
-          ) => (
-            <PokemonSprite
-              key={`${pokemonName}-${index}`}
-              name={pokemonName}
-            />
-          )
-        )}
-      </div>
-    );
-  }
-
-  /* =========================================
      FORMAT GAME TIME
   ========================================= */
 
@@ -640,6 +285,10 @@ export default function Home() {
       "0"
     )}`;
 
+  /* =========================================
+     DETERMINE GAME PERIOD
+  ========================================= */
+
   let gamePeriod:
     | "🌅 Morning"
     | "☀️ Day"
@@ -659,6 +308,10 @@ export default function Home() {
     gamePeriod =
       "☀️ Day";
   }
+
+  /* =========================================
+     HOME
+  ========================================= */
 
   return (
     <div className="home-page">
@@ -717,82 +370,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ALTERING CAVE */}
-
-        <div className="card altering-cave-card">
-          <h2>
-            Altering Cave
-          </h2>
-
-          {alteringCaveLoading && (
-            <div className="altering-cave-loading">
-              Loading current rotation...
-            </div>
-          )}
-
-          {!alteringCaveLoading &&
-            !alteringCave && (
-              <div className="altering-cave-loading">
-                Unable to load rotation
-              </div>
-            )}
-
-          {!alteringCaveLoading &&
-            alteringCave && (
-              <div className="altering-cave-content">
-
-                {alteringCave
-                  .encounters
-                  ?.length > 0 && (
-                  <div className="altering-group">
-                    <div className="altering-label">
-                      Singles
-                    </div>
-
-                    <PokemonSpriteGroup
-                      pokemon={
-                        alteringCave.encounters
-                      }
-                    />
-                  </div>
-                )}
-
-                {alteringCave
-                  .rareEncounters
-                  ?.length > 0 && (
-                  <div className="altering-group">
-                    <div className="altering-label">
-                      Rare Singles
-                    </div>
-
-                    <PokemonSpriteGroup
-                      pokemon={
-                        alteringCave.rareEncounters
-                      }
-                    />
-                  </div>
-                )}
-
-                {alteringCave
-                  .hordes
-                  ?.length > 0 && (
-                  <div className="altering-group">
-                    <div className="altering-label">
-                      Hordes
-                    </div>
-
-                    <PokemonSpriteGroup
-                      pokemon={
-                        alteringCave.hordes
-                      }
-                    />
-                  </div>
-                )}
-
-              </div>
-            )}
-        </div>
-
         {/* TEAM SHINIES */}
 
         <div className="card">
@@ -822,28 +399,6 @@ export default function Home() {
         </div>
 
       </div>
-
-      {/* ===============================
-          POKEMON INFO MODAL
-          SAME MODAL AS TEAM DEX
-      ================================ */}
-
-      {selectedPokemon && (
-        <PokemonInfoModal
-          pokemon={convertToModalPokemon(
-            selectedPokemon
-          )}
-          onClose={() =>
-            setSelectedPokemon(
-              null
-            )
-          }
-          onPokemonClick={
-            openPokemonById
-          }
-          defaultTab="Summary"
-        />
-      )}
 
     </div>
   );
