@@ -512,6 +512,21 @@ export default function AlteringCave() {
         </div>
       )}
 
+{/* =====================================
+    DATA CREDIT
+===================================== */}
+
+<div className="altering-cave-credit">
+  Altering Cave data provided by{" "}
+  <a
+    href="https://docs.google.com/spreadsheets/d/12lZupylxLAKUVQQJZIC8GJmvQiUwpbAAQ3BduAu_rig/edit?gid=1031347870#gid=1031347870"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    Team Mew and Trainer Polymnia
+  </a>
+</div>
+
       {/* =====================================
           TEAM DEX POKEMON MODAL
       ====================================== */}

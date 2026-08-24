@@ -5097,3 +5097,33 @@ textarea:focus {
     gap: 1px 3px;
   }
 }
+
+/* =========================
+   DATA CREDIT
+========================= */
+
+.altering-cave-credit {
+  margin-top: 35px;
+
+  text-align: center;
+
+  font-size: 10px;
+  line-height: 1.5;
+
+  color: rgba(130, 155, 180, 0.55);
+}
+
+.altering-cave-credit a {
+  color: rgba(130, 190, 225, 0.7);
+
+  text-decoration: none;
+
+  transition:
+    color 0.18s ease;
+}
+
+.altering-cave-credit a:hover {
+  color: #9bdcff;
+
+  text-decoration: underline;
+}
