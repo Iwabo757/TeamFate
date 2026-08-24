@@ -9,6 +9,10 @@ type GameTime = {
   seconds: number;
 };
 
+type AlteringCaveData = Awaited<
+  ReturnType<typeof getAlteringCaveData>
+>;
+
 function getPokeMMOTime(): GameTime {
   const now = new Date();
 
@@ -61,6 +65,14 @@ export default function Home() {
       getPokeMMOTime()
     );
 
+  const [alteringCave, setAlteringCave] =
+    useState<AlteringCaveData | null>(
+      null
+    );
+
+  const [alteringCaveLoading, setAlteringCaveLoading] =
+    useState(true);
+
   const [topHunter, setTopHunter] =
     useState({
       name: "None",
@@ -99,27 +111,50 @@ export default function Home() {
   }, []);
 
   /* =========================================
-     LIVE Altering Cave 
+     LIVE ALTERING CAVE
   ========================================= */
 
-useEffect(() => {
-  async function loadAlteringCave() {
-    try {
-      const data = await getAlteringCaveData();
+  useEffect(() => {
+    let mounted = true;
 
-      data.raw.forEach((row, index) => {
-        console.log(`ROW ${index}:`, row);
-      });
-    } catch (error) {
-      console.error(
-        "Failed to load Altering Cave:",
-        error
-      );
+    async function loadAlteringCave() {
+      try {
+        const data =
+          await getAlteringCaveData();
+
+        if (!mounted) {
+          return;
+        }
+
+        setAlteringCave(data);
+      } catch (error) {
+        console.error(
+          "Failed to load Altering Cave:",
+          error
+        );
+      } finally {
+        if (mounted) {
+          setAlteringCaveLoading(false);
+        }
+      }
     }
-  }
 
-  loadAlteringCave();
-}, []);
+    loadAlteringCave();
+
+    const refreshTimer =
+      window.setInterval(
+        loadAlteringCave,
+        60000
+      );
+
+    return () => {
+      mounted = false;
+
+      window.clearInterval(
+        refreshTimer
+      );
+    };
+  }, []);
 
   /* =========================================
      LOAD STATS
@@ -177,7 +212,10 @@ useEffect(() => {
 
   async function loadStats() {
     try {
-      const { count: members, error: membersError } =
+      const {
+        count: members,
+        error: membersError,
+      } =
         await supabase
           .from("profiles")
           .select("*", {
@@ -193,7 +231,10 @@ useEffect(() => {
         members ?? 0
       );
 
-      const { count: shinies, error: shiniesError } =
+      const {
+        count: shinies,
+        error: shiniesError,
+      } =
         await supabase
           .from("shiny_catches")
           .select("*", {
@@ -366,6 +407,76 @@ useEffect(() => {
           <div className="game-period">
             {gamePeriod}
           </div>
+        </div>
+
+        {/* ALTERING CAVE */}
+
+        <div className="card altering-cave-card">
+          <h2>
+            Altering Cave
+          </h2>
+
+          {alteringCaveLoading && (
+            <div className="altering-cave-loading">
+              Loading current rotation...
+            </div>
+          )}
+
+          {!alteringCaveLoading &&
+            !alteringCave && (
+              <div className="altering-cave-loading">
+                Unable to load rotation
+              </div>
+            )}
+
+          {!alteringCaveLoading &&
+            alteringCave && (
+              <div className="altering-cave-content">
+
+                {alteringCave.encounters?.length > 0 && (
+                  <div className="altering-group">
+                    <div className="altering-label">
+                      Singles
+                    </div>
+
+                    <div className="altering-pokemon">
+                      {alteringCave.encounters.join(
+                        " • "
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {alteringCave.rareEncounters?.length > 0 && (
+                  <div className="altering-group">
+                    <div className="altering-label">
+                      Rare Singles
+                    </div>
+
+                    <div className="altering-pokemon">
+                      {alteringCave.rareEncounters.join(
+                        " • "
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {alteringCave.hordes?.length > 0 && (
+                  <div className="altering-group">
+                    <div className="altering-label">
+                      Hordes
+                    </div>
+
+                    <div className="altering-pokemon">
+                      {alteringCave.hordes.join(
+                        " • "
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
         </div>
 
         {/* TEAM SHINIES */}
