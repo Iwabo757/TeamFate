@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import HomeTicker from "../components/HomeTicker";
+import PokemonInfoModal from "../components/PokemonInfoModal";
 import { getAlteringCaveData } from "../lib/alteringCave";
 
 type GameTime = {
@@ -19,6 +20,16 @@ type HomePokemon = {
   region?: string | null;
   caught: boolean;
   owners: string[];
+};
+
+type ModalPokemon = {
+  id: number;
+  name: string;
+  region?: string;
+  caught: boolean;
+  owners: Record<string, number>;
+  screenshots: string[];
+  totalCopies: number;
 };
 
 function getPokeMMOTime(): GameTime {
@@ -64,44 +75,93 @@ function normalizePokemonName(
     .toLowerCase();
 }
 
+function buildOwners(
+  owners: string[]
+): Record<string, number> {
+  return owners.reduce(
+    (
+      result,
+      owner
+    ) => {
+      result[owner] =
+        (result[owner] ?? 0) + 1;
+
+      return result;
+    },
+    {} as Record<string, number>
+  );
+}
+
+function convertToModalPokemon(
+  pokemon: HomePokemon
+): ModalPokemon {
+  return {
+    id: pokemon.id,
+    name: pokemon.name,
+    region:
+      pokemon.region ?? undefined,
+    caught: pokemon.caught,
+    owners: buildOwners(
+      pokemon.owners
+    ),
+    screenshots: [],
+    totalCopies:
+      pokemon.owners.length,
+  };
+}
+
 export default function Home() {
-  const [memberCount, setMemberCount] =
-    useState(0);
+  const [
+    memberCount,
+    setMemberCount,
+  ] = useState(0);
 
-  const [shinyCount, setShinyCount] =
-    useState(0);
+  const [
+    shinyCount,
+    setShinyCount,
+  ] = useState(0);
 
-  const [gameTime, setGameTime] =
-    useState<GameTime>(() =>
-      getPokeMMOTime()
-    );
+  const [
+    gameTime,
+    setGameTime,
+  ] = useState<GameTime>(() =>
+    getPokeMMOTime()
+  );
 
-  const [alteringCave, setAlteringCave] =
-    useState<AlteringCaveData | null>(
-      null
-    );
+  const [
+    alteringCave,
+    setAlteringCave,
+  ] = useState<
+    AlteringCaveData | null
+  >(null);
 
   const [
     alteringCaveLoading,
     setAlteringCaveLoading,
   ] = useState(true);
 
-  const [topHunter, setTopHunter] =
-    useState({
-      name: "None",
-      count: 0,
-    });
+  const [
+    topHunter,
+    setTopHunter,
+  ] = useState({
+    name: "None",
+    count: 0,
+  });
 
-  const [welcome, setWelcome] =
-    useState({
-      title: "",
-      message: "",
-    });
+  const [
+    welcome,
+    setWelcome,
+  ] = useState({
+    title: "",
+    message: "",
+  });
 
-  const [pokemonMap, setPokemonMap] =
-    useState<
-      Record<string, HomePokemon>
-    >({});
+  const [
+    pokemonMap,
+    setPokemonMap,
+  ] = useState<
+    Record<string, HomePokemon>
+  >({});
 
   const [
     selectedPokemon,
@@ -123,13 +183,16 @@ export default function Home() {
 
     updateGameTime();
 
-    const timer = window.setInterval(
-      updateGameTime,
-      1000
-    );
+    const timer =
+      window.setInterval(
+        updateGameTime,
+        1000
+      );
 
     return () => {
-      window.clearInterval(timer);
+      window.clearInterval(
+        timer
+      );
     };
   }, []);
 
@@ -157,7 +220,9 @@ export default function Home() {
         );
       } finally {
         if (mounted) {
-          setAlteringCaveLoading(false);
+          setAlteringCaveLoading(
+            false
+          );
         }
       }
     }
@@ -251,13 +316,17 @@ export default function Home() {
       );
 
       const nextPokemonMap:
-        Record<string, HomePokemon> =
-        {};
+        Record<
+          string,
+          HomePokemon
+        > = {};
 
       pokemonData?.forEach(
         (pokemon: any) => {
           const pokemonId =
-            Number(pokemon.id);
+            Number(
+              pokemon.id
+            );
 
           const owners =
             ownersByPokemon[
@@ -367,8 +436,10 @@ export default function Home() {
       }
 
       const totals:
-        Record<string, number> =
-        {};
+        Record<
+          string,
+          number
+        > = {};
 
       catches?.forEach(
         (entry: any) => {
@@ -384,7 +455,9 @@ export default function Home() {
       );
 
       const leader =
-        Object.entries(totals)
+        Object.entries(
+          totals
+        )
           .sort(
             (a, b) =>
               b[1] - a[1]
@@ -453,13 +526,41 @@ export default function Home() {
     name: string
   ): HomePokemon | null {
     const normalizedName =
-      normalizePokemonName(name);
+      normalizePokemonName(
+        name
+      );
 
     return (
       pokemonMap[
         normalizedName
       ] ?? null
     );
+  }
+
+  function openPokemon(
+    pokemon: HomePokemon
+  ) {
+    setSelectedPokemon(
+      pokemon
+    );
+  }
+
+  function openPokemonById(
+    pokemonId: number
+  ) {
+    const pokemon =
+      Object.values(
+        pokemonMap
+      ).find(
+        (entry) =>
+          entry.id === pokemonId
+      );
+
+    if (pokemon) {
+      setSelectedPokemon(
+        pokemon
+      );
+    }
   }
 
   function PokemonSprite({
@@ -479,15 +580,17 @@ export default function Home() {
         type="button"
         className="altering-pokemon-sprite"
         onClick={() =>
-          setSelectedPokemon(
+          openPokemon(
             pokemon
           )
         }
-        title={pokemon.name}
+        title={`View ${pokemon.name}`}
+        aria-label={`View ${pokemon.name}`}
       >
         <img
           src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
-          alt={pokemon.name}
+          alt={`Shiny ${pokemon.name}`}
+          loading="lazy"
         />
       </button>
     );
@@ -501,7 +604,10 @@ export default function Home() {
     return (
       <div className="altering-sprite-grid">
         {pokemon.map(
-          (pokemonName, index) => (
+          (
+            pokemonName,
+            index
+          ) => (
             <PokemonSprite
               key={`${pokemonName}-${index}`}
               name={pokemonName}
@@ -718,127 +824,25 @@ export default function Home() {
       </div>
 
       {/* ===============================
-          POKEMON MODAL
+          POKEMON INFO MODAL
+          SAME MODAL AS TEAM DEX
       ================================ */}
 
       {selectedPokemon && (
-        <div
-          className="modal-overlay"
-          onClick={() =>
+        <PokemonInfoModal
+          pokemon={convertToModalPokemon(
+            selectedPokemon
+          )}
+          onClose={() =>
             setSelectedPokemon(
               null
             )
           }
-        >
-          <div
-            className="pokemon-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          >
-            <button
-              type="button"
-              className="close-btn"
-              onClick={() =>
-                setSelectedPokemon(
-                  null
-                )
-              }
-            >
-              ×
-            </button>
-
-            <div className="modal-header">
-              <div>
-                <h2>
-                  {selectedPokemon.name}
-                </h2>
-
-                <span>
-                  #
-                  {String(
-                    selectedPokemon.id
-                  ).padStart(
-                    3,
-                    "0"
-                  )}
-                </span>
-              </div>
-
-              <span className="status-badge">
-                {selectedPokemon.caught
-                  ? "Captured"
-                  : "Missing"}
-              </span>
-            </div>
-
-            <div className="modal-body">
-
-              <div className="modal-left">
-                <img
-                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.id}.png`}
-                  alt={
-                    selectedPokemon.name
-                  }
-                  className="modal-sprite"
-                />
-              </div>
-
-              <div className="modal-right">
-
-                <div className="detail-card">
-                  <h3>
-                    Pokédex Info
-                  </h3>
-
-                  <p>
-                    National Dex #
-                    {selectedPokemon.id}
-                  </p>
-
-                  <p>
-                    Region:{" "}
-                    {selectedPokemon.region ??
-                      "Unknown"}
-                  </p>
-                </div>
-
-                <div className="detail-card">
-                  <h3>
-                    Team Fate Owners
-                  </h3>
-
-                  {selectedPokemon
-                    .owners
-                    .length > 0 ? (
-                    <div className="pokemon-owner-list">
-                      {[
-                        ...new Set(
-                          selectedPokemon.owners
-                        ),
-                      ].map(
-                        (owner) => (
-                          <div
-                            key={owner}
-                          >
-                            {owner}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <p>
-                      No Team Fate shiny
-                      recorded.
-                    </p>
-                  )}
-                </div>
-
-              </div>
-
-            </div>
-          </div>
-        </div>
+          onPokemonClick={
+            openPokemonById
+          }
+          defaultTab="Summary"
+        />
       )}
 
     </div>
