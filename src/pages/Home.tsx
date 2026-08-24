@@ -13,15 +13,17 @@ type AlteringCaveData = Awaited<
   ReturnType<typeof getAlteringCaveData>
 >;
 
+type HomePokemon = {
+  id: number;
+  name: string;
+  region?: string | null;
+  caught: boolean;
+  owners: string[];
+};
+
 function getPokeMMOTime(): GameTime {
   const now = new Date();
 
-  /*
-   * PokeMMO uses a 24-hour in-game cycle
-   * that completes every 6 real-world hours.
-   *
-   * 1 real second = 4 in-game seconds.
-   */
   const gameDayMilliseconds =
     24 * 60 * 60 * 1000;
 
@@ -53,6 +55,15 @@ function getPokeMMOTime(): GameTime {
   };
 }
 
+function normalizePokemonName(
+  name: string
+): string {
+  return name
+    .replace(/\s*\([^)]*\)/g, "")
+    .trim()
+    .toLowerCase();
+}
+
 export default function Home() {
   const [memberCount, setMemberCount] =
     useState(0);
@@ -70,8 +81,10 @@ export default function Home() {
       null
     );
 
-  const [alteringCaveLoading, setAlteringCaveLoading] =
-    useState(true);
+  const [
+    alteringCaveLoading,
+    setAlteringCaveLoading,
+  ] = useState(true);
 
   const [topHunter, setTopHunter] =
     useState({
@@ -84,6 +97,18 @@ export default function Home() {
       title: "",
       message: "",
     });
+
+  const [pokemonMap, setPokemonMap] =
+    useState<
+      Record<string, HomePokemon>
+    >({});
+
+  const [
+    selectedPokemon,
+    setSelectedPokemon,
+  ] = useState<HomePokemon | null>(
+    null
+  );
 
   /* =========================================
      LIVE POKEMMO TIME
@@ -104,14 +129,12 @@ export default function Home() {
     );
 
     return () => {
-      window.clearInterval(
-        timer
-      );
+      window.clearInterval(timer);
     };
   }, []);
 
   /* =========================================
-     LIVE ALTERING CAVE
+     LOAD ALTERING CAVE
   ========================================= */
 
   useEffect(() => {
@@ -157,6 +180,119 @@ export default function Home() {
   }, []);
 
   /* =========================================
+     LOAD POKEMON MAP
+  ========================================= */
+
+  useEffect(() => {
+    loadPokemonMap();
+  }, []);
+
+  async function loadPokemonMap() {
+    try {
+      const {
+        data: pokemonData,
+        error: pokemonError,
+      } = await supabase
+        .from("pokemon")
+        .select(
+          "id, name, region"
+        );
+
+      if (pokemonError) {
+        throw pokemonError;
+      }
+
+      const {
+        data: catches,
+        error: catchesError,
+      } = await supabase
+        .from("shiny_catches")
+        .select(`
+          pokemon_id,
+          profile_id,
+          profiles (
+            nickname
+          )
+        `);
+
+      if (catchesError) {
+        throw catchesError;
+      }
+
+      const ownersByPokemon:
+        Record<number, string[]> = {};
+
+      catches?.forEach(
+        (catchEntry: any) => {
+          const pokemonId =
+            Number(
+              catchEntry.pokemon_id
+            );
+
+          const owner =
+            catchEntry.profiles
+              ?.nickname ??
+            "Unknown";
+
+          if (
+            !ownersByPokemon[
+              pokemonId
+            ]
+          ) {
+            ownersByPokemon[
+              pokemonId
+            ] = [];
+          }
+
+          ownersByPokemon[
+            pokemonId
+          ].push(owner);
+        }
+      );
+
+      const nextPokemonMap:
+        Record<string, HomePokemon> =
+        {};
+
+      pokemonData?.forEach(
+        (pokemon: any) => {
+          const pokemonId =
+            Number(pokemon.id);
+
+          const owners =
+            ownersByPokemon[
+              pokemonId
+            ] ?? [];
+
+          nextPokemonMap[
+            normalizePokemonName(
+              pokemon.name
+            )
+          ] = {
+            id: pokemonId,
+            name: pokemon.name,
+            region:
+              pokemon.region ??
+              null,
+            caught:
+              owners.length > 0,
+            owners,
+          };
+        }
+      );
+
+      setPokemonMap(
+        nextPokemonMap
+      );
+    } catch (error) {
+      console.error(
+        "Failed to load Pokémon data:",
+        error
+      );
+    }
+  }
+
+  /* =========================================
      LOAD STATS
   ========================================= */
 
@@ -176,52 +312,17 @@ export default function Home() {
     };
   }, []);
 
-  /* =========================================
-     LOAD WELCOME MESSAGE
-  ========================================= */
-
-  useEffect(() => {
-    loadWelcome();
-  }, []);
-
-  async function loadWelcome() {
-    const { data, error } =
-      await supabase
-        .from("homepage_message")
-        .select("*")
-        .single();
-
-    if (error) {
-      console.error(
-        "Failed to load welcome message:",
-        error
-      );
-
-      return;
-    }
-
-    if (data) {
-      setWelcome({
-        title:
-          data.title ?? "",
-        message:
-          data.message ?? "",
-      });
-    }
-  }
-
   async function loadStats() {
     try {
       const {
         count: members,
         error: membersError,
-      } =
-        await supabase
-          .from("profiles")
-          .select("*", {
-            count: "exact",
-            head: true,
-          });
+      } = await supabase
+        .from("profiles")
+        .select("*", {
+          count: "exact",
+          head: true,
+        });
 
       if (membersError) {
         throw membersError;
@@ -234,13 +335,12 @@ export default function Home() {
       const {
         count: shinies,
         error: shiniesError,
-      } =
-        await supabase
-          .from("shiny_catches")
-          .select("*", {
-            count: "exact",
-            head: true,
-          });
+      } = await supabase
+        .from("shiny_catches")
+        .select("*", {
+          count: "exact",
+          head: true,
+        });
 
       if (shiniesError) {
         throw shiniesError;
@@ -253,29 +353,28 @@ export default function Home() {
       const {
         data: catches,
         error: catchesError,
-      } =
-        await supabase
-          .from("shiny_catches")
-          .select(`
-            profile_id,
-            profiles (
-              nickname
-            )
-          `);
+      } = await supabase
+        .from("shiny_catches")
+        .select(`
+          profile_id,
+          profiles (
+            nickname
+          )
+        `);
 
       if (catchesError) {
         throw catchesError;
       }
 
-      const totals: Record<
-        string,
-        number
-      > = {};
+      const totals:
+        Record<string, number> =
+        {};
 
       catches?.forEach(
         (entry: any) => {
           const name =
-            entry.profiles?.nickname ??
+            entry.profiles
+              ?.nickname ??
             "Unknown";
 
           totals[name] =
@@ -308,6 +407,109 @@ export default function Home() {
         error
       );
     }
+  }
+
+  /* =========================================
+     LOAD WELCOME MESSAGE
+  ========================================= */
+
+  useEffect(() => {
+    loadWelcome();
+  }, []);
+
+  async function loadWelcome() {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("homepage_message")
+      .select("*")
+      .single();
+
+    if (error) {
+      console.error(
+        "Failed to load welcome message:",
+        error
+      );
+
+      return;
+    }
+
+    if (data) {
+      setWelcome({
+        title:
+          data.title ?? "",
+        message:
+          data.message ?? "",
+      });
+    }
+  }
+
+  /* =========================================
+     POKEMON HELPERS
+  ========================================= */
+
+  function getPokemon(
+    name: string
+  ): HomePokemon | null {
+    const normalizedName =
+      normalizePokemonName(name);
+
+    return (
+      pokemonMap[
+        normalizedName
+      ] ?? null
+    );
+  }
+
+  function PokemonSprite({
+    name,
+  }: {
+    name: string;
+  }) {
+    const pokemon =
+      getPokemon(name);
+
+    if (!pokemon) {
+      return null;
+    }
+
+    return (
+      <button
+        type="button"
+        className="altering-pokemon-sprite"
+        onClick={() =>
+          setSelectedPokemon(
+            pokemon
+          )
+        }
+        title={pokemon.name}
+      >
+        <img
+          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
+          alt={pokemon.name}
+        />
+      </button>
+    );
+  }
+
+  function PokemonSpriteGroup({
+    pokemon,
+  }: {
+    pokemon: string[];
+  }) {
+    return (
+      <div className="altering-sprite-grid">
+        {pokemon.map(
+          (pokemonName, index) => (
+            <PokemonSprite
+              key={`${pokemonName}-${index}`}
+              name={pokemonName}
+            />
+          )
+        )}
+      </div>
+    );
   }
 
   /* =========================================
@@ -433,45 +635,51 @@ export default function Home() {
             alteringCave && (
               <div className="altering-cave-content">
 
-                {alteringCave.encounters?.length > 0 && (
+                {alteringCave
+                  .encounters
+                  ?.length > 0 && (
                   <div className="altering-group">
                     <div className="altering-label">
                       Singles
                     </div>
 
-                    <div className="altering-pokemon">
-                      {alteringCave.encounters.join(
-                        " • "
-                      )}
-                    </div>
+                    <PokemonSpriteGroup
+                      pokemon={
+                        alteringCave.encounters
+                      }
+                    />
                   </div>
                 )}
 
-                {alteringCave.rareEncounters?.length > 0 && (
+                {alteringCave
+                  .rareEncounters
+                  ?.length > 0 && (
                   <div className="altering-group">
                     <div className="altering-label">
                       Rare Singles
                     </div>
 
-                    <div className="altering-pokemon">
-                      {alteringCave.rareEncounters.join(
-                        " • "
-                      )}
-                    </div>
+                    <PokemonSpriteGroup
+                      pokemon={
+                        alteringCave.rareEncounters
+                      }
+                    />
                   </div>
                 )}
 
-                {alteringCave.hordes?.length > 0 && (
+                {alteringCave
+                  .hordes
+                  ?.length > 0 && (
                   <div className="altering-group">
                     <div className="altering-label">
                       Hordes
                     </div>
 
-                    <div className="altering-pokemon">
-                      {alteringCave.hordes.join(
-                        " • "
-                      )}
-                    </div>
+                    <PokemonSpriteGroup
+                      pokemon={
+                        alteringCave.hordes
+                      }
+                    />
                   </div>
                 )}
 
@@ -508,6 +716,130 @@ export default function Home() {
         </div>
 
       </div>
+
+      {/* ===============================
+          POKEMON MODAL
+      ================================ */}
+
+      {selectedPokemon && (
+        <div
+          className="modal-overlay"
+          onClick={() =>
+            setSelectedPokemon(
+              null
+            )
+          }
+        >
+          <div
+            className="pokemon-modal"
+            onClick={(event) =>
+              event.stopPropagation()
+            }
+          >
+            <button
+              type="button"
+              className="close-btn"
+              onClick={() =>
+                setSelectedPokemon(
+                  null
+                )
+              }
+            >
+              ×
+            </button>
+
+            <div className="modal-header">
+              <div>
+                <h2>
+                  {selectedPokemon.name}
+                </h2>
+
+                <span>
+                  #
+                  {String(
+                    selectedPokemon.id
+                  ).padStart(
+                    3,
+                    "0"
+                  )}
+                </span>
+              </div>
+
+              <span className="status-badge">
+                {selectedPokemon.caught
+                  ? "Captured"
+                  : "Missing"}
+              </span>
+            </div>
+
+            <div className="modal-body">
+
+              <div className="modal-left">
+                <img
+                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.id}.png`}
+                  alt={
+                    selectedPokemon.name
+                  }
+                  className="modal-sprite"
+                />
+              </div>
+
+              <div className="modal-right">
+
+                <div className="detail-card">
+                  <h3>
+                    Pokédex Info
+                  </h3>
+
+                  <p>
+                    National Dex #
+                    {selectedPokemon.id}
+                  </p>
+
+                  <p>
+                    Region:{" "}
+                    {selectedPokemon.region ??
+                      "Unknown"}
+                  </p>
+                </div>
+
+                <div className="detail-card">
+                  <h3>
+                    Team Fate Owners
+                  </h3>
+
+                  {selectedPokemon
+                    .owners
+                    .length > 0 ? (
+                    <div className="pokemon-owner-list">
+                      {[
+                        ...new Set(
+                          selectedPokemon.owners
+                        ),
+                      ].map(
+                        (owner) => (
+                          <div
+                            key={owner}
+                          >
+                            {owner}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p>
+                      No Team Fate shiny
+                      recorded.
+                    </p>
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
