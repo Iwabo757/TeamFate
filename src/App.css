@@ -5007,8 +5007,8 @@ textarea:focus {
   outline: none;
   background: transparent;
 
-  width: 48px;
-  height: 48px;
+  width: 110px;
+  height: 110px;
 
   padding: 0;
   margin: 0;
@@ -5020,19 +5020,27 @@ textarea:focus {
   cursor: pointer;
 
   transition:
-    transform 0.15s ease,
-    filter 0.15s ease;
+    transform 0.18s ease,
+    filter 0.18s ease;
 }
 
 .altering-cave-pokemon img {
-  width: 42px;
-  height: 42px;
+  width: 100px;
+  height: 100px;
 
   object-fit: contain;
-
   image-rendering: pixelated;
 
   pointer-events: none;
+}
+
+.altering-cave-pokemon:hover {
+  transform: scale(1.15);
+
+  filter: drop-shadow(
+    0 0 10px
+    rgba(120, 190, 255, 0.8)
+  );
 }
 
 .altering-cave-pokemon:hover {
@@ -5076,16 +5084,15 @@ textarea:focus {
     margin-bottom: 20px;
   }
 
-  .altering-cave-pokemon {
-    width: 40px;
-    height: 40px;
-  }
+.altering-cave-pokemon {
+  width: 72px;
+  height: 72px;
+}
 
-  .altering-cave-pokemon img {
-    width: 36px;
-    height: 36px;
-  }
-
+.altering-cave-pokemon img {
+  width: 66px;
+  height: 66px;
+}
   .altering-cave-sprites {
     gap: 1px 3px;
   }
