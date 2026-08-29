@@ -71,7 +71,6 @@ import ShuntMachine from "./pages/ShuntMachine";
 import AlteringCave from "./pages/AlteringCave";
 
 import Tools from "./pages/Tools";
-import ThemeSelector from "./components/ThemeSelector";
 
 type ProfileData = {
   id: string;
@@ -521,12 +520,9 @@ function canManageSite(
 
   </nav>
 
-<div className="topbar-right">
-
-  <ThemeSelector />
-
-  {profile ? (
-    <div className="user-menu">
+  <div className="topbar-right">
+    {profile ? (
+      <div className="user-menu">
         <Link
           to="/profile"
           className="user-button"
