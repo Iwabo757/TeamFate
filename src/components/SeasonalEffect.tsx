@@ -19,7 +19,7 @@ type Particle = {
   size: number;
   drift: number;
   rotation: number;
-  symbol?: string;
+  symbol: string;
 };
 
 function getSeasonConfig(season: Season) {
@@ -56,66 +56,63 @@ function getSeasonConfig(season: Season) {
 
 export default function SeasonalEffect({
   season,
-  duration = 4500,
+  duration = 20000,
 }: SeasonalEffectProps) {
-  const [visible, setVisible] =
-    useState(true);
+  const [visible, setVisible] = useState(true);
+
+  const config = getSeasonConfig(season);
 
   useEffect(() => {
     setVisible(true);
 
-    const timer =
-      window.setTimeout(() => {
-        setVisible(false);
-      }, duration);
+    const timer = window.setTimeout(() => {
+      setVisible(false);
+    }, duration);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [season, duration]);
 
-  const config =
-    getSeasonConfig(season);
+  const particles = useMemo<Particle[]>(() => {
+    return Array.from(
+      {
+        length: config.particleCount,
+      },
+      (_, index): Particle => ({
+        id: index,
 
-const particles = useMemo<Particle[]>(() => {
-  return Array.from(
-    {
-      length: config.particleCount,
-    },
-    (_, index): Particle => ({
-      id: index,
+        left:
+          Math.random() * 100,
 
-      left:
-        Math.random() * 100,
+        delay:
+          Math.random() * 2,
 
-      delay:
-        Math.random() * 2.5,
+        duration:
+          12 +
+          Math.random() * 8,
 
-      duration:
-        3.5 +
-        Math.random() * 3,
+        size:
+          12 +
+          Math.random() * 18,
 
-      size:
-        12 +
-        Math.random() * 18,
+        drift:
+          -120 +
+          Math.random() * 240,
 
-      drift:
-        -100 +
-        Math.random() * 200,
+        rotation:
+          Math.random() * 360,
 
-      rotation:
-        Math.random() * 360,
-
-      symbol:
-        config.symbols[
-          Math.floor(
-            Math.random() *
-              config.symbols.length
-          )
-        ],
-    })
-  );
-}, [season]);
+        symbol:
+          config.symbols[
+            Math.floor(
+              Math.random() *
+                config.symbols.length
+            )
+          ],
+      })
+    );
+  }, [season, config.particleCount, config.symbols]);
 
   if (!visible) {
     return null;
@@ -127,42 +124,38 @@ const particles = useMemo<Particle[]>(() => {
         className={`seasonal-effect ${config.className}`}
         aria-hidden="true"
       >
-        {particles.map(
-          (particle) => (
-            <span
-              key={particle.id}
-              className="season-particle"
-              style={
-                {
-                  left: `${particle.left}%`,
-                  animationDelay:
-                    `${particle.delay}s`,
-                  animationDuration:
-                    `${particle.duration}s`,
-                  fontSize:
-                    `${particle.size}px`,
-                  "--drift":
-                    `${particle.drift}px`,
-                  "--rotation":
-                    `${particle.rotation}deg`,
-                } as React.CSSProperties
-              }
-            >
-              {particle.symbol}
-            </span>
-          )
-        )}
+        {particles.map((particle) => (
+          <span
+            key={particle.id}
+            className="season-particle"
+            style={
+              {
+                left: `${particle.left}%`,
+                animationDelay:
+                  `${particle.delay}s`,
+                animationDuration:
+                  `${particle.duration}s`,
+                fontSize:
+                  `${particle.size}px`,
+                "--drift":
+                  `${particle.drift}px`,
+                "--rotation":
+                  `${particle.rotation}deg`,
+              } as React.CSSProperties
+            }
+          >
+            {particle.symbol}
+          </span>
+        ))}
       </div>
 
       <style>{`
-
         /* =====================================
            SEASONAL OVERLAY
         ====================================== */
 
         .seasonal-effect {
           position: fixed;
-
           inset: 0;
 
           width: 100vw;
@@ -176,10 +169,10 @@ const particles = useMemo<Particle[]>(() => {
 
           animation:
             seasonalFadeOut
-            1s ease
+            2s ease
             forwards;
 
-          animation-delay: 3.5s;
+          animation-delay: 18s;
         }
 
         .season-particle {
@@ -278,8 +271,7 @@ const particles = useMemo<Particle[]>(() => {
 
         .season-winter
         .season-particle {
-          color:
-            #ffffff;
+          color: #ffffff;
 
           text-shadow:
             0 0 8px
@@ -299,7 +291,6 @@ const particles = useMemo<Particle[]>(() => {
         ====================================== */
 
         @keyframes springFall {
-
           0% {
             transform:
               translate3d(
@@ -314,85 +305,7 @@ const particles = useMemo<Particle[]>(() => {
             opacity: 0;
           }
 
-          10% {
-            opacity: 1;
-          }
-
-          100% {
-            transform:
-              translate3d(
-                var(--drift),
-                115vh,
-                0
-              )
-              rotate(
-                calc(
-                  var(--rotation) + 540deg
-                )
-              );
-
-            opacity: 0;
-          }
-
-        }
-
-        /* =====================================
-           SUMMER ANIMATION
-        ====================================== */
-
-        @keyframes summerFloat {
-
-          0% {
-            transform:
-              translate3d(
-                0,
-                110vh,
-                0
-              )
-              scale(0.5);
-
-            opacity: 0;
-          }
-
-          15% {
-            opacity: 1;
-          }
-
-          100% {
-            transform:
-              translate3d(
-                var(--drift),
-                -20vh,
-                0
-              )
-              scale(1.2);
-
-            opacity: 0;
-          }
-
-        }
-
-        /* =====================================
-           AUTUMN ANIMATION
-        ====================================== */
-
-        @keyframes autumnFall {
-
-          0% {
-            transform:
-              translate3d(
-                0,
-                -80px,
-                0
-              )
-              rotate(
-                var(--rotation)
-              );
-
-            opacity: 0;
-          }
-
-          10% {
+          8% {
             opacity: 1;
           }
 
@@ -411,7 +324,80 @@ const particles = useMemo<Particle[]>(() => {
 
             opacity: 0;
           }
+        }
 
+        /* =====================================
+           SUMMER ANIMATION
+        ====================================== */
+
+        @keyframes summerFloat {
+          0% {
+            transform:
+              translate3d(
+                0,
+                110vh,
+                0
+              )
+              scale(0.5);
+
+            opacity: 0;
+          }
+
+          10% {
+            opacity: 1;
+          }
+
+          100% {
+            transform:
+              translate3d(
+                var(--drift),
+                -20vh,
+                0
+              )
+              scale(1.2);
+
+            opacity: 0;
+          }
+        }
+
+        /* =====================================
+           AUTUMN ANIMATION
+        ====================================== */
+
+        @keyframes autumnFall {
+          0% {
+            transform:
+              translate3d(
+                0,
+                -80px,
+                0
+              )
+              rotate(
+                var(--rotation)
+              );
+
+            opacity: 0;
+          }
+
+          8% {
+            opacity: 1;
+          }
+
+          100% {
+            transform:
+              translate3d(
+                var(--drift),
+                115vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 900deg
+                )
+              );
+
+            opacity: 0;
+          }
         }
 
         /* =====================================
@@ -419,7 +405,6 @@ const particles = useMemo<Particle[]>(() => {
         ====================================== */
 
         @keyframes winterFall {
-
           0% {
             transform:
               translate3d(
@@ -427,12 +412,14 @@ const particles = useMemo<Particle[]>(() => {
                 -60px,
                 0
               )
-              rotate(0deg);
+              rotate(
+                var(--rotation)
+              );
 
             opacity: 0;
           }
 
-          10% {
+          8% {
             opacity: 0.95;
           }
 
@@ -443,11 +430,14 @@ const particles = useMemo<Particle[]>(() => {
                 110vh,
                 0
               )
-              rotate(360deg);
+              rotate(
+                calc(
+                  var(--rotation) + 540deg
+                )
+              );
 
             opacity: 0;
           }
-
         }
 
         /* =====================================
@@ -455,7 +445,6 @@ const particles = useMemo<Particle[]>(() => {
         ====================================== */
 
         @keyframes seasonalFadeOut {
-
           0% {
             opacity: 1;
           }
@@ -463,7 +452,6 @@ const particles = useMemo<Particle[]>(() => {
           100% {
             opacity: 0;
           }
-
         }
 
         /* =====================================
@@ -473,12 +461,10 @@ const particles = useMemo<Particle[]>(() => {
         @media (
           max-width: 768px
         ) {
-
           .season-particle {
             transform:
               scale(0.8);
           }
-
         }
 
         /* =====================================
@@ -489,13 +475,10 @@ const particles = useMemo<Particle[]>(() => {
           prefers-reduced-motion:
           reduce
         ) {
-
           .seasonal-effect {
             display: none;
           }
-
         }
-
       `}</style>
     </>
   );
