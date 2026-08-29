@@ -1,11 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import HomeTicker from "../components/HomeTicker";
+import SeasonalEffect from "../components/SeasonalEffect";
 
 type GameTime = {
   hours: number;
   minutes: number;
   seconds: number;
+};
+
+type Season =
+  | "Spring"
+  | "Summer"
+  | "Autumn"
+  | "Winter";
+
+type SeasonInfo = {
+  name: Season;
+  icon: string;
 };
 
 function getPokeMMOTime(): GameTime {
@@ -48,6 +60,50 @@ function getPokeMMOTime(): GameTime {
   };
 }
 
+/* =========================================
+   POKEMMO SEASON
+========================================= */
+
+function getPokeMMOSeason(): SeasonInfo {
+  const month =
+    new Date().getMonth() + 1;
+
+  switch (month) {
+    case 1:
+    case 5:
+    case 9:
+      return {
+        name: "Spring",
+        icon: "🌸",
+      };
+
+    case 2:
+    case 6:
+    case 10:
+      return {
+        name: "Summer",
+        icon: "☀️",
+      };
+
+    case 3:
+    case 7:
+    case 11:
+      return {
+        name: "Autumn",
+        icon: "🍁",
+      };
+
+    case 4:
+    case 8:
+    case 12:
+    default:
+      return {
+        name: "Winter",
+        icon: "❄️",
+      };
+  }
+}
+
 export default function Home() {
   const [memberCount, setMemberCount] =
     useState(0);
@@ -71,6 +127,11 @@ export default function Home() {
       title: "",
       message: "",
     });
+
+  const [season] =
+    useState<SeasonInfo>(() =>
+      getPokeMMOSeason()
+    );
 
   /* =========================================
      LIVE POKEMMO TIME
@@ -316,9 +377,17 @@ export default function Home() {
   return (
     <div className="home-page">
 
-      {/* ===============================
+      {/* =====================================
+          SEASONAL ENTRANCE EFFECT
+      ====================================== */}
+
+      <SeasonalEffect
+        season={season.name}
+      />
+
+      {/* =====================================
           WELCOME
-      ================================ */}
+      ====================================== */}
 
       <div className="welcome-card">
         <h2>
@@ -330,15 +399,15 @@ export default function Home() {
         </p>
       </div>
 
-      {/* ===============================
+      {/* =====================================
           HOME TICKER
-      ================================ */}
+      ====================================== */}
 
       <HomeTicker />
 
-      {/* ===============================
+      {/* =====================================
           STATS
-      ================================ */}
+      ====================================== */}
 
       <div className="stats">
 
@@ -367,6 +436,10 @@ export default function Home() {
 
           <div className="game-period">
             {gamePeriod}
+          </div>
+
+          <div className="game-season">
+            {season.icon} {season.name}
           </div>
         </div>
 
