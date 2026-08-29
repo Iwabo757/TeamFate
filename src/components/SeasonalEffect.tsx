@@ -22,37 +22,45 @@ type Particle = {
   symbol: string;
 };
 
+/* =========================================
+   SEASON CONFIGURATION
+========================================= */
+
 function getSeasonConfig(season: Season) {
   switch (season) {
     case "Spring":
       return {
-        particleCount: 35,
+        particleCount: 70,
         className: "season-spring",
-        symbols: ["🌸", "🌸", "✿"],
+        symbols: ["🌸", "✿", "🌸"],
       };
 
     case "Summer":
       return {
-        particleCount: 30,
+        particleCount: 55,
         className: "season-summer",
-        symbols: ["✦", "·", "✧"],
+        symbols: ["✦", "✧", "•"],
       };
 
     case "Autumn":
       return {
-        particleCount: 40,
+        particleCount: 70,
         className: "season-autumn",
         symbols: ["🍂", "🍁", "🍂"],
       };
 
     case "Winter":
       return {
-        particleCount: 55,
+        particleCount: 100,
         className: "season-winter",
         symbols: ["❄", "❅", "❆"],
       };
   }
 }
+
+/* =========================================
+   SEASONAL EFFECT
+========================================= */
 
 export default function SeasonalEffect({
   season,
@@ -60,7 +68,14 @@ export default function SeasonalEffect({
 }: SeasonalEffectProps) {
   const [visible, setVisible] = useState(true);
 
-  const config = getSeasonConfig(season);
+  const config = useMemo(
+    () => getSeasonConfig(season),
+    [season]
+  );
+
+  /* =====================================
+     EFFECT TIMER
+  ====================================== */
 
   useEffect(() => {
     setVisible(true);
@@ -74,6 +89,10 @@ export default function SeasonalEffect({
     };
   }, [season, duration]);
 
+  /* =====================================
+     GENERATE PARTICLES
+  ====================================== */
+
   const particles = useMemo<Particle[]>(() => {
     return Array.from(
       {
@@ -83,22 +102,36 @@ export default function SeasonalEffect({
         id: index,
 
         left:
-          Math.random() * 100,
+          Math.random() * 110 - 5,
 
+        /*
+         * Spread particle starts across
+         * almost the entire 20-second effect.
+         */
         delay:
-          Math.random() * 2,
+          Math.random() * 14,
 
+        /*
+         * Faster movement prevents the
+         * animation from looking slow
+         * and jumpy.
+         */
         duration:
-          12 +
-          Math.random() * 8,
+          5 +
+          Math.random() * 4,
 
         size:
           12 +
-          Math.random() * 18,
+          Math.random() * 16,
 
+        /*
+         * Wide horizontal movement so
+         * particles travel naturally
+         * across the entire screen.
+         */
         drift:
-          -120 +
-          Math.random() * 240,
+          -180 +
+          Math.random() * 360,
 
         rotation:
           Math.random() * 360,
@@ -112,7 +145,7 @@ export default function SeasonalEffect({
           ],
       })
     );
-  }, [season, config.particleCount, config.symbols]);
+  }, [config]);
 
   if (!visible) {
     return null;
@@ -131,14 +164,19 @@ export default function SeasonalEffect({
             style={
               {
                 left: `${particle.left}%`,
+
                 animationDelay:
                   `${particle.delay}s`,
+
                 animationDuration:
                   `${particle.duration}s`,
+
                 fontSize:
                   `${particle.size}px`,
+
                 "--drift":
                   `${particle.drift}px`,
+
                 "--rotation":
                   `${particle.rotation}deg`,
               } as React.CSSProperties
@@ -150,16 +188,18 @@ export default function SeasonalEffect({
       </div>
 
       <style>{`
+
         /* =====================================
            SEASONAL OVERLAY
         ====================================== */
 
         .seasonal-effect {
           position: fixed;
+
           inset: 0;
 
-          width: 100vw;
-          height: 100vh;
+          width: 100%;
+          height: 100dvh;
 
           overflow: hidden;
 
@@ -175,23 +215,33 @@ export default function SeasonalEffect({
           animation-delay: 18s;
         }
 
+        /* =====================================
+           PARTICLES
+        ====================================== */
+
         .season-particle {
           position: absolute;
 
-          top: -80px;
+          top: -10vh;
 
           display: block;
 
           user-select: none;
 
-          animation:
-            seasonalFall
-            linear
-            forwards;
+          pointer-events: none;
 
           will-change:
             transform,
             opacity;
+
+          backface-visibility: hidden;
+
+          transform:
+            translate3d(
+              0,
+              0,
+              0
+            );
 
           opacity: 0;
         }
@@ -213,8 +263,10 @@ export default function SeasonalEffect({
               )
             );
 
-          animation-name:
-            springFall;
+          animation:
+            springFall
+            linear
+            forwards;
         }
 
         /* =====================================
@@ -228,7 +280,7 @@ export default function SeasonalEffect({
               255,
               225,
               120,
-              0.9
+              0.95
             );
 
           text-shadow:
@@ -237,11 +289,13 @@ export default function SeasonalEffect({
               255,
               210,
               70,
-              0.9
+              0.8
             );
 
-          animation-name:
-            summerFloat;
+          animation:
+            summerFloat
+            ease-in-out
+            forwards;
         }
 
         /* =====================================
@@ -261,8 +315,10 @@ export default function SeasonalEffect({
               )
             );
 
-          animation-name:
-            autumnFall;
+          animation:
+            autumnFall
+            ease-in-out
+            forwards;
         }
 
         /* =====================================
@@ -282,8 +338,10 @@ export default function SeasonalEffect({
               0.8
             );
 
-          animation-name:
-            winterFall;
+          animation:
+            winterFall
+            linear
+            forwards;
         }
 
         /* =====================================
@@ -295,7 +353,7 @@ export default function SeasonalEffect({
             transform:
               translate3d(
                 0,
-                -80px,
+                -10vh,
                 0
               )
               rotate(
@@ -307,6 +365,54 @@ export default function SeasonalEffect({
 
           8% {
             opacity: 1;
+          }
+
+          25% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.2
+                ),
+                20vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 180deg
+                )
+              );
+          }
+
+          50% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * -0.15
+                ),
+                50vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 360deg
+                )
+              );
+          }
+
+          75% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.6
+                ),
+                80vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 540deg
+                )
+              );
           }
 
           100% {
@@ -338,20 +444,44 @@ export default function SeasonalEffect({
                 110vh,
                 0
               )
-              scale(0.5);
+              scale(0.6);
 
             opacity: 0;
           }
 
           10% {
-            opacity: 1;
+            opacity: 0.9;
+          }
+
+          35% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.3
+                ),
+                70vh,
+                0
+              )
+              scale(0.9);
+          }
+
+          65% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * -0.2
+                ),
+                35vh,
+                0
+              )
+              scale(1);
           }
 
           100% {
             transform:
               translate3d(
                 var(--drift),
-                -20vh,
+                -15vh,
                 0
               )
               scale(1.2);
@@ -369,7 +499,7 @@ export default function SeasonalEffect({
             transform:
               translate3d(
                 0,
-                -80px,
+                -10vh,
                 0
               )
               rotate(
@@ -381,6 +511,54 @@ export default function SeasonalEffect({
 
           8% {
             opacity: 1;
+          }
+
+          25% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.25
+                ),
+                20vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 180deg
+                )
+              );
+          }
+
+          50% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * -0.2
+                ),
+                50vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 360deg
+                )
+              );
+          }
+
+          75% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.55
+                ),
+                80vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 540deg
+                )
+              );
           }
 
           100% {
@@ -409,7 +587,7 @@ export default function SeasonalEffect({
             transform:
               translate3d(
                 0,
-                -60px,
+                -10vh,
                 0
               )
               rotate(
@@ -423,16 +601,64 @@ export default function SeasonalEffect({
             opacity: 0.95;
           }
 
-          100% {
+          25% {
             transform:
               translate3d(
-                var(--drift),
-                110vh,
+                calc(
+                  var(--drift) * 0.25
+                ),
+                20vh,
                 0
               )
               rotate(
                 calc(
-                  var(--rotation) + 540deg
+                  var(--rotation) + 90deg
+                )
+              );
+          }
+
+          50% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * -0.1
+                ),
+                50vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 180deg
+                )
+              );
+          }
+
+          75% {
+            transform:
+              translate3d(
+                calc(
+                  var(--drift) * 0.55
+                ),
+                80vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 270deg
+                )
+              );
+          }
+
+          100% {
+            transform:
+              translate3d(
+                var(--drift),
+                115vh,
+                0
+              )
+              rotate(
+                calc(
+                  var(--rotation) + 360deg
                 )
               );
 
@@ -445,11 +671,11 @@ export default function SeasonalEffect({
         ====================================== */
 
         @keyframes seasonalFadeOut {
-          0% {
+          from {
             opacity: 1;
           }
 
-          100% {
+          to {
             opacity: 0;
           }
         }
@@ -463,7 +689,7 @@ export default function SeasonalEffect({
         ) {
           .season-particle {
             transform:
-              scale(0.8);
+              scale(0.85);
           }
         }
 
@@ -479,6 +705,7 @@ export default function SeasonalEffect({
             display: none;
           }
         }
+
       `}</style>
     </>
   );
