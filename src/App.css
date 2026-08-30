@@ -6120,3 +6120,467 @@ textarea:focus {
       0 20px 50px rgba(0, 0, 0, 0.5);
   }
 }
+/* =========================================================
+   FINAL HEADER LAYOUT FIX
+   Add this at the VERY BOTTOM of App.css
+   ========================================================= */
+
+
+/* =========================================================
+   DESKTOP HEADER
+========================================================= */
+
+@media (min-width: 901px) {
+
+  .topbar {
+    width: 100% !important;
+    height: 82px !important;
+    min-height: 82px !important;
+
+    display: flex !important;
+    align-items: stretch !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    position: relative !important;
+
+    overflow: visible !important;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 18, 39, 0.96),
+        rgba(14, 34, 65, 0.96)
+      ) !important;
+
+    border-bottom:
+      1px solid rgba(100, 207, 255, 0.16) !important;
+  }
+
+
+  /* -------------------------------------------------------
+     LOGO AREA
+  ------------------------------------------------------- */
+
+  .logo {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex: 0 0 520px !important;
+
+    min-width: 0 !important;
+
+    padding: 0 22px !important;
+
+    box-sizing: border-box !important;
+
+    overflow: visible !important;
+  }
+
+
+  .brand {
+    height: 82px !important;
+
+    width: 100% !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    padding: 0 !important;
+
+    overflow: visible !important;
+
+    text-decoration: none !important;
+  }
+
+
+  .brand-logo {
+    width: 68px !important;
+    height: 68px !important;
+
+    min-width: 68px !important;
+
+    flex: 0 0 68px !important;
+
+    object-fit: contain !important;
+
+    display: block !important;
+  }
+
+
+  .logo-text {
+    height: auto !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    justify-content: center !important;
+    align-items: flex-start !important;
+
+    overflow: visible !important;
+
+    line-height: 1 !important;
+  }
+
+
+  .logo-main {
+    display: block !important;
+
+    line-height: 0.9 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  .logo-sub {
+    display: block !important;
+
+    margin-top: 4px !important;
+
+    line-height: 1 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  /* -------------------------------------------------------
+     DESKTOP NAVIGATION
+  ------------------------------------------------------- */
+
+  .nav-links {
+    height: 82px !important;
+
+    flex: 1 1 auto !important;
+
+    min-width: 0 !important;
+
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: space-evenly !important;
+
+    gap: 0 !important;
+
+    margin: 0 !important;
+
+    overflow: visible !important;
+  }
+
+
+  .nav-links a {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 12px !important;
+
+    white-space: nowrap !important;
+
+    flex: 0 1 auto !important;
+
+    box-sizing: border-box !important;
+  }
+
+
+  /* -------------------------------------------------------
+     RIGHT SIDE
+  ------------------------------------------------------- */
+
+  .topbar-right {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex: 0 0 auto !important;
+
+    gap: 10px !important;
+
+    padding: 0 18px 0 10px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  .admin-nav-link {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 10px !important;
+
+    white-space: nowrap !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-menu {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-button {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 10px !important;
+
+    text-decoration: none !important;
+  }
+
+
+  .nav-avatar {
+    width: 58px !important;
+    height: 58px !important;
+
+    min-width: 58px !important;
+
+    object-fit: cover !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-info {
+    display: flex !important;
+    flex-direction: column !important;
+
+    justify-content: center !important;
+
+    min-width: 0 !important;
+  }
+
+
+  /* =======================================================
+     DESKTOP SUB NAV
+  ======================================================= */
+
+  .sub-nav {
+    width: 100% !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    position: relative !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    background:
+      rgba(5, 16, 37, 0.38) !important;
+
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+
+    border-bottom:
+      1px solid rgba(100, 207, 255, 0.12) !important;
+
+    overflow: visible !important;
+  }
+
+
+  .sub-nav-links {
+    height: 100% !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 8px !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    transform: none !important;
+  }
+
+
+  .sub-nav-link {
+    min-height: 42px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 6px 18px !important;
+
+    box-sizing: border-box !important;
+  }
+
+
+  /* Theme selector stays on right without affecting
+     the centered sub-navigation links */
+  .sub-nav-theme {
+    position: absolute !important;
+
+    right: 28px !important;
+
+    top: 50% !important;
+
+    transform: translateY(-50%) !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    z-index: 2 !important;
+  }
+
+
+  .theme-selector-select {
+    min-width: 210px !important;
+
+    height: 40px !important;
+
+    padding: 0 14px !important;
+
+    background:
+      rgba(7, 20, 48, 0.56) !important;
+
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+}
+
+
+/* =========================================================
+   MEDIUM DESKTOP
+   Keeps everything fitting before mobile layout starts
+========================================================= */
+
+@media (min-width: 901px) and (max-width: 1450px) {
+
+  .logo {
+    flex-basis: 420px !important;
+  }
+
+
+  .nav-links a {
+    padding: 0 8px !important;
+  }
+
+
+  .nav-links a,
+  .admin-nav-link {
+    font-size: 0.95rem !important;
+  }
+
+
+  .sub-nav-theme {
+    right: 18px !important;
+  }
+
+
+  .theme-selector-select {
+    min-width: 180px !important;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   Keep existing hamburger layout intact
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .topbar {
+    height: 74px !important;
+    min-height: 74px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    padding: 0 14px !important;
+
+    overflow: visible !important;
+  }
+
+
+  .logo {
+    height: 74px !important;
+
+    flex: 1 1 auto !important;
+
+    min-width: 0 !important;
+
+    padding: 0 !important;
+  }
+
+
+  .brand {
+    height: 74px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    padding: 0 !important;
+  }
+
+
+  .nav-links,
+  .topbar-right,
+  .sub-nav {
+    display: none !important;
+  }
+
+
+  .mobile-navigation {
+    display: flex !important;
+
+    position: relative !important;
+
+    align-items: center !important;
+
+    flex: 0 0 auto !important;
+
+    z-index: 5000 !important;
+  }
+
+
+  .mobile-menu-btn {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    position: relative !important;
+
+    z-index: 5001 !important;
+  }
+
+
+  .mobile-menu {
+    z-index: 5000 !important;
+  }
+}
