@@ -5134,863 +5134,33 @@ textarea:focus {
 }
 
 /* =========================================================
-   THEME VARIABLES
+   ACCESSIBILITY THEME SYSTEM
 ========================================================= */
+
+/* Default Team Fate theme */
 
 :root,
 [data-theme="default"] {
-  --theme-bg: #07111f;
-  --theme-bg-secondary: #0b1728;
-  --theme-panel: #101f35;
-  --theme-panel-hover: #162944;
-
-  --theme-primary: #6caeff;
-  --theme-primary-hover: #8fc3ff;
-  --theme-secondary: #a78bfa;
-
-  --theme-accent: #e58db8;
-  --theme-accent-secondary: #7cc9f5;
-
-  --theme-text: #e8eefc;
-  --theme-text-muted: #9aa8c2;
-  --theme-text-dim: #6f7d98;
-
-  --theme-border: rgba(126, 164, 220, 0.22);
-  --theme-border-strong: rgba(126, 164, 220, 0.42);
-
-  --theme-shadow: rgba(0, 0, 0, 0.45);
-
-  --theme-success: #68d391;
-  --theme-warning: #f6c85f;
-  --theme-danger: #f87171;
-
-  --theme-glow: rgba(108, 174, 255, 0.3);
-}
-
-
-/* =========================================================
-   PURPLE
-========================================================= */
-
-[data-theme="purple"] {
-  --theme-bg: #120c20;
-  --theme-bg-secondary: #1a102b;
-  --theme-panel: #24163a;
-  --theme-panel-hover: #30204a;
-
-  --theme-primary: #b180ff;
-  --theme-primary-hover: #caa5ff;
-  --theme-secondary: #e879f9;
-
-  --theme-accent: #d98cff;
-  --theme-accent-secondary: #a78bfa;
-
-  --theme-text: #f1eaff;
-  --theme-text-muted: #b9a8d0;
-  --theme-text-dim: #827393;
-
-  --theme-border: rgba(186, 130, 255, 0.25);
-  --theme-border-strong: rgba(186, 130, 255, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.5);
-
-  --theme-success: #86efac;
-  --theme-warning: #facc15;
-  --theme-danger: #fb7185;
-
-  --theme-glow: rgba(177, 128, 255, 0.35);
-}
-
-
-/* =========================================================
-   CRIMSON
-========================================================= */
-
-[data-theme="crimson"] {
-  --theme-bg: #1a090d;
-  --theme-bg-secondary: #260d13;
-  --theme-panel: #35131d;
-  --theme-panel-hover: #471925;
-
-  --theme-primary: #f87171;
-  --theme-primary-hover: #fca5a5;
-  --theme-secondary: #fb7185;
-
-  --theme-accent: #ff8fa3;
-  --theme-accent-secondary: #f43f5e;
-
-  --theme-text: #fff1f2;
-  --theme-text-muted: #d6a5ad;
-  --theme-text-dim: #98717a;
-
-  --theme-border: rgba(248, 113, 113, 0.25);
-  --theme-border-strong: rgba(248, 113, 113, 0.48);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #86efac;
-  --theme-warning: #fbbf24;
-  --theme-danger: #fb7185;
-
-  --theme-glow: rgba(248, 113, 113, 0.3);
-}
-
-
-/* =========================================================
-   FOREST
-========================================================= */
-
-[data-theme="forest"] {
-  --theme-bg: #07150d;
-  --theme-bg-secondary: #0c2114;
-  --theme-panel: #12301d;
-  --theme-panel-hover: #194126;
-
-  --theme-primary: #5ee88a;
-  --theme-primary-hover: #86f5aa;
-  --theme-secondary: #22c55e;
-
-  --theme-accent: #84d65a;
-  --theme-accent-secondary: #5ee88a;
-
-  --theme-text: #edfff2;
-  --theme-text-muted: #a6c5ae;
-  --theme-text-dim: #6f9278;
-
-  --theme-border: rgba(94, 232, 138, 0.22);
-  --theme-border-strong: rgba(94, 232, 138, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #5ee88a;
-  --theme-warning: #facc15;
-  --theme-danger: #fb7185;
-
-  --theme-glow: rgba(94, 232, 138, 0.3);
-}
-
-
-/* =========================================================
-   EMBER
-========================================================= */
-
-[data-theme="ember"] {
-  --theme-bg: #1b0d06;
-  --theme-bg-secondary: #281208;
-  --theme-panel: #351b0d;
-  --theme-panel-hover: #472511;
-
-  --theme-primary: #fb923c;
-  --theme-primary-hover: #fdba74;
-  --theme-secondary: #f97316;
-
-  --theme-accent: #fbbf24;
-  --theme-accent-secondary: #fb923c;
-
-  --theme-text: #fff5eb;
-  --theme-text-muted: #d6b59a;
-  --theme-text-dim: #9a785d;
-
-  --theme-border: rgba(251, 146, 60, 0.25);
-  --theme-border-strong: rgba(251, 146, 60, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #86efac;
-  --theme-warning: #fbbf24;
-  --theme-danger: #fb7185;
-
-  --theme-glow: rgba(251, 146, 60, 0.32);
-}
-
-
-/* =========================================================
-   MIDNIGHT
-========================================================= */
-
-[data-theme="midnight"] {
-  --theme-bg: #020617;
-  --theme-bg-secondary: #070d1d;
-  --theme-panel: #0d1528;
-  --theme-panel-hover: #15203a;
-
-  --theme-primary: #60a5fa;
-  --theme-primary-hover: #93c5fd;
-  --theme-secondary: #818cf8;
-
-  --theme-accent: #38bdf8;
-  --theme-accent-secondary: #6366f1;
-
-  --theme-text: #f1f5f9;
-  --theme-text-muted: #94a3b8;
-  --theme-text-dim: #64748b;
-
-  --theme-border: rgba(96, 165, 250, 0.18);
-  --theme-border-strong: rgba(96, 165, 250, 0.35);
-
-  --theme-shadow: rgba(0, 0, 0, 0.7);
-
-  --theme-success: #4ade80;
-  --theme-warning: #facc15;
-  --theme-danger: #f87171;
-
-  --theme-glow: rgba(59, 130, 246, 0.25);
-}
-
-
-/* =========================================================
-   GOLD
-========================================================= */
-
-[data-theme="gold"] {
-  --theme-bg: #171207;
-  --theme-bg-secondary: #211a0b;
-  --theme-panel: #302714;
-  --theme-panel-hover: #40351b;
-
-  --theme-primary: #facc15;
-  --theme-primary-hover: #fde047;
-  --theme-secondary: #eab308;
-
-  --theme-accent: #fbbf24;
-  --theme-accent-secondary: #fde68a;
-
-  --theme-text: #fffbea;
-  --theme-text-muted: #d1c28c;
-  --theme-text-dim: #96885d;
-
-  --theme-border: rgba(250, 204, 21, 0.22);
-  --theme-border-strong: rgba(250, 204, 21, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #86efac;
-  --theme-warning: #facc15;
-  --theme-danger: #fb7185;
-
-  --theme-glow: rgba(250, 204, 21, 0.28);
-}
-
-
-/* =========================================================
-   PROTANOPIA ACCESSIBILITY
-========================================================= */
-
-[data-theme="protanopia"] {
-  --theme-bg: #08131c;
-  --theme-bg-secondary: #0d1d29;
-  --theme-panel: #142a38;
-  --theme-panel-hover: #1c394a;
-
-  --theme-primary: #4ea5ff;
-  --theme-primary-hover: #80c2ff;
-  --theme-secondary: #f4c542;
-
-  --theme-accent: #ffd166;
-  --theme-accent-secondary: #4ea5ff;
-
-  --theme-text: #eef7ff;
-  --theme-text-muted: #a9becd;
-  --theme-text-dim: #748a99;
-
-  --theme-border: rgba(78, 165, 255, 0.25);
-  --theme-border-strong: rgba(244, 197, 66, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #58b7ff;
-  --theme-warning: #ffd166;
-  --theme-danger: #ffb86b;
-
-  --theme-glow: rgba(78, 165, 255, 0.3);
-}
-
-
-/* =========================================================
-   DEUTERANOPIA ACCESSIBILITY
-========================================================= */
-
-[data-theme="deuteranopia"] {
-  --theme-bg: #10111b;
-  --theme-bg-secondary: #181a28;
-  --theme-panel: #242638;
-  --theme-panel-hover: #303349;
-
-  --theme-primary: #5fa8ff;
-  --theme-primary-hover: #8bc4ff;
-  --theme-secondary: #f6c445;
-
-  --theme-accent: #e8b931;
-  --theme-accent-secondary: #5fa8ff;
-
-  --theme-text: #f2f4ff;
-  --theme-text-muted: #b3b8ce;
-  --theme-text-dim: #7f869d;
-
-  --theme-border: rgba(95, 168, 255, 0.24);
-  --theme-border-strong: rgba(246, 196, 69, 0.42);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #68b5ff;
-  --theme-warning: #f6c445;
-  --theme-danger: #ff9f68;
-
-  --theme-glow: rgba(95, 168, 255, 0.3);
-}
-
-
-/* =========================================================
-   TRITANOPIA ACCESSIBILITY
-========================================================= */
-
-[data-theme="tritanopia"] {
-  --theme-bg: #140f19;
-  --theme-bg-secondary: #1e1726;
-  --theme-panel: #2b2134;
-  --theme-panel-hover: #382b45;
-
-  --theme-primary: #f28e4b;
-  --theme-primary-hover: #ffb070;
-  --theme-secondary: #8e6fd1;
-
-  --theme-accent: #b28cff;
-  --theme-accent-secondary: #f28e4b;
-
-  --theme-text: #fff5f0;
-  --theme-text-muted: #c9b3aa;
-  --theme-text-dim: #947e78;
-
-  --theme-border: rgba(242, 142, 75, 0.25);
-  --theme-border-strong: rgba(178, 140, 255, 0.45);
-
-  --theme-shadow: rgba(0, 0, 0, 0.55);
-
-  --theme-success: #b28cff;
-  --theme-warning: #f6c85f;
-  --theme-danger: #ff8f70;
-
-  --theme-glow: rgba(178, 140, 255, 0.3);
-}
-
-
-/* =========================================================
-   THEME SELECTOR
-========================================================= */
-
-.theme-selector {
-  position: relative;
-  z-index: 1000;
-}
-
-
-/* =========================================================
-   SELECTOR BUTTON
-========================================================= */
-
-.theme-selector-button {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-
-  min-width: 170px;
-
-  padding: 11px 14px;
-
-  border: 1px solid var(--theme-border);
-  border-radius: 10px;
-
-  background: var(--theme-panel);
-
-  color: var(--theme-text);
-
-  font: inherit;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
-}
-
-.theme-selector-button:hover {
-  background: var(--theme-panel-hover);
-
-  border-color: var(--theme-border-strong);
-
-  box-shadow:
-    0 0 18px
-    var(--theme-glow);
-
-  transform: translateY(-1px);
-}
-
-.theme-selector-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 16px;
-}
-
-.theme-selector-label {
-  flex: 1;
-
-  text-align: left;
-
-  white-space: nowrap;
-}
-
-.theme-selector-arrow {
-  color: var(--theme-text-muted);
-
-  font-size: 14px;
-
-  transition: transform 0.2s ease;
-}
-
-.theme-selector-arrow.is-open {
-  transform: rotate(180deg);
-}
-
-
-/* =========================================================
-   DROPDOWN MENU
-========================================================= */
-
-.theme-selector-menu {
-  position: absolute;
-
-  top: calc(100% + 8px);
-  right: 0;
-
-  width: 225px;
-
-  padding: 8px;
-
-  border: 1px solid var(--theme-border-strong);
-  border-radius: 12px;
-
-  background: var(--theme-panel);
-
-  box-shadow:
-    0 18px 45px
-    var(--theme-shadow);
-
-  backdrop-filter: blur(14px);
-
-  animation:
-    themeMenuOpen
-    0.16s ease-out;
-
-  overflow: hidden;
-}
-
-
-/* =========================================================
-   MENU SECTIONS
-========================================================= */
-
-.theme-selector-section {
-  display: flex;
-  flex-direction: column;
-
-  gap: 2px;
-}
-
-.theme-selector-heading {
-  padding:
-    8px
-    10px
-    6px;
-
-  color: var(--theme-text-dim);
-
-  font-size: 11px;
-  font-weight: 800;
-
-  letter-spacing: 0.12em;
-
-  text-transform: uppercase;
-}
-
-.theme-selector-divider {
-  height: 1px;
-
-  margin: 8px 4px;
-
-  background: var(--theme-border);
-}
-
-
-/* =========================================================
-   THEME OPTIONS
-========================================================= */
-
-.theme-selector-option {
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
-  width: 100%;
-
-  padding: 10px;
-
-  border: none;
-  border-radius: 8px;
-
-  background: transparent;
-
-  color: var(--theme-text);
-
-  font: inherit;
-
-  text-align: left;
-
-  cursor: pointer;
-
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-
-.theme-selector-option:hover {
-  background: var(--theme-panel-hover);
-}
-
-.theme-selector-option.active {
-  background:
-    color-mix(
-      in srgb,
-      var(--theme-primary) 16%,
-      transparent
-    );
-
-  color: var(--theme-primary-hover);
-}
-
-.theme-option-icon {
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  width: 20px;
-
-  font-size: 15px;
-}
-
-.theme-check {
-  margin-left: auto;
-
-  color: var(--theme-primary);
-
-  font-size: 15px;
-  font-weight: 800;
-}
-
-
-/* =========================================================
-   DROPDOWN ANIMATION
-========================================================= */
-
-@keyframes themeMenuOpen {
-  from {
-    opacity: 0;
-
-    transform:
-      translateY(-6px)
-      scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-
-    transform:
-      translateY(0)
-      scale(1);
-  }
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 768px) {
-  .theme-selector-button {
-    min-width: auto;
-  }
-
-  .theme-selector-label {
-    display: none;
-  }
-
-  .theme-selector-menu {
-    width: 220px;
-  }
-}
-
-.sub-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.sub-nav-links {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex: 1;
-}
-
-.sub-nav-theme {
-  position: absolute;
-  right: 24px;
-}
-
-@media (max-width: 900px) {
-  .sub-nav-theme {
-    position: static;
-    margin-left: auto;
-  }
-
-  .sub-nav {
-    padding-right: 12px;
-  }
-
-  .sub-nav-links {
-    justify-content: flex-start;
-  }
-}
-/* =========================================================
-   THEME APPLICATION
-========================================================= */
-
-body {
-  color: var(--theme-text);
-}
-
-.topbar {
-  background:
-    linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--theme-bg) 92%, transparent),
-      color-mix(in srgb, var(--theme-panel) 92%, transparent)
-    );
-  border-bottom-color: var(--theme-border);
-}
-
-.sub-nav {
-  background:
-    color-mix(in srgb, var(--theme-bg-secondary) 88%, transparent);
-  border-color: var(--theme-border);
-}
-
-.nav-links a {
-  color: var(--theme-text-muted);
-}
-
-.nav-links a:hover,
-.nav-links a.active {
-  color: var(--theme-primary);
-}
-
-.sub-nav-link {
-  color: var(--theme-text-muted);
-}
-
-.sub-nav-link:hover,
-.sub-nav-link.active {
-  color: var(--theme-primary);
-}
-
-.card,
-.panel,
-.stat-card {
-  border-color: var(--theme-border);
-}
-
-button,
-.login-btn {
-  border-color: var(--theme-border);
-}
-
-
-/* =========================================================
-   THEME SELECTOR - FINAL POSITIONING FIX
-========================================================= */
-
-.sub-nav {
-  position: relative;
-  overflow: visible !important;
-  z-index: 900;
-}
-
-.sub-nav-theme {
-  position: absolute;
-  right: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1200;
-}
-
-.theme-selector {
-  position: relative;
-  z-index: 2000;
-}
-
-.theme-selector-button {
-  pointer-events: auto;
-}
-
-.theme-selector-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-
-  z-index: 99999;
-
-  display: block;
-
-  width: 225px;
-
-  background: var(--theme-panel);
-
-  border: 1px solid
-    var(--theme-border-strong);
-
-  box-shadow:
-    0 18px 45px
-    var(--theme-shadow);
-}
-/* =========================================================
-   ACCESSIBILITY THEME SELECTOR
-========================================================= */
-
-.sub-nav {
-  position: relative;
-  overflow: visible !important;
-}
-
-.sub-nav-theme {
-  position: absolute;
-  right: 28px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 100;
-}
-
-.theme-selector {
-  display: flex;
-  align-items: center;
-}
-
-.theme-selector-select {
-  min-width: 220px;
-
-  padding: 12px 42px 12px 18px;
-
-  appearance: auto;
-
-  background:
-    rgba(10, 22, 45, 0.96);
-
-  color:
-    var(--theme-text);
-
-  border: 1px solid
-    var(--theme-border);
-
-  border-radius: 14px;
-
-  font-family:
-    var(--theme-font-body);
-
-  font-size: 1rem;
-
-  font-weight: 700;
-
-  letter-spacing: 0.03em;
-
-  cursor: pointer;
-
-  outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease;
-}
-
-.theme-selector-select:hover {
-  border-color:
-    var(--theme-primary);
-}
-
-.theme-selector-select:focus {
-  border-color:
-    var(--theme-primary);
-
-  box-shadow:
-    0 0 0 3px
-    var(--theme-focus);
-}
-
-.theme-selector-select option {
-  background:
-    #10182a;
-
-  color:
-    #ffffff;
-}
-
-@media (max-width: 900px) {
-  .sub-nav-theme {
-    right: 12px;
-  }
-
-  .theme-selector-select {
-    min-width: 150px;
-    padding: 9px 10px;
-    font-size: 0.85rem;
-  }
-}
-/* =========================================================
-   THEME VARIABLES
-========================================================= */
-
-:root {
   --theme-bg: #07152d;
   --theme-bg-secondary: #0b1d3a;
+
   --theme-panel: rgba(8, 20, 55, 0.88);
+  --theme-panel-hover: rgba(18, 38, 76, 0.94);
 
   --theme-primary: #64cfff;
+  --theme-primary-hover: #9fdfff;
   --theme-secondary: #a88cff;
 
   --theme-text: #d8ecff;
   --theme-text-muted: #9fc4e8;
+  --theme-text-dim: #748a99;
 
   --theme-border: rgba(100, 207, 255, 0.22);
   --theme-border-strong: rgba(100, 207, 255, 0.5);
 
+  --theme-shadow: rgba(0, 0, 0, 0.55);
   --theme-glow: rgba(100, 207, 255, 0.35);
   --theme-focus: rgba(100, 207, 255, 0.25);
-
-  --theme-font-body:
-    "Segoe UI",
-    Arial,
-    sans-serif;
-
-  --theme-font-heading:
-    "Permanent Marker",
-    "Segoe UI",
-    sans-serif;
 }
 
 
@@ -6002,29 +5172,24 @@ button,
 [data-theme="protanopia"] {
   --theme-bg: #101820;
   --theme-bg-secondary: #16232d;
+
   --theme-panel: rgba(18, 30, 38, 0.92);
+  --theme-panel-hover: rgba(31, 48, 59, 0.96);
 
   --theme-primary: #3aaed8;
+  --theme-primary-hover: #77cceb;
   --theme-secondary: #f2c14e;
 
   --theme-text: #ffffff;
   --theme-text-muted: #d2e3ea;
+  --theme-text-dim: #91aab5;
 
   --theme-border: rgba(58, 174, 216, 0.32);
   --theme-border-strong: rgba(58, 174, 216, 0.65);
 
+  --theme-shadow: rgba(0, 0, 0, 0.6);
   --theme-glow: rgba(58, 174, 216, 0.3);
   --theme-focus: rgba(242, 193, 78, 0.28);
-
-  --theme-font-body:
-    Arial,
-    Helvetica,
-    sans-serif;
-
-  --theme-font-heading:
-    Arial,
-    Helvetica,
-    sans-serif;
 }
 
 
@@ -6036,29 +5201,24 @@ button,
 [data-theme="deuteranopia"] {
   --theme-bg: #111827;
   --theme-bg-secondary: #1c2636;
+
   --theme-panel: rgba(22, 31, 45, 0.92);
+  --theme-panel-hover: rgba(35, 47, 66, 0.96);
 
   --theme-primary: #4da6ff;
+  --theme-primary-hover: #8cc8ff;
   --theme-secondary: #ffb000;
 
   --theme-text: #ffffff;
   --theme-text-muted: #d9e4f2;
+  --theme-text-dim: #9ba9bb;
 
   --theme-border: rgba(77, 166, 255, 0.34);
   --theme-border-strong: rgba(77, 166, 255, 0.68);
 
+  --theme-shadow: rgba(0, 0, 0, 0.6);
   --theme-glow: rgba(77, 166, 255, 0.3);
   --theme-focus: rgba(255, 176, 0, 0.3);
-
-  --theme-font-body:
-    "Trebuchet MS",
-    Arial,
-    sans-serif;
-
-  --theme-font-heading:
-    "Trebuchet MS",
-    Arial,
-    sans-serif;
 }
 
 
@@ -6070,97 +5230,270 @@ button,
 [data-theme="tritanopia"] {
   --theme-bg: #24162d;
   --theme-bg-secondary: #34203f;
+
   --theme-panel: rgba(43, 27, 53, 0.93);
+  --theme-panel-hover: rgba(62, 39, 75, 0.97);
 
   --theme-primary: #d875c7;
+  --theme-primary-hover: #eea0df;
   --theme-secondary: #e6e6e6;
 
   --theme-text: #ffffff;
   --theme-text-muted: #eaddeb;
+  --theme-text-dim: #b6a5b9;
 
   --theme-border: rgba(216, 117, 199, 0.35);
   --theme-border-strong: rgba(216, 117, 199, 0.7);
 
+  --theme-shadow: rgba(0, 0, 0, 0.62);
   --theme-glow: rgba(216, 117, 199, 0.3);
   --theme-focus: rgba(216, 117, 199, 0.28);
-
-  --theme-font-body:
-    Verdana,
-    Arial,
-    sans-serif;
-
-  --theme-font-heading:
-    Verdana,
-    Arial,
-    sans-serif;
 }
+
+
 /* =========================================================
-   ACCESSIBILITY FONT APPLICATION
+   ACCESSIBILITY THEME SELECTOR
 ========================================================= */
 
-body,
-button,
-input,
-select,
-textarea {
-  font-family:
-    var(--theme-font-body);
+.sub-nav {
+  position: relative;
+  overflow: visible !important;
+}
+
+.sub-nav-theme {
+  position: absolute;
+  top: 50%;
+  right: 28px;
+  z-index: 100;
+  transform: translateY(-50%);
+}
+
+.theme-selector {
+  display: flex;
+  align-items: center;
+}
+
+.theme-selector-select {
+  min-width: 220px;
+  padding: 12px 42px 12px 18px;
+
+  appearance: auto;
+
+  color: var(--theme-text);
+  background: var(--theme-panel);
+
+  border: 1px solid var(--theme-border);
+  border-radius: 14px;
+
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+
+  cursor: pointer;
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.theme-selector-select:hover {
+  border-color: var(--theme-primary);
+}
+
+.theme-selector-select:focus {
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px var(--theme-focus);
+}
+
+.theme-selector-select option {
+  color: #ffffff;
+  background: #10182a;
+}
+
+
+/* =========================================================
+   THEME COLOR APPLICATION
+========================================================= */
+
+[data-theme] body {
+  color: var(--theme-text);
+}
+
+[data-theme] .topbar {
+  border-color: var(--theme-border);
+  box-shadow: 0 0 30px var(--theme-glow);
+}
+
+[data-theme] .sub-nav {
+  border-color: var(--theme-border);
+}
+
+[data-theme] .card,
+[data-theme] .admin-card,
+[data-theme] .welcome-card,
+[data-theme] .member-card,
+[data-theme] .event-card,
+[data-theme] .region-card,
+[data-theme] .leaderboard-card,
+[data-theme] .shiny-card {
+  border-color: var(--theme-border);
+}
+
+[data-theme] .card:hover,
+[data-theme] .admin-card:hover,
+[data-theme] .member-card:hover,
+[data-theme] .event-card:hover,
+[data-theme] .shiny-card:hover {
+  box-shadow: 0 0 25px var(--theme-glow);
+}
+
+[data-theme] .dex-controls input,
+[data-theme] .dex-controls select,
+[data-theme] .shiny-card,
+[data-theme] .pokemon-modal,
+[data-theme] .detail-card {
+  border-color: var(--theme-border);
+}
+
+[data-theme] .dex-entry.caught {
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 8px var(--theme-glow);
+}
+
+[data-theme] .status-badge {
+  background: linear-gradient(
+    135deg,
+    var(--theme-primary),
+    var(--theme-primary-hover)
+  );
+}
+
+
+/* =========================================================
+   ACCESSIBILITY FONT APPLICATION
+   Default theme keeps the original Team Fate typography.
+========================================================= */
+
+[data-theme="protanopia"],
+[data-theme="protanopia"] button,
+[data-theme="protanopia"] input,
+[data-theme="protanopia"] select,
+[data-theme="protanopia"] textarea {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+[data-theme="deuteranopia"],
+[data-theme="deuteranopia"] button,
+[data-theme="deuteranopia"] input,
+[data-theme="deuteranopia"] select,
+[data-theme="deuteranopia"] textarea {
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+[data-theme="tritanopia"],
+[data-theme="tritanopia"] button,
+[data-theme="tritanopia"] input,
+[data-theme="tritanopia"] select,
+[data-theme="tritanopia"] textarea {
+  font-family: Verdana, Arial, sans-serif;
 }
 
 
 /* Navigation */
 
-.topbar,
-.sub-nav,
-.nav-links,
-.nav-links a,
-.sub-nav-link {
-  font-family:
-    var(--theme-font-heading);
-}
-
-
-/* Accessibility themes use clearer typography */
-
+[data-theme="protanopia"] .topbar,
+[data-theme="protanopia"] .topbar a,
 [data-theme="protanopia"] .nav-links,
 [data-theme="protanopia"] .nav-links a,
+[data-theme="protanopia"] .sub-nav,
 [data-theme="protanopia"] .sub-nav-link,
+[data-theme="protanopia"] .login-btn,
+[data-theme="protanopia"] .username {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
 
+[data-theme="deuteranopia"] .topbar,
+[data-theme="deuteranopia"] .topbar a,
 [data-theme="deuteranopia"] .nav-links,
 [data-theme="deuteranopia"] .nav-links a,
+[data-theme="deuteranopia"] .sub-nav,
 [data-theme="deuteranopia"] .sub-nav-link,
+[data-theme="deuteranopia"] .login-btn,
+[data-theme="deuteranopia"] .username {
+  font-family: "Trebuchet MS", Arial, sans-serif !important;
+  font-style: normal !important;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
 
+[data-theme="tritanopia"] .topbar,
+[data-theme="tritanopia"] .topbar a,
 [data-theme="tritanopia"] .nav-links,
 [data-theme="tritanopia"] .nav-links a,
-[data-theme="tritanopia"] .sub-nav-link {
-  font-family:
-    var(--theme-font-heading) !important;
-
-  font-weight: 800;
-
+[data-theme="tritanopia"] .sub-nav,
+[data-theme="tritanopia"] .sub-nav-link,
+[data-theme="tritanopia"] .login-btn,
+[data-theme="tritanopia"] .username {
+  font-family: Verdana, Arial, sans-serif !important;
   font-style: normal !important;
-
+  font-weight: 800;
   letter-spacing: 0.04em;
 }
 
 
-/* Main headings */
+/* Headings */
 
 [data-theme="protanopia"] h1,
 [data-theme="protanopia"] h2,
 [data-theme="protanopia"] h3,
+[data-theme="protanopia"] .page-title,
+[data-theme="protanopia"] .logo-main,
+[data-theme="protanopia"] .champion-name,
+[data-theme="protanopia"] .winner-name {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-style: normal !important;
+}
 
 [data-theme="deuteranopia"] h1,
 [data-theme="deuteranopia"] h2,
 [data-theme="deuteranopia"] h3,
+[data-theme="deuteranopia"] .page-title,
+[data-theme="deuteranopia"] .logo-main,
+[data-theme="deuteranopia"] .champion-name,
+[data-theme="deuteranopia"] .winner-name {
+  font-family: "Trebuchet MS", Arial, sans-serif !important;
+  font-style: normal !important;
+}
 
 [data-theme="tritanopia"] h1,
 [data-theme="tritanopia"] h2,
-[data-theme="tritanopia"] h3 {
-  font-family:
-    var(--theme-font-heading) !important;
-
+[data-theme="tritanopia"] h3,
+[data-theme="tritanopia"] .page-title,
+[data-theme="tritanopia"] .logo-main,
+[data-theme="tritanopia"] .champion-name,
+[data-theme="tritanopia"] .winner-name {
+  font-family: Verdana, Arial, sans-serif !important;
   font-style: normal !important;
+}
 
-  letter-spacing: 0.02em;
+
+/* =========================================================
+   RESPONSIVE THEME SELECTOR
+========================================================= */
+
+@media (max-width: 900px) {
+  .sub-nav-theme {
+    right: 12px;
+  }
+
+  .theme-selector-select {
+    min-width: 150px;
+    padding: 9px 10px;
+    font-size: 0.85rem;
+  }
 }
