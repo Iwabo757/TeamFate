@@ -4589,82 +4589,78 @@ textarea:focus {
 }
 
 /* =========================================================
-   SITE HEADER — CLEAN CONSOLIDATED LAYOUT
-   Desktop:
-   Logo | Main Navigation | Profile/Login
-   Mobile:
-   Logo | Hamburger
-   ========================================================= */
+   CLEAN TEAM FATE HEADER
+   Compact desktop layout:
+   Logo | Navigation (including Admin) | Profile
+========================================================= */
 
 .site-header {
-  position: relative;
-  z-index: 5000;
   width: 100%;
+  position: relative;
+  z-index: 1000;
+  overflow: visible;
 }
 
 /* ---------------------------------------------------------
-   MAIN TOP BAR
+   MAIN HEADER
 --------------------------------------------------------- */
 
 .topbar,
 .main-nav {
-  position: relative;
-  z-index: 5000;
-
   width: 100%;
-  height: 58px;
-  min-height: 58px;
+  height: 56px;
+  min-height: 56px;
 
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: stretch;
 
-  margin: 0;
   padding: 0;
+  margin: 0;
+
+  position: relative;
+  z-index: 1000;
 
   background:
     linear-gradient(
       90deg,
-      rgba(7, 18, 39, 0.96),
-      rgba(15, 37, 69, 0.96)
+      rgba(8, 18, 37, 0.96),
+      rgba(16, 41, 74, 0.96)
     );
 
-  border-bottom: 1px solid rgba(100, 207, 255, 0.14);
+  backdrop-filter: blur(18px);
+
+  border-bottom: 1px solid rgba(120, 190, 255, 0.16);
 
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.14);
+    0 0 24px rgba(100, 207, 255, 0.12);
 
   overflow: visible;
 }
 
-/* Some App.tsx versions wrap logo/navigation in .nav-left. */
+/* Some versions of App.tsx wrap the contents in nav-left.
+   Let it participate in the grid without creating a second row. */
 .nav-left {
   display: contents;
 }
 
 /* ---------------------------------------------------------
-   BRAND
+   BRAND / LOGO
 --------------------------------------------------------- */
 
 .logo,
-.logo-section {
-  min-width: 0;
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-
-  padding: 0 12px;
-}
-
+.logo-section,
 .brand {
-  height: 100%;
-
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-start;
 
+  height: 100%;
   min-width: 0;
+  flex: 0 0 auto;
+
+  padding: 0 10px;
+  gap: 7px;
 
   text-decoration: none;
 }
@@ -4675,51 +4671,52 @@ textarea:focus {
   height: 46px;
   min-width: 46px;
 
+  object-fit: contain;
   flex: 0 0 46px;
 
   display: block;
-  object-fit: contain;
 
-  border-radius: 9px;
+  border-radius: 10px;
 }
 
 .logo-text {
-  min-width: 0;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-start;
 
+  min-width: 0;
   line-height: 1;
 }
 
 .logo-main {
   white-space: nowrap;
-  line-height: 0.9;
-
-  font-size: clamp(1.25rem, 1.55vw, 1.85rem);
+  font-size: clamp(1.25rem, 1.7vw, 1.85rem);
+  line-height: 0.95;
 }
 
 .logo-sub {
-  margin-top: 2px;
-
   white-space: nowrap;
-  line-height: 1;
-
-  font-size: clamp(0.58rem, 0.68vw, 0.78rem);
+  margin-top: 2px;
+  font-size: clamp(0.58rem, 0.72vw, 0.78rem);
 }
 
 /* ---------------------------------------------------------
-   DESKTOP MAIN NAVIGATION
+   MAIN NAVIGATION
 --------------------------------------------------------- */
 
 .nav-links {
-  min-width: 0;
-  height: 100%;
-
   display: flex;
   align-items: stretch;
   justify-content: center;
+
+  min-width: 0;
+  width: auto;
+  height: 100%;
+
+  margin: 0;
+  padding: 0;
+  gap: 0;
 
   overflow: hidden;
 }
@@ -4728,32 +4725,38 @@ textarea:focus {
 .nav-links > button,
 .nav-links .nav-link,
 .nav-links .admin-nav-link {
-  min-width: 0;
-  height: 100%;
-
-  flex: 1 1 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+
+  height: 100%;
   margin: 0;
-  padding: 0 clamp(5px, 0.7vw, 11px);
+  padding: 0 7px;
 
-  border: 0;
   border-radius: 0;
-
+  border: 0;
   background: transparent;
 
-  white-space: nowrap;
+  color: inherit;
   text-decoration: none;
 
-  font-size: clamp(0.76rem, 1vw, 1.1rem);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+
+  font-size: clamp(0.82rem, 1.05vw, 1.18rem);
   line-height: 1;
+
+  cursor: pointer;
 
   transition:
     background 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .nav-links > a:hover,
@@ -4761,41 +4764,43 @@ textarea:focus {
 .nav-links .nav-link:hover,
 .nav-links .admin-nav-link:hover {
   transform: none;
-
   background: rgba(100, 207, 255, 0.08);
   color: #ffffff;
+  box-shadow: none;
 }
 
 .nav-links > a.active,
 .nav-links > button.active,
 .nav-links .nav-link.active,
 .nav-links .admin-nav-link.active {
-  color: #d8f1ff;
-
   background:
     linear-gradient(
       180deg,
-      rgba(100, 207, 255, 0.18),
-      rgba(100, 207, 255, 0.08)
+      rgba(100, 207, 255, 0.20),
+      rgba(100, 207, 255, 0.10)
     );
 
-  border-left: 1px solid rgba(100, 207, 255, 0.24);
-  border-right: 1px solid rgba(100, 207, 255, 0.24);
+  border-left: 1px solid rgba(100, 207, 255, 0.34);
+  border-right: 1px solid rgba(100, 207, 255, 0.34);
+
+  color: #bfe8ff;
 }
 
-/* Admin always stays inline with the other desktop links. */
+/* Admin is always a normal inline navigation item. */
 .nav-links .admin-nav-link,
 .admin-nav-link {
   position: static !important;
-
   top: auto !important;
   right: auto !important;
   left: auto !important;
 
-  z-index: auto !important;
-
   flex: 1 1 0 !important;
   min-width: 0 !important;
+
+  margin: 0 !important;
+  padding: 0 7px !important;
+
+  z-index: auto !important;
 }
 
 /* ---------------------------------------------------------
@@ -4804,43 +4809,33 @@ textarea:focus {
 
 .topbar-right,
 .nav-right {
-  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 
+  height: 100%;
+  width: auto;
+  min-width: max-content;
+
+  margin: 0;
+  padding: 0 10px 0 7px;
+
+  flex: 0 0 auto;
+
+  position: relative;
+  z-index: 1100;
+
+  white-space: nowrap;
+}
+
+.user-profile,
+.profile-section {
   display: flex;
   align-items: center;
   justify-content: flex-end;
 
   gap: 7px;
-
-  min-width: max-content;
-
-  padding: 0 12px 0 7px;
-  margin: 0;
-
-  white-space: nowrap;
-
-  position: relative;
-  z-index: 5100;
-}
-
-.user-menu,
-.user-profile,
-.profile-section {
-  display: flex;
-  align-items: center;
-
   min-width: 0;
-}
-
-.user-button {
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-
-  gap: 8px;
-
-  text-decoration: none;
 }
 
 .user-avatar,
@@ -4852,22 +4847,21 @@ textarea:focus {
   flex: 0 0 42px;
 
   object-fit: cover;
-
-  border-radius: 9px;
+  border-radius: 10px;
 }
 
 .user-info {
-  min-width: 0;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
+
+  min-width: 0;
+  margin: 0;
 }
 
 .username {
   display: block;
-
-  max-width: 100px;
+  max-width: 95px;
 
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4875,8 +4869,7 @@ textarea:focus {
 }
 
 .login-btn,
-.logout-btn,
-.logout-link {
+.logout-btn {
   white-space: nowrap;
 }
 
@@ -4886,58 +4879,41 @@ textarea:focus {
 
 .sub-nav,
 .secondary-nav {
-  position: relative;
-  z-index: 100;
-
   width: 100%;
-  height: 32px;
-  min-height: 32px;
+  min-height: 40px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  padding: 2px 14px;
+  gap: 6px;
+  padding: 3px 14px;
 
-  background: rgba(4, 14, 35, 0.42);
+  box-sizing: border-box;
 
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(4, 14, 35, 0.96);
 
-  border-bottom: 1px solid rgba(100, 207, 255, 0.12);
+  border-bottom: 1px solid rgba(100, 207, 255, 0.20);
+
+  position: relative;
+  z-index: 10;
 
   overflow: visible;
 }
 
-.sub-nav-links {
-  min-width: 0;
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 4px;
-}
-
 .sub-nav-link {
-  height: 26px;
-
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  padding: 2px 12px;
+  padding: 8px 16px;
+
+  color: #c9e9ff;
+  text-decoration: none;
 
   border-radius: 8px;
 
-  white-space: nowrap;
-  text-decoration: none;
-
-  color: var(--theme-text);
-
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
 
   transition:
     background 0.2s ease,
@@ -4945,34 +4921,23 @@ textarea:focus {
 }
 
 .sub-nav-link:hover {
-  background: rgba(100, 207, 255, 0.10);
+  background: rgba(100, 207, 255, 0.12);
   color: #ffffff;
 }
 
 .sub-nav-link.active {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(100, 207, 255, 0.18),
-      rgba(100, 207, 255, 0.09)
-    );
-
+  background: rgba(100, 207, 255, 0.18);
   color: #ffffff;
 }
 
-/* ---------------------------------------------------------
-   THEME SELECTOR
---------------------------------------------------------- */
-
+/* Compact theme selector in the secondary bar. */
 .sub-nav-theme {
   position: absolute;
-
   top: 50%;
   right: 18px;
+  z-index: 100;
 
   transform: translateY(-50%);
-
-  z-index: 120;
 }
 
 .theme-selector {
@@ -4981,45 +4946,34 @@ textarea:focus {
 }
 
 .theme-selector-select {
-  width: 165px;
-  min-width: 165px;
-  height: 26px;
+  width: 190px;
+  min-width: 190px;
+  height: 32px;
 
-  padding: 0 30px 0 10px;
+  padding: 0 30px 0 12px;
 
   color: var(--theme-text);
-
-  background: rgba(8, 20, 55, 0.56);
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(8, 20, 55, 0.90);
 
   border: 1px solid var(--theme-border);
-  border-radius: 9px;
+  border-radius: 10px;
 
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
 
   cursor: pointer;
   outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
 .theme-selector-select:hover {
   border-color: var(--theme-primary);
-
-  box-shadow:
-    0 0 10px var(--theme-glow);
+  box-shadow: 0 0 12px var(--theme-glow);
 }
 
 .theme-selector-select:focus {
   border-color: var(--theme-primary);
-
-  box-shadow:
-    0 0 0 3px var(--theme-focus);
+  box-shadow: 0 0 0 3px var(--theme-focus);
 }
 
 .theme-selector-select option {
@@ -5028,551 +4982,73 @@ textarea:focus {
 }
 
 /* ---------------------------------------------------------
-   MOBILE MENU BACKDROP
---------------------------------------------------------- */
-
-.mobile-menu-backdrop {
-  position: fixed;
-  inset: 0;
-
-  z-index: 9000;
-
-  background: rgba(0, 0, 0, 0.52);
-
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-
-  animation: mobileBackdropFadeIn 0.2s ease forwards;
-}
-
-@keyframes mobileBackdropFadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* ---------------------------------------------------------
-   MOBILE
---------------------------------------------------------- */
-
-@media (max-width: 900px) {
-  .topbar,
-  .main-nav {
-    height: 72px;
-    min-height: 72px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 12px;
-  }
-
-  .nav-left {
-    display: flex;
-    align-items: center;
-
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  .logo,
-  .logo-section {
-    height: 100%;
-
-    min-width: 0;
-
-    padding: 0;
-  }
-
-  .brand {
-    height: 100%;
-    gap: 8px;
-
-    min-width: 0;
-  }
-
-  .logo-image,
-  .brand-logo {
-    width: 50px;
-    height: 50px;
-    min-width: 50px;
-
-    flex-basis: 50px;
-  }
-
-  .logo-main {
-    font-size: clamp(1.35rem, 6vw, 1.8rem);
-  }
-
-  .logo-sub {
-    font-size: clamp(0.58rem, 2.6vw, 0.74rem);
-  }
-
-  /* Hide desktop navigation/profile row on mobile. */
-  .nav-links,
-  .topbar-right,
-  .nav-right {
-    display: none !important;
-  }
-
-  /* -------------------------------------------------------
-     HAMBURGER
-  ------------------------------------------------------- */
-
-  .mobile-navigation {
-    position: relative;
-
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-
-    flex: 0 0 auto;
-
-    z-index: 9200;
-  }
-
-  .mobile-menu-btn {
-    width: 48px;
-    height: 48px;
-
-    display: inline-flex !important;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border: 1px solid rgba(100, 207, 255, 0.18);
-    border-radius: 12px;
-
-    background: rgba(8, 22, 48, 0.84);
-
-    color: var(--theme-text);
-
-    font-size: 1.8rem;
-    line-height: 1;
-
-    cursor: pointer;
-
-    position: relative;
-    z-index: 9201;
-  }
-
-  /* -------------------------------------------------------
-     MOBILE SLIDE-OUT MENU
-     Fixed to the viewport so it can never open off-screen.
-  ------------------------------------------------------- */
-
-  .mobile-menu {
-    position: fixed !important;
-
-    top: 0 !important;
-    right: 0 !important;
-    left: auto !important;
-    bottom: 0 !important;
-
-    width: min(84vw, 360px);
-    max-width: calc(100vw - 18px);
-    height: 100dvh;
-
-    margin: 0 !important;
-
-    display: flex !important;
-    flex-direction: column;
-
-    background:
-      linear-gradient(
-        180deg,
-        rgba(8, 22, 45, 0.98),
-        rgba(5, 14, 30, 0.99)
-      );
-
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-
-    border-left: 1px solid rgba(120, 190, 255, 0.28);
-
-    box-shadow:
-      -12px 0 40px rgba(0, 0, 0, 0.55);
-
-    overflow-x: hidden;
-    overflow-y: auto;
-
-    transform: translateX(100%);
-    transition: transform 0.28s ease;
-
-    pointer-events: none;
-
-    z-index: 9500 !important;
-  }
-
-  .mobile-menu.mobile-menu-open {
-    transform: translateX(0);
-    pointer-events: auto;
-  }
-
-  .mobile-menu-header {
-    min-height: 72px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 0 18px;
-
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-
-    color: var(--theme-text);
-
-    font-size: 1.05rem;
-    font-weight: 800;
-
-    flex-shrink: 0;
-  }
-
-  .mobile-menu-close {
-    width: 42px;
-    height: 42px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid rgba(120, 190, 255, 0.22);
-    border-radius: 10px;
-
-    background: rgba(255, 255, 255, 0.05);
-
-    color: var(--theme-text);
-
-    font-size: 1.2rem;
-
-    cursor: pointer;
-  }
-
-  .mobile-menu-links {
-    width: 100%;
-
-    display: flex;
-    flex-direction: column;
-
-    padding: 8px 0 28px;
-  }
-
-  .mobile-menu-links a,
-  .mobile-menu-links button,
-  .mobile-menu a {
-    width: 100%;
-    min-height: 54px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 0 20px;
-
-    border: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-
-    background: transparent;
-
-    color: var(--theme-text);
-
-    text-align: left;
-    text-decoration: none;
-
-    font-family: inherit;
-    font-size: 1rem;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    transition:
-      background 0.2s ease,
-      padding-left 0.2s ease;
-  }
-
-  .mobile-menu-links a:hover,
-  .mobile-menu-links a:active,
-  .mobile-menu-links button:hover,
-  .mobile-menu-links button:active,
-  .mobile-menu a:hover,
-  .mobile-menu a:active {
-    padding-left: 26px;
-
-    background: rgba(100, 207, 255, 0.10);
-  }
-
-  /* -------------------------------------------------------
-     MOBILE SUB BAR
-     Keep it visible, compact, and transparent.
-  ------------------------------------------------------- */
-
-  .sub-nav,
-  .secondary-nav {
-    height: 48px;
-    min-height: 48px;
-
-    display: flex !important;
-    align-items: center;
-    justify-content: flex-start;
-
-    padding: 4px 148px 4px 10px;
-
-    background: rgba(4, 14, 35, 0.34);
-
-    backdrop-filter: blur(9px);
-    -webkit-backdrop-filter: blur(9px);
-
-    overflow: visible;
-  }
-
-  .sub-nav-links {
-    width: 100%;
-    min-width: 0;
-    height: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-
-    gap: 4px;
-
-    overflow-x: auto;
-    overflow-y: hidden;
-
-    scrollbar-width: none;
-  }
-
-  .sub-nav-links::-webkit-scrollbar {
-    display: none;
-  }
-
-  .sub-nav-link {
-    height: 36px;
-
-    flex: 0 0 auto;
-
-    padding: 5px 12px;
-
-    font-size: 0.84rem;
-  }
-
-  .sub-nav-theme {
-    top: 50%;
-    right: 10px;
-
-    transform: translateY(-50%);
-  }
-
-  .theme-selector-select {
-    width: 132px;
-    min-width: 132px;
-    height: 34px;
-
-    padding-left: 9px;
-
-    font-size: 0.74rem;
-  }
-}
-
-/* ---------------------------------------------------------
-   SMALL MOBILE
---------------------------------------------------------- */
-
-@media (max-width: 520px) {
-  .topbar,
-  .main-nav {
-    height: 64px;
-    min-height: 64px;
-
-    padding: 0 10px;
-  }
-
-  .logo-image,
-  .brand-logo {
-    width: 46px;
-    height: 46px;
-    min-width: 46px;
-
-    flex-basis: 46px;
-  }
-
-  .logo-main {
-    font-size: clamp(1.1rem, 5.6vw, 1.5rem);
-  }
-
-  .logo-sub {
-    font-size: clamp(0.5rem, 2.3vw, 0.66rem);
-  }
-
-  .mobile-menu-btn {
-    width: 44px;
-    height: 44px;
-
-    font-size: 1.6rem;
-  }
-
-  .mobile-menu {
-    width: min(88vw, 340px);
-    max-width: calc(100vw - 10px);
-  }
-
-  .sub-nav,
-  .secondary-nav {
-    height: 46px;
-    min-height: 46px;
-
-    padding-right: 138px;
-  }
-
-  .sub-nav-link {
-    height: 34px;
-
-    padding: 5px 10px;
-
-    font-size: 0.8rem;
-  }
-
-  .theme-selector-select {
-    width: 122px;
-    min-width: 122px;
-    height: 32px;
-
-    font-size: 0.7rem;
-  }
-}
-
-/* ---------------------------------------------------------
-   VERY SMALL SCREENS
---------------------------------------------------------- */
-
-@media (max-width: 380px) {
-  .logo-image,
-  .brand-logo {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-
-    flex-basis: 42px;
-  }
-
-  .logo-main {
-    font-size: 1.05rem;
-  }
-
-  .logo-sub {
-    font-size: 0.48rem;
-  }
-
-  .mobile-menu-btn {
-    width: 42px;
-    height: 42px;
-  }
-
-  .mobile-menu {
-    width: calc(100vw - 8px);
-  }
-
-  .sub-nav,
-  .secondary-nav {
-    padding-right: 132px;
-  }
-
-  .theme-selector-select {
-    width: 116px;
-    min-width: 116px;
-  }
-}
-
-/* ---------------------------------------------------------
    DESKTOP COMPACTION
 --------------------------------------------------------- */
 
+@media (min-width: 901px) and (max-width: 1700px) {
+  .nav-links > a,
+  .nav-links > button,
+  .nav-links .nav-link,
+  .nav-links .admin-nav-link {
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: clamp(0.88rem, 1.12vw, 1.30rem);
+  }
+
+  .topbar-right,
+  .nav-right {
+    padding-right: 12px;
+    padding-left: 8px;
+  }
+}
+
 @media (min-width: 901px) and (max-width: 1450px) {
   .logo,
-  .logo-section {
+  .logo-section,
+  .brand {
     padding-left: 10px;
     padding-right: 10px;
   }
 
   .logo-image,
   .brand-logo {
-    width: 42px;
-    height: 42px;
-    min-width: 42px;
-
-    flex-basis: 42px;
-  }
-
-  .logo-main {
-    font-size: 1.35rem;
-  }
-
-  .logo-sub {
-    font-size: 0.62rem;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    flex-basis: 52px;
   }
 
   .nav-links > a,
   .nav-links > button,
   .nav-links .nav-link,
   .nav-links .admin-nav-link {
-    padding-left: 5px;
-    padding-right: 5px;
-
-    font-size: clamp(0.72rem, 0.9vw, 0.95rem);
-  }
-
-  .topbar-right,
-  .nav-right {
-    padding-right: 9px;
-    padding-left: 5px;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 0.92rem;
   }
 
   .user-avatar,
   .nav-avatar {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-
-    flex-basis: 38px;
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    flex-basis: 50px;
   }
 
   .username {
-    max-width: 78px;
-  }
-
-  .theme-selector-select {
-    width: 150px;
-    min-width: 150px;
+    max-width: 88px;
   }
 }
 
-@media (min-width: 901px) and (max-width: 1120px) {
+@media (min-width: 901px) and (max-width: 1200px) {
   .topbar,
   .main-nav {
-    height: 54px;
-    min-height: 54px;
-  }
-
-  .logo-image,
-  .brand-logo {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
-
-    flex-basis: 38px;
+    height: 56px;
+    min-height: 56px;
   }
 
   .logo-main {
-    font-size: 1.15rem;
-  }
-
-  .logo-sub {
-    font-size: 0.54rem;
+    font-size: 1.55rem;
   }
 
   .nav-links > a,
@@ -5581,54 +5057,2088 @@ textarea:focus {
   .nav-links .admin-nav-link {
     padding-left: 4px;
     padding-right: 4px;
-
-    font-size: 0.68rem;
+    font-size: 0.80rem;
   }
 
   .topbar-right,
   .nav-right {
-    padding-right: 7px;
-    padding-left: 4px;
+    padding-right: 8px;
+    padding-left: 5px;
   }
 
   .user-avatar,
   .nav-avatar {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-
-    flex-basis: 34px;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    flex-basis: 46px;
   }
 
   .username {
-    max-width: 62px;
+    max-width: 70px;
   }
 }
 
 /* ---------------------------------------------------------
-   DESKTOP ONLY
+   MOBILE HEADER
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .topbar,
+  .main-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    height: 72px;
+    min-height: 72px;
+
+    padding: 0 12px;
+  }
+
+  .nav-left {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .topbar-right,
+  .nav-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    width: auto;
+    min-width: 0;
+    height: auto;
+
+    margin-left: auto;
+    padding: 0;
+  }
+
+  .logo,
+  .logo-section,
+  .brand {
+    padding: 0;
+  }
+
+  .logo-image,
+  .brand-logo {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    flex-basis: 48px;
+  }
+
+  .logo-main {
+    font-size: 1.45rem;
+  }
+
+  .logo-sub {
+    font-size: 0.68rem;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    flex-basis: 44px;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    min-height: 50px;
+    justify-content: flex-start;
+    padding-right: 150px;
+  }
+
+  .sub-nav-theme {
+    right: 10px;
+  }
+
+  .theme-selector-select {
+    width: 135px;
+    min-width: 135px;
+    height: 36px;
+    padding: 0 8px;
+    font-size: 0.78rem;
+  }
+}
+
+
+
+/* =========================================================
+   FINAL COMPACT HEADER OVERRIDE
+   Keep both desktop bars intentionally short.
+========================================================= */
+@media (min-width: 901px) {
+  .topbar,
+  .main-nav {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    min-height: 40px !important;
+    height: 40px;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .sub-nav-link {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+}
+
+
+
+/* =========================================================
+   FINAL HEADER + MOBILE FIX
+   Fixes:
+   - restores the actual .mobile-menu dropdown
+   - keeps the hamburger visible and clickable
+   - prevents Admin/profile overflow on mobile
+   - makes the secondary bar more transparent
+   - keeps both header rows compact
+========================================================= */
+
+/* ---------------------------------------------------------
+   TRANSPARENT SECONDARY BAR
+--------------------------------------------------------- */
+
+.sub-nav,
+.secondary-nav {
+  background: rgba(4, 14, 35, 0.52) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom-color: rgba(100, 207, 255, 0.16);
+}
+
+.theme-selector-select {
+  background: rgba(8, 20, 55, 0.58) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---------------------------------------------------------
+   DESKTOP: KEEP THE TWO BARS COMPACT
 --------------------------------------------------------- */
 
 @media (min-width: 901px) {
-  .mobile-navigation,
-  .mobile-menu-btn,
-  .mobile-menu,
-  .mobile-menu-backdrop {
-    display: none;
+  .topbar,
+  .main-nav {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    height: 40px !important;
+    min-height: 40px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .sub-nav-link {
+    padding: 5px 16px !important;
   }
 }
 
 /* ---------------------------------------------------------
-   REDUCED MOTION
+   MOBILE HEADER
 --------------------------------------------------------- */
 
-@media (prefers-reduced-motion: reduce) {
-  .mobile-menu,
-  .mobile-menu-backdrop,
-  .nav-links > a,
-  .nav-links > button,
+@media (max-width: 900px) {
+  .topbar,
+  .main-nav {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    height: 64px !important;
+    min-height: 64px !important;
+
+    padding: 0 14px !important;
+
+    overflow: visible !important;
+  }
+
+  .logo,
+  .logo-section,
+  .brand {
+    min-width: 0;
+    height: 64px;
+    padding: 0 !important;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .logo-image,
+  .brand-logo {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    flex-basis: 48px !important;
+  }
+
+  .logo-main {
+    font-size: clamp(1.25rem, 6vw, 1.7rem) !important;
+  }
+
+  .logo-sub {
+    font-size: clamp(0.58rem, 2.8vw, 0.72rem) !important;
+  }
+
+  /* Desktop navigation stays hidden on mobile. */
+  .nav-links {
+    display: none !important;
+  }
+
+  /* Restore and stabilize the hamburger. */
+  .mobile-menu-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+    margin-left: auto;
+    margin-right: 8px;
+
+    padding: 0 !important;
+
+    font-size: 2rem !important;
+    line-height: 1;
+
+    color: #ffffff;
+    background: rgba(8, 20, 45, 0.32);
+    border: 1px solid rgba(100, 207, 255, 0.16);
+    border-radius: 10px;
+
+    cursor: pointer;
+    z-index: 3200;
+  }
+
+  /* On mobile, do not keep the duplicate Admin link in the top row.
+     Admin remains available inside the hamburger menu. */
+  .topbar-right .admin-nav-link {
+    display: none !important;
+  }
+
+  .topbar-right,
+  .nav-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+
+    width: auto !important;
+    min-width: 0 !important;
+    height: 64px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    flex: 0 0 auto !important;
+  }
+
+  .user-menu {
+    display: flex;
+    align-items: center;
+  }
+
+  .user-button {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .user-info {
+    display: none !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    flex-basis: 46px !important;
+
+    margin: 0;
+  }
+
+  .login-btn {
+    padding: 7px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* -------------------------------------------------------
+     ACTUAL MOBILE DROPDOWN
+     App.tsx uses .mobile-menu, not .mobile-nav.
+  ------------------------------------------------------- */
+
+  .mobile-menu {
+    position: absolute !important;
+
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+
+    display: flex !important;
+    flex-direction: column;
+
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+
+    padding: 8px 12px 16px;
+
+    background: rgba(4, 14, 35, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border-top: 1px solid rgba(100, 207, 255, 0.18);
+    border-bottom: 1px solid rgba(100, 207, 255, 0.18);
+
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.38);
+
+    z-index: 3100 !important;
+  }
+
+  .mobile-menu a {
+    display: flex !important;
+    align-items: center;
+
+    min-height: 46px;
+
+    padding: 11px 14px;
+
+    color: #dcecff;
+    text-decoration: none;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .mobile-menu a:last-child {
+    border-bottom: 0;
+  }
+
+  .mobile-menu a:hover,
+  .mobile-menu a:active {
+    background: rgba(100, 207, 255, 0.10);
+    color: #ffffff;
+  }
+
+  /* -------------------------------------------------------
+     COMPACT, TRANSPARENT MOBILE SUB BAR
+  ------------------------------------------------------- */
+
+  .sub-nav,
+  .secondary-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    height: 44px !important;
+    min-height: 44px !important;
+
+    padding: 3px 150px 3px 12px !important;
+
+    background: rgba(4, 14, 35, 0.45) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    overflow: visible !important;
+  }
+
+  .sub-nav-links {
+    display: flex;
+    align-items: center;
+
+    min-width: 0;
+    max-width: 100%;
+
+    gap: 4px;
+
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sub-nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
   .sub-nav-link {
-    animation: none !important;
-    transition: none !important;
+    flex: 0 0 auto;
+
+    padding: 7px 12px !important;
+
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .sub-nav-theme {
+    position: absolute !important;
+
+    top: 50%;
+    right: 10px;
+
+    transform: translateY(-50%);
+  }
+
+  .theme-selector-select {
+    width: 132px !important;
+    min-width: 132px !important;
+    height: 34px !important;
+
+    padding: 0 28px 0 10px !important;
+
+    font-size: 0.78rem !important;
+
+    background: rgba(8, 20, 55, 0.55) !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   EXTRA SMALL MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .topbar,
+  .main-nav {
+    height: 60px !important;
+    min-height: 60px !important;
+    padding: 0 10px !important;
+  }
+
+  .logo,
+  .logo-section,
+  .brand {
+    height: 60px;
+  }
+
+  .logo-image,
+  .brand-logo {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  .logo-main {
+    font-size: 1.25rem !important;
+  }
+
+  .logo-sub {
+    font-size: 0.58rem !important;
+  }
+
+  .mobile-menu-btn {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+
+    margin-right: 6px;
+
+    font-size: 1.8rem !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    height: 42px !important;
+    min-height: 42px !important;
+
+    padding-right: 138px !important;
+  }
+
+  .theme-selector-select {
+    width: 122px !important;
+    min-width: 122px !important;
+    height: 32px !important;
+
+    font-size: 0.72rem !important;
+  }
+
+  .mobile-menu {
+    max-height: calc(100vh - 60px);
+  }
+}
+
+/* =========================================================
+   TOP BAR FINAL LAYOUT FIX
+   Add this at the VERY BOTTOM of App.css
+========================================================= */
+
+/* ---------------------------------------------------------
+   DESKTOP HEADER
+--------------------------------------------------------- */
+
+@media (min-width: 901px) {
+
+  .topbar {
+    height: 82px;
+    min-height: 82px;
+
+    display: grid !important;
+
+    /*
+      Logo | Navigation | Account
+    */
+
+    grid-template-columns:
+      minmax(300px, 420px)
+      minmax(0, 1fr)
+      auto;
+
+    grid-template-rows: 82px;
+
+    align-items: stretch;
+
+    overflow: hidden;
+
+    padding: 0;
+  }
+
+
+  /* -------------------------------------------------------
+     LOGO AREA
+  ------------------------------------------------------- */
+
+  .logo {
+    grid-column: 1;
+    grid-row: 1;
+
+    height: 82px;
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+  }
+
+  .brand {
+    width: 100%;
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 6px 18px;
+
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 64px;
+    height: 64px;
+
+    flex: 0 0 64px;
+
+    border-radius: 10px;
+  }
+
+  .logo-main {
+    font-size: clamp(1.7rem, 2vw, 2.45rem);
+    line-height: 0.9;
+  }
+
+  .logo-sub {
+    font-size: clamp(0.75rem, 0.9vw, 1rem);
+    line-height: 1;
+  }
+
+
+  /* -------------------------------------------------------
+     HIDE MOBILE BUTTON ON DESKTOP
+  ------------------------------------------------------- */
+
+  .mobile-navigation,
+  .mobile-menu-btn,
+  .mobile-menu {
+    display: none !important;
+  }
+
+
+  /* -------------------------------------------------------
+     MAIN NAVIGATION
+  ------------------------------------------------------- */
+
+  .nav-links {
+    grid-column: 2;
+    grid-row: 1;
+
+    min-width: 0;
+    height: 82px;
+
+    display: flex !important;
+    align-items: stretch;
+    justify-content: center;
+
+    overflow: hidden;
+  }
+
+  .nav-links a {
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 1 1 auto;
+
+    padding:
+      0
+      clamp(8px, 1vw, 20px);
+
+    white-space: nowrap;
+
+    font-size:
+      clamp(1.05rem, 1.4vw, 1.55rem);
+  }
+
+
+  /* -------------------------------------------------------
+     RIGHT ACCOUNT AREA
+  ------------------------------------------------------- */
+
+  .topbar-right {
+    grid-column: 3;
+    grid-row: 1;
+
+    height: 82px;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+
+    flex-wrap: nowrap;
+
+    gap: 8px;
+
+    padding:
+      6px
+      18px
+      6px
+      8px;
+
+    white-space: nowrap;
+  }
+
+
+  /* -------------------------------------------------------
+     ADMIN BUTTON
+  ------------------------------------------------------- */
+
+  .admin-nav-link {
+    height: 82px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 auto;
+
+    padding:
+      0
+      clamp(8px, 0.9vw, 14px);
+
+    white-space: nowrap;
+
+    font-size:
+      clamp(1rem, 1.25vw, 1.4rem);
+  }
+
+
+  /* -------------------------------------------------------
+     PROFILE
+  ------------------------------------------------------- */
+
+  .user-menu {
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+  }
+
+  .user-button {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    white-space: nowrap;
+  }
+
+  .nav-avatar {
+    width: 54px;
+    height: 54px;
+
+    flex: 0 0 54px;
+  }
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+
+    min-width: 0;
+  }
+
+  .username {
+    max-width: 125px;
+
+    font-size:
+      clamp(1rem, 1.2vw, 1.35rem);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .logout-link {
+    font-size: 0.88rem;
+  }
+
+
+  /* -------------------------------------------------------
+     LOGIN
+  ------------------------------------------------------- */
+
+  .login-btn {
+    height: 52px;
+
+    flex: 0 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 22px;
+
+    white-space: nowrap;
+
+    border-radius: 10px;
+
+    font-size: 1.3rem;
+  }
+
+
+  /* -------------------------------------------------------
+     COMPACT DESKTOP
+  ------------------------------------------------------- */
+
+  @media (max-width: 1500px) {
+
+    .topbar {
+      grid-template-columns:
+        minmax(260px, 340px)
+        minmax(0, 1fr)
+        auto;
+    }
+
+    .brand {
+      padding-inline: 12px;
+    }
+
+    .brand-logo {
+      width: 56px;
+      height: 56px;
+
+      flex-basis: 56px;
+    }
+
+    .logo-main {
+      font-size: 1.85rem;
+    }
+
+    .nav-links a {
+      padding-inline: 9px;
+      font-size: clamp(1rem, 1.25vw, 1.35rem);
+    }
+
+    .admin-nav-link {
+      padding-inline: 8px;
+      font-size: 1.15rem;
+    }
+
+    .username {
+      max-width: 100px;
+    }
+
+    .nav-avatar {
+      width: 48px;
+      height: 48px;
+
+      flex-basis: 48px;
+    }
+  }
+
+
+  /* -------------------------------------------------------
+     SMALL DESKTOP / LARGE TABLET
+  ------------------------------------------------------- */
+
+  @media (max-width: 1200px) {
+
+    .topbar {
+      grid-template-columns:
+        250px
+        minmax(0, 1fr)
+        auto;
+    }
+
+    .logo-sub {
+      display: none;
+    }
+
+    .brand-logo {
+      width: 50px;
+      height: 50px;
+
+      flex-basis: 50px;
+    }
+
+    .logo-main {
+      font-size: 1.65rem;
+    }
+
+    .nav-links a {
+      padding-inline: 7px;
+      font-size: 1rem;
+    }
+
+    .admin-nav-link {
+      padding-inline: 7px;
+      font-size: 1rem;
+    }
+
+    .user-info {
+      display: none;
+    }
+
+    .login-btn {
+      height: 46px;
+      padding-inline: 16px;
+      font-size: 1.15rem;
+    }
+  }
+}
+
+
+/* =========================================================
+   DESKTOP SUB NAV
+========================================================= */
+
+@media (min-width: 901px) {
+
+  .sub-nav {
+    height: 46px;
+    min-height: 46px;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+
+    padding:
+      0
+      240px
+      0
+      18px;
+
+    background:
+      rgba(5, 15, 35, 0.32);
+
+    border-bottom:
+      1px solid rgba(100, 207, 255, 0.1);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .sub-nav-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+  }
+
+  .sub-nav-link {
+    min-height: 34px;
+
+    padding:
+      6px
+      16px;
+
+    font-size: 0.95rem;
+  }
+
+  .sub-nav-theme {
+    right: 18px;
+  }
+
+  .theme-selector-select {
+    width: 190px;
+    min-height: 34px;
+
+    background:
+      rgba(7, 20, 48, 0.48);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .topbar {
+    height: 74px;
+    min-height: 74px;
+
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 14px;
+  }
+
+  .logo {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .brand {
+    height: 74px;
+
+    padding: 6px 0;
+
+    display: flex;
+    align-items: center;
+  }
+
+  .brand-logo {
+    width: 54px;
+    height: 54px;
+
+    flex: 0 0 54px;
+  }
+
+  .logo-main {
+    font-size: clamp(1.45rem, 6vw, 2rem);
+  }
+
+  .logo-sub {
+    font-size: clamp(0.62rem, 2.8vw, 0.82rem);
+  }
+
+  .nav-links,
+  .topbar-right,
+  .sub-nav {
+    display: none !important;
+  }
+
+  .mobile-navigation {
+    position: relative;
+
+    display: flex !important;
+    align-items: center;
+
+    flex: 0 0 auto;
+
+    z-index: 2000;
+  }
+
+  .mobile-menu-btn {
+    width: 48px;
+    height: 48px;
+
+    display: grid !important;
+    place-items: center;
+
+    border: 1px solid var(--theme-border);
+    border-radius: 10px;
+
+    background:
+      rgba(8, 22, 48, 0.88);
+
+    color: var(--theme-text);
+
+    font-size: 1.7rem;
+
+    cursor: pointer;
+  }
+
+  .mobile-menu {
+    position: absolute;
+
+    top: calc(100% + 10px);
+    right: 0;
+
+    width: min(360px, calc(100vw - 24px));
+
+    max-height:
+      calc(100vh - 100px);
+
+    overflow-y: auto;
+
+    padding: 10px;
+
+    border:
+      1px solid var(--theme-border);
+
+    border-radius: 16px;
+
+    background:
+      rgba(5, 15, 34, 0.98);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    box-shadow:
+      0 20px 50px rgba(0, 0, 0, 0.5);
+  }
+}
+/* =========================================================
+   FINAL HEADER LAYOUT FIX
+   Add this at the VERY BOTTOM of App.css
+   ========================================================= */
+
+
+/* =========================================================
+   DESKTOP HEADER
+========================================================= */
+
+@media (min-width: 901px) {
+
+  .topbar {
+    width: 100% !important;
+    height: 82px !important;
+    min-height: 82px !important;
+
+    display: flex !important;
+    align-items: stretch !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    position: relative !important;
+
+    overflow: visible !important;
+
+    background:
+      linear-gradient(
+        90deg,
+        rgba(7, 18, 39, 0.96),
+        rgba(14, 34, 65, 0.96)
+      ) !important;
+
+    border-bottom:
+      1px solid rgba(100, 207, 255, 0.16) !important;
+  }
+
+
+  /* -------------------------------------------------------
+     LOGO AREA
+  ------------------------------------------------------- */
+
+  .logo {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex: 0 0 520px !important;
+
+    min-width: 0 !important;
+
+    padding: 0 22px !important;
+
+    box-sizing: border-box !important;
+
+    overflow: visible !important;
+  }
+
+
+  .brand {
+    height: 82px !important;
+
+    width: 100% !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 12px !important;
+
+    padding: 0 !important;
+
+    overflow: visible !important;
+
+    text-decoration: none !important;
+  }
+
+
+  .brand-logo {
+    width: 68px !important;
+    height: 68px !important;
+
+    min-width: 68px !important;
+
+    flex: 0 0 68px !important;
+
+    object-fit: contain !important;
+
+    display: block !important;
+  }
+
+
+  .logo-text {
+    height: auto !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    justify-content: center !important;
+    align-items: flex-start !important;
+
+    overflow: visible !important;
+
+    line-height: 1 !important;
+  }
+
+
+  .logo-main {
+    display: block !important;
+
+    line-height: 0.9 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  .logo-sub {
+    display: block !important;
+
+    margin-top: 4px !important;
+
+    line-height: 1 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  /* -------------------------------------------------------
+     DESKTOP NAVIGATION
+  ------------------------------------------------------- */
+
+  .nav-links {
+    height: 82px !important;
+
+    flex: 1 1 auto !important;
+
+    min-width: 0 !important;
+
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: space-evenly !important;
+
+    gap: 0 !important;
+
+    margin: 0 !important;
+
+    overflow: visible !important;
+  }
+
+
+  .nav-links a {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 12px !important;
+
+    white-space: nowrap !important;
+
+    flex: 0 1 auto !important;
+
+    box-sizing: border-box !important;
+  }
+
+
+  /* -------------------------------------------------------
+     RIGHT SIDE
+  ------------------------------------------------------- */
+
+  .topbar-right {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex: 0 0 auto !important;
+
+    gap: 10px !important;
+
+    padding: 0 18px 0 10px !important;
+
+    margin: 0 !important;
+
+    white-space: nowrap !important;
+
+    overflow: visible !important;
+  }
+
+
+  .admin-nav-link {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 0 10px !important;
+
+    white-space: nowrap !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-menu {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-button {
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 10px !important;
+
+    text-decoration: none !important;
+  }
+
+
+  .nav-avatar {
+    width: 58px !important;
+    height: 58px !important;
+
+    min-width: 58px !important;
+
+    object-fit: cover !important;
+
+    flex-shrink: 0 !important;
+  }
+
+
+  .user-info {
+    display: flex !important;
+    flex-direction: column !important;
+
+    justify-content: center !important;
+
+    min-width: 0 !important;
+  }
+
+
+  /* =======================================================
+     DESKTOP SUB NAV
+  ======================================================= */
+
+  .sub-nav {
+    width: 100% !important;
+
+    height: 58px !important;
+    min-height: 58px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    position: relative !important;
+
+    padding: 0 !important;
+
+    box-sizing: border-box !important;
+
+    background:
+      rgba(5, 16, 37, 0.38) !important;
+
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+
+    border-bottom:
+      1px solid rgba(100, 207, 255, 0.12) !important;
+
+    overflow: visible !important;
+  }
+
+
+  .sub-nav-links {
+    height: 100% !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 8px !important;
+
+    margin: 0 auto !important;
+
+    padding: 0 !important;
+
+    transform: none !important;
+  }
+
+
+  .sub-nav-link {
+    min-height: 42px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    padding: 6px 18px !important;
+
+    box-sizing: border-box !important;
+  }
+
+
+  /* Theme selector stays on right without affecting
+     the centered sub-navigation links */
+  .sub-nav-theme {
+    position: absolute !important;
+
+    right: 28px !important;
+
+    top: 50% !important;
+
+    transform: translateY(-50%) !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    z-index: 2 !important;
+  }
+
+
+  .theme-selector-select {
+    min-width: 210px !important;
+
+    height: 40px !important;
+
+    padding: 0 14px !important;
+
+    background:
+      rgba(7, 20, 48, 0.56) !important;
+
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+}
+
+
+/* =========================================================
+   MEDIUM DESKTOP
+   Keeps everything fitting before mobile layout starts
+========================================================= */
+
+@media (min-width: 901px) and (max-width: 1450px) {
+
+  .logo {
+    flex-basis: 420px !important;
+  }
+
+
+  .nav-links a {
+    padding: 0 8px !important;
+  }
+
+
+  .nav-links a,
+  .admin-nav-link {
+    font-size: 0.95rem !important;
+  }
+
+
+  .sub-nav-theme {
+    right: 18px !important;
+  }
+
+
+  .theme-selector-select {
+    min-width: 180px !important;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   Keep existing hamburger layout intact
+========================================================= */
+
+@media (max-width: 900px) {
+
+  .topbar {
+    height: 74px !important;
+    min-height: 74px !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    padding: 0 14px !important;
+
+    overflow: visible !important;
+  }
+
+
+  .logo {
+    height: 74px !important;
+
+    flex: 1 1 auto !important;
+
+    min-width: 0 !important;
+
+    padding: 0 !important;
+  }
+
+
+  .brand {
+    height: 74px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    padding: 0 !important;
+  }
+
+
+  .nav-links,
+  .topbar-right,
+  .sub-nav {
+    display: none !important;
+  }
+
+
+  .mobile-navigation {
+    display: flex !important;
+
+    position: relative !important;
+
+    align-items: center !important;
+
+    flex: 0 0 auto !important;
+
+    z-index: 5000 !important;
+  }
+
+
+  .mobile-menu-btn {
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    position: relative !important;
+
+    z-index: 5001 !important;
+  }
+
+
+  .mobile-menu {
+    z-index: 5000 !important;
+  }
+}
+
+/* =========================================================
+   COMPACT HEADER SIZE OVERRIDE
+========================================================= */
+
+@media (min-width: 901px) {
+
+  /* Main top bar */
+  .topbar {
+    height: 70px !important;
+    min-height: 70px !important;
+  }
+
+  /* Logo section */
+  .logo {
+    height: 70px !important;
+    flex: 0 0 400px !important;
+    padding: 0 18px !important;
+  }
+
+  .brand {
+    height: 70px !important;
+    gap: 9px !important;
+  }
+
+  /* Smaller square logo */
+  .brand-logo {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    flex: 0 0 56px !important;
+  }
+
+  /* Keep text logo from becoming oversized */
+  .logo-text {
+    transform: scale(0.88);
+    transform-origin: left center;
+  }
+
+  /* Main navigation */
+  .nav-links {
+    height: 70px !important;
+  }
+
+  .nav-links a {
+    height: 70px !important;
+    padding: 0 10px !important;
+  }
+
+  /* Right side */
+  .topbar-right {
+    height: 70px !important;
+    padding: 0 14px 0 8px !important;
+    gap: 8px !important;
+  }
+
+  .admin-nav-link {
+    height: 70px !important;
+    padding: 0 8px !important;
+  }
+
+  .user-menu,
+  .user-button {
+    height: 70px !important;
+  }
+
+  .nav-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+  }
+
+
+  /* =======================================================
+     COMPACT SUB BAR
+  ======================================================= */
+
+  .sub-nav {
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .sub-nav-links {
+    height: 48px !important;
+    gap: 6px !important;
+  }
+
+  .sub-nav-link {
+    min-height: 36px !important;
+    padding: 5px 15px !important;
+  }
+
+  .sub-nav-theme {
+    right: 24px !important;
+  }
+
+  .theme-selector-select {
+    height: 36px !important;
+    min-width: 190px !important;
+  }
+}
+
+
+/* Slightly tighter on smaller desktop screens */
+@media (min-width: 901px) and (max-width: 1300px) {
+
+  .logo {
+    flex-basis: 330px !important;
+  }
+
+  .brand-logo {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    flex-basis: 50px !important;
+  }
+
+  .logo-text {
+    transform: scale(0.78);
+    transform-origin: left center;
+  }
+
+  .nav-links a {
+    padding: 0 7px !important;
+  }
+
+  .sub-nav-theme {
+    right: 16px !important;
+  }
+
+  .theme-selector-select {
+    min-width: 170px !important;
+  }
+}
+/* =========================================================
+   ULTRA COMPACT HEADER OVERRIDE
+   ========================================================= */
+
+@media (min-width: 901px) {
+
+  /* =========================
+     TOP BAR
+     ========================= */
+
+  .topbar {
+    height: 58px !important;
+    min-height: 58px !important;
+  }
+
+  .logo {
+    height: 58px !important;
+    flex: 0 0 320px !important;
+    padding: 0 14px !important;
+  }
+
+  .brand {
+    height: 58px !important;
+    gap: 8px !important;
+  }
+
+  /* Smaller Team Fate image */
+  .brand-logo {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    flex: 0 0 44px !important;
+  }
+
+  /* Scale down Team Fate text */
+  .logo-text {
+    transform: scale(0.72) !important;
+    transform-origin: left center !important;
+  }
+
+  /* Navigation */
+  .nav-links {
+    height: 58px !important;
+  }
+
+  .nav-links a {
+    height: 58px !important;
+    padding: 0 8px !important;
+  }
+
+  /* Admin / Login area */
+  .topbar-right {
+    height: 58px !important;
+    padding: 0 12px 0 6px !important;
+    gap: 6px !important;
+  }
+
+  .admin-nav-link {
+    height: 58px !important;
+    padding: 0 7px !important;
+  }
+
+  .user-menu,
+  .user-button {
+    height: 58px !important;
+  }
+
+  .nav-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+  }
+
+
+  /* =========================
+     SUB BAR
+     ========================= */
+
+  .sub-nav {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .sub-nav-links {
+    height: 40px !important;
+    gap: 5px !important;
+  }
+
+  .sub-nav-link {
+    min-height: 32px !important;
+    padding: 3px 13px !important;
+  }
+
+  /* Theme selector */
+  .sub-nav-theme {
+    right: 20px !important;
+  }
+
+  .theme-selector-select {
+    height: 32px !important;
+    min-width: 170px !important;
+    padding: 0 10px !important;
+  }
+}
+
+
+/* =========================
+   SMALLER DESKTOP
+   ========================= */
+
+@media (min-width: 901px) and (max-width: 1300px) {
+
+  .logo {
+    flex-basis: 280px !important;
+  }
+
+  .brand-logo {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .logo-text {
+    transform: scale(0.64) !important;
+  }
+
+  .nav-links a {
+    padding: 0 6px !important;
+  }
+}
+/* =========================================================
+   COMPACT SUB NAV — HALF HEIGHT OF TOP BAR
+========================================================= */
+
+@media (min-width: 901px) {
+
+  .sub-nav {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+  }
+
+  .sub-nav-links {
+    height: 30px !important;
+    min-height: 30px !important;
+    gap: 4px !important;
+  }
+
+  .sub-nav-link {
+    height: 26px !important;
+    min-height: 26px !important;
+
+    padding: 2px 12px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    line-height: 1 !important;
+  }
+
+  .sub-nav-theme {
+    height: 30px !important;
+
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .theme-selector-select {
+    height: 26px !important;
+    min-height: 26px !important;
+
+    padding: 0 10px !important;
+
+    line-height: 26px !important;
+  }
+}
+/* =========================
+   MOBILE NAVIGATION
+========================= */
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+
+  opacity: 0;
+  animation: mobileBackdropFadeIn 0.2s ease forwards;
+}
+
+@keyframes mobileBackdropFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+
+  width: min(82vw, 340px);
+  height: 100dvh;
+
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 22, 45, 0.98),
+      rgba(5, 14, 30, 0.99)
+    );
+
+  border-left: 1px solid rgba(120, 190, 255, 0.28);
+
+  box-shadow:
+    -10px 0 35px rgba(0, 0, 0, 0.55);
+
+  transform: translateX(105%);
+  transition: transform 0.28s ease;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  pointer-events: none;
+}
+
+.mobile-menu.mobile-menu-open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.mobile-menu-header {
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  font-size: 1.15rem;
+  font-weight: 700;
+
+  color: #dbeaff;
+
+  flex-shrink: 0;
+}
+
+.mobile-menu-close {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(120, 190, 255, 0.22);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  color: #dbeaff;
+
+  font-size: 1.2rem;
+
+  cursor: pointer;
+}
+
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+
+  padding: 12px 0 30px;
+}
+
+.mobile-menu-links button {
+  width: 100%;
+
+  min-height: 58px;
+
+  padding: 0 22px;
+
+  display: flex;
+  align-items: center;
+
+  background: transparent;
+
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+  color: #e8f1ff;
+
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    padding-left 0.2s ease;
+}
+
+.mobile-menu-links button:hover,
+.mobile-menu-links button:active {
+  background: rgba(70, 150, 220, 0.12);
+  padding-left: 28px;
+}
+/* =========================================================
+   FINAL MOBILE MENU VIEWPORT FIX
+========================================================= */
+
+@media (max-width: 900px) {
+
+  /* Keep the header itself inside the viewport */
+  .topbar,
+  .main-nav {
+    width: 100% !important;
+    max-width: 100vw !important;
+
+    box-sizing: border-box !important;
+
+    overflow: visible !important;
+  }
+
+  /* Keep hamburger visible */
+  .mobile-navigation {
+    position: static !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    flex: 0 0 auto !important;
+
+    margin-left: auto !important;
+
+    z-index: 10001 !important;
+  }
+
+  .mobile-menu-btn {
+    position: relative !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    width: 48px !important;
+    height: 48px !important;
+
+    margin: 0 !important;
+
+    flex: 0 0 48px !important;
+
+    transform: none !important;
+
+    z-index: 10002 !important;
+  }
+
+  /* Force drawer to use the actual viewport */
+  .mobile-menu {
+    position: fixed !important;
+
+    top: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+    bottom: 0 !important;
+
+    width: min(84vw, 360px) !important;
+    max-width: calc(100vw - 8px) !important;
+
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    margin: 0 !important;
+
+    box-sizing: border-box !important;
+
+    z-index: 10000 !important;
+
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+
+    transform: translate3d(100%, 0, 0) !important;
+
+    pointer-events: none !important;
+  }
+
+  .mobile-menu.mobile-menu-open {
+    transform: translate3d(0, 0, 0) !important;
+
+    pointer-events: auto !important;
+  }
+
+  /* Backdrop always covers the real viewport */
+  .mobile-menu-backdrop {
+    position: fixed !important;
+
+    inset: 0 !important;
+
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+
+    z-index: 9999 !important;
   }
 }
