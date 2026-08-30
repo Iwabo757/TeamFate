@@ -53,7 +53,7 @@ h3 {
 
 .logo-sub {
   font-family: "Road Rage", sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   letter-spacing: 1px;
 }
 :root {
@@ -2279,7 +2279,7 @@ textarea:focus {
 .pokemon-info-close {
   position: absolute;
   top: 14px;
-  right: 18px;
+  right: 14px;
   z-index: 5;
   border: 0;
   background: transparent;
@@ -4151,7 +4151,7 @@ textarea:focus {
 .altering-cave-retry {
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 5px 12px;
   cursor: pointer;
 }
 
@@ -4608,8 +4608,8 @@ textarea:focus {
 .topbar,
 .main-nav {
   width: 100%;
-  height: 78px;
-  min-height: 78px;
+  height: 56px;
+  min-height: 56px;
 
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -4659,20 +4659,20 @@ textarea:focus {
   min-width: 0;
   flex: 0 0 auto;
 
-  padding: 0 14px;
-  gap: 10px;
+  padding: 0 10px;
+  gap: 7px;
 
   text-decoration: none;
 }
 
 .logo-image,
 .brand-logo {
-  width: 62px;
-  height: 62px;
-  min-width: 62px;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
 
   object-fit: contain;
-  flex: 0 0 62px;
+  flex: 0 0 46px;
 
   display: block;
 
@@ -4691,14 +4691,14 @@ textarea:focus {
 
 .logo-main {
   white-space: nowrap;
-  font-size: clamp(1.65rem, 2.2vw, 2.35rem);
+  font-size: clamp(1.25rem, 1.7vw, 1.85rem);
   line-height: 0.95;
 }
 
 .logo-sub {
   white-space: nowrap;
-  margin-top: 4px;
-  font-size: clamp(0.72rem, 0.9vw, 0.95rem);
+  margin-top: 2px;
+  font-size: clamp(0.58rem, 0.72vw, 0.78rem);
 }
 
 /* ---------------------------------------------------------
@@ -4735,7 +4735,7 @@ textarea:focus {
 
   height: 100%;
   margin: 0;
-  padding: 0 10px;
+  padding: 0 7px;
 
   border-radius: 0;
   border: 0;
@@ -4748,7 +4748,7 @@ textarea:focus {
   overflow: hidden;
   text-overflow: clip;
 
-  font-size: clamp(0.92rem, 1.22vw, 1.45rem);
+  font-size: clamp(0.82rem, 1.05vw, 1.18rem);
   line-height: 1;
 
   cursor: pointer;
@@ -4798,7 +4798,7 @@ textarea:focus {
   min-width: 0 !important;
 
   margin: 0 !important;
-  padding: 0 10px !important;
+  padding: 0 7px !important;
 
   z-index: auto !important;
 }
@@ -4818,7 +4818,7 @@ textarea:focus {
   min-width: max-content;
 
   margin: 0;
-  padding: 0 14px 0 10px;
+  padding: 0 10px 0 7px;
 
   flex: 0 0 auto;
 
@@ -4834,17 +4834,17 @@ textarea:focus {
   align-items: center;
   justify-content: flex-end;
 
-  gap: 9px;
+  gap: 7px;
   min-width: 0;
 }
 
 .user-avatar,
 .nav-avatar {
-  width: 56px;
-  height: 56px;
-  min-width: 56px;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
 
-  flex: 0 0 56px;
+  flex: 0 0 42px;
 
   object-fit: cover;
   border-radius: 10px;
@@ -4861,7 +4861,7 @@ textarea:focus {
 
 .username {
   display: block;
-  max-width: 110px;
+  max-width: 95px;
 
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4880,14 +4880,14 @@ textarea:focus {
 .sub-nav,
 .secondary-nav {
   width: 100%;
-  min-height: 54px;
+  min-height: 40px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  gap: 10px;
-  padding: 6px 20px;
+  gap: 6px;
+  padding: 3px 14px;
 
   box-sizing: border-box;
 
@@ -4946,11 +4946,11 @@ textarea:focus {
 }
 
 .theme-selector-select {
-  width: 210px;
-  min-width: 210px;
-  height: 38px;
+  width: 190px;
+  min-width: 190px;
+  height: 32px;
 
-  padding: 0 34px 0 14px;
+  padding: 0 30px 0 12px;
 
   color: var(--theme-text);
   background: rgba(8, 20, 55, 0.90);
@@ -5043,8 +5043,8 @@ textarea:focus {
 @media (min-width: 901px) and (max-width: 1200px) {
   .topbar,
   .main-nav {
-    height: 72px;
-    min-height: 72px;
+    height: 56px;
+    min-height: 56px;
   }
 
   .logo-main {
@@ -5170,3 +5170,29 @@ textarea:focus {
   }
 }
 
+
+
+/* =========================================================
+   FINAL COMPACT HEADER OVERRIDE
+   Keep both desktop bars intentionally short.
+========================================================= */
+@media (min-width: 901px) {
+  .topbar,
+  .main-nav {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    min-height: 40px !important;
+    height: 40px;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .sub-nav-link {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+  }
+}
