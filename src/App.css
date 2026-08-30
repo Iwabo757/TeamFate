@@ -6584,3 +6584,137 @@ textarea:focus {
     z-index: 5000 !important;
   }
 }
+
+/* =========================================================
+   COMPACT HEADER SIZE OVERRIDE
+========================================================= */
+
+@media (min-width: 901px) {
+
+  /* Main top bar */
+  .topbar {
+    height: 70px !important;
+    min-height: 70px !important;
+  }
+
+  /* Logo section */
+  .logo {
+    height: 70px !important;
+    flex: 0 0 400px !important;
+    padding: 0 18px !important;
+  }
+
+  .brand {
+    height: 70px !important;
+    gap: 9px !important;
+  }
+
+  /* Smaller square logo */
+  .brand-logo {
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    flex: 0 0 56px !important;
+  }
+
+  /* Keep text logo from becoming oversized */
+  .logo-text {
+    transform: scale(0.88);
+    transform-origin: left center;
+  }
+
+  /* Main navigation */
+  .nav-links {
+    height: 70px !important;
+  }
+
+  .nav-links a {
+    height: 70px !important;
+    padding: 0 10px !important;
+  }
+
+  /* Right side */
+  .topbar-right {
+    height: 70px !important;
+    padding: 0 14px 0 8px !important;
+    gap: 8px !important;
+  }
+
+  .admin-nav-link {
+    height: 70px !important;
+    padding: 0 8px !important;
+  }
+
+  .user-menu,
+  .user-button {
+    height: 70px !important;
+  }
+
+  .nav-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+  }
+
+
+  /* =======================================================
+     COMPACT SUB BAR
+  ======================================================= */
+
+  .sub-nav {
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .sub-nav-links {
+    height: 48px !important;
+    gap: 6px !important;
+  }
+
+  .sub-nav-link {
+    min-height: 36px !important;
+    padding: 5px 15px !important;
+  }
+
+  .sub-nav-theme {
+    right: 24px !important;
+  }
+
+  .theme-selector-select {
+    height: 36px !important;
+    min-width: 190px !important;
+  }
+}
+
+
+/* Slightly tighter on smaller desktop screens */
+@media (min-width: 901px) and (max-width: 1300px) {
+
+  .logo {
+    flex-basis: 330px !important;
+  }
+
+  .brand-logo {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    flex-basis: 50px !important;
+  }
+
+  .logo-text {
+    transform: scale(0.78);
+    transform-origin: left center;
+  }
+
+  .nav-links a {
+    padding: 0 7px !important;
+  }
+
+  .sub-nav-theme {
+    right: 16px !important;
+  }
+
+  .theme-selector-select {
+    min-width: 170px !important;
+  }
+}
