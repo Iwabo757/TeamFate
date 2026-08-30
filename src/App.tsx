@@ -522,8 +522,6 @@ function canManageSite(
   </nav>
 <div className="topbar-right">
 
-  <ThemeSelector />
-
   {profile ? (
     <div className="user-menu">
         <Link
@@ -683,20 +681,26 @@ function canManageSite(
 
 {subNav.length > 0 && (
   <div className="sub-nav">
-    {subNav.map((item) => (
-      <NavLink
-        key={item.path}
-        to={item.path}
-        end={item.end}
-        className={({ isActive }) =>
-          `sub-nav-link ${
-            isActive ? "active" : ""
-          }`
-        }
-      >
-        {item.label}
-      </NavLink>
-    ))}
+    <div className="sub-nav-links">
+      {subNav.map((item) => (
+        <NavLink
+          key={item.path}
+          to={item.path}
+          end={item.end}
+          className={({ isActive }) =>
+            `sub-nav-link ${
+              isActive ? "active" : ""
+            }`
+          }
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </div>
+
+    <div className="sub-nav-theme">
+      <ThemeSelector />
+    </div>
   </div>
 )}
   

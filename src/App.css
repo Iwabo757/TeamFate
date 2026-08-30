@@ -57,24 +57,22 @@ h3 {
   letter-spacing: 1px;
 }
 :root {
- 
-  --bg-card: rgba(8, 20, 55, 0.58);
-  --bg-dark: #050a1c;
+  --bg-card: var(--theme-panel);
+  --bg-dark: var(--theme-bg);
 
-  --fate-blue: #64cfff;
-  --fate-blue-light: #bfe8ff;
+  --fate-blue: var(--theme-primary);
+  --fate-blue-light: var(--theme-primary-hover);
 
-  --text: #d8ecff;
-  --muted: #9fc4e8;
+  --text: var(--theme-text);
+  --muted: var(--theme-text-muted);
 
-  --border: rgba(100,207,255,.12);
+  --border: var(--theme-border);
 
-  --fate-blue-glow: rgba(143,216,255,.45);
+  --fate-blue-glow: var(--theme-glow);
 
-  --blue: #64cfff;
-  --purple: #a88cff;
+  --blue: var(--theme-primary);
+  --purple: var(--theme-secondary);
 
- 
   --radius: 18px;
 }
 body,
@@ -5735,4 +5733,90 @@ textarea:focus {
   .theme-selector-menu {
     width: 220px;
   }
+}
+
+.sub-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.sub-nav-theme {
+  position: absolute;
+  right: 24px;
+}
+
+@media (max-width: 900px) {
+  .sub-nav-theme {
+    position: static;
+    margin-left: auto;
+  }
+
+  .sub-nav {
+    padding-right: 12px;
+  }
+
+  .sub-nav-links {
+    justify-content: flex-start;
+  }
+}
+/* =========================================================
+   THEME APPLICATION
+========================================================= */
+
+body {
+  color: var(--theme-text);
+}
+
+.topbar {
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--theme-bg) 92%, transparent),
+      color-mix(in srgb, var(--theme-panel) 92%, transparent)
+    );
+  border-bottom-color: var(--theme-border);
+}
+
+.sub-nav {
+  background:
+    color-mix(in srgb, var(--theme-bg-secondary) 88%, transparent);
+  border-color: var(--theme-border);
+}
+
+.nav-links a {
+  color: var(--theme-text-muted);
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: var(--theme-primary);
+}
+
+.sub-nav-link {
+  color: var(--theme-text-muted);
+}
+
+.sub-nav-link:hover,
+.sub-nav-link.active {
+  color: var(--theme-primary);
+}
+
+.card,
+.panel,
+.stat-card {
+  border-color: var(--theme-border);
+}
+
+button,
+.login-btn {
+  border-color: var(--theme-border);
 }
