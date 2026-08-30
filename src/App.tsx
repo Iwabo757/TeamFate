@@ -95,34 +95,6 @@ export default function App() {
     useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function checkUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      console.log("SESSION:", session);
-
-      console.log(
-        "URL:",
-        window.location.href
-      );
-
-      console.log(
-        "HASH:",
-        window.location.hash
-      );
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      console.log("USER:", user);
-    }
-
-    checkUser();
-  }, []);
-
-  useEffect(() => {
     loadProfile();
 
     const {
@@ -396,8 +368,8 @@ function canManageSite(
         {
           label: "Shunt Machine",
           path: "/shunt-machine",
-        },        {
-          label: "Altering Cave",
+        },
+        {          label: "Altering Cave",
           path: "/altering-cave",
         },
       ];
@@ -513,16 +485,20 @@ function canManageSite(
     </NavLink>
 
 
+  </nav>
+
+  <div className="topbar-right">
+
     {canManageSite(profile?.role) && (
-      <NavLink to="/admin">
+      <NavLink
+        to="/admin"
+        className="admin-nav-link"
+      >
         Admin
       </NavLink>
     )}
 
-  </nav>
-<div className="topbar-right">
-
-  {profile ? (
+    {profile ? (
     <div className="user-menu">
         <Link
           to="/profile"
@@ -566,7 +542,7 @@ function canManageSite(
 ========================================================= */}
 
 {mobileOpen && (
-  <div className="mobile-menu">
+  <div className="mobile-menu" ref={menuRef}>
 
     <Link
       to="/"
@@ -787,11 +763,6 @@ function canManageSite(
 <Route
   path="/admin/shiny-approvals"
   element={<AdminShinyApprovals />}
-/>
-
-<Route
-  path="/submit-shiny"
-  element={<SubmitShiny />}
 />
 <Route
   path="/admin/shiny-dashboard"

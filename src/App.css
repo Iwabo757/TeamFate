@@ -5524,3 +5524,106 @@ textarea:focus {
     font-size: 0.85rem;
   }
 }
+
+
+/* =========================================================
+   TOP BAR LAYOUT
+========================================================= */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 92px;
+
+  overflow: visible;
+}
+
+/* Logo stays fixed */
+
+.logo-section {
+  flex-shrink: 0;
+}
+
+
+/* Main navigation */
+
+.nav-links {
+  display: flex;
+  align-items: stretch;
+
+  flex: 1;
+  min-width: 0;
+
+  height: 92px;
+}
+
+
+/* Right-side controls */
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin-left: auto;
+
+  padding: 0 14px;
+
+  flex-shrink: 0;
+
+  white-space: nowrap;
+}
+
+
+/* Admin button */
+
+.admin-nav-link,
+.admin-button {
+  flex-shrink: 0;
+}
+
+
+/* Logged in profile */
+
+.user-profile,
+.profile-section {
+  display: flex;
+  align-items: center;
+
+  flex-shrink: 0;
+
+  min-width: 0;
+}
+
+
+/* Avatar */
+
+.user-avatar {
+  width: 58px;
+  height: 58px;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  object-fit: cover;
+}
+
+
+/* Username area */
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.username {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  max-width: 120px;
+}
