@@ -7095,39 +7095,47 @@ textarea:focus {
   }
 
   /* Force drawer to use the actual viewport */
-  .mobile-menu {
-    position: fixed !important;
+.mobile-menu {
+  position: fixed !important;
 
-    top: 0 !important;
-    right: 0 !important;
-    left: auto !important;
-    bottom: 0 !important;
+  top: 0 !important;
+  right: 0 !important;
+  left: auto !important;
+  bottom: 0 !important;
 
-    width: min(84vw, 360px) !important;
-    max-width: calc(100vw - 8px) !important;
+  width: min(84vw, 360px) !important;
+  max-width: calc(100vw - 8px) !important;
 
-    height: 100vh !important;
-    height: 100dvh !important;
+  height: 100dvh !important;
 
-    margin: 0 !important;
+  margin: 0 !important;
 
-    box-sizing: border-box !important;
+  box-sizing: border-box !important;
 
-    z-index: 10000 !important;
+  display: flex !important;
+  flex-direction: column !important;
 
-    overflow-x: hidden !important;
-    overflow-y: auto !important;
+  z-index: 10000 !important;
 
-    transform: translate3d(100%, 0, 0) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 
-    pointer-events: none !important;
-  }
+  transform: translateX(0) !important;
 
-  .mobile-menu.mobile-menu-open {
-    transform: translate3d(0, 0, 0) !important;
+  pointer-events: auto !important;
 
-    pointer-events: auto !important;
-  }
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 22, 45, 0.98),
+      rgba(5, 14, 30, 0.99)
+    ) !important;
+
+  border-left: 1px solid rgba(120, 190, 255, 0.28);
+
+  box-shadow:
+    -12px 0 40px rgba(0, 0, 0, 0.55);
+}
 
   /* Backdrop always covers the real viewport */
   .mobile-menu-backdrop {
