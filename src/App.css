@@ -6899,3 +6899,147 @@ textarea:focus {
     line-height: 26px !important;
   }
 }
+/* =========================
+   MOBILE NAVIGATION
+========================= */
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+
+  opacity: 0;
+  animation: mobileBackdropFadeIn 0.2s ease forwards;
+}
+
+@keyframes mobileBackdropFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: 0;
+
+  width: min(82vw, 340px);
+  height: 100dvh;
+
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 22, 45, 0.98),
+      rgba(5, 14, 30, 0.99)
+    );
+
+  border-left: 1px solid rgba(120, 190, 255, 0.28);
+
+  box-shadow:
+    -10px 0 35px rgba(0, 0, 0, 0.55);
+
+  transform: translateX(105%);
+  transition: transform 0.28s ease;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  pointer-events: none;
+}
+
+.mobile-menu.mobile-menu-open {
+  transform: translateX(0);
+  pointer-events: auto;
+}
+
+.mobile-menu-header {
+  min-height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  font-size: 1.15rem;
+  font-weight: 700;
+
+  color: #dbeaff;
+
+  flex-shrink: 0;
+}
+
+.mobile-menu-close {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(120, 190, 255, 0.22);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.05);
+
+  color: #dbeaff;
+
+  font-size: 1.2rem;
+
+  cursor: pointer;
+}
+
+.mobile-menu-links {
+  display: flex;
+  flex-direction: column;
+
+  width: 100%;
+
+  padding: 12px 0 30px;
+}
+
+.mobile-menu-links button {
+  width: 100%;
+
+  min-height: 58px;
+
+  padding: 0 22px;
+
+  display: flex;
+  align-items: center;
+
+  background: transparent;
+
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+  color: #e8f1ff;
+
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    padding-left 0.2s ease;
+}
+
+.mobile-menu-links button:hover,
+.mobile-menu-links button:active {
+  background: rgba(70, 150, 220, 0.12);
+  padding-left: 28px;
+}
