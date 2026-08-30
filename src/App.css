@@ -5583,3 +5583,206 @@ textarea:focus {
     max-height: calc(100vh - 60px);
   }
 }
+
+/* =========================================
+   MOBILE MENU
+========================================= */
+
+.mobile-menu {
+  display: none;
+}
+
+
+/* =========================================
+   MOBILE LAYOUT
+========================================= */
+
+@media (max-width: 768px) {
+
+  /* Hide the desktop navigation */
+  .desktop-nav {
+    display: none !important;
+  }
+
+  /* Hide the ENTIRE sub top bar on mobile */
+  .sub-top-bar {
+    display: none !important;
+  }
+
+  .desktop-theme-selector {
+    display: none !important;
+  }
+
+
+  /* =========================================
+     MOBILE HEADER
+  ========================================= */
+
+  .top-header {
+    position: relative;
+    min-height: 86px;
+  }
+
+
+  /* =========================================
+     HAMBURGER BUTTON
+  ========================================= */
+
+  .hamburger-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 52px;
+
+    padding: 0;
+    margin-left: auto;
+
+    background: rgba(8, 22, 45, 0.75);
+    border: 1px solid rgba(120, 190, 255, 0.3);
+    border-radius: 10px;
+
+    color: #dcecff;
+    cursor: pointer;
+
+    transition:
+      background 0.2s ease,
+      border-color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .hamburger-button:hover {
+    background: rgba(30, 75, 115, 0.8);
+    border-color: rgba(120, 190, 255, 0.6);
+  }
+
+  .hamburger-button:active {
+    transform: scale(0.96);
+  }
+
+
+  /* =========================================
+     MOBILE DROPDOWN
+  ========================================= */
+
+  .mobile-menu {
+    display: block;
+
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+
+    z-index: 9999;
+
+    padding: 16px;
+
+    background:
+      linear-gradient(
+        180deg,
+        rgba(8, 21, 42, 0.98),
+        rgba(5, 14, 30, 0.98)
+      );
+
+    backdrop-filter: blur(16px);
+
+    border-top: 1px solid rgba(110, 180, 255, 0.2);
+    border-bottom: 1px solid rgba(110, 180, 255, 0.25);
+
+    box-shadow:
+      0 16px 40px rgba(0, 0, 0, 0.55);
+  }
+
+
+  /* =========================================
+     MOBILE NAVIGATION LINKS
+  ========================================= */
+
+  .mobile-menu-links {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+  }
+
+  .mobile-menu-links a {
+    display: flex;
+    align-items: center;
+
+    min-height: 48px;
+
+    padding: 0 16px;
+
+    color: #e4edf9;
+    text-decoration: none;
+
+    font-size: 1rem;
+    font-weight: 700;
+
+    border-radius: 8px;
+
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .mobile-menu-links a:hover,
+  .mobile-menu-links a:active {
+    background: rgba(60, 130, 190, 0.18);
+    color: #ffffff;
+  }
+
+
+  /* =========================================
+     MOBILE THEME SECTION
+  ========================================= */
+
+  .mobile-theme-section {
+    margin-top: 16px;
+    padding-top: 16px;
+
+    border-top: 1px solid rgba(120, 180, 255, 0.2);
+  }
+
+  .mobile-theme-label {
+    margin-bottom: 8px;
+
+    color: rgba(210, 225, 245, 0.7);
+
+    font-size: 0.75rem;
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .mobile-theme-section .theme-selector {
+    width: 100%;
+  }
+
+  .mobile-theme-section select {
+    width: 100%;
+    min-height: 48px;
+
+    font-size: 1rem;
+  }
+
+
+  /* =========================================
+     MOBILE PROFILE
+  ========================================= */
+
+  .user-profile {
+    gap: 0;
+  }
+
+  .user-profile-info {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 48px;
+    height: 48px;
+  }
+}

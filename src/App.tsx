@@ -1,26 +1,26 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./index.css";
 import "./App.css";
 
 import {
-  Routes,
-  Route,
-  NavLink,
   Link,
+  NavLink,
+  Route,
+  Routes,
   useLocation,
 } from "react-router-dom";
 
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
- 
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
+
 import { supabase } from "./lib/supabase";
+
 import Members from "./pages/Members";
 import Home from "./pages/Home";
 
 import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
-
 
 import AdminEvents from "./pages/AdminEvents";
 import AdminPastEvents from "./pages/AdminPastEvents";
@@ -71,6 +71,7 @@ import ShuntMachine from "./pages/ShuntMachine";
 import AlteringCave from "./pages/AlteringCave";
 
 import Tools from "./pages/Tools";
+
 import ThemeSelector from "./components/ThemeSelector";
 
 type ProfileData = {
@@ -81,161 +82,180 @@ type ProfileData = {
   role: string;
 };
 
+type SubNavItem = {
+  label: string;
+  path: string;
+  end?: boolean;
+};
 
 export default function App() {
   const location = useLocation();
 
-  const [profile, setProfile] =
-    useState<ProfileData | null>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [mobileOpen, setMobileOpen] =
-    useState(false);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
 
-  const menuRef =
-    useRef<HTMLDivElement>(null);
+  /* =========================================================
+     AUTH / PROFILE
+  ========================================================= */
 
   useEffect(() => {
     loadProfile();
 
     const {
       data: authListener,
-    } = supabase.auth.onAuthStateChange(
-      () => {
-        loadProfile();
-      }
-    );
+    } = supabase.auth.onAuthStateChange(() => {
+      loadProfile();
+    });
 
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-useEffect(() => {
-  function handleClickOutside(
-    event: MouseEvent
-  ) {
-    if (
-      menuRef.current &&
-      !menuRef.current.contains(
-        event.target as Node
-      )
-    ) {
-      setMobileOpen(false);
+  /* =========================================================
+     CLOSE MOBILE MENU ON PAGE CHANGE
+  ========================================================= */
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  /* =========================================================
+     CLOSE MOBILE MENU WHEN CLICKING OUTSIDE
+  ========================================================= */
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        mobileNavRef.current &&
+        !mobileNavRef.current.contains(event.target as Node)
+      ) {
+        setMobileOpen(false);
+      }
     }
-  }
 
-  document.addEventListener(
-    "mousedown",
-    handleClickOutside
-  );
-
-  return () => {
-    document.removeEventListener(
+    document.addEventListener(
       "mousedown",
       handleClickOutside
     );
-  };
-}, []);
 
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
-async function loadProfile() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  /* =========================================================
+     LOAD PROFILE
+  ========================================================= */
 
-  if (!user) {
-    setProfile(null);
-    return;
-  }
+  async function loadProfile() {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  // Check if profile exists
-  const { data: existing } =
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+
+    const { data: existingProfile } =
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+    /* First Login */
+
+    if (!existingProfile) {
+      await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          username:
+            user.user_metadata.name,
+          discord_name:
+            user.user_metadata.name,
+          avatar_url:
+            user.user_metadata.avatar_url,
+          discord_id:
+            user.user_metadata.provider_id,
+          role: "guest",
+        });
+    }
+
+    /* Update Discord Information
+       Role is intentionally NOT updated here */
+
     await supabase
       .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
+      .upsert(
+        {
+          id: user.id,
+          username:
+            user.user_metadata.name,
+          discord_name:
+            user.user_metadata.name,
+          avatar_url:
+            user.user_metadata.avatar_url,
+          discord_id:
+            user.user_metadata.provider_id,
+        },
+        {
+          onConflict: "id",
+        }
+      );
 
-  // First login only
-  if (!existing) {
-    await supabase
-      .from("profiles")
-      .insert({
-        id: user.id,
-        username:
-          user.user_metadata.name,
+    const { data: profileData } =
+      await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
 
-        discord_name:
-          user.user_metadata.name,
-
-        avatar_url:
-          user.user_metadata.avatar_url,
-
-        discord_id:
-          user.user_metadata.provider_id,
-
-        role: "guest",
-      });
+    if (profileData) {
+      setProfile(profileData);
+    }
   }
 
-  // Update Discord info but NEVER role
-  await supabase
-    .from("profiles")
-    .upsert(
-      {
-        id: user.id,
+  /* =========================================================
+     ROLE PERMISSIONS
+  ========================================================= */
 
-        username:
-          user.user_metadata.name,
-
-        discord_name:
-          user.user_metadata.name,
-
-        avatar_url:
-          user.user_metadata.avatar_url,
-
-        discord_id:
-          user.user_metadata.provider_id,
-      },
-      {
-        onConflict: "id",
-      }
-    );
-
-  const profileResult =
-    await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-  if (profileResult.data) {
-    setProfile(
-      profileResult.data
-    );
+  function canManageSite(role?: string) {
+    return [
+      "officer",
+      "commander",
+      "leader",
+      "admin",
+    ].includes(role || "");
   }
-}
 
-
-function canManageSite(
-  role?: string
-) {
-  return [
-    "officer",
-    "commander",
-    "leader",
-    "admin",
-  ].includes(role || "");
-}
+  /* =========================================================
+     LOGOUT
+  ========================================================= */
 
   async function handleLogout() {
     await supabase.auth.signOut();
+
     setProfile(null);
+    setMobileOpen(false);
   }
-  const getSubNav = () => {
+
+  /* =========================================================
+     DYNAMIC DESKTOP SUB NAVIGATION
+  ========================================================= */
+
+  function getSubNav(): SubNavItem[] {
     const path = location.pathname;
 
-    // HOME
+    /* HOME */
+
     if (
       path === "/" ||
       path === "/recruitment"
@@ -253,7 +273,8 @@ function canManageSite(
       ];
     }
 
-    // SHINY
+    /* SHINY */
+
     if (
       path === "/shinydex" ||
       path === "/showcase" ||
@@ -275,30 +296,30 @@ function canManageSite(
       ];
     }
 
-  // EVENTS + BOUNTIES
-  if (
-    path.startsWith("/events") ||
-    path.startsWith("/bounties")
-  ) {
-    return [
-      {
-        label: "Events",
-        path: "/events",
-      },
-      {
-        label: "Bounties",
-        path: "/bounties",
-      },
-      {
-        label: "Shiny Wars",
-        path: "/events/shinywars",
-      },
+    /* EVENTS */
 
-    ];
-  }
+    if (
+      path.startsWith("/events") ||
+      path.startsWith("/bounties")
+    ) {
+      return [
+        {
+          label: "Events",
+          path: "/events",
+        },
+        {
+          label: "Bounties",
+          path: "/bounties",
+        },
+        {
+          label: "Shiny Wars",
+          path: "/events/shinywars",
+        },
+      ];
+    }
 
+    /* RAIDS */
 
-    // RAIDS
     if (
       path === "/raid-tracker" ||
       path === "/raid-overview" ||
@@ -320,10 +341,9 @@ function canManageSite(
       ];
     }
 
-    // LEADERBOARD
-    if (
-      path.startsWith("/board")
-    ) {
+    /* LEADERBOARD */
+
+    if (path.startsWith("/board")) {
       return [
         {
           label: "Leaderboard",
@@ -332,10 +352,9 @@ function canManageSite(
       ];
     }
 
-    // MEMBERS
-    if (
-      path.startsWith("/members")
-    ) {
+    /* MEMBERS */
+
+    if (path.startsWith("/members")) {
       return [
         {
           label: "Members",
@@ -344,7 +363,8 @@ function canManageSite(
       ];
     }
 
-    // Tools
+    /* TOOLS */
+
     if (
       path.startsWith("/tools") ||
       path.startsWith("/guides") ||
@@ -369,13 +389,15 @@ function canManageSite(
           label: "Shunt Machine",
           path: "/shunt-machine",
         },
-        {          label: "Altering Cave",
+        {
+          label: "Altering Cave",
           path: "/altering-cave",
         },
       ];
     }
 
-    // ADMIN
+    /* ADMIN */
+
     if (
       path.startsWith("/admin") &&
       canManageSite(profile?.role)
@@ -414,502 +436,668 @@ function canManageSite(
     }
 
     return [];
-  };
+  }
 
   const subNav = getSubNav();
 
   return (
     <>
-    <div className="app">
-<header className="topbar">
+      <div className="app">
 
-  <div className="logo">
-<Link to="/" className="brand">
-  <img
-    src="/images/jirachi-banner.jpg"
-    alt="Team Fate"
-    className="brand-logo"
-  />
+        {/* =====================================================
+            TOP HEADER
+        ===================================================== */}
 
-  <div className="logo-text">
-    <div className="logo-main">
-      Team Faté
-    </div>
+        <header className="topbar">
 
-    <div className="logo-sub">
-      ★ One Wish. One Faté ★
-    </div>
-  </div>
-</Link>
-  </div>
+          {/* LOGO */}
 
-  <button
-    className="mobile-menu-btn"
-    onClick={() => setMobileOpen(!mobileOpen)}
-    aria-label="Toggle navigation"
-  >
-    ☰
-  </button>
+          <div className="logo">
+            <Link
+              to="/"
+              className="brand"
+            >
+              <img
+                src="/images/jirachi-banner.jpg"
+                alt="Team Fate"
+                className="brand-logo"
+              />
 
-  <nav className="nav-links">
+              <div className="logo-text">
+                <div className="logo-main">
+                  Team Faté
+                </div>
 
-    <NavLink
-      to="/"
-      end
-    >
-      Home
-    </NavLink>
-
-    <NavLink to="/shinydex">
-      Shiny
-    </NavLink>
-
-    <NavLink to="/events">
-      Events
-    </NavLink>
-
-    <NavLink to="/board">
-      Leaderboard
-    </NavLink>
-
-    <NavLink to="/raid-overview">
-      Raids
-    </NavLink>
-
-    <NavLink to="/tools">
-      Tools
-    </NavLink>
-
-    <NavLink to="/members">
-      Members
-    </NavLink>
+                <div className="logo-sub">
+                  ★ One Wish. One Faté ★
+                </div>
+              </div>
+            </Link>
+          </div>
 
 
-  </nav>
+          {/* =================================================
+              MOBILE NAVIGATION WRAPPER
+          ================================================= */}
 
-  <div className="topbar-right">
+          <div
+            className="mobile-navigation"
+            ref={mobileNavRef}
+          >
 
-    {canManageSite(profile?.role) && (
-      <NavLink
-        to="/admin"
-        className="admin-nav-link"
-      >
-        Admin
-      </NavLink>
-    )}
-
-    {profile ? (
-    <div className="user-menu">
-        <Link
-          to="/profile"
-          className="user-button"
-        >
-          <img
-            src={profile.avatar_url}
-            alt={profile.nickname || profile.username}
-            className="nav-avatar"
-          />
-
-          <div className="user-info">
-            <span className="username">
-              {profile.nickname || profile.username}
-            </span>
+            {/* HAMBURGER BUTTON */}
 
             <button
-              className="logout-link"
-              onClick={(e) => {
-                e.preventDefault();
-                handleLogout();
-              }}
+              className="mobile-menu-btn"
+              onClick={() =>
+                setMobileOpen((open) => !open)
+              }
+              aria-label="Toggle navigation"
+              aria-expanded={mobileOpen}
             >
-              Logout
+              ☰
             </button>
+
+
+            {/* MOBILE MENU */}
+
+            {mobileOpen && (
+              <div className="mobile-menu">
+
+                <div className="mobile-menu-section">
+
+                  <div className="mobile-menu-title">
+                    Navigation
+                  </div>
+
+                  <Link to="/">
+                    Home
+                  </Link>
+
+                  <Link to="/recruitment">
+                    Recruitment
+                  </Link>
+
+                  <Link to="/shinydex">
+                    Team Shiny Dex
+                  </Link>
+
+                  <Link to="/submit-shiny">
+                    Submit Shiny
+                  </Link>
+
+                  <Link to="/showcase">
+                    Shiny Showcase
+                  </Link>
+
+                  <Link to="/events">
+                    Events
+                  </Link>
+
+                  <Link to="/bounties">
+                    Bounties
+                  </Link>
+
+                  <Link to="/events/shinywars">
+                    Shiny Wars
+                  </Link>
+
+                  <Link to="/raid-tracker">
+                    My Raid Status
+                  </Link>
+
+                  <Link to="/raid-overview">
+                    Raid Overview
+                  </Link>
+
+                  <Link to="/raid-builder">
+                    Raid Builder
+                  </Link>
+
+                  <Link to="/board">
+                    Leaderboard
+                  </Link>
+
+                  <Link to="/members">
+                    Members
+                  </Link>
+
+                  <Link to="/tools">
+                    Tools
+                  </Link>
+
+                  <Link to="/guides">
+                    Guides
+                  </Link>
+
+                  <Link to="/horde-hunter">
+                    Horde Hunter
+                  </Link>
+
+                  <Link to="/shunt-machine">
+                    Shunt Machine
+                  </Link>
+
+                  <Link to="/altering-cave">
+                    Altering Cave
+                  </Link>
+
+                </div>
+
+
+                {/* ADMIN */}
+
+                {canManageSite(profile?.role) && (
+                  <div className="mobile-menu-section">
+
+                    <div className="mobile-menu-title">
+                      Staff
+                    </div>
+
+                    <Link to="/admin">
+                      Admin Dashboard
+                    </Link>
+
+                  </div>
+                )}
+
+
+                {/* THEME ACCESSIBILITY */}
+
+                <div className="mobile-menu-section mobile-theme-section">
+
+                  <div className="mobile-menu-title">
+                    Accessibility Theme
+                  </div>
+
+                  <ThemeSelector />
+
+                </div>
+
+
+                {/* MOBILE ACCOUNT */}
+
+                <div className="mobile-menu-section mobile-account-section">
+
+                  <div className="mobile-menu-title">
+                    Account
+                  </div>
+
+                  {profile ? (
+                    <>
+                      <Link to="/profile">
+                        Profile
+                      </Link>
+
+                      <button
+                        className="mobile-logout-btn"
+                        onClick={handleLogout}
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/login">
+                      Login
+                    </Link>
+                  )}
+
+                </div>
+
+              </div>
+            )}
+
           </div>
-        </Link>
+
+
+          {/* =================================================
+              DESKTOP NAVIGATION
+          ================================================= */}
+
+          <nav className="nav-links">
+
+            <NavLink
+              to="/"
+              end
+            >
+              Home
+            </NavLink>
+
+            <NavLink to="/shinydex">
+              Shiny
+            </NavLink>
+
+            <NavLink to="/events">
+              Events
+            </NavLink>
+
+            <NavLink to="/board">
+              Leaderboard
+            </NavLink>
+
+            <NavLink to="/raid-overview">
+              Raids
+            </NavLink>
+
+            <NavLink to="/tools">
+              Tools
+            </NavLink>
+
+            <NavLink to="/members">
+              Members
+            </NavLink>
+
+          </nav>
+
+
+          {/* =================================================
+              DESKTOP RIGHT SIDE
+          ================================================= */}
+
+          <div className="topbar-right">
+
+            {canManageSite(profile?.role) && (
+              <NavLink
+                to="/admin"
+                className="admin-nav-link"
+              >
+                Admin
+              </NavLink>
+            )}
+
+
+            {profile ? (
+              <div className="user-menu">
+
+                <Link
+                  to="/profile"
+                  className="user-button"
+                >
+
+                  <img
+                    src={profile.avatar_url}
+                    alt={
+                      profile.nickname ||
+                      profile.username
+                    }
+                    className="nav-avatar"
+                  />
+
+                  <div className="user-info">
+
+                    <span className="username">
+                      {profile.nickname ||
+                        profile.username}
+                    </span>
+
+                    <button
+                      className="logout-link"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        handleLogout();
+                      }}
+                    >
+                      Logout
+                    </button>
+
+                  </div>
+
+                </Link>
+
+              </div>
+            ) : (
+              <NavLink
+                to="/login"
+                className="login-btn"
+              >
+                Login
+              </NavLink>
+            )}
+
+          </div>
+
+        </header>
+
+
+        {/* =====================================================
+            DESKTOP SUB NAVIGATION ONLY
+
+            CSS WILL HIDE THIS COMPLETELY ON MOBILE
+        ===================================================== */}
+
+        {subNav.length > 0 && (
+          <div className="sub-nav">
+
+            <div className="sub-nav-links">
+
+              {subNav.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.end}
+                  className={({ isActive }) =>
+                    `sub-nav-link ${
+                      isActive ? "active" : ""
+                    }`
+                  }
+                >
+                  {item.label}
+                </NavLink>
+              ))}
+
+            </div>
+
+
+            {/* DESKTOP THEME SELECTOR */}
+
+            <div className="sub-nav-theme">
+              <ThemeSelector />
+            </div>
+
+          </div>
+        )}
+
+
+        {/* =====================================================
+            PAGE CONTENT
+        ===================================================== */}
+
+        <main className="content">
+
+          <Routes>
+
+            {/* HOME */}
+
+            <Route
+              path="/"
+              element={<Home />}
+            />
+
+            <Route
+              path="/recruitment"
+              element={<Recruitment />}
+            />
+
+
+            {/* SHINY */}
+
+            <Route
+              path="/showcase"
+              element={<ShinyShowcase />}
+            />
+
+            <Route
+              path="/shinydex"
+              element={<ShinyDex />}
+            />
+
+            <Route
+              path="/submit-shiny"
+              element={<SubmitShiny />}
+            />
+
+
+            {/* MEMBERS */}
+
+            <Route
+              path="/members"
+              element={<Members />}
+            />
+
+
+            {/* LEADERBOARD */}
+
+            <Route
+              path="/board"
+              element={<ShinyBoard />}
+            />
+
+
+            {/* EVENTS */}
+
+            <Route
+              path="/events"
+              element={<Events />}
+            />
+
+            <Route
+              path="/events/shinywars"
+              element={<ShinyWars />}
+            />
+
+            <Route
+              path="/events/shinywars/:warId"
+              element={<ShinyWars />}
+            />
+
+            <Route
+              path="/events/shinywars/history"
+              element={<ShinyWarHistory />}
+            />
+
+
+            {/* BOUNTIES */}
+
+            <Route
+              path="/bounties"
+              element={<Bounties />}
+            />
+
+
+            {/* RAIDS */}
+
+            <Route
+              path="/raid-tracker"
+              element={<RaidTracker />}
+            />
+
+            <Route
+              path="/ready-raiders"
+              element={<ReadyRaiders />}
+            />
+
+            <Route
+              path="/raid-builder"
+              element={<RaidBuilder />}
+            />
+
+            <Route
+              path="/raid-overview"
+              element={<RaidOverview />}
+            />
+
+            <Route
+              path="/guides"
+              element={<RaidGuides />}
+            />
+
+            <Route
+              path="/admin-raids"
+              element={<AdminRaidDashboard />}
+            />
+
+
+            {/* TOOLS */}
+
+            <Route
+              path="/tools"
+              element={<Tools />}
+            />
+
+            <Route
+              path="/horde-hunter"
+              element={<HordeHunter />}
+            />
+
+            <Route
+              path="/shunt-machine"
+              element={<ShuntMachine />}
+            />
+
+            <Route
+              path="/altering-cave"
+              element={<AlteringCave />}
+            />
+
+
+            {/* PROFILE */}
+
+            <Route
+              path="/profile"
+              element={<Profile />}
+            />
+
+            <Route
+              path="/login"
+              element={<Login />}
+            />
+
+
+            {/* =================================================
+                ADMIN
+            ================================================= */}
+
+            <Route
+              path="/admin"
+              element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/events"
+              element={<EventDashboard />}
+            />
+
+            <Route
+              path="/admin/current-events"
+              element={<AdminCurrentEvents />}
+            />
+
+            <Route
+              path="/admin/past-events"
+              element={<AdminPastEvents />}
+            />
+
+            <Route
+              path="/admin/events/create"
+              element={<AdminEvents />}
+            />
+
+            <Route
+              path="/admin/events/edit/:id"
+              element={<AdminEvents />}
+            />
+
+
+            {/* ADMIN SHINIES */}
+
+            <Route
+              path="/admin/shinies/add"
+              element={<AddShiny />}
+            />
+
+            <Route
+              path="/admin/shinies"
+              element={<ManageShinies />}
+            />
+
+            <Route
+              path="/admin/shiny-approvals"
+              element={<AdminShinyApprovals />}
+            />
+
+            <Route
+              path="/admin/shiny-dashboard"
+              element={<ShinyDashboard />}
+            />
+
+
+            {/* ADMIN MEMBERS */}
+
+            <Route
+              path="/admin/members"
+              element={<ManageMembers />}
+            />
+
+
+            {/* ADMIN BOUNTIES */}
+
+            <Route
+              path="/admin/bounties"
+              element={<AdminBounties />}
+            />
+
+            <Route
+              path="/admin/current-bounties"
+              element={<AdminCurrentBounties />}
+            />
+
+            <Route
+              path="/admin/past-bounties"
+              element={<AdminPastBounties />}
+            />
+
+            <Route
+              path="/admin/bounties/create"
+              element={<AdminBounties />}
+            />
+
+            <Route
+              path="/admin/bounties/edit/:id"
+              element={<AdminBounties />}
+            />
+
+            <Route
+              path="/admin/bounty-dashboard"
+              element={<BountyDashboard />}
+            />
+
+
+            {/* ADMIN HOMEPAGE */}
+
+            <Route
+              path="/admin/homepage"
+              element={<EditHomepage />}
+            />
+
+
+            {/* ADMIN SHINY WARS */}
+
+            <Route
+              path="/admin/shinywars"
+              element={<ShinyWarsDashboard />}
+            />
+
+            <Route
+              path="/admin/shinywars/create"
+              element={<CreateShinyWar />}
+            />
+
+            <Route
+              path="/admin/shinywars/edit/:id"
+              element={<EditShinyWar />}
+            />
+
+            <Route
+              path="/admin/shinywars/teams/:id"
+              element={<ManageShinyWarTeams />}
+            />
+
+
+            {/* ADMIN RECRUITMENT */}
+
+            <Route
+              path="/admin/recruitment"
+              element={<AdminRecruitment />}
+            />
+
+          </Routes>
+
+        </main>
+
       </div>
-    ) : (
-      <NavLink
-        to="/login"
-        className="login-btn"
-      >
-        Login
-      </NavLink>
-    )}
-  </div>
 
-{/* =========================================================
-    MOBILE MAIN NAVIGATION
-========================================================= */}
-
-{mobileOpen && (
-  <div className="mobile-menu" ref={menuRef}>
-
-    <Link
-      to="/"
-      onClick={() => setMobileOpen(false)}
-    >
-      Home
-    </Link>
-
-    <Link
-      to="/recruitment"
-      onClick={() => setMobileOpen(false)}
-    >
-      Recruitment
-    </Link>
-
-    <Link
-      to="/shinydex"
-      onClick={() => setMobileOpen(false)}
-    >
-      Team Shiny Dex
-    </Link>
-
-    <Link
-      to="/submit-shiny"
-      onClick={() => setMobileOpen(false)}
-    >
-      Submit Shiny
-    </Link>
-
-    <Link
-      to="/showcase"
-      onClick={() => setMobileOpen(false)}
-    >
-      Showcase
-    </Link>
-
-    <Link
-      to="/events"
-      onClick={() => setMobileOpen(false)}
-    >
-      Events
-    </Link>
-
-    <Link
-      to="/bounties"
-      onClick={() => setMobileOpen(false)}
-    >
-      Bounty
-    </Link>
-
-    <Link
-      to="/raid-tracker"
-      onClick={() => setMobileOpen(false)}
-    >
-      My Raid Status
-    </Link>
-
-    <Link
-      to="/raid-overview"
-      onClick={() => setMobileOpen(false)}
-    >
-      Raid Overview
-    </Link>
-
-    <Link
-      to="/raid-builder"
-      onClick={() => setMobileOpen(false)}
-    >
-      Raids Team Builder
-    </Link>
-
-    <Link
-      to="/board"
-      onClick={() => setMobileOpen(false)}
-    >
-      Leaderboard
-    </Link>
-
-    <Link
-      to="/members"
-      onClick={() => setMobileOpen(false)}
-    >
-      Members
-    </Link>
-
-    <Link
-      to="/tools"
-      onClick={() => setMobileOpen(false)}
-    >
-      Tools
-    </Link>
-
-
-    {canManageSite(profile?.role) && (
-      <Link
-        to="/admin"
-        onClick={() => setMobileOpen(false)}
-      >
-        Admin
-      </Link>
-    )}
-
-  </div>
-)}
-
-</header>
-
-
-{/* =========================================================
-    DYNAMIC SUB NAVIGATION
-========================================================= */}
-
-{subNav.length > 0 && (
-  <div className="sub-nav">
-    <div className="sub-nav-links">
-      {subNav.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          end={item.end}
-          className={({ isActive }) =>
-            `sub-nav-link ${
-              isActive ? "active" : ""
-            }`
-          }
-        >
-          {item.label}
-        </NavLink>
-      ))}
-    </div>
-
-    <div className="sub-nav-theme">
-      <ThemeSelector />
-    </div>
-  </div>
-)}
-  
-
-      <main className="content">
-        <Routes>
-          <Route
-            path="/"
-            element={<Home />}
-          />
-
-          <Route
-            path="/showcase"
-            element={
-              <ShinyShowcase />
-            }
-          />
-
-          <Route
-            path="/shinydex"
-            element={<ShinyDex />}
-          />
-<Route
-  path="/members"
-  element={<Members />}
-/>
-          <Route
-            path="/board"
-            element={
-              <ShinyBoard />
-            }
-          />
-
-          <Route
-            path="/events"
-            element={<Events />}
-          />
-
-<Route
-  path="/admin"
-  element={<AdminDashboard />}
-/>
-
-<Route
-  path="/admin/events"
-  element={<EventDashboard />}
-/>
-
-<Route
-  path="/admin/current-events"
-  element={<AdminCurrentEvents />}
-/>
-
-<Route
-  path="/admin/past-events"
-  element={<AdminPastEvents />}
-/>
-
-<Route
-  path="/admin/events/create"
-  element={<AdminEvents />}
-/>
-
-<Route
-  path="/admin/shinies/add"
-  element={<AddShiny />}
-/>
-
-<Route
-  path="/admin/shinies"
-  element={<ManageShinies />}
-/>
-
-<Route
-  path="/admin/members"
-  element={<ManageMembers />}
-/>
-
-<Route
-  path="/submit-shiny"
-  element={<SubmitShiny />}
-/>
-
-<Route
-  path="/admin/shiny-approvals"
-  element={<AdminShinyApprovals />}
-/>
-<Route
-  path="/admin/shiny-dashboard"
-  element={<ShinyDashboard />}
-/>
-<Route
-  path="/bounties"
-  element={<Bounties />}
-/>
-
-<Route
-  path="/admin/bounties"
-  element={<AdminBounties />}
-/>
-
-<Route
-  path="/admin/current-bounties"
-  element={<AdminCurrentBounties />}
-/>
-
-<Route
-  path="/admin/past-bounties"
-  element={<AdminPastBounties />}
-/>
-
-<Route
-  path="/admin/bounties/create"
-  element={<AdminBounties />}
-/>
-<Route
-  path="/admin/bounty-dashboard"
-  element={<BountyDashboard />}
- />
-<Route
-  path="/admin/events/edit/:id"
-  element={<AdminEvents />}
-/>
-<Route
-  path="/admin/bounties/edit/:id"
-  element={<AdminBounties />}
-/>
-<Route
-  path="/admin/homepage"
-  element={<EditHomepage />}
-/>
-
-<Route
-  path="/admin/shinywars"
-  element={
-    <ShinyWarsDashboard />
-  }
-/>
-<Route
-  path="/admin/shinywars/create"
-  element={<CreateShinyWar />}
-/>
-
-<Route
-  path="/admin/shinywars/teams/:id"
-  element={
-    <ManageShinyWarTeams />
-  }
-/>
-<Route
-  path="/admin/shinywars/edit/:id"
-  element={<EditShinyWar />}
-/>
-<Route
-  path="/events/shinywars/history"
-  element={
-    <ShinyWarHistory />
-  }
-/>
-<Route
-  path="/events/shinywars"
-  element={<ShinyWars />}
-/>
-<Route
-  path="/events/shinywars/:warId"
-  element={<ShinyWars />}
-/>
-<Route
-  path="/raid-tracker"
-  element={<RaidTracker />}
-/>
-<Route
-  path="/ready-raiders"
-  element={<ReadyRaiders />}
-/>
-<Route
-  path="/raid-builder"
-  element={<RaidBuilder />}
-/>
-<Route
-  path="/admin-raids"
-  element={
-    <AdminRaidDashboard />
-  }
-/>
-<Route
-  path="/raid-overview"
-  element={<RaidOverview />}
-/>
-<Route
-  path="/guides"
-  element={<RaidGuides />}
-/>
-<Route
-  path="/recruitment"
-  element={<Recruitment />}
-/>
-<Route
-  path="/admin/recruitment"
-  element={<AdminRecruitment />}
-/>
-<Route
-  path="/horde-hunter"
-  element={<HordeHunter />}
-/>
-<Route
-  path="/shunt-machine"
-  element={<ShuntMachine />}
-/>
-<Route
-  path="/altering-cave"
-  element={<AlteringCave />}
-/>
-
-<Route
-  path="/tools"
-  element={<Tools />}
-/>
-          <Route
-            path="/profile"
-            element={<Profile />}
-          />
-
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-        </Routes>
-      </main>
-    </div>
-
-    <Analytics />
-    <SpeedInsights />
-  </>
+      <Analytics />
+      <SpeedInsights />
+    </>
   );
 }
