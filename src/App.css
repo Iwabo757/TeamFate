@@ -5263,7 +5263,7 @@ textarea:focus {
 .sub-nav-theme {
   position: absolute;
   top: 50%;
-  right: 22px;
+  right: 28px;
   z-index: 100;
   transform: translateY(-50%);
 }
@@ -5274,21 +5274,20 @@ textarea:focus {
 }
 
 .theme-selector-select {
-  width: 170px;
-  min-width: 170px;
-  height: 42px;
+  min-width: 220px;
+  padding: 12px 42px 12px 18px;
 
-  padding: 0 14px;
+  appearance: auto;
 
   color: var(--theme-text);
-  background: rgba(8, 20, 55, 0.9);
+  background: var(--theme-panel);
 
   border: 1px solid var(--theme-border);
-  border-radius: 10px;
+  border-radius: 14px;
 
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 
   cursor: pointer;
   outline: none;
@@ -5301,42 +5300,16 @@ textarea:focus {
 
 .theme-selector-select:hover {
   border-color: var(--theme-primary);
-
-  box-shadow:
-    0 0 12px var(--theme-glow);
 }
 
 .theme-selector-select:focus {
   border-color: var(--theme-primary);
-
-  box-shadow:
-    0 0 0 3px var(--theme-focus);
+  box-shadow: 0 0 0 3px var(--theme-focus);
 }
 
 .theme-selector-select option {
   color: #ffffff;
   background: #10182a;
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 900px) {
-  .sub-nav-theme {
-    right: 12px;
-  }
-
-  .theme-selector-select {
-    width: 135px;
-    min-width: 135px;
-    height: 36px;
-
-    padding: 0 8px;
-
-    font-size: 0.78rem;
-  }
 }
 
 
@@ -5523,107 +5496,4 @@ textarea:focus {
     padding: 9px 10px;
     font-size: 0.85rem;
   }
-}
-
-
-/* =========================================================
-   TOP BAR LAYOUT
-========================================================= */
-
-.topbar {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 92px;
-
-  overflow: visible;
-}
-
-/* Logo stays fixed */
-
-.logo-section {
-  flex-shrink: 0;
-}
-
-
-/* Main navigation */
-
-.nav-links {
-  display: flex;
-  align-items: stretch;
-
-  flex: 1;
-  min-width: 0;
-
-  height: 92px;
-}
-
-
-/* Right-side controls */
-
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  margin-left: auto;
-
-  padding: 0 14px;
-
-  flex-shrink: 0;
-
-  white-space: nowrap;
-}
-
-
-/* Admin button */
-
-.admin-nav-link,
-.admin-button {
-  flex-shrink: 0;
-}
-
-
-/* Logged in profile */
-
-.user-profile,
-.profile-section {
-  display: flex;
-  align-items: center;
-
-  flex-shrink: 0;
-
-  min-width: 0;
-}
-
-
-/* Avatar */
-
-.user-avatar {
-  width: 58px;
-  height: 58px;
-
-  flex-shrink: 0;
-
-  border-radius: 12px;
-
-  object-fit: cover;
-}
-
-
-/* Username area */
-
-.user-info {
-  display: flex;
-  flex-direction: column;
-
-  min-width: 0;
-}
-
-.username {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  max-width: 120px;
 }
