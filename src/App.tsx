@@ -566,22 +566,6 @@ export default function App() {
                     Tools
                   </Link>
 
-                  <Link to="/guides">
-                    Guides
-                  </Link>
-
-                  <Link to="/horde-hunter">
-                    Horde Hunter
-                  </Link>
-
-                  <Link to="/shunt-machine">
-                    Shunt Machine
-                  </Link>
-
-                  <Link to="/altering-cave">
-                    Altering Cave
-                  </Link>
-
                 </div>
 
 
