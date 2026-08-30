@@ -6849,3 +6849,53 @@ textarea:focus {
     padding: 0 6px !important;
   }
 }
+/* =========================================================
+   COMPACT SUB NAV — HALF HEIGHT OF TOP BAR
+========================================================= */
+
+@media (min-width: 901px) {
+
+  .sub-nav {
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+  }
+
+  .sub-nav-links {
+    height: 30px !important;
+    min-height: 30px !important;
+    gap: 4px !important;
+  }
+
+  .sub-nav-link {
+    height: 26px !important;
+    min-height: 26px !important;
+
+    padding: 2px 12px !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    line-height: 1 !important;
+  }
+
+  .sub-nav-theme {
+    height: 30px !important;
+
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .theme-selector-select {
+    height: 26px !important;
+    min-height: 26px !important;
+
+    padding: 0 10px !important;
+
+    line-height: 26px !important;
+  }
+}
