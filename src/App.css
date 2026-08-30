@@ -5497,3 +5497,246 @@ textarea:focus {
     font-size: 0.85rem;
   }
 }
+
+/* =========================================================
+   FINAL CLEAN HEADER / NAVIGATION LAYOUT
+   Three-column desktop header:
+   Logo | Navigation (including Admin) | Profile
+========================================================= */
+
+@media (min-width: 901px) {
+  .topbar {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    min-height: 104px !important;
+    height: 104px !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .logo,
+  .logo-section {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    flex: 0 0 auto !important;
+  }
+
+  .nav-links {
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    width: auto !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .nav-links > a,
+  .nav-links > button,
+  .nav-links .nav-link,
+  .nav-links .admin-nav-link {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 10px !important;
+    border-radius: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: clip !important;
+    font-size: clamp(0.95rem, 1.25vw, 1.55rem) !important;
+    line-height: 1 !important;
+  }
+
+  /* Admin is always a normal inline navigation item. */
+  .nav-links .admin-nav-link,
+  .nav-links .admin-button {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    order: initial !important;
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    z-index: auto !important;
+  }
+
+  /* Reserve a separate column for the account area. */
+  .topbar-right,
+  .nav-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    min-width: max-content !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 18px 0 12px !important;
+    flex: 0 0 auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 1100 !important;
+    white-space: nowrap !important;
+  }
+
+  .user-profile,
+  .profile-section {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    gap: 10px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 62px !important;
+    height: 62px !important;
+    min-width: 62px !important;
+    flex: 0 0 62px !important;
+    object-fit: cover !important;
+  }
+
+  .user-info {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+  }
+
+  .username {
+    display: block !important;
+    max-width: 110px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .logout-btn {
+    white-space: nowrap !important;
+  }
+}
+
+/* =========================================================
+   HEADER COMPACTION
+========================================================= */
+
+@media (min-width: 901px) and (max-width: 1700px) {
+  .nav-links > a,
+  .nav-links > button,
+  .nav-links .nav-link,
+  .nav-links .admin-nav-link {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    font-size: clamp(0.9rem, 1.15vw, 1.35rem) !important;
+  }
+
+  .topbar-right,
+  .nav-right {
+    padding-right: 14px !important;
+    padding-left: 10px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1450px) {
+  .nav-links > a,
+  .nav-links > button,
+  .nav-links .nav-link,
+  .nav-links .admin-nav-link {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    flex-basis: 54px !important;
+  }
+
+  .username {
+    max-width: 90px !important;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .nav-links > a,
+  .nav-links > button,
+  .nav-links .nav-link,
+  .nav-links .admin-nav-link {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    font-size: 0.84rem !important;
+  }
+
+  .topbar-right,
+  .nav-right {
+    padding-right: 10px !important;
+    padding-left: 6px !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    flex-basis: 48px !important;
+  }
+
+  .username {
+    max-width: 70px !important;
+  }
+}
+
+/* =========================================================
+   MOBILE HEADER
+========================================================= */
+
+@media (max-width: 900px) {
+  .topbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 76px !important;
+    height: 76px !important;
+    padding: 0 12px !important;
+  }
+
+  .nav-links {
+    display: none !important;
+  }
+
+  .topbar-right,
+  .nav-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+    padding: 0 !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    flex-basis: 44px !important;
+  }
+}
