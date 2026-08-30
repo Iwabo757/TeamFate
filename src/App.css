@@ -6718,3 +6718,134 @@ textarea:focus {
     min-width: 170px !important;
   }
 }
+/* =========================================================
+   ULTRA COMPACT HEADER OVERRIDE
+   ========================================================= */
+
+@media (min-width: 901px) {
+
+  /* =========================
+     TOP BAR
+     ========================= */
+
+  .topbar {
+    height: 58px !important;
+    min-height: 58px !important;
+  }
+
+  .logo {
+    height: 58px !important;
+    flex: 0 0 320px !important;
+    padding: 0 14px !important;
+  }
+
+  .brand {
+    height: 58px !important;
+    gap: 8px !important;
+  }
+
+  /* Smaller Team Fate image */
+  .brand-logo {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    flex: 0 0 44px !important;
+  }
+
+  /* Scale down Team Fate text */
+  .logo-text {
+    transform: scale(0.72) !important;
+    transform-origin: left center !important;
+  }
+
+  /* Navigation */
+  .nav-links {
+    height: 58px !important;
+  }
+
+  .nav-links a {
+    height: 58px !important;
+    padding: 0 8px !important;
+  }
+
+  /* Admin / Login area */
+  .topbar-right {
+    height: 58px !important;
+    padding: 0 12px 0 6px !important;
+    gap: 6px !important;
+  }
+
+  .admin-nav-link {
+    height: 58px !important;
+    padding: 0 7px !important;
+  }
+
+  .user-menu,
+  .user-button {
+    height: 58px !important;
+  }
+
+  .nav-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+  }
+
+
+  /* =========================
+     SUB BAR
+     ========================= */
+
+  .sub-nav {
+    height: 40px !important;
+    min-height: 40px !important;
+  }
+
+  .sub-nav-links {
+    height: 40px !important;
+    gap: 5px !important;
+  }
+
+  .sub-nav-link {
+    min-height: 32px !important;
+    padding: 3px 13px !important;
+  }
+
+  /* Theme selector */
+  .sub-nav-theme {
+    right: 20px !important;
+  }
+
+  .theme-selector-select {
+    height: 32px !important;
+    min-width: 170px !important;
+    padding: 0 10px !important;
+  }
+}
+
+
+/* =========================
+   SMALLER DESKTOP
+   ========================= */
+
+@media (min-width: 901px) and (max-width: 1300px) {
+
+  .logo {
+    flex-basis: 280px !important;
+  }
+
+  .brand-logo {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .logo-text {
+    transform: scale(0.64) !important;
+  }
+
+  .nav-links a {
+    padding: 0 6px !important;
+  }
+}
