@@ -1,45 +1,45 @@
-import { useEffect, useRef, useState } from "react";
-import { type Theme, useTheme } from "../contexts/ThemeContext";
+import { useState } from "react";
+import { useTheme, type Theme } from "../contexts/ThemeContext";
 
 type ThemeOption = {
-  value: Theme;
+  id: Theme;
   label: string;
   icon: string;
 };
 
 const visualThemes: ThemeOption[] = [
   {
-    value: "default",
+    id: "default",
     label: "Fate Default",
     icon: "🔵",
   },
   {
-    value: "purple",
+    id: "purple",
     label: "Purple",
     icon: "🟣",
   },
   {
-    value: "crimson",
+    id: "crimson",
     label: "Crimson",
     icon: "🔴",
   },
   {
-    value: "forest",
+    id: "forest",
     label: "Forest",
     icon: "🟢",
   },
   {
-    value: "ember",
+    id: "ember",
     label: "Ember",
     icon: "🟠",
   },
   {
-    value: "midnight",
+    id: "midnight",
     label: "Midnight",
-    icon: "⚫",
+    icon: "🌙",
   },
   {
-    value: "gold",
+    id: "gold",
     label: "Gold",
     icon: "🟡",
   },
@@ -47,126 +47,105 @@ const visualThemes: ThemeOption[] = [
 
 const accessibilityThemes: ThemeOption[] = [
   {
-    value: "protanopia",
+    id: "protanopia",
     label: "Protanopia",
     icon: "👁",
   },
   {
-    value: "deuteranopia",
+    id: "deuteranopia",
     label: "Deuteranopia",
     icon: "👁",
   },
   {
-    value: "tritanopia",
+    id: "tritanopia",
     label: "Tritanopia",
     icon: "👁",
   },
 ];
 
 export default function ThemeSelector() {
+  const [isOpen, setIsOpen] = useState(false);
+
   const { theme, setTheme } = useTheme();
 
-  const [open, setOpen] = useState(false);
+  const allThemes = [
+    ...visualThemes,
+    ...accessibilityThemes,
+  ];
 
-  const selectorRef = useRef<HTMLDivElement>(null);
-
-  const selectedTheme =
-    [...visualThemes, ...accessibilityThemes].find(
-      (option) => option.value === theme
+  const currentTheme =
+    allThemes.find(
+      (item) => item.id === theme
     ) ?? visualThemes[0];
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        selectorRef.current &&
-        !selectorRef.current.contains(
-          event.target as Node
-        )
-      ) {
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener(
-      "mousedown",
-      handleClickOutside
-    );
-
-    return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleClickOutside
-      );
-    };
-  }, []);
 
   function handleThemeChange(
     selectedTheme: Theme
   ) {
     setTheme(selectedTheme);
-    setOpen(false);
+    setIsOpen(false);
   }
 
   return (
-    <div
-      className="theme-selector"
-      ref={selectorRef}
-    >
+    <div className="theme-selector">
       <button
         type="button"
         className="theme-selector-button"
-        onClick={() => setOpen((current) => !current)}
-        aria-expanded={open}
+        onClick={() =>
+          setIsOpen((previous) => !previous)
+        }
+        aria-expanded={isOpen}
         aria-haspopup="menu"
       >
         <span className="theme-selector-icon">
-          {selectedTheme.icon}
+          {currentTheme.icon}
         </span>
 
         <span className="theme-selector-label">
-          {selectedTheme.label}
+          {currentTheme.label}
         </span>
 
         <span
           className={`theme-selector-arrow ${
-            open ? "is-open" : ""
+            isOpen ? "is-open" : ""
           }`}
         >
           ▾
         </span>
       </button>
 
-      {open && (
+      {isOpen && (
         <div
           className="theme-selector-menu"
           role="menu"
         >
           <div className="theme-selector-section">
-            <span className="theme-selector-heading">
+            <div className="theme-selector-heading">
               Themes
-            </span>
+            </div>
 
-            {visualThemes.map((option) => (
+            {visualThemes.map((item) => (
               <button
-                key={option.value}
+                key={item.id}
                 type="button"
                 role="menuitem"
                 className={`theme-selector-option ${
-                  theme === option.value
+                  theme === item.id
                     ? "active"
                     : ""
                 }`}
                 onClick={() =>
-                  handleThemeChange(option.value)
+                  handleThemeChange(item.id)
                 }
               >
                 <span className="theme-option-icon">
-                  {option.icon}
+                  {item.icon}
                 </span>
 
-                <span>{option.label}</span>
+                <span>
+                  {item.label}
+                </span>
 
-                {theme === option.value && (
+                {theme === item.id && (
                   <span className="theme-check">
                     ✓
                   </span>
@@ -178,37 +157,41 @@ export default function ThemeSelector() {
           <div className="theme-selector-divider" />
 
           <div className="theme-selector-section">
-            <span className="theme-selector-heading">
+            <div className="theme-selector-heading">
               Accessibility
-            </span>
+            </div>
 
-            {accessibilityThemes.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="menuitem"
-                className={`theme-selector-option ${
-                  theme === option.value
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  handleThemeChange(option.value)
-                }
-              >
-                <span className="theme-option-icon">
-                  {option.icon}
-                </span>
-
-                <span>{option.label}</span>
-
-                {theme === option.value && (
-                  <span className="theme-check">
-                    ✓
+            {accessibilityThemes.map(
+              (item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  role="menuitem"
+                  className={`theme-selector-option ${
+                    theme === item.id
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handleThemeChange(item.id)
+                  }
+                >
+                  <span className="theme-option-icon">
+                    {item.icon}
                   </span>
-                )}
-              </button>
-            ))}
+
+                  <span>
+                    {item.label}
+                  </span>
+
+                  {theme === item.id && (
+                    <span className="theme-check">
+                      ✓
+                    </span>
+                  )}
+                </button>
+              )
+            )}
           </div>
         </div>
       )}

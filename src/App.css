@@ -5820,3 +5820,52 @@ button,
 .login-btn {
   border-color: var(--theme-border);
 }
+
+
+/* =========================================================
+   THEME SELECTOR - FINAL POSITIONING FIX
+========================================================= */
+
+.sub-nav {
+  position: relative;
+  overflow: visible !important;
+  z-index: 900;
+}
+
+.sub-nav-theme {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1200;
+}
+
+.theme-selector {
+  position: relative;
+  z-index: 2000;
+}
+
+.theme-selector-button {
+  pointer-events: auto;
+}
+
+.theme-selector-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+
+  z-index: 99999;
+
+  display: block;
+
+  width: 225px;
+
+  background: var(--theme-panel);
+
+  border: 1px solid
+    var(--theme-border-strong);
+
+  box-shadow:
+    0 18px 45px
+    var(--theme-shadow);
+}
