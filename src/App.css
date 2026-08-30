@@ -5196,3 +5196,390 @@ textarea:focus {
     padding-bottom: 4px !important;
   }
 }
+
+
+
+/* =========================================================
+   FINAL HEADER + MOBILE FIX
+   Fixes:
+   - restores the actual .mobile-menu dropdown
+   - keeps the hamburger visible and clickable
+   - prevents Admin/profile overflow on mobile
+   - makes the secondary bar more transparent
+   - keeps both header rows compact
+========================================================= */
+
+/* ---------------------------------------------------------
+   TRANSPARENT SECONDARY BAR
+--------------------------------------------------------- */
+
+.sub-nav,
+.secondary-nav {
+  background: rgba(4, 14, 35, 0.52) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom-color: rgba(100, 207, 255, 0.16);
+}
+
+.theme-selector-select {
+  background: rgba(8, 20, 55, 0.58) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ---------------------------------------------------------
+   DESKTOP: KEEP THE TWO BARS COMPACT
+--------------------------------------------------------- */
+
+@media (min-width: 901px) {
+  .topbar,
+  .main-nav {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    height: 40px !important;
+    min-height: 40px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+  }
+
+  .sub-nav-link {
+    padding: 5px 16px !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   MOBILE HEADER
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .topbar,
+  .main-nav {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+
+    height: 64px !important;
+    min-height: 64px !important;
+
+    padding: 0 14px !important;
+
+    overflow: visible !important;
+  }
+
+  .logo,
+  .logo-section,
+  .brand {
+    min-width: 0;
+    height: 64px;
+    padding: 0 !important;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .logo-image,
+  .brand-logo {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    flex-basis: 48px !important;
+  }
+
+  .logo-main {
+    font-size: clamp(1.25rem, 6vw, 1.7rem) !important;
+  }
+
+  .logo-sub {
+    font-size: clamp(0.58rem, 2.8vw, 0.72rem) !important;
+  }
+
+  /* Desktop navigation stays hidden on mobile. */
+  .nav-links {
+    display: none !important;
+  }
+
+  /* Restore and stabilize the hamburger. */
+  .mobile-menu-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+    margin-left: auto;
+    margin-right: 8px;
+
+    padding: 0 !important;
+
+    font-size: 2rem !important;
+    line-height: 1;
+
+    color: #ffffff;
+    background: rgba(8, 20, 45, 0.32);
+    border: 1px solid rgba(100, 207, 255, 0.16);
+    border-radius: 10px;
+
+    cursor: pointer;
+    z-index: 3200;
+  }
+
+  /* On mobile, do not keep the duplicate Admin link in the top row.
+     Admin remains available inside the hamburger menu. */
+  .topbar-right .admin-nav-link {
+    display: none !important;
+  }
+
+  .topbar-right,
+  .nav-right {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+
+    width: auto !important;
+    min-width: 0 !important;
+    height: 64px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    flex: 0 0 auto !important;
+  }
+
+  .user-menu {
+    display: flex;
+    align-items: center;
+  }
+
+  .user-button {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+
+  .user-info {
+    display: none !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    flex-basis: 46px !important;
+
+    margin: 0;
+  }
+
+  .login-btn {
+    padding: 7px 12px;
+    font-size: 0.9rem;
+  }
+
+  /* -------------------------------------------------------
+     ACTUAL MOBILE DROPDOWN
+     App.tsx uses .mobile-menu, not .mobile-nav.
+  ------------------------------------------------------- */
+
+  .mobile-menu {
+    position: absolute !important;
+
+    top: calc(100% + 1px);
+    left: 0;
+    right: 0;
+
+    display: flex !important;
+    flex-direction: column;
+
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+
+    padding: 8px 12px 16px;
+
+    background: rgba(4, 14, 35, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+
+    border-top: 1px solid rgba(100, 207, 255, 0.18);
+    border-bottom: 1px solid rgba(100, 207, 255, 0.18);
+
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.38);
+
+    z-index: 3100 !important;
+  }
+
+  .mobile-menu a {
+    display: flex !important;
+    align-items: center;
+
+    min-height: 46px;
+
+    padding: 11px 14px;
+
+    color: #dcecff;
+    text-decoration: none;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .mobile-menu a:last-child {
+    border-bottom: 0;
+  }
+
+  .mobile-menu a:hover,
+  .mobile-menu a:active {
+    background: rgba(100, 207, 255, 0.10);
+    color: #ffffff;
+  }
+
+  /* -------------------------------------------------------
+     COMPACT, TRANSPARENT MOBILE SUB BAR
+  ------------------------------------------------------- */
+
+  .sub-nav,
+  .secondary-nav {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    height: 44px !important;
+    min-height: 44px !important;
+
+    padding: 3px 150px 3px 12px !important;
+
+    background: rgba(4, 14, 35, 0.45) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    overflow: visible !important;
+  }
+
+  .sub-nav-links {
+    display: flex;
+    align-items: center;
+
+    min-width: 0;
+    max-width: 100%;
+
+    gap: 4px;
+
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sub-nav-links::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sub-nav-link {
+    flex: 0 0 auto;
+
+    padding: 7px 12px !important;
+
+    font-size: 0.88rem;
+    white-space: nowrap;
+  }
+
+  .sub-nav-theme {
+    position: absolute !important;
+
+    top: 50%;
+    right: 10px;
+
+    transform: translateY(-50%);
+  }
+
+  .theme-selector-select {
+    width: 132px !important;
+    min-width: 132px !important;
+    height: 34px !important;
+
+    padding: 0 28px 0 10px !important;
+
+    font-size: 0.78rem !important;
+
+    background: rgba(8, 20, 55, 0.55) !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   EXTRA SMALL MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 520px) {
+  .topbar,
+  .main-nav {
+    height: 60px !important;
+    min-height: 60px !important;
+    padding: 0 10px !important;
+  }
+
+  .logo,
+  .logo-section,
+  .brand {
+    height: 60px;
+  }
+
+  .logo-image,
+  .brand-logo {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    flex-basis: 42px !important;
+  }
+
+  .logo-main {
+    font-size: 1.25rem !important;
+  }
+
+  .logo-sub {
+    font-size: 0.58rem !important;
+  }
+
+  .mobile-menu-btn {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+
+    margin-right: 6px;
+
+    font-size: 1.8rem !important;
+  }
+
+  .user-avatar,
+  .nav-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-basis: 40px !important;
+  }
+
+  .sub-nav,
+  .secondary-nav {
+    height: 42px !important;
+    min-height: 42px !important;
+
+    padding-right: 138px !important;
+  }
+
+  .theme-selector-select {
+    width: 122px !important;
+    min-width: 122px !important;
+    height: 32px !important;
+
+    font-size: 0.72rem !important;
+  }
+
+  .mobile-menu {
+    max-height: calc(100vh - 60px);
+  }
+}
