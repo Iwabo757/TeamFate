@@ -5869,3 +5869,298 @@ button,
     0 18px 45px
     var(--theme-shadow);
 }
+/* =========================================================
+   ACCESSIBILITY THEME SELECTOR
+========================================================= */
+
+.sub-nav {
+  position: relative;
+  overflow: visible !important;
+}
+
+.sub-nav-theme {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 100;
+}
+
+.theme-selector {
+  display: flex;
+  align-items: center;
+}
+
+.theme-selector-select {
+  min-width: 220px;
+
+  padding: 12px 42px 12px 18px;
+
+  appearance: auto;
+
+  background:
+    rgba(10, 22, 45, 0.96);
+
+  color:
+    var(--theme-text);
+
+  border: 1px solid
+    var(--theme-border);
+
+  border-radius: 14px;
+
+  font-family:
+    var(--theme-font-body);
+
+  font-size: 1rem;
+
+  font-weight: 700;
+
+  letter-spacing: 0.03em;
+
+  cursor: pointer;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.theme-selector-select:hover {
+  border-color:
+    var(--theme-primary);
+}
+
+.theme-selector-select:focus {
+  border-color:
+    var(--theme-primary);
+
+  box-shadow:
+    0 0 0 3px
+    var(--theme-focus);
+}
+
+.theme-selector-select option {
+  background:
+    #10182a;
+
+  color:
+    #ffffff;
+}
+
+@media (max-width: 900px) {
+  .sub-nav-theme {
+    right: 12px;
+  }
+
+  .theme-selector-select {
+    min-width: 150px;
+    padding: 9px 10px;
+    font-size: 0.85rem;
+  }
+}
+/* =========================================================
+   THEME VARIABLES
+========================================================= */
+
+:root {
+  --theme-bg: #07152d;
+  --theme-bg-secondary: #0b1d3a;
+  --theme-panel: rgba(8, 20, 55, 0.88);
+
+  --theme-primary: #64cfff;
+  --theme-secondary: #a88cff;
+
+  --theme-text: #d8ecff;
+  --theme-text-muted: #9fc4e8;
+
+  --theme-border: rgba(100, 207, 255, 0.22);
+  --theme-border-strong: rgba(100, 207, 255, 0.5);
+
+  --theme-glow: rgba(100, 207, 255, 0.35);
+  --theme-focus: rgba(100, 207, 255, 0.25);
+
+  --theme-font-body:
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+  --theme-font-heading:
+    "Permanent Marker",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* =========================================================
+   PROTANOPIA
+   Red-blind accessibility palette
+========================================================= */
+
+[data-theme="protanopia"] {
+  --theme-bg: #101820;
+  --theme-bg-secondary: #16232d;
+  --theme-panel: rgba(18, 30, 38, 0.92);
+
+  --theme-primary: #3aaed8;
+  --theme-secondary: #f2c14e;
+
+  --theme-text: #ffffff;
+  --theme-text-muted: #d2e3ea;
+
+  --theme-border: rgba(58, 174, 216, 0.32);
+  --theme-border-strong: rgba(58, 174, 216, 0.65);
+
+  --theme-glow: rgba(58, 174, 216, 0.3);
+  --theme-focus: rgba(242, 193, 78, 0.28);
+
+  --theme-font-body:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  --theme-font-heading:
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+
+/* =========================================================
+   DEUTERANOPIA
+   Green-blind accessibility palette
+========================================================= */
+
+[data-theme="deuteranopia"] {
+  --theme-bg: #111827;
+  --theme-bg-secondary: #1c2636;
+  --theme-panel: rgba(22, 31, 45, 0.92);
+
+  --theme-primary: #4da6ff;
+  --theme-secondary: #ffb000;
+
+  --theme-text: #ffffff;
+  --theme-text-muted: #d9e4f2;
+
+  --theme-border: rgba(77, 166, 255, 0.34);
+  --theme-border-strong: rgba(77, 166, 255, 0.68);
+
+  --theme-glow: rgba(77, 166, 255, 0.3);
+  --theme-focus: rgba(255, 176, 0, 0.3);
+
+  --theme-font-body:
+    "Trebuchet MS",
+    Arial,
+    sans-serif;
+
+  --theme-font-heading:
+    "Trebuchet MS",
+    Arial,
+    sans-serif;
+}
+
+
+/* =========================================================
+   TRITANOPIA
+   Blue-yellow accessibility palette
+========================================================= */
+
+[data-theme="tritanopia"] {
+  --theme-bg: #24162d;
+  --theme-bg-secondary: #34203f;
+  --theme-panel: rgba(43, 27, 53, 0.93);
+
+  --theme-primary: #d875c7;
+  --theme-secondary: #e6e6e6;
+
+  --theme-text: #ffffff;
+  --theme-text-muted: #eaddeb;
+
+  --theme-border: rgba(216, 117, 199, 0.35);
+  --theme-border-strong: rgba(216, 117, 199, 0.7);
+
+  --theme-glow: rgba(216, 117, 199, 0.3);
+  --theme-focus: rgba(216, 117, 199, 0.28);
+
+  --theme-font-body:
+    Verdana,
+    Arial,
+    sans-serif;
+
+  --theme-font-heading:
+    Verdana,
+    Arial,
+    sans-serif;
+}
+/* =========================================================
+   ACCESSIBILITY FONT APPLICATION
+========================================================= */
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family:
+    var(--theme-font-body);
+}
+
+
+/* Navigation */
+
+.topbar,
+.sub-nav,
+.nav-links,
+.nav-links a,
+.sub-nav-link {
+  font-family:
+    var(--theme-font-heading);
+}
+
+
+/* Accessibility themes use clearer typography */
+
+[data-theme="protanopia"] .nav-links,
+[data-theme="protanopia"] .nav-links a,
+[data-theme="protanopia"] .sub-nav-link,
+
+[data-theme="deuteranopia"] .nav-links,
+[data-theme="deuteranopia"] .nav-links a,
+[data-theme="deuteranopia"] .sub-nav-link,
+
+[data-theme="tritanopia"] .nav-links,
+[data-theme="tritanopia"] .nav-links a,
+[data-theme="tritanopia"] .sub-nav-link {
+  font-family:
+    var(--theme-font-heading) !important;
+
+  font-weight: 800;
+
+  font-style: normal !important;
+
+  letter-spacing: 0.04em;
+}
+
+
+/* Main headings */
+
+[data-theme="protanopia"] h1,
+[data-theme="protanopia"] h2,
+[data-theme="protanopia"] h3,
+
+[data-theme="deuteranopia"] h1,
+[data-theme="deuteranopia"] h2,
+[data-theme="deuteranopia"] h3,
+
+[data-theme="tritanopia"] h1,
+[data-theme="tritanopia"] h2,
+[data-theme="tritanopia"] h3 {
+  font-family:
+    var(--theme-font-heading) !important;
+
+  font-style: normal !important;
+
+  letter-spacing: 0.02em;
+}

@@ -6,18 +6,8 @@ import {
   type ReactNode,
 } from "react";
 
-/* =========================================
-   THEME TYPES
-========================================= */
-
 export type Theme =
   | "default"
-  | "purple"
-  | "crimson"
-  | "forest"
-  | "ember"
-  | "midnight"
-  | "gold"
   | "protanopia"
   | "deuteranopia"
   | "tritanopia";
@@ -27,23 +17,11 @@ type ThemeContextType = {
   setTheme: (theme: Theme) => void;
 };
 
-/* =========================================
-   CONTEXT
-========================================= */
-
 const ThemeContext = createContext<
   ThemeContextType | undefined
 >(undefined);
 
-/* =========================================
-   STORAGE KEY
-========================================= */
-
 const THEME_STORAGE_KEY = "team-fate-theme";
-
-/* =========================================
-   PROVIDER
-========================================= */
 
 type ThemeProviderProps = {
   children: ReactNode;
@@ -52,23 +30,22 @@ type ThemeProviderProps = {
 export function ThemeProvider({
   children,
 }: ThemeProviderProps) {
-  const [theme, setThemeState] =
-    useState<Theme>(() => {
-      const savedTheme =
-        localStorage.getItem(
-          THEME_STORAGE_KEY
-        );
+  const [theme, setTheme] = useState<Theme>(() => {
+    const savedTheme = localStorage.getItem(
+      THEME_STORAGE_KEY
+    );
 
-      if (savedTheme) {
-        return savedTheme as Theme;
-      }
+    if (
+      savedTheme === "default" ||
+      savedTheme === "protanopia" ||
+      savedTheme === "deuteranopia" ||
+      savedTheme === "tritanopia"
+    ) {
+      return savedTheme;
+    }
 
-      return "default";
-    });
-
-  /* =====================================
-     APPLY THEME TO DOCUMENT
-  ====================================== */
+    return "default";
+  });
 
   useEffect(() => {
     document.documentElement.setAttribute(
@@ -82,14 +59,6 @@ export function ThemeProvider({
     );
   }, [theme]);
 
-  /* =====================================
-     SET THEME
-  ====================================== */
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-  };
-
   return (
     <ThemeContext.Provider
       value={{
@@ -101,10 +70,6 @@ export function ThemeProvider({
     </ThemeContext.Provider>
   );
 }
-
-/* =========================================
-   HOOK
-========================================= */
 
 export function useTheme() {
   const context = useContext(ThemeContext);
