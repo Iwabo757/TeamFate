@@ -1561,9 +1561,9 @@ export default function AdminRecruitment() {
               </div>
             )}
 
-{/* =================================================
+
             {/* EDITOR */}
-================================================= */}
+
 <div
   ref={editorRef}
   contentEditable
