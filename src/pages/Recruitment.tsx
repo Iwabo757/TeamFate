@@ -1261,7 +1261,7 @@ export default function Recruitment() {
 {page?.discord_url && (
   <div className="recruitment-discord">
     <img
-      src="https://media.tenor.com/3z4a1VYh9zQAAAAi/jirachi-pokemon.gif"
+      src="/jirachi-pokemon.gif"
       alt="Dancing Jirachi"
       className="jirachi-dance"
     />
@@ -1276,7 +1276,7 @@ export default function Recruitment() {
     </a>
 
     <img
-      src="https://media.tenor.com/3z4a1VYh9zQAAAAi/jirachi-pokemon.gif"
+      src="/jirachi-pokemon.gif"
       alt="Dancing Jirachi"
       className="jirachi-dance"
     />
