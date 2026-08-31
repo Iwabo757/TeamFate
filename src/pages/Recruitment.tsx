@@ -1258,20 +1258,30 @@ export default function Recruitment() {
               }}
             />
 
-            {page?.discord_url && (
-              <div className="recruitment-discord">
-                <a
-                  href={sanitizeUrl(
-                    page.discord_url
-                  )}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="discord-button"
-                >
-                  💬 Join Team Fate Discord
-                </a>
-              </div>
-            )}
+{page?.discord_url && (
+  <div className="recruitment-discord">
+    <img
+      src="https://media.tenor.com/3z4a1VYh9zQAAAAi/jirachi-pokemon.gif"
+      alt="Dancing Jirachi"
+      className="jirachi-dance"
+    />
+
+    <a
+      href={sanitizeUrl(page.discord_url)}
+      target="_blank"
+      rel="noreferrer"
+      className="discord-button"
+    >
+      💬 Join Team Fate Discord
+    </a>
+
+    <img
+      src="https://media.tenor.com/3z4a1VYh9zQAAAAi/jirachi-pokemon.gif"
+      alt="Dancing Jirachi"
+      className="jirachi-dance"
+    />
+  </div>
+)}
 
             {page?.updated_at && (
               <div className="recruitment-last-updated">

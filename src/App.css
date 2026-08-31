@@ -7207,3 +7207,88 @@ textarea:focus {
   font-size: 12px;
   text-align: right;
 }
+
+.recruitment-card {
+  min-height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+}
+
+.recruitment-content {
+  flex: 1;
+}
+
+.recruitment-discord {
+  margin-top: auto;
+  padding-top: 40px;
+  padding-bottom: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.discord-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 16px 32px;
+  min-width: 260px;
+
+  border-radius: 12px;
+  border: 2px solid rgba(114, 137, 218, 0.8);
+
+  background: linear-gradient(
+    135deg,
+    #5865f2,
+    #7289da
+  );
+
+  color: white;
+  text-decoration: none;
+
+  font-size: 18px;
+  font-weight: 800;
+
+  box-shadow:
+    0 0 15px rgba(88, 101, 242, 0.4),
+    inset 0 1px rgba(255, 255, 255, 0.2);
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.discord-button:hover {
+  transform: translateY(-3px) scale(1.03);
+
+  box-shadow:
+    0 0 25px rgba(88, 101, 242, 0.7),
+    inset 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.jirachi-dance {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+@media (max-width: 600px) {
+  .recruitment-discord {
+    gap: 10px;
+  }
+
+  .jirachi-dance {
+    width: 45px;
+    height: 45px;
+  }
+
+  .discord-button {
+    min-width: auto;
+    padding: 14px 18px;
+    font-size: 15px;
+  }
+}
