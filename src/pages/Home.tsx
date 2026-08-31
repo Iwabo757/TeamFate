@@ -389,15 +389,16 @@ export default function Home() {
           WELCOME
       ====================================== */}
 
-      <div className="welcome-card">
-        <h2>
-          {welcome.title}
-        </h2>
+<div className="welcome-card">
+  <h2>{welcome.title}</h2>
 
-        <p>
-          {welcome.message}
-        </p>
-      </div>
+  <div
+    className="welcome-message"
+    dangerouslySetInnerHTML={{
+      __html: welcome.message,
+    }}
+  />
+</div>
 
       {/* =====================================
           HOME TICKER
