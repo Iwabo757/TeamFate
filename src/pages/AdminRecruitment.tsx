@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -37,9 +38,7 @@ const MANAGER_ROLES = [
 const DEFAULT_CONTENT = `
 <h2>Join Team Fate</h2>
 
-<p>
-Welcome to Team Fate!
-</p>
+<p>Welcome to Team Fate!</p>
 
 <p>
 We are always looking for active and friendly members
@@ -49,12 +48,12 @@ to join our community.
 <h3>What We Offer</h3>
 
 <ul>
-<li>Active PokéMMO community</li>
-<li>Shiny hunting events</li>
-<li>Shiny Wars</li>
-<li>Weekly community events</li>
-<li>Team activities</li>
-<li>Friendly and helpful members</li>
+  <li>Active PokéMMO community</li>
+  <li>Shiny hunting events</li>
+  <li>Shiny Wars</li>
+  <li>Weekly community events</li>
+  <li>Team activities</li>
+  <li>Friendly and helpful members</li>
 </ul>
 
 <h3>Interested in Joining?</h3>
@@ -65,9 +64,7 @@ Join our Discord and get to know the team!
 `;
 
 function canManageSite(role?: string) {
-  return MANAGER_ROLES.includes(
-    role || ""
-  );
+  return MANAGER_ROLES.includes(role || "");
 }
 
 function cleanUrl(url: string) {
@@ -93,6 +90,9 @@ export default function AdminRecruitment() {
 
   const editorRef =
     useRef<HTMLDivElement | null>(null);
+
+  const contentRef =
+    useRef(DEFAULT_CONTENT);
 
   const fileInputRef =
     useRef<HTMLInputElement | null>(null);
@@ -128,9 +128,7 @@ export default function AdminRecruitment() {
     useState("");
 
   const [statusType, setStatusType] =
-    useState<
-      "success" | "error" | ""
-    >("");
+    useState<"success" | "error" | "">("");
 
   const [linkInput, setLinkInput] =
     useState("");
@@ -139,9 +137,38 @@ export default function AdminRecruitment() {
     useState(false);
 
   /*
-   * ============================================================
+   * Keep a ref containing the latest editor content.
+   *
+   * This allows the editor to be populated when it mounts
+   * without React constantly rewriting innerHTML while typing.
+   */
+
+  useEffect(() => {
+    contentRef.current = content;
+  }, [content]);
+
+  /*
+   * Editor mount handler.
+   *
+   * This is the important fix for the blank editor problem.
+   * The editor receives the saved content only when it mounts.
+   * After that, React does not overwrite it while typing.
+   */
+
+  const setEditorNode = useCallback(
+    (node: HTMLDivElement | null) => {
+      editorRef.current = node;
+
+      if (node) {
+        node.innerHTML =
+          contentRef.current || DEFAULT_CONTENT;
+      }
+    },
+    []
+  );
+
+  /*
    * LOAD PROFILE
-   * ============================================================
    */
 
   useEffect(() => {
@@ -149,62 +176,66 @@ export default function AdminRecruitment() {
   }, []);
 
   async function loadProfile() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setProfile(null);
+      if (!user) {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } =
+        await supabase
+          .from("profiles")
+          .select(
+            "id, username, nickname, avatar_url, role"
+          )
+          .eq("id", user.id)
+          .single();
+
+      if (error) {
+        console.error(
+          "Failed to load profile:",
+          error
+        );
+
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+
+      setProfile(data);
+
+      if (!canManageSite(data?.role)) {
+        setLoading(false);
+        return;
+      }
+
+      await loadRecruitment();
+
       setLoading(false);
-      return;
-    }
-
-    const { data, error } =
-      await supabase
-        .from("profiles")
-        .select(
-          "id, username, nickname, avatar_url, role"
-        )
-        .eq("id", user.id)
-        .single();
-
-    if (error) {
+    } catch (error) {
       console.error(
-        "Failed to load profile:",
+        "Profile loading error:",
         error
       );
 
-      setProfile(null);
       setLoading(false);
-      return;
     }
-
-    setProfile(data);
-
-    if (
-      !canManageSite(data?.role)
-    ) {
-      setLoading(false);
-      return;
-    }
-
-    await loadRecruitment();
-
-    setLoading(false);
   }
 
   /*
-   * ============================================================
-   * LOAD RECRUITMENT
-   * ============================================================
+   * LOAD RECRUITMENT PAGE
    */
 
   async function loadRecruitment() {
     const { data, error } =
       await supabase
         .from("recruitment_page")
-        .select(
-          `
+        .select(`
           id,
           title,
           content,
@@ -213,8 +244,7 @@ export default function AdminRecruitment() {
           discord_url,
           updated_at,
           updated_by
-          `
-        )
+        `)
         .eq("id", PAGE_ID)
         .single();
 
@@ -240,50 +270,43 @@ export default function AdminRecruitment() {
     const page =
       data as RecruitmentPage;
 
+    const loadedContent =
+      page.draft_content ||
+      page.content ||
+      DEFAULT_CONTENT;
+
     setTitle(
       page.title ||
         "Join Team Fate"
     );
 
-    /*
-     * Admin gets the saved draft if one exists.
-     * Otherwise load the published content.
-     */
+    setContent(loadedContent);
 
-    setContent(
-      page.draft_content ||
-        page.content ||
-        DEFAULT_CONTENT
-    );
+    contentRef.current =
+      loadedContent;
 
     setBannerUrl(
-      page.banner_url ||
-        ""
+      page.banner_url || ""
     );
 
     setDiscordUrl(
-      page.discord_url ||
-        ""
+      page.discord_url || ""
     );
 
     /*
-     * Populate editor after React renders it.
+     * If the editor already exists, populate it immediately.
+     * This does not affect typing because this only happens
+     * when loading data from the database.
      */
 
-    setTimeout(() => {
-      if (editorRef.current) {
-        editorRef.current.innerHTML =
-          page.draft_content ||
-          page.content ||
-          DEFAULT_CONTENT;
-      }
-    }, 0);
+    if (editorRef.current) {
+      editorRef.current.innerHTML =
+        loadedContent;
+    }
   }
 
   /*
-   * ============================================================
    * EDITOR CONTENT
-   * ============================================================
    */
 
   function syncEditor() {
@@ -291,15 +314,17 @@ export default function AdminRecruitment() {
       return;
     }
 
-    setContent(
-      editorRef.current.innerHTML
-    );
+    const editorContent =
+      editorRef.current.innerHTML;
+
+    contentRef.current =
+      editorContent;
+
+    setContent(editorContent);
   }
 
   /*
-   * ============================================================
    * FORMATTING
-   * ============================================================
    */
 
   function format(
@@ -358,22 +383,16 @@ export default function AdminRecruitment() {
     );
   }
 
-  function center() {
-    format(
-      "justifyCenter"
-    );
+  function left() {
+    format("justifyLeft");
   }
 
-  function left() {
-    format(
-      "justifyLeft"
-    );
+  function center() {
+    format("justifyCenter");
   }
 
   function right() {
-    format(
-      "justifyRight"
-    );
+    format("justifyRight");
   }
 
   function bulletList() {
@@ -395,9 +414,7 @@ export default function AdminRecruitment() {
   }
 
   /*
-   * ============================================================
-   * LINK
-   * ============================================================
+   * LINKS
    */
 
   function openLinkBox() {
@@ -423,12 +440,7 @@ export default function AdminRecruitment() {
   }
 
   /*
-   * ============================================================
    * BANNER UPLOAD
-   * ============================================================
-   *
-   * Uses the same "event-images" storage bucket pattern already
-   * used elsewhere in the project.
    */
 
   function chooseBanner() {
@@ -467,8 +479,7 @@ export default function AdminRecruitment() {
       const extension =
         file.name
           .split(".")
-          .pop() ||
-        "png";
+          .pop() || "png";
 
       const fileName =
         `recruitment-${Date.now()}.${extension}`;
@@ -480,8 +491,7 @@ export default function AdminRecruitment() {
             fileName,
             file,
             {
-              cacheControl:
-                "3600",
+              cacheControl: "3600",
               upsert: true,
             }
           );
@@ -493,13 +503,9 @@ export default function AdminRecruitment() {
       const { data } =
         supabase.storage
           .from("event-images")
-          .getPublicUrl(
-            fileName
-          );
+          .getPublicUrl(fileName);
 
-      if (
-        !data?.publicUrl
-      ) {
+      if (!data?.publicUrl) {
         throw new Error(
           "Unable to create image URL."
         );
@@ -513,9 +519,7 @@ export default function AdminRecruitment() {
         "Banner uploaded. Publish the page to save it."
       );
 
-      setStatusType(
-        "success"
-      );
+      setStatusType("success");
     } catch (error: any) {
       console.error(
         "Banner upload error:",
@@ -527,24 +531,16 @@ export default function AdminRecruitment() {
           "Banner upload failed."
       );
 
-      setStatusType(
-        "error"
-      );
+      setStatusType("error");
+    } finally {
+      setUploading(false);
+
+      event.target.value = "";
     }
-
-    setUploading(false);
-
-    /*
-     * Allow selecting the same file again.
-     */
-
-    event.target.value = "";
   }
 
   /*
-   * ============================================================
    * SAVE DRAFT
-   * ============================================================
    */
 
   async function saveDraft() {
@@ -562,94 +558,92 @@ export default function AdminRecruitment() {
     setStatus("");
     setStatusType("");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setStatus(
-        "You must be logged in."
+      if (!user) {
+        throw new Error(
+          "You must be logged in."
+        );
+      }
+
+      const editorContent =
+        editorRef.current
+          ?.innerHTML ||
+        contentRef.current ||
+        DEFAULT_CONTENT;
+
+      const { error } =
+        await supabase
+          .from("recruitment_page")
+          .update({
+            title:
+              title.trim() ||
+              "Join Team Fate",
+
+            draft_content:
+              editorContent,
+
+            banner_url:
+              bannerUrl.trim() ||
+              null,
+
+            discord_url:
+              discordUrl.trim() ||
+              null,
+
+            updated_at:
+              new Date().toISOString(),
+
+            updated_by:
+              user.id,
+          })
+          .eq(
+            "id",
+            PAGE_ID
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      setContent(
+        editorContent
       );
 
-      setStatusType("error");
-      setSaving(false);
+      contentRef.current =
+        editorContent;
 
-      return;
-    }
+      setStatus(
+        "Draft saved successfully."
+      );
 
-    const editorContent =
-      editorRef.current
-        ?.innerHTML ||
-      content;
-
-    const { error } =
-      await supabase
-        .from("recruitment_page")
-        .update({
-          title:
-            title.trim() ||
-            "Join Team Fate",
-
-          draft_content:
-            editorContent,
-
-          banner_url:
-            bannerUrl.trim() ||
-            null,
-
-          discord_url:
-            discordUrl.trim() ||
-            null,
-
-          updated_at:
-            new Date().toISOString(),
-
-          updated_by:
-            user.id,
-        })
-        .eq(
-          "id",
-          PAGE_ID
-        );
-
-    if (error) {
+      setStatusType(
+        "success"
+      );
+    } catch (error: any) {
       console.error(
         "Save draft error:",
         error
       );
 
       setStatus(
-        `Failed to save draft: ${error.message}`
+        error?.message ||
+          "Failed to save draft."
       );
 
       setStatusType(
         "error"
       );
-
+    } finally {
       setSaving(false);
-
-      return;
     }
-
-    setContent(
-      editorContent
-    );
-
-    setStatus(
-      "Draft saved successfully."
-    );
-
-    setStatusType(
-      "success"
-    );
-
-    setSaving(false);
   }
 
   /*
-   * ============================================================
    * PUBLISH
-   * ============================================================
    */
 
   async function publish() {
@@ -667,130 +661,112 @@ export default function AdminRecruitment() {
     setStatus("");
     setStatusType("");
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setStatus(
-        "You must be logged in."
+      if (!user) {
+        throw new Error(
+          "You must be logged in."
+        );
+      }
+
+      const editorContent =
+        editorRef.current
+          ?.innerHTML ||
+        contentRef.current ||
+        DEFAULT_CONTENT;
+
+      const finalTitle =
+        title.trim() ||
+        "Join Team Fate";
+
+      const { error } =
+        await supabase
+          .from("recruitment_page")
+          .update({
+            title:
+              finalTitle,
+
+            content:
+              editorContent,
+
+            draft_content:
+              editorContent,
+
+            banner_url:
+              bannerUrl.trim() ||
+              null,
+
+            discord_url:
+              discordUrl.trim() ||
+              null,
+
+            updated_at:
+              new Date().toISOString(),
+
+            updated_by:
+              user.id,
+          })
+          .eq(
+            "id",
+            PAGE_ID
+          );
+
+      if (error) {
+        throw error;
+      }
+
+      setTitle(finalTitle);
+
+      setContent(
+        editorContent
       );
 
-      setStatusType("error");
-      setSaving(false);
+      contentRef.current =
+        editorContent;
 
-      return;
-    }
+      setStatus(
+        "Recruitment page published successfully."
+      );
 
-    const editorContent =
-      editorRef.current
-        ?.innerHTML ||
-      content;
-
-    const finalTitle =
-      title.trim() ||
-      "Join Team Fate";
-
-    const { error } =
-      await supabase
-        .from("recruitment_page")
-        .update({
-          title:
-            finalTitle,
-
-          content:
-            editorContent,
-
-          /*
-           * Keep the draft synchronized
-           * with the published version.
-           */
-
-          draft_content:
-            editorContent,
-
-          banner_url:
-            bannerUrl.trim() ||
-            null,
-
-          discord_url:
-            discordUrl.trim() ||
-            null,
-
-          updated_at:
-            new Date().toISOString(),
-
-          updated_by:
-            user.id,
-        })
-        .eq(
-          "id",
-          PAGE_ID
-        );
-
-    if (error) {
+      setStatusType(
+        "success"
+      );
+    } catch (error: any) {
       console.error(
         "Publish error:",
         error
       );
 
       setStatus(
-        `Failed to publish: ${error.message}`
+        error?.message ||
+          "Failed to publish recruitment page."
       );
 
       setStatusType(
         "error"
       );
-
+    } finally {
       setSaving(false);
-
-      return;
     }
-
-    setContent(
-      editorContent
-    );
-
-    setTitle(
-      finalTitle
-    );
-
-    setStatus(
-      "Recruitment page published successfully."
-    );
-
-    setStatusType(
-      "success"
-    );
-
-    setSaving(false);
-
-    /*
-     * Reload the database version to ensure
-     * everything displayed is current.
-     */
-
-    await loadRecruitment();
   }
 
   /*
-   * ============================================================
    * PREVIEW
-   * ============================================================
    */
 
   function togglePreview() {
     syncEditor();
 
     setPreview(
-      !preview
+      (current) => !current
     );
   }
 
   /*
-   * ============================================================
-   * NOT AUTHORIZED
-   * ============================================================
+   * ACCESS DENIED
    */
 
   if (
@@ -804,14 +780,10 @@ export default function AdminRecruitment() {
         <div
           className="admin-card"
           style={{
-            maxWidth:
-              "700px",
-            margin:
-              "60px auto",
-            padding:
-              "40px",
-            textAlign:
-              "center",
+            maxWidth: "700px",
+            margin: "60px auto",
+            padding: "40px",
+            textAlign: "center",
           }}
         >
           <h1>
@@ -839,9 +811,7 @@ export default function AdminRecruitment() {
   }
 
   /*
-   * ============================================================
    * LOADING
-   * ============================================================
    */
 
   if (loading) {
@@ -850,10 +820,8 @@ export default function AdminRecruitment() {
         <div
           className="admin-card"
           style={{
-            padding:
-              "40px",
-            textAlign:
-              "center",
+            padding: "40px",
+            textAlign: "center",
           }}
         >
           Loading Recruitment Editor...
@@ -863,47 +831,32 @@ export default function AdminRecruitment() {
   }
 
   /*
-   * ============================================================
    * PAGE
-   * ============================================================
    */
 
   return (
     <div className="page">
       <div
         style={{
-          maxWidth:
-            "1100px",
-          margin:
-            "0 auto",
+          maxWidth: "1100px",
+          margin: "0 auto",
         }}
       >
-
-        {/* =====================================================
-            HEADER
-        ===================================================== */}
-
         <div
           style={{
-            display:
-              "flex",
+            display: "flex",
             justifyContent:
               "space-between",
-            alignItems:
-              "center",
-            gap:
-              "20px",
-            flexWrap:
-              "wrap",
-            marginBottom:
-              "25px",
+            alignItems: "center",
+            gap: "20px",
+            flexWrap: "wrap",
+            marginBottom: "25px",
           }}
         >
           <div>
             <h1
               style={{
-                margin:
-                  0,
+                margin: 0,
               }}
             >
               Recruitment Editor
@@ -911,10 +864,8 @@ export default function AdminRecruitment() {
 
             <p
               style={{
-                margin:
-                  "6px 0 0",
-                opacity:
-                  0.7,
+                margin: "6px 0 0",
+                opacity: 0.7,
               }}
             >
               Manage the public Team Fate
@@ -934,35 +885,25 @@ export default function AdminRecruitment() {
           </button>
         </div>
 
-        {/* =====================================================
-            STATUS
-        ===================================================== */}
-
         {status && (
           <div
             style={{
-              marginBottom:
-                "20px",
-              padding:
-                "13px 16px",
-              borderRadius:
-                "8px",
+              marginBottom: "20px",
+              padding: "13px 16px",
+              borderRadius: "8px",
 
               background:
-                statusType ===
-                "error"
+                statusType === "error"
                   ? "rgba(180,40,40,.18)"
                   : "rgba(40,160,90,.18)",
 
               border:
-                statusType ===
-                "error"
+                statusType === "error"
                   ? "1px solid rgba(255,80,80,.4)"
                   : "1px solid rgba(80,220,130,.4)",
 
               color:
-                statusType ===
-                "error"
+                statusType === "error"
                   ? "#ffb0b0"
                   : "#a8ffc2",
             }}
@@ -971,39 +912,28 @@ export default function AdminRecruitment() {
           </div>
         )}
 
-        {/* =====================================================
-            PREVIEW
-        ===================================================== */}
-
         {preview ? (
           <div
             className="admin-card"
             style={{
-              padding:
-                "30px",
+              padding: "30px",
             }}
           >
             <div
               style={{
-                display:
-                  "flex",
+                display: "flex",
                 justifyContent:
                   "space-between",
-                alignItems:
-                  "center",
-                gap:
-                  "15px",
-                flexWrap:
-                  "wrap",
-                marginBottom:
-                  "25px",
+                alignItems: "center",
+                gap: "15px",
+                flexWrap: "wrap",
+                marginBottom: "25px",
               }}
             >
               <div>
                 <h2
                   style={{
-                    margin:
-                      0,
+                    margin: 0,
                   }}
                 >
                   Page Preview
@@ -1011,14 +941,12 @@ export default function AdminRecruitment() {
 
                 <p
                   style={{
-                    margin:
-                      "5px 0 0",
-                    opacity:
-                      0.6,
+                    margin: "5px 0 0",
+                    opacity: 0.6,
                   }}
                 >
-                  This is how the published
-                  recruitment page will appear.
+                  Preview of the recruitment
+                  page content.
                 </p>
               </div>
 
@@ -1032,37 +960,25 @@ export default function AdminRecruitment() {
               </button>
             </div>
 
-            {/* BANNER */}
-
             {bannerUrl && (
               <img
                 src={bannerUrl}
                 alt="Recruitment banner"
                 style={{
-                  width:
-                    "100%",
-                  maxHeight:
-                    "450px",
-                  objectFit:
-                    "cover",
-                  borderRadius:
-                    "12px",
-                  display:
-                    "block",
-                  marginBottom:
-                    "30px",
+                  width: "100%",
+                  maxHeight: "450px",
+                  objectFit: "cover",
+                  borderRadius: "12px",
+                  display: "block",
+                  marginBottom: "30px",
                 }}
               />
             )}
-
-            {/* TITLE */}
 
             <h1>
               {title ||
                 "Join Team Fate"}
             </h1>
-
-            {/* CONTENT */}
 
             <div
               className="recruitment-content"
@@ -1073,17 +989,13 @@ export default function AdminRecruitment() {
               }}
             />
 
-            {/* DISCORD */}
-
             {discordUrl && (
               <div
                 style={{
-                  display:
-                    "flex",
+                  display: "flex",
                   justifyContent:
                     "center",
-                  marginTop:
-                    "35px",
+                  marginTop: "35px",
                 }}
               >
                 <a
@@ -1107,30 +1019,17 @@ export default function AdminRecruitment() {
             )}
           </div>
         ) : (
-          /* ===================================================
-             EDITOR
-          =================================================== */
-
           <div
             className="admin-card"
             style={{
-              padding:
-                "30px",
+              padding: "30px",
             }}
           >
-
-            {/* =================================================
-                TITLE
-            ================================================= */}
-
             <label
               style={{
-                display:
-                  "block",
-                fontWeight:
-                  700,
-                marginBottom:
-                  "8px",
+                display: "block",
+                fontWeight: 700,
+                marginBottom: "8px",
               }}
             >
               Page Title
@@ -1146,37 +1045,25 @@ export default function AdminRecruitment() {
               }
               placeholder="Join Team Fate"
               style={{
-                width:
-                  "100%",
+                width: "100%",
                 boxSizing:
                   "border-box",
-                padding:
-                  "12px 14px",
-                borderRadius:
-                  "8px",
+                padding: "12px 14px",
+                borderRadius: "8px",
                 border:
                   "1px solid rgba(255,255,255,.15)",
                 background:
                   "rgba(0,0,0,.2)",
-                color:
-                  "inherit",
-                marginBottom:
-                  "25px",
+                color: "inherit",
+                marginBottom: "25px",
               }}
             />
 
-            {/* =================================================
-                BANNER
-            ================================================= */}
-
             <label
               style={{
-                display:
-                  "block",
-                fontWeight:
-                  700,
-                marginBottom:
-                  "8px",
+                display: "block",
+                fontWeight: 700,
+                marginBottom: "8px",
               }}
             >
               Banner Image
@@ -1184,21 +1071,15 @@ export default function AdminRecruitment() {
 
             <div
               style={{
-                display:
-                  "flex",
-                gap:
-                  "10px",
-                flexWrap:
-                  "wrap",
-                marginBottom:
-                  "15px",
+                display: "flex",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginBottom: "15px",
               }}
             >
               <input
                 type="text"
-                value={
-                  bannerUrl
-                }
+                value={bannerUrl}
                 onChange={(event) =>
                   setBannerUrl(
                     event.target.value
@@ -1206,18 +1087,14 @@ export default function AdminRecruitment() {
                 }
                 placeholder="Paste banner image URL..."
                 style={{
-                  flex:
-                    "1 1 400px",
-                  padding:
-                    "12px 14px",
-                  borderRadius:
-                    "8px",
+                  flex: "1 1 400px",
+                  padding: "12px 14px",
+                  borderRadius: "8px",
                   border:
                     "1px solid rgba(255,255,255,.15)",
                   background:
                     "rgba(0,0,0,.2)",
-                  color:
-                    "inherit",
+                  color: "inherit",
                 }}
               />
 
@@ -1227,9 +1104,7 @@ export default function AdminRecruitment() {
                 onClick={
                   chooseBanner
                 }
-                disabled={
-                  uploading
-                }
+                disabled={uploading}
               >
                 {uploading
                   ? "Uploading..."
@@ -1237,17 +1112,14 @@ export default function AdminRecruitment() {
               </button>
 
               <input
-                ref={
-                  fileInputRef
-                }
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={
                   handleBannerUpload
                 }
                 style={{
-                  display:
-                    "none",
+                  display: "none",
                 }}
               />
             </div>
@@ -1255,26 +1127,18 @@ export default function AdminRecruitment() {
             {bannerUrl && (
               <div
                 style={{
-                  marginBottom:
-                    "25px",
+                  marginBottom: "25px",
                 }}
               >
                 <img
-                  src={
-                    bannerUrl
-                  }
+                  src={bannerUrl}
                   alt="Banner preview"
                   style={{
-                    width:
-                      "100%",
-                    maxHeight:
-                      "300px",
-                    objectFit:
-                      "cover",
-                    borderRadius:
-                      "10px",
-                    display:
-                      "block",
+                    width: "100%",
+                    maxHeight: "300px",
+                    objectFit: "cover",
+                    borderRadius: "10px",
+                    display: "block",
                   }}
                 />
 
@@ -1282,13 +1146,10 @@ export default function AdminRecruitment() {
                   type="button"
                   className="delete-btn"
                   onClick={() =>
-                    setBannerUrl(
-                      ""
-                    )
+                    setBannerUrl("")
                   }
                   style={{
-                    marginTop:
-                      "10px",
+                    marginTop: "10px",
                   }}
                 >
                   Remove Banner
@@ -1296,18 +1157,11 @@ export default function AdminRecruitment() {
               </div>
             )}
 
-            {/* =================================================
-                DISCORD
-            ================================================= */}
-
             <label
               style={{
-                display:
-                  "block",
-                fontWeight:
-                  700,
-                marginBottom:
-                  "8px",
+                display: "block",
+                fontWeight: 700,
+                marginBottom: "8px",
               }}
             >
               Discord Link
@@ -1315,9 +1169,7 @@ export default function AdminRecruitment() {
 
             <input
               type="url"
-              value={
-                discordUrl
-              }
+              value={discordUrl}
               onChange={(event) =>
                 setDiscordUrl(
                   event.target.value
@@ -1325,54 +1177,36 @@ export default function AdminRecruitment() {
               }
               placeholder="https://discord.gg/..."
               style={{
-                width:
-                  "100%",
+                width: "100%",
                 boxSizing:
                   "border-box",
-                padding:
-                  "12px 14px",
-                borderRadius:
-                  "8px",
+                padding: "12px 14px",
+                borderRadius: "8px",
                 border:
                   "1px solid rgba(255,255,255,.15)",
                 background:
                   "rgba(0,0,0,.2)",
-                color:
-                  "inherit",
-                marginBottom:
-                  "25px",
+                color: "inherit",
+                marginBottom: "25px",
               }}
             />
 
-            {/* =================================================
-                CONTENT
-            ================================================= */}
-
             <label
               style={{
-                display:
-                  "block",
-                fontWeight:
-                  700,
-                marginBottom:
-                  "8px",
+                display: "block",
+                fontWeight: 700,
+                marginBottom: "8px",
               }}
             >
               Recruitment Content
             </label>
 
-            {/* TOOLBAR */}
-
             <div
               style={{
-                display:
-                  "flex",
-                gap:
-                  "5px",
-                flexWrap:
-                  "wrap",
-                padding:
-                  "10px",
+                display: "flex",
+                gap: "5px",
+                flexWrap: "wrap",
+                padding: "10px",
                 border:
                   "1px solid rgba(255,255,255,.15)",
                 borderBottom:
@@ -1385,124 +1219,90 @@ export default function AdminRecruitment() {
             >
               <ToolbarButton
                 label="B"
-                onClick={
-                  bold
-                }
+                onClick={bold}
               />
 
               <ToolbarButton
                 label="I"
-                onClick={
-                  italic
-                }
+                onClick={italic}
               />
 
               <ToolbarButton
                 label="U"
-                onClick={
-                  underline
-                }
+                onClick={underline}
               />
 
               <ToolbarButton
                 label="S"
-                onClick={
-                  strike
-                }
+                onClick={strike}
               />
 
               <ToolbarDivider />
 
               <ToolbarButton
                 label="H2"
-                onClick={
-                  heading
-                }
+                onClick={heading}
               />
 
               <ToolbarButton
                 label="H3"
-                onClick={
-                  subheading
-                }
+                onClick={subheading}
               />
 
               <ToolbarButton
                 label="P"
-                onClick={
-                  paragraph
-                }
+                onClick={paragraph}
               />
 
               <ToolbarDivider />
 
               <ToolbarButton
                 label="←"
-                onClick={
-                  left
-                }
+                onClick={left}
               />
 
               <ToolbarButton
                 label="↔"
-                onClick={
-                  center
-                }
+                onClick={center}
               />
 
               <ToolbarButton
                 label="→"
-                onClick={
-                  right
-                }
+                onClick={right}
               />
 
               <ToolbarDivider />
 
               <ToolbarButton
                 label="• List"
-                onClick={
-                  bulletList
-                }
+                onClick={bulletList}
               />
 
               <ToolbarButton
                 label="1. List"
-                onClick={
-                  numberedList
-                }
+                onClick={numberedList}
               />
 
               <ToolbarDivider />
 
               <ToolbarButton
                 label="🔗 Link"
-                onClick={
-                  openLinkBox
-                }
+                onClick={openLinkBox}
               />
 
               <ToolbarButton
                 label="Clear"
-                onClick={
-                  clearFormat
-                }
+                onClick={clearFormat}
               />
             </div>
-
-            {/* LINK BOX */}
 
             {showLinkInput && (
               <div
                 style={{
-                  display:
-                    "flex",
-                  gap:
-                    "8px",
-                  flexWrap:
-                    "wrap",
-                  padding:
-                    "10px",
+                  display: "flex",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                  padding: "10px",
                   background:
                     "rgba(0,0,0,.15)",
                   border:
@@ -1511,9 +1311,7 @@ export default function AdminRecruitment() {
               >
                 <input
                   type="url"
-                  value={
-                    linkInput
-                  }
+                  value={linkInput}
                   onChange={(event) =>
                     setLinkInput(
                       event.target.value
@@ -1521,18 +1319,14 @@ export default function AdminRecruitment() {
                   }
                   placeholder="https://example.com"
                   style={{
-                    flex:
-                      "1 1 300px",
-                    padding:
-                      "10px",
-                    borderRadius:
-                      "6px",
+                    flex: "1 1 300px",
+                    padding: "10px",
+                    borderRadius: "6px",
                     border:
                       "1px solid rgba(255,255,255,.15)",
                     background:
                       "rgba(0,0,0,.2)",
-                    color:
-                      "inherit",
+                    color: "inherit",
                   }}
                   autoFocus
                 />
@@ -1561,49 +1355,38 @@ export default function AdminRecruitment() {
               </div>
             )}
 
-
-            {/* EDITOR */}
-
-<div
-  ref={editorRef}
-  contentEditable
-  suppressContentEditableWarning
-  onInput={syncEditor}
-  onBlur={syncEditor}
-  style={{
-    minHeight: "400px",
-    padding: "20px",
-    border:
-      "1px solid rgba(255,255,255,.15)",
-    borderRadius:
-      "0 0 8px 8px",
-    background:
-      "rgba(0,0,0,.15)",
-    color: "inherit",
-    lineHeight: 1.7,
-    outline: "none",
-  }}
-/>
-
-            {/* =================================================
-                DISCORD PREVIEW
-            ================================================= */}
+            <div
+              ref={setEditorNode}
+              contentEditable
+              suppressContentEditableWarning
+              onInput={syncEditor}
+              onBlur={syncEditor}
+              style={{
+                minHeight: "400px",
+                padding: "20px",
+                border:
+                  "1px solid rgba(255,255,255,.15)",
+                borderRadius:
+                  "0 0 8px 8px",
+                background:
+                  "rgba(0,0,0,.15)",
+                color: "inherit",
+                lineHeight: 1.7,
+                outline: "none",
+              }}
+            />
 
             {discordUrl && (
               <div
                 style={{
-                  marginTop:
-                    "25px",
+                  marginTop: "25px",
                 }}
               >
                 <label
                   style={{
-                    display:
-                      "block",
-                    fontWeight:
-                      700,
-                    marginBottom:
-                      "10px",
+                    display: "block",
+                    fontWeight: 700,
+                    marginBottom: "10px",
                   }}
                 >
                   Discord Button Preview
@@ -1631,22 +1414,14 @@ export default function AdminRecruitment() {
               </div>
             )}
 
-            {/* =================================================
-                ACTIONS
-            ================================================= */}
-
             <div
               style={{
-                display:
-                  "flex",
+                display: "flex",
                 justifyContent:
                   "flex-end",
-                gap:
-                  "10px",
-                flexWrap:
-                  "wrap",
-                marginTop:
-                  "30px",
+                gap: "10px",
+                flexWrap: "wrap",
+                marginTop: "30px",
               }}
             >
               <button
@@ -1665,9 +1440,7 @@ export default function AdminRecruitment() {
                 onClick={
                   saveDraft
                 }
-                disabled={
-                  saving
-                }
+                disabled={saving}
               >
                 {saving
                   ? "Saving..."
@@ -1680,9 +1453,7 @@ export default function AdminRecruitment() {
                 onClick={
                   publish
                 }
-                disabled={
-                  saving
-                }
+                disabled={saving}
               >
                 {saving
                   ? "Publishing..."
@@ -1708,12 +1479,6 @@ export default function AdminRecruitment() {
   );
 }
 
-/*
- * ============================================================
- * TOOLBAR COMPONENTS
- * ============================================================
- */
-
 function ToolbarButton({
   label,
   onClick,
@@ -1729,22 +1494,16 @@ function ToolbarButton({
       }}
       onClick={onClick}
       style={{
-        minWidth:
-          "38px",
-        height:
-          "34px",
-        padding:
-          "0 8px",
-        borderRadius:
-          "6px",
+        minWidth: "38px",
+        height: "34px",
+        padding: "0 8px",
+        borderRadius: "6px",
         border:
           "1px solid rgba(255,255,255,.15)",
         background:
           "rgba(255,255,255,.05)",
-        color:
-          "inherit",
-        cursor:
-          "pointer",
+        color: "inherit",
+        cursor: "pointer",
         fontWeight:
           label === "B" ||
           label === "I" ||
@@ -1763,12 +1522,9 @@ function ToolbarDivider() {
   return (
     <div
       style={{
-        width:
-          "1px",
-        height:
-          "28px",
-        margin:
-          "3px 4px",
+        width: "1px",
+        height: "28px",
+        margin: "3px 4px",
         background:
           "rgba(255,255,255,.15)",
       }}
