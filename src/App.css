@@ -7150,3 +7150,60 @@ textarea:focus {
     z-index: 9999 !important;
   }
 }
+
+.rich-text-editor {
+  width: 100%;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #181818;
+}
+
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  background: #222;
+}
+
+.editor-toolbar button {
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.editor-toolbar button:hover {
+  background: #444;
+}
+
+.toolbar-divider {
+  width: 1px;
+  background: #444;
+  margin: 0 4px;
+}
+
+.message-editor {
+  min-height: 200px;
+  padding: 15px;
+  outline: none;
+  color: white;
+  line-height: 1.6;
+}
+
+.message-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #777;
+}
+
+.character-count {
+  padding: 8px 12px;
+  border-top: 1px solid #333;
+  color: #888;
+  font-size: 12px;
+  text-align: right;
+}
