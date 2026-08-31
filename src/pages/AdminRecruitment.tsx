@@ -1561,44 +1561,29 @@ export default function AdminRecruitment() {
               </div>
             )}
 
+{/* =================================================
             {/* EDITOR */}
-
-            <div
-              ref={
-                editorRef
-              }
-              contentEditable
-              suppressContentEditableWarning
-              onInput={
-                syncEditor
-              }
-              onBlur={
-                syncEditor
-              }
-              dangerouslySetInnerHTML={{
-                __html:
-                  content ||
-                  DEFAULT_CONTENT,
-              }}
-              style={{
-                minHeight:
-                  "400px",
-                padding:
-                  "20px",
-                border:
-                  "1px solid rgba(255,255,255,.15)",
-                borderRadius:
-                  "0 0 8px 8px",
-                background:
-                  "rgba(0,0,0,.15)",
-                color:
-                  "inherit",
-                lineHeight:
-                  1.7,
-                outline:
-                  "none",
-              }}
-            />
+================================================= */}
+<div
+  ref={editorRef}
+  contentEditable
+  suppressContentEditableWarning
+  onInput={syncEditor}
+  onBlur={syncEditor}
+  style={{
+    minHeight: "400px",
+    padding: "20px",
+    border:
+      "1px solid rgba(255,255,255,.15)",
+    borderRadius:
+      "0 0 8px 8px",
+    background:
+      "rgba(0,0,0,.15)",
+    color: "inherit",
+    lineHeight: 1.7,
+    outline: "none",
+  }}
+/>
 
             {/* =================================================
                 DISCORD PREVIEW
