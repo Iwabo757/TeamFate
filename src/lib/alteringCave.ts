@@ -6,7 +6,7 @@ const SHEET_ID =
 const GID = "1031347870";
 
 const SHEET_URL =
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
 export interface AlteringCaveData {
   crystal: string;
