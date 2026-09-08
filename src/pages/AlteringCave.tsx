@@ -25,9 +25,9 @@ type AlteringCaveData = Awaited<
   ReturnType<typeof getAlteringCaveData>
 >;
 
-/* =========================================
+/* =========================================================
    POKEMON NAME NORMALIZATION
-========================================= */
+========================================================= */
 
 function normalizePokemonName(name: string): string {
   return name
@@ -36,11 +36,13 @@ function normalizePokemonName(name: string): string {
     .toLowerCase();
 }
 
-/* =========================================
-   SHINY SHOWCASE GIF NAME
-========================================= */
+/* =========================================================
+   SHOWCASE-STYLE GIF NAME
 
-function getGifName(name: string) {
+   Matches the exact naming logic used by Showcase.
+========================================================= */
+
+function getGifName(name: string): string {
   return name
     .toLowerCase()
     .replace(/♀/g, "f")
@@ -48,30 +50,25 @@ function getGifName(name: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
-/* =========================================
+/* =========================================================
    BUILD OWNERS
-========================================= */
+========================================================= */
 
 function buildOwners(
   owners: string[]
 ): Record<string, number> {
   return owners.reduce(
-    (
-      result,
-      owner
-    ) => {
-      result[owner] =
-        (result[owner] ?? 0) + 1;
-
+    (result, owner) => {
+      result[owner] = (result[owner] ?? 0) + 1;
       return result;
     },
     {} as Record<string, number>
   );
 }
 
-/* =========================================
+/* =========================================================
    CONVERT TO MODAL POKEMON
-========================================= */
+========================================================= */
 
 function convertToModalPokemon(
   pokemon: HomePokemon
@@ -79,29 +76,23 @@ function convertToModalPokemon(
   return {
     id: pokemon.id,
     name: pokemon.name,
-    region:
-      pokemon.region ?? undefined,
+    region: pokemon.region ?? undefined,
     caught: pokemon.caught,
-    owners: buildOwners(
-      pokemon.owners
-    ),
+    owners: buildOwners(pokemon.owners),
     screenshots: [],
-    totalCopies:
-      pokemon.owners.length,
+    totalCopies: pokemon.owners.length,
   };
 }
 
-/* =========================================
+/* =========================================================
    MAIN COMPONENT
-========================================= */
+========================================================= */
 
 export default function AlteringCave() {
   const [
     alteringCave,
     setAlteringCave,
-  ] = useState<AlteringCaveData | null>(
-    null
-  );
+  ] = useState<AlteringCaveData | null>(null);
 
   const [
     loading,
@@ -111,34 +102,27 @@ export default function AlteringCave() {
   const [
     error,
     setError,
-  ] = useState<string | null>(
-    null
-  );
+  ] = useState<string | null>(null);
 
   const [
     pokemonMap,
     setPokemonMap,
-  ] = useState<
-    Record<string, HomePokemon>
-  >({});
+  ] = useState<Record<string, HomePokemon>>({});
 
   const [
     selectedPokemon,
     setSelectedPokemon,
-  ] = useState<HomePokemon | null>(
-    null
-  );
+  ] = useState<HomePokemon | null>(null);
 
-  /* =========================================
+  /* =========================================================
      LOAD ALTERING CAVE
-  ========================================= */
+  ========================================================= */
 
   async function loadAlteringCave() {
     try {
       setError(null);
 
-      const data =
-        await getAlteringCaveData();
+      const data = await getAlteringCaveData();
 
       setAlteringCave(data);
     } catch (err) {
@@ -155,33 +139,26 @@ export default function AlteringCave() {
     }
   }
 
-  /* =========================================
+  /* =========================================================
      INITIAL LOAD + AUTO REFRESH
-  ========================================= */
+  ========================================================= */
 
   useEffect(() => {
     loadAlteringCave();
 
-    /*
-     * Refresh the Altering Cave data
-     * every minute.
-     */
-    const refreshTimer =
-      window.setInterval(
-        loadAlteringCave,
-        60000
-      );
+    const refreshTimer = window.setInterval(
+      loadAlteringCave,
+      60000
+    );
 
     return () => {
-      window.clearInterval(
-        refreshTimer
-      );
+      window.clearInterval(refreshTimer);
     };
   }, []);
 
-  /* =========================================
+  /* =========================================================
      LOAD POKEMON DATA
-  ========================================= */
+  ========================================================= */
 
   useEffect(() => {
     loadPokemonMap();
@@ -194,9 +171,7 @@ export default function AlteringCave() {
         error: pokemonError,
       } = await supabase
         .from("pokemon")
-        .select(
-          "id, name, region"
-        );
+        .select("id, name, region");
 
       if (pokemonError) {
         throw pokemonError;
@@ -219,69 +194,54 @@ export default function AlteringCave() {
         throw catchesError;
       }
 
-      const ownersByPokemon:
-        Record<number, string[]> = {};
+      const ownersByPokemon: Record<
+        number,
+        string[]
+      > = {};
 
-      catches?.forEach(
-        (entry: any) => {
-          const pokemonId =
-            Number(
-              entry.pokemon_id
-            );
+      catches?.forEach((entry: any) => {
+        const pokemonId = Number(
+          entry.pokemon_id
+        );
 
-          const owner =
-            entry.profiles?.nickname ??
-            "Unknown";
+        const owner =
+          entry.profiles?.nickname ??
+          "Unknown";
 
-          if (
-            !ownersByPokemon[
-              pokemonId
-            ]
-          ) {
-            ownersByPokemon[
-              pokemonId
-            ] = [];
-          }
-
-          ownersByPokemon[
-            pokemonId
-          ].push(owner);
+        if (!ownersByPokemon[pokemonId]) {
+          ownersByPokemon[pokemonId] = [];
         }
-      );
 
-      const nextMap:
-        Record<string, HomePokemon> =
-        {};
+        ownersByPokemon[pokemonId].push(owner);
+      });
 
-      pokemonData?.forEach(
-        (pokemon: any) => {
-          const id =
-            Number(pokemon.id);
+      const nextMap: Record<
+        string,
+        HomePokemon
+      > = {};
 
-          const owners =
-            ownersByPokemon[id] ??
-            [];
+      pokemonData?.forEach((pokemon: any) => {
+        const id = Number(pokemon.id);
 
-          nextMap[
-            normalizePokemonName(
-              pokemon.name
-            )
-          ] = {
-            id,
-            name: pokemon.name,
-            region:
-              pokemon.region ??
-              null,
-            caught:
-              owners.length > 0,
-            owners,
-          };
-        }
-      );
+        const owners =
+          ownersByPokemon[id] ?? [];
 
-      setPokemonMap(
-        nextMap
-      );
+        nextMap[
+          normalizePokemonName(
+            pokemon.name
+          )
+        ] = {
+          id,
+          name: pokemon.name,
+          region:
+            pokemon.region ?? null,
+          caught:
+            owners.length > 0,
+          owners,
+        };
+      });
+
+      setPokemonMap(nextMap);
     } catch (err) {
       console.error(
         "Failed to load Pokémon data:",
@@ -290,120 +250,129 @@ export default function AlteringCave() {
     }
   }
 
-  /* =========================================
+  /* =========================================================
      GET POKEMON
-  ========================================= */
+  ========================================================= */
 
   function getPokemon(
     name: string
   ): HomePokemon | null {
     return (
       pokemonMap[
-        normalizePokemonName(
-          name
-        )
+        normalizePokemonName(name)
       ] ?? null
     );
   }
 
-  /* =========================================
+  /* =========================================================
      OPEN POKEMON MODAL
-  ========================================= */
+  ========================================================= */
 
   function openPokemon(
     pokemon: HomePokemon
   ) {
-    setSelectedPokemon(
-      pokemon
-    );
+    setSelectedPokemon(pokemon);
   }
 
   function openPokemonById(
     pokemonId: number
   ) {
-    const pokemon =
-      Object.values(
-        pokemonMap
-      ).find(
-        (entry) =>
-          entry.id === pokemonId
-      );
+    const pokemon = Object.values(
+      pokemonMap
+    ).find(
+      (entry) =>
+        entry.id === pokemonId
+    );
 
     if (pokemon) {
-      setSelectedPokemon(
-        pokemon
-      );
+      setSelectedPokemon(pokemon);
     }
   }
 
-  /* =========================================
+  /* =========================================================
      POKEMON SPRITE
-     
-     Uses the EXACT same hover behavior
-     as Shiny Showcase:
-     
-     PNG normally
-     GIF while hovering
-     PNG when leaving
-  ========================================= */
+
+     Normal:
+       Shiny PNG
+
+     Hover:
+       Shiny animated GIF
+
+     Mouse leave:
+       Shiny PNG
+
+     This follows the same GIF source and naming
+     logic used by Team Fate Showcase.
+  ========================================================= */
 
   function PokemonSprite({
     name,
   }: {
     name: string;
   }) {
-    const pokemon =
-      getPokemon(name);
+    const pokemon = getPokemon(name);
 
     if (!pokemon) {
       return null;
     }
+
+    const staticSprite =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
+
+    const animatedSprite =
+      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+        pokemon.name
+      )}.gif`;
 
     return (
       <button
         type="button"
         className="altering-cave-pokemon"
         onClick={() =>
-          openPokemon(
-            pokemon
-          )
+          openPokemon(pokemon)
         }
         title={`View ${pokemon.name}`}
         aria-label={`View ${pokemon.name}`}
+        onMouseEnter={(event) => {
+          const image =
+            event.currentTarget.querySelector(
+              "img"
+            );
+
+          if (image) {
+            image.src =
+              animatedSprite;
+          }
+        }}
+        onMouseLeave={(event) => {
+          const image =
+            event.currentTarget.querySelector(
+              "img"
+            );
+
+          if (image) {
+            image.src =
+              staticSprite;
+          }
+        }}
       >
         <img
-          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
+          src={staticSprite}
           alt={`Shiny ${pokemon.name}`}
-          className="altering-cave-sprite"
+          className="showcase-sprite"
           loading="lazy"
-          onMouseEnter={(
-            event
-          ) => {
+          onError={(event) => {
             event.currentTarget.src =
-              `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-                pokemon.name
-              )}.gif`;
-          }}
-          onMouseLeave={(
-            event
-          ) => {
-            event.currentTarget.src =
-              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
-          }}
-          onError={(
-            event
-          ) => {
-            event.currentTarget.src =
-              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
+              staticSprite;
           }}
         />
       </button>
     );
   }
 
-  /* =========================================
+  /* =========================================================
      SPRITE GROUP
-  ========================================= */
+  ========================================================= */
 
   function SpriteGroup({
     pokemon,
@@ -413,10 +382,7 @@ export default function AlteringCave() {
     return (
       <div className="altering-cave-sprites">
         {pokemon.map(
-          (
-            name,
-            index
-          ) => (
+          (name, index) => (
             <PokemonSprite
               key={`${name}-${index}`}
               name={name}
@@ -427,17 +393,15 @@ export default function AlteringCave() {
     );
   }
 
-  /* =========================================
+  /* =========================================================
      LOADING
-  ========================================= */
+  ========================================================= */
 
   if (loading) {
     return (
       <div className="altering-cave-page">
         <div className="altering-cave-header">
-          <h1>
-            Altering Cave
-          </h1>
+          <h1>Altering Cave</h1>
 
           <p>
             Loading current rotation...
@@ -447,17 +411,15 @@ export default function AlteringCave() {
     );
   }
 
-  /* =========================================
+  /* =========================================================
      ERROR
-  ========================================= */
+  ========================================================= */
 
   if (error) {
     return (
       <div className="altering-cave-page">
         <div className="altering-cave-header">
-          <h1>
-            Altering Cave
-          </h1>
+          <h1>Altering Cave</h1>
 
           <p className="altering-cave-error">
             {error}
@@ -478,21 +440,19 @@ export default function AlteringCave() {
     );
   }
 
-  /* =========================================
+  /* =========================================================
      PAGE
-  ========================================= */
+  ========================================================= */
 
   return (
     <div className="altering-cave-page">
 
-      {/* =====================================
+      {/* =====================================================
           HEADER
-      ====================================== */}
+      ===================================================== */}
 
       <div className="altering-cave-header">
-        <h1>
-          Altering Cave
-        </h1>
+        <h1>Altering Cave</h1>
 
         <p>
           Current Pokémon available
@@ -504,85 +464,70 @@ export default function AlteringCave() {
         </div>
       </div>
 
-      {/* =====================================
+      {/* =====================================================
           CURRENT ROTATION
-      ====================================== */}
+      ===================================================== */}
 
       {alteringCave && (
         <div className="altering-cave-card">
 
-          {/* =================================
+          {/* =================================================
               SINGLES
-          ================================== */}
+          ================================================= */}
 
-          {alteringCave
-            .encounters
-            .length > 0 && (
+          {alteringCave.encounters.length >
+            0 && (
             <section className="altering-cave-section">
-
-              <h2>
-                Singles
-              </h2>
+              <h2>Singles</h2>
 
               <SpriteGroup
                 pokemon={
                   alteringCave.encounters
                 }
               />
-
             </section>
           )}
 
-          {/* =================================
+          {/* =================================================
               RARE SINGLES
-          ================================== */}
+          ================================================= */}
 
-          {alteringCave
-            .rareEncounters
+          {alteringCave.rareEncounters
             .length > 0 && (
             <section className="altering-cave-section">
-
-              <h2>
-                Rare Singles
-              </h2>
+              <h2>Rare Singles</h2>
 
               <SpriteGroup
                 pokemon={
                   alteringCave.rareEncounters
                 }
               />
-
             </section>
           )}
 
-          {/* =================================
+          {/* =================================================
               HORDES
-          ================================== */}
+          ================================================= */}
 
-          {alteringCave
-            .hordes
-            .length > 0 && (
+          {alteringCave.hordes.length >
+            0 && (
             <section className="altering-cave-section">
-
-              <h2>
-                Hordes
-              </h2>
+              <h2>Hordes</h2>
 
               <SpriteGroup
                 pokemon={
                   alteringCave.hordes
                 }
               />
-
             </section>
           )}
 
         </div>
       )}
 
-      {/* =====================================
+      {/* =====================================================
           DATA CREDIT
-      ====================================== */}
+      ===================================================== */}
 
       <div className="altering-cave-credit">
         Altering Cave data provided by{" "}
@@ -596,9 +541,9 @@ export default function AlteringCave() {
         </a>
       </div>
 
-      {/* =====================================
-          TEAM DEX POKEMON MODAL
-      ====================================== */}
+      {/* =====================================================
+          POKEMON MODAL
+      ===================================================== */}
 
       {selectedPokemon && (
         <PokemonInfoModal
@@ -606,9 +551,7 @@ export default function AlteringCave() {
             selectedPokemon
           )}
           onClose={() =>
-            setSelectedPokemon(
-              null
-            )
+            setSelectedPokemon(null)
           }
           onPokemonClick={
             openPokemonById
