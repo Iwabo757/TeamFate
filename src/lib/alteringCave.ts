@@ -1,5 +1,9 @@
 import Papa from "papaparse";
 
+/* =========================================================
+   GOOGLE SHEET
+   ========================================================= */
+
 const SHEET_ID =
   "12lZupylxLAKUVQQJZIC8GJmvQiUwpbAAQ3BduAu_rig";
 
@@ -8,6 +12,11 @@ const GID = "1031347870";
 const SHEET_URL =
   `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
 
+
+/* =========================================================
+   DATA TYPE
+   ========================================================= */
+
 export interface AlteringCaveData {
   crystal: string;
   encounters: string[];
@@ -15,6 +24,7 @@ export interface AlteringCaveData {
   hordes: string[];
   raw: string[][];
 }
+
 
 /* =========================================================
    HELPERS
@@ -26,15 +36,27 @@ const normalize = (value: unknown): string =>
     .replace(/\s+/g, " ")
     .trim();
 
-const normalizeRow = (row: string[]): string[] =>
+
+const normalizeRow = (
+  row: string[],
+): string[] =>
   row.map(normalize);
 
-const unique = (items: string[]): string[] =>
-  [...new Set(items.map(normalize).filter(Boolean))];
 
-/*
- * Values that should never be treated as Pokémon.
- */
+const unique = (
+  items: string[],
+): string[] =>
+  [...new Set(
+    items
+      .map(normalize)
+      .filter(Boolean),
+  )];
+
+
+/* =========================================================
+   VALUES THAT ARE NOT POKÉMON
+   ========================================================= */
+
 const BLOCKED_VALUES = new Set([
   "",
   "active",
@@ -73,7 +95,14 @@ const BLOCKED_VALUES = new Set([
   "fairy",
 ]);
 
-const isPokemon = (value: string): boolean => {
+
+/* =========================================================
+   POKÉMON CHECK
+   ========================================================= */
+
+const isPokemon = (
+  value: string,
+): boolean => {
   const text = normalize(value);
 
   if (!text) {
@@ -87,22 +116,26 @@ const isPokemon = (value: string): boolean => {
   }
 
   /*
-   * Ignore labels such as:
-   * Rotation 1
-   * Rotation 2
-   * Tier
-   * Tier 1
+   * Ignore rotation labels.
    */
-  if (/^rotation\s*\d+$/i.test(text)) {
-    return false;
-  }
-
-  if (/^tier\s*\d*$/i.test(text)) {
+  if (
+    /^rotation\s*\d+$/i.test(text)
+  ) {
     return false;
   }
 
   /*
-   * Ignore entries such as:
+   * Ignore tier labels.
+   */
+  if (
+    /^tier\s*\d*$/i.test(text)
+  ) {
+    return false;
+  }
+
+  /*
+   * Ignore special labels such as:
+   *
    * Zorua (All Hordes)
    */
   if (
@@ -115,48 +148,28 @@ const isPokemon = (value: string): boolean => {
   return true;
 };
 
+
 /* =========================================================
-   CURRENT ALTERING CAVE DATA
+   READ COLUMN A RANGE
    ========================================================= */
 
 /*
- * IMPORTANT:
+ * Spreadsheet rows are 1-based.
  *
- * The Current Altering Cave information is in COLUMN A.
+ * Therefore:
  *
- * Singles:
- *   A6 - A10
+ * A6  = raw[5][0]
+ * A7  = raw[6][0]
+ * A8  = raw[7][0]
+ * A9  = raw[8][0]
+ * A10 = raw[9][0]
  *
- * Rare Singles:
- *   A12 - A13
+ * A12 = raw[11][0]
+ * A13 = raw[12][0]
  *
- * Hordes:
- *   A15 - A16
- *
- * JavaScript arrays are zero-based, so:
- *
- * Spreadsheet A6  = raw[5][0]
- * Spreadsheet A10 = raw[9][0]
- *
- * Spreadsheet A12 = raw[11][0]
- * Spreadsheet A13 = raw[12][0]
- *
- * Spreadsheet A15 = raw[14][0]
- * Spreadsheet A16 = raw[15][0]
- *
- * We intentionally do NOT:
- *
- * - search for ACTIVE
- * - search for CURRENT
- * - scan historical rotations
- * - inspect other Pokémon columns
- *
- * The Current section in column A is the source of truth.
+ * A15 = raw[14][0]
+ * A16 = raw[15][0]
  */
-
-/* =========================================================
-   READ A RANGE
-   ========================================================= */
 
 const getColumnARange = (
   rows: string[][],
@@ -165,17 +178,14 @@ const getColumnARange = (
 ): string[] => {
   const values: string[] = [];
 
-  /*
-   * startRow/endRow are spreadsheet row numbers.
-   * They are converted to zero-based array indexes here.
-   */
   for (
     let sheetRow = startRow;
     sheetRow <= endRow;
     sheetRow++
   ) {
-    const rowIndex = sheetRow - 1;
-    const row = rows[rowIndex];
+    const arrayIndex = sheetRow - 1;
+
+    const row = rows[arrayIndex];
 
     if (!row) {
       continue;
@@ -190,6 +200,40 @@ const getColumnARange = (
 
   return unique(values);
 };
+
+
+/* =========================================================
+   DEBUG COLUMN A
+   ========================================================= */
+
+const getCurrentColumnADebug = (
+  rows: string[][],
+) => {
+  const debugRows: Array<{
+    sheetRow: number;
+    value: string;
+  }> = [];
+
+  for (
+    let sheetRow = 6;
+    sheetRow <= 16;
+    sheetRow++
+  ) {
+    const arrayIndex = sheetRow - 1;
+
+    const row = rows[arrayIndex];
+
+    debugRows.push({
+      sheetRow,
+      value: normalize(
+        row?.[0] ?? "",
+      ),
+    });
+  }
+
+  return debugRows;
+};
+
 
 /* =========================================================
    FIND CRYSTAL
@@ -229,16 +273,39 @@ const findCrystal = (
   return "";
 };
 
+
 /* =========================================================
-   LOAD ALTERING CAVE DATA
+   LOAD ALTERING CAVE
    ========================================================= */
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   console.log(
-    "Loading Altering Cave spreadsheet...",
+    "==========================================",
   );
 
-  const response = await fetch(SHEET_URL);
+  console.log(
+    "LOADING ALTERING CAVE SPREADSHEET",
+  );
+
+  console.log(
+    "==========================================",
+  );
+
+  /*
+   * Cache bust the Google Sheets request.
+   *
+   * The timestamp makes every request a unique URL,
+   * preventing an old CSV response from being reused.
+   */
+  const requestUrl =
+    `${SHEET_URL}&_=${Date.now()}`;
+
+  const response = await fetch(
+    requestUrl,
+    {
+      cache: "no-store",
+    },
+  );
 
   if (!response.ok) {
     throw new Error(
@@ -254,18 +321,36 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     );
   }
 
-  const parsed = Papa.parse<string[]>(csv, {
-    skipEmptyLines: false,
-  });
+  console.log(
+    "Altering Cave CSV received:",
+    csv.length,
+    "characters",
+  );
 
-  if (parsed.errors.length > 0) {
+
+  /* =======================================================
+     PARSE CSV
+     ======================================================= */
+
+  const parsed = Papa.parse<string[]>(
+    csv,
+    {
+      skipEmptyLines: false,
+    },
+  );
+
+  if (
+    parsed.errors &&
+    parsed.errors.length > 0
+  ) {
     console.warn(
       "Altering Cave CSV parsing warnings:",
       parsed.errors,
     );
   }
 
-  const raw = parsed.data.map(normalizeRow);
+  const raw =
+    parsed.data.map(normalizeRow);
 
   if (!raw.length) {
     throw new Error(
@@ -279,42 +364,110 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     "rows",
   );
 
+
   /* =======================================================
-     READ CURRENT SECTION
+     DEBUG CURRENT SECTION
+     ======================================================= */
+
+  const currentColumnA =
+    getCurrentColumnADebug(raw);
+
+  console.log(
+    "==========================================",
+  );
+
+  console.log(
+    "CURRENT ALTERING CAVE - COLUMN A",
+  );
+
+  console.log(
+    "==========================================",
+  );
+
+  console.table(
+    currentColumnA,
+  );
+
+
+  /* =======================================================
+     CURRENT SINGLES
      ======================================================= */
 
   /*
-   * CURRENT SINGLES
-   *
    * A6:A10
    */
-  const encounters = getColumnARange(
-    raw,
-    6,
-    10,
-  );
+
+  const encounters =
+    getColumnARange(
+      raw,
+      6,
+      10,
+    );
+
+
+  /* =======================================================
+     CURRENT RARE SINGLES
+     ======================================================= */
 
   /*
-   * CURRENT RARE SINGLES
-   *
    * A12:A13
    */
-  const rareEncounters = getColumnARange(
-    raw,
-    12,
-    13,
-  );
+
+  const rareEncounters =
+    getColumnARange(
+      raw,
+      12,
+      13,
+    );
+
+
+  /* =======================================================
+     CURRENT HORDES
+     ======================================================= */
 
   /*
-   * CURRENT HORDES
-   *
    * A15:A16
    */
-  const hordes = getColumnARange(
-    raw,
-    15,
-    16,
+
+  const hordes =
+    getColumnARange(
+      raw,
+      15,
+      16,
+    );
+
+
+  /* =======================================================
+     DEBUG RESULTS
+     ======================================================= */
+
+  console.log(
+    "==========================================",
   );
+
+  console.log(
+    "CURRENT ALTERING CAVE RESULTS",
+  );
+
+  console.log(
+    "==========================================",
+  );
+
+  console.log(
+    "SINGLES A6:A10:",
+    encounters,
+  );
+
+  console.log(
+    "RARE SINGLES A12:A13:",
+    rareEncounters,
+  );
+
+  console.log(
+    "HORDES A15:A16:",
+    hordes,
+  );
+
 
   /* =======================================================
      FINAL DATA
@@ -322,15 +475,24 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
   const finalData: AlteringCaveData = {
     crystal: findCrystal(raw),
+
     encounters,
+
     rareEncounters,
+
     hordes,
+
     raw,
   };
 
+
   /* =======================================================
-     DEBUG
+     FINAL DEBUG
      ======================================================= */
+
+  console.log(
+    "==========================================",
+  );
 
   console.log(
     "ALTERING CAVE PARSED:",
@@ -338,19 +500,9 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   );
 
   console.log(
-    "CURRENT SINGLES A6:A10:",
-    encounters,
+    "==========================================",
   );
 
-  console.log(
-    "CURRENT RARE SINGLES A12:A13:",
-    rareEncounters,
-  );
-
-  console.log(
-    "CURRENT HORDES A15:A16:",
-    hordes,
-  );
 
   return finalData;
 }
