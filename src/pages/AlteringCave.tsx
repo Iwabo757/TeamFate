@@ -37,18 +37,15 @@ function normalizePokemonName(name: string): string {
 }
 
 /* =========================================
-   SHOWDOWN GIF NAME
+   SHINY SHOWCASE GIF NAME
 ========================================= */
 
-function getShowdownSpriteName(name: string): string {
+function getGifName(name: string) {
   return name
-    .trim()
     .toLowerCase()
-    .replace(/♀/g, "-f")
-    .replace(/♂/g, "-m")
-    .replace(/[.'’]/g, "")
-    .replace(/:/g, "")
-    .replace(/\s+/g, "-");
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/[^a-z0-9]/g, "");
 }
 
 /* =========================================
@@ -342,13 +339,12 @@ export default function AlteringCave() {
   /* =========================================
      POKEMON SPRITE
      
-     Static shiny sprite normally.
+     Uses the EXACT same hover behavior
+     as Shiny Showcase:
      
-     Hover:
-       Static PNG -> Animated GIF
-     
-     Mouse leave:
-       Animated GIF -> Static PNG
+     PNG normally
+     GIF while hovering
+     PNG when leaving
   ========================================= */
 
   function PokemonSprite({
@@ -363,14 +359,6 @@ export default function AlteringCave() {
       return null;
     }
 
-    const staticSprite =
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
-
-    const animatedSprite =
-      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
-        pokemon.name
-      )}.gif`;
-
     return (
       <button
         type="button"
@@ -384,26 +372,29 @@ export default function AlteringCave() {
         aria-label={`View ${pokemon.name}`}
       >
         <img
-          src={staticSprite}
+          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
           alt={`Shiny ${pokemon.name}`}
+          className="altering-cave-sprite"
           loading="lazy"
           onMouseEnter={(
             event
           ) => {
             event.currentTarget.src =
-              animatedSprite;
+              `https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+                pokemon.name
+              )}.gif`;
           }}
           onMouseLeave={(
             event
           ) => {
             event.currentTarget.src =
-              staticSprite;
+              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
           }}
           onError={(
             event
           ) => {
             event.currentTarget.src =
-              staticSprite;
+              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
           }}
         />
       </button>
