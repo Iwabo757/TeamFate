@@ -104,18 +104,12 @@ const isPokemon = (
     return false;
   }
 
-  /*
-   * Ignore rotation labels.
-   */
   if (
     /^rotation\s*\d+$/i.test(text)
   ) {
     return false;
   }
 
-  /*
-   * Ignore tier labels.
-   */
   if (
     /^tier\s*\d*$/i.test(text)
   ) {
@@ -123,8 +117,7 @@ const isPokemon = (
   }
 
   /*
-   * Ignore special labels such as:
-   *
+   * Ignore labels such as:
    * Zorua (All Hordes)
    */
   if (
@@ -144,28 +137,22 @@ const isPokemon = (
 
 const unique = (
   items: string[],
-): string[] => {
-  return [
-    ...new Set(
-      items
-        .map(normalize)
-        .filter(Boolean),
-    ),
-  ];
-};
+): string[] => [
+  ...new Set(
+    items
+      .map(normalize)
+      .filter(Boolean),
+  ),
+];
 
 
 /* =========================================================
-   FIND A SECTION IN COLUMN A
+   FIND CURRENT ROW
    ========================================================= */
 
-const findColumnASection = (
+const findCurrentRow = (
   rows: string[][],
-  sectionName: string,
 ): number => {
-  const target =
-    sectionName.toLowerCase();
-
   for (
     let rowIndex = 0;
     rowIndex < rows.length;
@@ -177,10 +164,15 @@ const findColumnASection = (
       continue;
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * Current must specifically be in COLUMN A.
+     */
     const value =
       normalize(row[0]).toLowerCase();
 
-    if (value === target) {
+    if (value === "current") {
       return rowIndex;
     }
   }
@@ -190,38 +182,19 @@ const findColumnASection = (
 
 
 /* =========================================================
-   READ POKÉMON UNDER A SECTION
+   FIND SECTION AFTER CURRENT
    ========================================================= */
 
-/*
- * We only read COLUMN A.
- *
- * Example:
- *
- * Singles
- * Haxorus
- * Hydreigon
- * Petilil
- * Woobat
- * Rattata
- *
- * The function starts immediately after the section
- * heading and reads until another known section begins.
- */
-
-const readSection = (
+const findSectionAfter = (
   rows: string[][],
-  sectionRow: number,
-  maximumPokemon: number,
-): string[] => {
-  if (sectionRow === -1) {
-    return [];
-  }
-
-  const results: string[] = [];
+  sectionName: string,
+  startRow: number,
+): number => {
+  const target =
+    sectionName.toLowerCase();
 
   for (
-    let rowIndex = sectionRow + 1;
+    let rowIndex = startRow;
     rowIndex < rows.length;
     rowIndex++
   ) {
@@ -231,33 +204,79 @@ const readSection = (
       continue;
     }
 
-    const value =
-      normalize(row[0]);
-
     /*
-     * Stop when we hit another section.
+     * ONLY COLUMN A.
      */
-    const lower =
-      value.toLowerCase();
+    const value =
+      normalize(row[0]).toLowerCase();
 
-    if (
-      lower === "singles" ||
-      lower === "rare singles" ||
-      lower === "hordes"
-    ) {
-      break;
+    if (value === target) {
+      return rowIndex;
     }
 
     /*
-     * Ignore blank cells.
+     * If we hit a historical rotation header before
+     * finding the requested section, stop.
      */
-    if (!value) {
+    if (
+      /^rotation\s*\d+$/i.test(value)
+    ) {
+      break;
+    }
+  }
+
+  return -1;
+};
+
+
+/* =========================================================
+   READ CURRENT SECTION
+   ========================================================= */
+
+const readCurrentSection = (
+  rows: string[][],
+  sectionRow: number,
+  nextSectionRow: number,
+  expectedCount: number,
+): string[] => {
+  if (sectionRow === -1) {
+    return [];
+  }
+
+  const results: string[] = [];
+
+  /*
+   * Only read between this section and the next section.
+   *
+   * This prevents us from accidentally pulling Pokémon
+   * from another category.
+   */
+  const end =
+    nextSectionRow !== -1
+      ? nextSectionRow
+      : rows.length;
+
+  for (
+    let rowIndex = sectionRow + 1;
+    rowIndex < end;
+    rowIndex++
+  ) {
+    const row = rows[rowIndex];
+
+    if (!row) {
       continue;
     }
 
     /*
-     * Ignore non-Pokémon labels.
+     * ONLY COLUMN A.
      */
+    const value =
+      normalize(row[0]);
+
+    if (!value) {
+      continue;
+    }
+
     if (!isPokemon(value)) {
       continue;
     }
@@ -265,11 +284,12 @@ const readSection = (
     results.push(value);
 
     /*
-     * We know exactly how many Pokémon belong
-     * to each Current section.
+     * Singles = 5
+     * Rare Singles = 2
+     * Hordes = 2
      */
     if (
-      results.length >= maximumPokemon
+      results.length >= expectedCount
     ) {
       break;
     }
@@ -323,7 +343,7 @@ const findCrystal = (
 
 
 /* =========================================================
-   MAIN LOADER
+   LOAD ALTERING CAVE DATA
    ========================================================= */
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
@@ -341,7 +361,7 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     FRESH GOOGLE SHEETS REQUEST
+     FRESH REQUEST
      ======================================================= */
 
   const requestUrl =
@@ -426,50 +446,58 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     FIND CURRENT SECTION HEADERS
+     FIND CURRENT SECTION
      ======================================================= */
 
-  /*
-   * IMPORTANT:
-   *
-   * We are ONLY looking at COLUMN A.
-   *
-   * We are NOT:
-   *
-   * - looking for ACTIVE
-   * - looking for CURRENT
-   * - scanning historical rotations
-   * - reading columns B onward
-   *
-   * The Current section in column A is the source.
-   */
+  const currentRow =
+    findCurrentRow(raw);
 
-  const singlesRow =
-    findColumnASection(
-      raw,
-      "Singles",
-    );
 
-  const rareSinglesRow =
-    findColumnASection(
-      raw,
-      "Rare Singles",
-    );
+  console.log(
+    "CURRENT ROW:",
+    currentRow,
+  );
 
-  const hordesRow =
-    findColumnASection(
-      raw,
-      "Hordes",
+
+  if (currentRow === -1) {
+    throw new Error(
+      "Could not find the Current Altering Cave section in column A.",
     );
+  }
 
 
   /* =======================================================
-     DEBUG SECTION LOCATIONS
+     FIND CURRENT CATEGORY HEADERS
      ======================================================= */
+
+  const singlesRow =
+    findSectionAfter(
+      raw,
+      "Singles",
+      currentRow + 1,
+    );
+
+
+  const rareSinglesRow =
+    findSectionAfter(
+      raw,
+      "Rare Singles",
+      currentRow + 1,
+    );
+
+
+  const hordesRow =
+    findSectionAfter(
+      raw,
+      "Hordes",
+      currentRow + 1,
+    );
+
 
   console.log(
     "CURRENT SECTION LOCATIONS:",
     {
+      currentRow,
       singlesRow,
       rareSinglesRow,
       hordesRow,
@@ -478,67 +506,46 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     READ CURRENT SINGLES
+     READ SINGLES
      ======================================================= */
 
-  /*
-   * Expected:
-   *
-   * A6
-   * A7
-   * A8
-   * A9
-   * A10
-   */
-
   const encounters =
-    readSection(
+    readCurrentSection(
       raw,
       singlesRow,
+      rareSinglesRow,
       5,
     );
 
 
   /* =======================================================
-     READ CURRENT RARE SINGLES
+     READ RARE SINGLES
      ======================================================= */
-
-  /*
-   * Expected:
-   *
-   * A12
-   * A13
-   */
 
   const rareEncounters =
-    readSection(
+    readCurrentSection(
       raw,
       rareSinglesRow,
-      2,
-    );
-
-
-  /* =======================================================
-     READ CURRENT HORDES
-     ======================================================= */
-
-  /*
-   * Expected:
-   *
-   * A15
-   * A16
-   */
-
-  const hordes =
-    readSection(
-      raw,
       hordesRow,
       2,
     );
 
 
   /* =======================================================
-     DEBUG RESULTS
+     READ HORDES
+     ======================================================= */
+
+  const hordes =
+    readCurrentSection(
+      raw,
+      hordesRow,
+      -1,
+      2,
+    );
+
+
+  /* =======================================================
+     DEBUG
      ======================================================= */
 
   console.log(
@@ -570,7 +577,7 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     FINAL DATA
+     FINAL RESULT
      ======================================================= */
 
   const finalData: AlteringCaveData = {
@@ -582,18 +589,9 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   };
 
 
-  /* =======================================================
-     FINAL DEBUG
-     ======================================================= */
-
   console.log(
     "ALTERING CAVE PARSED:",
     finalData,
-  );
-
-
-  console.log(
-    "==========================================",
   );
 
 
