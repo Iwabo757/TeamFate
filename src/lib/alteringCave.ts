@@ -27,7 +27,7 @@ export interface AlteringCaveData {
 
 
 /* =========================================================
-   HELPERS
+   NORMALIZATION
    ========================================================= */
 
 const normalize = (value: unknown): string =>
@@ -39,18 +39,7 @@ const normalize = (value: unknown): string =>
 
 const normalizeRow = (
   row: string[],
-): string[] =>
-  row.map(normalize);
-
-
-const unique = (
-  items: string[],
-): string[] =>
-  [...new Set(
-    items
-      .map(normalize)
-      .filter(Boolean),
-  )];
+): string[] => row.map(normalize);
 
 
 /* =========================================================
@@ -97,7 +86,7 @@ const BLOCKED_VALUES = new Set([
 
 
 /* =========================================================
-   POKÉMON CHECK
+   POKÉMON VALIDATION
    ========================================================= */
 
 const isPokemon = (
@@ -150,88 +139,143 @@ const isPokemon = (
 
 
 /* =========================================================
-   READ COLUMN A RANGE
+   UNIQUE VALUES
    ========================================================= */
 
-/*
- * Spreadsheet rows are 1-based.
- *
- * Therefore:
- *
- * A6  = raw[5][0]
- * A7  = raw[6][0]
- * A8  = raw[7][0]
- * A9  = raw[8][0]
- * A10 = raw[9][0]
- *
- * A12 = raw[11][0]
- * A13 = raw[12][0]
- *
- * A15 = raw[14][0]
- * A16 = raw[15][0]
- */
-
-const getColumnARange = (
-  rows: string[][],
-  startRow: number,
-  endRow: number,
+const unique = (
+  items: string[],
 ): string[] => {
-  const values: string[] = [];
+  return [
+    ...new Set(
+      items
+        .map(normalize)
+        .filter(Boolean),
+    ),
+  ];
+};
+
+
+/* =========================================================
+   FIND A SECTION IN COLUMN A
+   ========================================================= */
+
+const findColumnASection = (
+  rows: string[][],
+  sectionName: string,
+): number => {
+  const target =
+    sectionName.toLowerCase();
 
   for (
-    let sheetRow = startRow;
-    sheetRow <= endRow;
-    sheetRow++
+    let rowIndex = 0;
+    rowIndex < rows.length;
+    rowIndex++
   ) {
-    const arrayIndex = sheetRow - 1;
-
-    const row = rows[arrayIndex];
+    const row = rows[rowIndex];
 
     if (!row) {
       continue;
     }
 
-    const value = normalize(row[0]);
+    const value =
+      normalize(row[0]).toLowerCase();
 
-    if (isPokemon(value)) {
-      values.push(value);
+    if (value === target) {
+      return rowIndex;
     }
   }
 
-  return unique(values);
+  return -1;
 };
 
 
 /* =========================================================
-   DEBUG COLUMN A
+   READ POKÉMON UNDER A SECTION
    ========================================================= */
 
-const getCurrentColumnADebug = (
+/*
+ * We only read COLUMN A.
+ *
+ * Example:
+ *
+ * Singles
+ * Haxorus
+ * Hydreigon
+ * Petilil
+ * Woobat
+ * Rattata
+ *
+ * The function starts immediately after the section
+ * heading and reads until another known section begins.
+ */
+
+const readSection = (
   rows: string[][],
-) => {
-  const debugRows: Array<{
-    sheetRow: number;
-    value: string;
-  }> = [];
-
-  for (
-    let sheetRow = 6;
-    sheetRow <= 16;
-    sheetRow++
-  ) {
-    const arrayIndex = sheetRow - 1;
-
-    const row = rows[arrayIndex];
-
-    debugRows.push({
-      sheetRow,
-      value: normalize(
-        row?.[0] ?? "",
-      ),
-    });
+  sectionRow: number,
+  maximumPokemon: number,
+): string[] => {
+  if (sectionRow === -1) {
+    return [];
   }
 
-  return debugRows;
+  const results: string[] = [];
+
+  for (
+    let rowIndex = sectionRow + 1;
+    rowIndex < rows.length;
+    rowIndex++
+  ) {
+    const row = rows[rowIndex];
+
+    if (!row) {
+      continue;
+    }
+
+    const value =
+      normalize(row[0]);
+
+    /*
+     * Stop when we hit another section.
+     */
+    const lower =
+      value.toLowerCase();
+
+    if (
+      lower === "singles" ||
+      lower === "rare singles" ||
+      lower === "hordes"
+    ) {
+      break;
+    }
+
+    /*
+     * Ignore blank cells.
+     */
+    if (!value) {
+      continue;
+    }
+
+    /*
+     * Ignore non-Pokémon labels.
+     */
+    if (!isPokemon(value)) {
+      continue;
+    }
+
+    results.push(value);
+
+    /*
+     * We know exactly how many Pokémon belong
+     * to each Current section.
+     */
+    if (
+      results.length >= maximumPokemon
+    ) {
+      break;
+    }
+  }
+
+  return unique(results);
 };
 
 
@@ -252,19 +296,23 @@ const findCrystal = (
       columnIndex < row.length;
       columnIndex++
     ) {
-      const value = normalize(
-        row[columnIndex],
-      ).toLowerCase();
+      const value =
+        normalize(
+          row[columnIndex],
+        ).toLowerCase();
 
       if (value !== "crystal") {
         continue;
       }
 
-      const nextValue = normalize(
-        row[columnIndex + 1],
-      );
+      const nextValue =
+        normalize(
+          row[columnIndex + 1],
+        );
 
-      if (isPokemon(nextValue)) {
+      if (
+        isPokemon(nextValue)
+      ) {
         return nextValue;
       }
     }
@@ -275,7 +323,7 @@ const findCrystal = (
 
 
 /* =========================================================
-   LOAD ALTERING CAVE
+   MAIN LOADER
    ========================================================= */
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
@@ -284,28 +332,29 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   );
 
   console.log(
-    "LOADING ALTERING CAVE SPREADSHEET",
+    "LOADING ALTERING CAVE SPREADSHEET...",
   );
 
   console.log(
     "==========================================",
   );
 
-  /*
-   * Cache bust the Google Sheets request.
-   *
-   * The timestamp makes every request a unique URL,
-   * preventing an old CSV response from being reused.
-   */
+
+  /* =======================================================
+     FRESH GOOGLE SHEETS REQUEST
+     ======================================================= */
+
   const requestUrl =
     `${SHEET_URL}&_=${Date.now()}`;
 
-  const response = await fetch(
-    requestUrl,
-    {
-      cache: "no-store",
-    },
-  );
+  const response =
+    await fetch(
+      requestUrl,
+      {
+        cache: "no-store",
+      },
+    );
+
 
   if (!response.ok) {
     throw new Error(
@@ -313,13 +362,17 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     );
   }
 
-  const csv = await response.text();
+
+  const csv =
+    await response.text();
+
 
   if (!csv.trim()) {
     throw new Error(
       "The Altering Cave spreadsheet returned no data.",
     );
   }
+
 
   console.log(
     "Altering Cave CSV received:",
@@ -332,12 +385,14 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
      PARSE CSV
      ======================================================= */
 
-  const parsed = Papa.parse<string[]>(
-    csv,
-    {
-      skipEmptyLines: false,
-    },
-  );
+  const parsed =
+    Papa.parse<string[]>(
+      csv,
+      {
+        skipEmptyLines: false,
+      },
+    );
+
 
   if (
     parsed.errors &&
@@ -349,14 +404,19 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     );
   }
 
+
   const raw =
-    parsed.data.map(normalizeRow);
+    parsed.data.map(
+      normalizeRow,
+    );
+
 
   if (!raw.length) {
     throw new Error(
       "The Altering Cave spreadsheet contains no data.",
     );
   }
+
 
   console.log(
     "Altering Cave spreadsheet loaded:",
@@ -366,74 +426,114 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     DEBUG CURRENT SECTION
+     FIND CURRENT SECTION HEADERS
      ======================================================= */
 
-  const currentColumnA =
-    getCurrentColumnADebug(raw);
+  /*
+   * IMPORTANT:
+   *
+   * We are ONLY looking at COLUMN A.
+   *
+   * We are NOT:
+   *
+   * - looking for ACTIVE
+   * - looking for CURRENT
+   * - scanning historical rotations
+   * - reading columns B onward
+   *
+   * The Current section in column A is the source.
+   */
+
+  const singlesRow =
+    findColumnASection(
+      raw,
+      "Singles",
+    );
+
+  const rareSinglesRow =
+    findColumnASection(
+      raw,
+      "Rare Singles",
+    );
+
+  const hordesRow =
+    findColumnASection(
+      raw,
+      "Hordes",
+    );
+
+
+  /* =======================================================
+     DEBUG SECTION LOCATIONS
+     ======================================================= */
 
   console.log(
-    "==========================================",
-  );
-
-  console.log(
-    "CURRENT ALTERING CAVE - COLUMN A",
-  );
-
-  console.log(
-    "==========================================",
-  );
-
-  console.table(
-    currentColumnA,
+    "CURRENT SECTION LOCATIONS:",
+    {
+      singlesRow,
+      rareSinglesRow,
+      hordesRow,
+    },
   );
 
 
   /* =======================================================
-     CURRENT SINGLES
+     READ CURRENT SINGLES
      ======================================================= */
 
   /*
-   * A6:A10
+   * Expected:
+   *
+   * A6
+   * A7
+   * A8
+   * A9
+   * A10
    */
 
   const encounters =
-    getColumnARange(
+    readSection(
       raw,
-      6,
-      10,
+      singlesRow,
+      5,
     );
 
 
   /* =======================================================
-     CURRENT RARE SINGLES
+     READ CURRENT RARE SINGLES
      ======================================================= */
 
   /*
-   * A12:A13
+   * Expected:
+   *
+   * A12
+   * A13
    */
 
   const rareEncounters =
-    getColumnARange(
+    readSection(
       raw,
-      12,
-      13,
+      rareSinglesRow,
+      2,
     );
 
 
   /* =======================================================
-     CURRENT HORDES
+     READ CURRENT HORDES
      ======================================================= */
 
   /*
-   * A15:A16
+   * Expected:
+   *
+   * A15
+   * A16
    */
 
   const hordes =
-    getColumnARange(
+    readSection(
       raw,
-      15,
-      16,
+      hordesRow,
+      2,
     );
 
 
@@ -454,17 +554,17 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   );
 
   console.log(
-    "SINGLES A6:A10:",
+    "SINGLES:",
     encounters,
   );
 
   console.log(
-    "RARE SINGLES A12:A13:",
+    "RARE SINGLES:",
     rareEncounters,
   );
 
   console.log(
-    "HORDES A15:A16:",
+    "HORDES:",
     hordes,
   );
 
@@ -475,13 +575,9 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
   const finalData: AlteringCaveData = {
     crystal: findCrystal(raw),
-
     encounters,
-
     rareEncounters,
-
     hordes,
-
     raw,
   };
 
@@ -491,13 +587,10 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
      ======================================================= */
 
   console.log(
-    "==========================================",
-  );
-
-  console.log(
     "ALTERING CAVE PARSED:",
     finalData,
   );
+
 
   console.log(
     "==========================================",
