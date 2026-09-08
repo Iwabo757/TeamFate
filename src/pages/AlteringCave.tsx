@@ -25,14 +25,35 @@ type AlteringCaveData = Awaited<
   ReturnType<typeof getAlteringCaveData>
 >;
 
-function normalizePokemonName(
-  name: string
-): string {
+/* =========================================
+   POKEMON NAME NORMALIZATION
+========================================= */
+
+function normalizePokemonName(name: string): string {
   return name
     .replace(/\s*\([^)]*\)/g, "")
     .trim()
     .toLowerCase();
 }
+
+/* =========================================
+   SHOWDOWN GIF NAME
+========================================= */
+
+function getShowdownSpriteName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/♀/g, "-f")
+    .replace(/♂/g, "-m")
+    .replace(/[.'’]/g, "")
+    .replace(/:/g, "")
+    .replace(/\s+/g, "-");
+}
+
+/* =========================================
+   BUILD OWNERS
+========================================= */
 
 function buildOwners(
   owners: string[]
@@ -51,6 +72,10 @@ function buildOwners(
   );
 }
 
+/* =========================================
+   CONVERT TO MODAL POKEMON
+========================================= */
+
 function convertToModalPokemon(
   pokemon: HomePokemon
 ): ModalPokemon {
@@ -68,6 +93,10 @@ function convertToModalPokemon(
       pokemon.owners.length,
   };
 }
+
+/* =========================================
+   MAIN COMPONENT
+========================================= */
 
 export default function AlteringCave() {
   const [
@@ -129,11 +158,15 @@ export default function AlteringCave() {
     }
   }
 
+  /* =========================================
+     INITIAL LOAD + AUTO REFRESH
+  ========================================= */
+
   useEffect(() => {
     loadAlteringCave();
 
     /*
-     * Refresh the Google Sheet data
+     * Refresh the Altering Cave data
      * every minute.
      */
     const refreshTimer =
@@ -308,6 +341,14 @@ export default function AlteringCave() {
 
   /* =========================================
      POKEMON SPRITE
+     
+     Static shiny sprite normally.
+     
+     Hover:
+       Static PNG -> Animated GIF
+     
+     Mouse leave:
+       Animated GIF -> Static PNG
   ========================================= */
 
   function PokemonSprite({
@@ -322,6 +363,14 @@ export default function AlteringCave() {
       return null;
     }
 
+    const staticSprite =
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`;
+
+    const animatedSprite =
+      `https://play.pokemonshowdown.com/sprites/ani-shiny/${getShowdownSpriteName(
+        pokemon.name
+      )}.gif`;
+
     return (
       <button
         type="button"
@@ -335,9 +384,27 @@ export default function AlteringCave() {
         aria-label={`View ${pokemon.name}`}
       >
         <img
-          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemon.id}.png`}
+          src={staticSprite}
           alt={`Shiny ${pokemon.name}`}
           loading="lazy"
+          onMouseEnter={(
+            event
+          ) => {
+            event.currentTarget.src =
+              animatedSprite;
+          }}
+          onMouseLeave={(
+            event
+          ) => {
+            event.currentTarget.src =
+              staticSprite;
+          }}
+          onError={(
+            event
+          ) => {
+            event.currentTarget.src =
+              staticSprite;
+          }}
         />
       </button>
     );
@@ -420,6 +487,10 @@ export default function AlteringCave() {
     );
   }
 
+  /* =========================================
+     PAGE
+  ========================================= */
+
   return (
     <div className="altering-cave-page">
 
@@ -449,7 +520,9 @@ export default function AlteringCave() {
       {alteringCave && (
         <div className="altering-cave-card">
 
-          {/* SINGLES */}
+          {/* =================================
+              SINGLES
+          ================================== */}
 
           {alteringCave
             .encounters
@@ -469,7 +542,9 @@ export default function AlteringCave() {
             </section>
           )}
 
-          {/* RARE SINGLES */}
+          {/* =================================
+              RARE SINGLES
+          ================================== */}
 
           {alteringCave
             .rareEncounters
@@ -489,7 +564,9 @@ export default function AlteringCave() {
             </section>
           )}
 
-          {/* HORDES */}
+          {/* =================================
+              HORDES
+          ================================== */}
 
           {alteringCave
             .hordes
@@ -512,20 +589,21 @@ export default function AlteringCave() {
         </div>
       )}
 
-{/* =====================================
-    DATA CREDIT
-===================================== */}
+      {/* =====================================
+          DATA CREDIT
+      ====================================== */}
 
-<div className="altering-cave-credit">
-  Altering Cave data provided by{" "}
-  <a
-    href="https://docs.google.com/spreadsheets/d/12lZupylxLAKUVQQJZIC8GJmvQiUwpbAAQ3BduAu_rig/edit?gid=1031347870#gid=1031347870"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    Team Mew and Trainer Polymnia
-  </a>
-</div>
+      <div className="altering-cave-credit">
+        Altering Cave data provided by{" "}
+
+        <a
+          href="https://docs.google.com/spreadsheets/d/12lZupylxLAKUVQQJZIC8GJmvQiUwpbAAQ3BduAu_rig/edit?gid=1031347870#gid=1031347870"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Team Mew and Trainer Polymnia
+        </a>
+      </div>
 
       {/* =====================================
           TEAM DEX POKEMON MODAL
