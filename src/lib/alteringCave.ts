@@ -9,8 +9,19 @@ const SHEET_ID =
 
 const GID = "1031347870";
 
+/*
+ * We specifically request A6:A16.
+ *
+ * This is the Current Altering Cave section:
+ *
+ * A6:A10  = Singles
+ * A11     = Rare Singles header
+ * A12:A13 = Rare Singles
+ * A14     = Hordes header
+ * A15:A16 = Hordes
+ */
 const SHEET_URL =
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}`;
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&gid=${GID}&range=A6:A16`;
 
 
 /* =========================================================
@@ -27,10 +38,12 @@ export interface AlteringCaveData {
 
 
 /* =========================================================
-   NORMALIZATION
+   NORMALIZE
    ========================================================= */
 
-const normalize = (value: unknown): string =>
+const normalize = (
+  value: unknown,
+): string =>
   String(value ?? "")
     .replace(/\u00a0/g, " ")
     .replace(/\s+/g, " ")
@@ -39,11 +52,12 @@ const normalize = (value: unknown): string =>
 
 const normalizeRow = (
   row: string[],
-): string[] => row.map(normalize);
+): string[] =>
+  row.map(normalize);
 
 
 /* =========================================================
-   VALUES THAT ARE NOT POKÉMON
+   BLOCKED VALUES
    ========================================================= */
 
 const BLOCKED_VALUES = new Set([
@@ -86,7 +100,7 @@ const BLOCKED_VALUES = new Set([
 
 
 /* =========================================================
-   POKÉMON VALIDATION
+   POKÉMON CHECK
    ========================================================= */
 
 const isPokemon = (
@@ -98,9 +112,12 @@ const isPokemon = (
     return false;
   }
 
-  const lower = text.toLowerCase();
+  const lower =
+    text.toLowerCase();
 
-  if (BLOCKED_VALUES.has(lower)) {
+  if (
+    BLOCKED_VALUES.has(lower)
+  ) {
     return false;
   }
 
@@ -117,7 +134,7 @@ const isPokemon = (
   }
 
   /*
-   * Ignore labels such as:
+   * Ignore entries such as:
    * Zorua (All Hordes)
    */
   if (
@@ -132,218 +149,23 @@ const isPokemon = (
 
 
 /* =========================================================
-   UNIQUE VALUES
+   UNIQUE
    ========================================================= */
 
 const unique = (
   items: string[],
-): string[] => [
-  ...new Set(
-    items
-      .map(normalize)
-      .filter(Boolean),
-  ),
-];
+): string[] =>
+  [
+    ...new Set(
+      items
+        .map(normalize)
+        .filter(Boolean),
+    ),
+  ];
 
 
 /* =========================================================
-   FIND CURRENT ROW
-   ========================================================= */
-
-const findCurrentRow = (
-  rows: string[][],
-): number => {
-  for (
-    let rowIndex = 0;
-    rowIndex < rows.length;
-    rowIndex++
-  ) {
-    const row = rows[rowIndex];
-
-    if (!row) {
-      continue;
-    }
-
-    /*
-     * IMPORTANT:
-     *
-     * Current must specifically be in COLUMN A.
-     */
-    const value =
-      normalize(row[0]).toLowerCase();
-
-    if (value === "current") {
-      return rowIndex;
-    }
-  }
-
-  return -1;
-};
-
-
-/* =========================================================
-   FIND SECTION AFTER CURRENT
-   ========================================================= */
-
-const findSectionAfter = (
-  rows: string[][],
-  sectionName: string,
-  startRow: number,
-): number => {
-  const target =
-    sectionName.toLowerCase();
-
-  for (
-    let rowIndex = startRow;
-    rowIndex < rows.length;
-    rowIndex++
-  ) {
-    const row = rows[rowIndex];
-
-    if (!row) {
-      continue;
-    }
-
-    /*
-     * ONLY COLUMN A.
-     */
-    const value =
-      normalize(row[0]).toLowerCase();
-
-    if (value === target) {
-      return rowIndex;
-    }
-
-    /*
-     * If we hit a historical rotation header before
-     * finding the requested section, stop.
-     */
-    if (
-      /^rotation\s*\d+$/i.test(value)
-    ) {
-      break;
-    }
-  }
-
-  return -1;
-};
-
-
-/* =========================================================
-   READ CURRENT SECTION
-   ========================================================= */
-
-const readCurrentSection = (
-  rows: string[][],
-  sectionRow: number,
-  nextSectionRow: number,
-  expectedCount: number,
-): string[] => {
-  if (sectionRow === -1) {
-    return [];
-  }
-
-  const results: string[] = [];
-
-  /*
-   * Only read between this section and the next section.
-   *
-   * This prevents us from accidentally pulling Pokémon
-   * from another category.
-   */
-  const end =
-    nextSectionRow !== -1
-      ? nextSectionRow
-      : rows.length;
-
-  for (
-    let rowIndex = sectionRow + 1;
-    rowIndex < end;
-    rowIndex++
-  ) {
-    const row = rows[rowIndex];
-
-    if (!row) {
-      continue;
-    }
-
-    /*
-     * ONLY COLUMN A.
-     */
-    const value =
-      normalize(row[0]);
-
-    if (!value) {
-      continue;
-    }
-
-    if (!isPokemon(value)) {
-      continue;
-    }
-
-    results.push(value);
-
-    /*
-     * Singles = 5
-     * Rare Singles = 2
-     * Hordes = 2
-     */
-    if (
-      results.length >= expectedCount
-    ) {
-      break;
-    }
-  }
-
-  return unique(results);
-};
-
-
-/* =========================================================
-   FIND CRYSTAL
-   ========================================================= */
-
-const findCrystal = (
-  rows: string[][],
-): string => {
-  for (const row of rows) {
-    if (!row) {
-      continue;
-    }
-
-    for (
-      let columnIndex = 0;
-      columnIndex < row.length;
-      columnIndex++
-    ) {
-      const value =
-        normalize(
-          row[columnIndex],
-        ).toLowerCase();
-
-      if (value !== "crystal") {
-        continue;
-      }
-
-      const nextValue =
-        normalize(
-          row[columnIndex + 1],
-        );
-
-      if (
-        isPokemon(nextValue)
-      ) {
-        return nextValue;
-      }
-    }
-  }
-
-  return "";
-};
-
-
-/* =========================================================
-   LOAD ALTERING CAVE DATA
+   MAIN LOADER
    ========================================================= */
 
 export async function getAlteringCaveData(): Promise<AlteringCaveData> {
@@ -361,11 +183,12 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   /* =======================================================
-     FRESH REQUEST
+     FORCE FRESH DATA
      ======================================================= */
 
   const requestUrl =
     `${SHEET_URL}&_=${Date.now()}`;
+
 
   const response =
     await fetch(
@@ -382,6 +205,10 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
     );
   }
 
+
+  /* =======================================================
+     READ CSV
+     ======================================================= */
 
   const csv =
     await response.text();
@@ -439,113 +266,112 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   console.log(
-    "Altering Cave spreadsheet loaded:",
+    "Altering Cave Current section loaded:",
     raw.length,
     "rows",
   );
 
 
   /* =======================================================
-     FIND CURRENT SECTION
+     DEBUG EXACT A6:A16 DATA
      ======================================================= */
 
-  const currentRow =
-    findCurrentRow(raw);
-
+  console.log(
+    "==========================================",
+  );
 
   console.log(
-    "CURRENT ROW:",
-    currentRow,
+    "CURRENT ALTERING CAVE A6:A16",
+  );
+
+  console.log(
+    "=========================================="
   );
 
 
-  if (currentRow === -1) {
-    throw new Error(
-      "Could not find the Current Altering Cave section in column A.",
-    );
-  }
-
-
-  /* =======================================================
-     FIND CURRENT CATEGORY HEADERS
-     ======================================================= */
-
-  const singlesRow =
-    findSectionAfter(
-      raw,
-      "Singles",
-      currentRow + 1,
-    );
-
-
-  const rareSinglesRow =
-    findSectionAfter(
-      raw,
-      "Rare Singles",
-      currentRow + 1,
-    );
-
-
-  const hordesRow =
-    findSectionAfter(
-      raw,
-      "Hordes",
-      currentRow + 1,
-    );
-
-
-  console.log(
-    "CURRENT SECTION LOCATIONS:",
-    {
-      currentRow,
-      singlesRow,
-      rareSinglesRow,
-      hordesRow,
+  raw.forEach(
+    (row, index) => {
+      console.log(
+        `Sheet Row ${index + 6}:`,
+        row?.[0] ?? "",
+      );
     },
   );
 
 
   /* =======================================================
-     READ SINGLES
+     MAP CURRENT SECTION
+     ======================================================= */
+
+  /*
+   * Because the request is ONLY A6:A16,
+   * the returned array is now:
+
+   * raw[0]  = A6
+   * raw[1]  = A7
+   * raw[2]  = A8
+   * raw[3]  = A9
+   * raw[4]  = A10
+   *
+   * raw[5]  = A11  (Rare Singles header)
+   *
+   * raw[6]  = A12
+   * raw[7]  = A13
+   *
+   * raw[8]  = A14  (Hordes header)
+   *
+   * raw[9]  = A15
+   * raw[10] = A16
+   */
+
+
+  /* =======================================================
+     SINGLES
      ======================================================= */
 
   const encounters =
-    readCurrentSection(
-      raw,
-      singlesRow,
-      rareSinglesRow,
-      5,
+    unique(
+      raw
+        .slice(0, 5)
+        .map(
+          row => row?.[0] ?? "",
+        )
+        .filter(isPokemon),
     );
 
 
   /* =======================================================
-     READ RARE SINGLES
+     RARE SINGLES
      ======================================================= */
 
   const rareEncounters =
-    readCurrentSection(
-      raw,
-      rareSinglesRow,
-      hordesRow,
-      2,
+    unique(
+      raw
+        .slice(6, 8)
+        .map(
+          row => row?.[0] ?? "",
+        )
+        .filter(isPokemon),
     );
 
 
   /* =======================================================
-     READ HORDES
+     HORDES
      ======================================================= */
 
   const hordes =
-    readCurrentSection(
-      raw,
-      hordesRow,
-      -1,
-      2,
+    unique(
+      raw
+        .slice(9, 11)
+        .map(
+          row => row?.[0] ?? "",
+        )
+        .filter(isPokemon),
     );
 
 
   /* =======================================================
-     DEBUG
+     DEBUG RESULTS
      ======================================================= */
 
   console.log(
@@ -561,17 +387,17 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
   );
 
   console.log(
-    "SINGLES:",
+    "SINGLES A6:A10:",
     encounters,
   );
 
   console.log(
-    "RARE SINGLES:",
+    "RARE SINGLES A12:A13:",
     rareEncounters,
   );
 
   console.log(
-    "HORDES:",
+    "HORDES A15:A16:",
     hordes,
   );
 
@@ -581,7 +407,7 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
      ======================================================= */
 
   const finalData: AlteringCaveData = {
-    crystal: findCrystal(raw),
+    crystal: "",
     encounters,
     rareEncounters,
     hordes,
@@ -590,8 +416,16 @@ export async function getAlteringCaveData(): Promise<AlteringCaveData> {
 
 
   console.log(
+    "==========================================",
+  );
+
+  console.log(
     "ALTERING CAVE PARSED:",
     finalData,
+  );
+
+  console.log(
+    "==========================================",
   );
 
 
