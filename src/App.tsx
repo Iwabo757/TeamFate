@@ -69,7 +69,7 @@ import AdminRecruitment from "./pages/AdminRecruitment";
 import HordeHunter from "./pages/HordeHunter";
 import ShuntMachine from "./pages/ShuntMachine";
 import AlteringCave from "./pages/AlteringCave";
-
+import CosmeticBuilder from "./pages/CosmeticBuilder";
 import Tools from "./pages/Tools";
 
 import ThemeSelector from "./components/ThemeSelector";
@@ -370,7 +370,8 @@ export default function App() {
       path.startsWith("/guides") ||
       path.startsWith("/horde-hunter") ||
       path.startsWith("/shunt-machine") ||
-      path.startsWith("/altering-cave")
+      path.startsWith("/altering-cave") ||
+      path.startsWith("/cosmetic-builder")
     ) {
       return [
         {
@@ -392,6 +393,10 @@ export default function App() {
         {
           label: "Altering Cave",
           path: "/altering-cave",
+        },
+        {
+          label: "Cosmetic Builder",
+          path: "/cosmetic-builder",
         },
       ];
     }
@@ -924,6 +929,10 @@ export default function App() {
             />
 
 
+           <Route
+             path="/tools/cosmetic-builder"
+             element={<CosmeticBuilder />}
+           />
             {/* PROFILE */}
 
             <Route
