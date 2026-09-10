@@ -930,7 +930,7 @@ export default function App() {
 
 
            <Route
-             path="/tools/cosmetic-builder"
+             path="/cosmetic-builder"
              element={<CosmeticBuilder />}
            />
             {/* PROFILE */}
