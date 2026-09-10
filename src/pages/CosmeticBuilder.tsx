@@ -41,15 +41,6 @@ const SCENES = [
   { label: "Side", id: 3 },
 ];
 
-function rendererUrl(sceneId: number, clothes: Record<number, number>) {
-  const c = { ...DEFAULT_CLOTHES, ...clothes };
-
-  return (
-    `https://apis.fiereu.de/pokemmoclothes/v1/${sceneId}/2/1/` +
-    `${c[6]}/${c[12]}/${c[4]}/${c[5]}/${c[8]}/${c[3]}/` +
-    `${c[2]}/${c[10]}/${c[9]}/${c[7]}.png`
-  );
-}
 
 export default function CosmeticBuilder() {
   const [selectedSlot, setSelectedSlot] = useState(2);
