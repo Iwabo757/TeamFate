@@ -17,11 +17,30 @@ export function getCosmeticSetupImage(
   sceneId: number,
   clothes: Record<number, number>
 ) {
-  const c = { ...DEFAULT_CLOTHES, ...clothes };
+  const c = {
+    ...DEFAULT_CLOTHES,
+    ...clothes,
+  };
 
-  return (
-    `https://apis.fiereu.de/pokemmoclothes/v1/${sceneId}/2/1/` +
-    `${c[6]}/${c[12]}/${c[4]}/${c[5]}/${c[8]}/${c[3]}/` +
-    `${c[2]}/${c[10]}/${c[9]}/${c[7]}.png`
-  );
+  const params = [
+    c[6],  // back
+    c[12], // bicycle
+    c[4],  // eyes
+    c[5],  // face
+    c[8],  // gloves
+    c[3],  // hair
+    c[2],  // hat
+    c[10], // legs
+    c[9],  // shoes
+    c[7],  // top
+  ];
+
+  const rendererBase =
+    import.meta.env.VITE_COSMETIC_RENDERER_URL;
+
+  if (!rendererBase) {
+    return null;
+  }
+
+  return `${rendererBase}/${sceneId}/2/1/${params.join("/")}.png`;
 }

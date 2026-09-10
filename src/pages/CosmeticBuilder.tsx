@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { cosmetics } from "../data/cosmetics";
 import "../cosmetic-builder.css";
-
+import { getCosmeticSetupImage } from "../utils/cosmeticRenderer";
 const SLOT_NAMES: Record<number, string> = {
   1: "Forehead",
   2: "Hat",
@@ -219,7 +219,7 @@ export default function CosmeticBuilder() {
             {!previewError ? (
               <img
                 className="cosmetic-character"
-                src={rendererUrl(scene, clothes)}
+                src={getCosmeticSetupImage(scene, clothes) ?? undefined}
                 alt="PokeMMO character preview"
                 onError={() => setPreviewError(true)}
               />
