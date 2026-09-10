@@ -1,87 +1,65 @@
 export default async function handler(req: any, res: any) {
   try {
-    const scene = String(req.query.scene || "2");
-    const params = String(req.query.params || "");
-
-    if (!/^\d+$/.test(scene)) {
-      return res.status(400).send("Invalid scene");
-    }
-
-    if (!/^\d+(,\d+){9}$/.test(params)) {
-      return res.status(400).send("Invalid cosmetic parameters");
-    }
-
-    const [apiItemsResponse, cosmeticsResponse] = await Promise.all([
-      fetch(
-        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/main/src/data/apiItems.json"
-      ),
+    const [cosmeticsResponse, itemsResponse] = await Promise.all([
       fetch(
         "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items-cosmetic.json"
       ),
+      fetch(
+        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items.json"
+      ),
     ]);
 
-    if (!apiItemsResponse.ok || !cosmeticsResponse.ok) {
-      return res.status(502).send("Unable to load cosmetic data");
+    if (!cosmeticsResponse.ok || !itemsResponse.ok) {
+      return res.status(502).json({
+        error: "Unable to load cosmetic data",
+      });
     }
 
-    const apiItems = await apiItemsResponse.json();
-    const cosmetics = await cosmeticsResponse.json();
+    const cosmeticData = await cosmeticsResponse.json();
+    const itemData = await itemsResponse.json();
 
-    // Build a set of IDs that are actually cosmetic API IDs.
-    const cosmeticApiIds = new Set<number>();
+    const itemsById = new Map<number, any>();
 
-    for (const cosmetic of cosmetics) {
+    for (const item of itemData) {
+      itemsById.set(Number(item.id), item);
+    }
+
+    const cosmetics: any[] = [];
+
+    for (const cosmetic of cosmeticData) {
       const ids = Array.isArray(cosmetic.item_id)
         ? cosmetic.item_id
         : [cosmetic.item_id];
 
       for (const id of ids) {
         const numericId = Number(id);
+        const item = itemsById.get(numericId);
 
-        if (Number.isFinite(numericId)) {
-          cosmeticApiIds.add(numericId);
-        }
+        cosmetics.push({
+          item_id: numericId,
+          name: item?.name || `Item ${numericId}`,
+          icon_id: item?.icon_id ?? numericId,
+          slot: Number(cosmetic.slot),
+          attribute: Number(cosmetic.attribute ?? 0),
+          festival: Number(cosmetic.festival ?? 0),
+          limitation: Number(cosmetic.limitation ?? 0),
+          month: Number(cosmetic.month ?? 0),
+          year: Number(cosmetic.year ?? 0),
+        });
       }
     }
 
-    // Convert API cosmetic IDs to the internal renderer IDs.
-    const convertedParams = params.split(",").map((value) => {
-      const id = Number(value);
-
-      if (!cosmeticApiIds.has(id)) {
-        return id;
-      }
-
-      const mapping = apiItems.find(
-        (item: any) => Number(item.apiID) === id
-      );
-
-      return mapping ? Number(mapping.id) : id;
-    });
-
-    const rendererUrl =
-      `https://apis.fiereu.de/pokemmoclothes/v1/` +
-      `${scene}/2/1/${convertedParams.join("/")}.png`;
-
-    console.log("Cosmetic renderer:", rendererUrl);
-
-    const response = await fetch(rendererUrl);
-
-    if (!response.ok) {
-      return res.status(response.status).send("Renderer unavailable");
-    }
-
-    const image = Buffer.from(await response.arrayBuffer());
-
-    res.setHeader("Content-Type", "image/png");
     res.setHeader(
       "Cache-Control",
-      "public, max-age=3600, s-maxage=3600"
+      "public, s-maxage=3600, stale-while-revalidate=86400"
     );
 
-    return res.status(200).send(image);
+    return res.status(200).json(cosmetics);
   } catch (error) {
-    console.error("Cosmetic renderer error:", error);
-    return res.status(500).send("Cosmetic renderer error");
+    console.error("Cosmetic data error:", error);
+
+    return res.status(500).json({
+      error: "Failed to load cosmetic data",
+    });
   }
 }
