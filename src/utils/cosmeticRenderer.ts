@@ -23,24 +23,17 @@ export function getCosmeticSetupImage(
   };
 
   const params = [
-    c[6],  // back
-    c[12], // bicycle
-    c[4],  // eyes
-    c[5],  // face
-    c[8],  // gloves
-    c[3],  // hair
-    c[2],  // hat
-    c[10], // legs
-    c[9],  // shoes
-    c[7],  // top
+    c[6],
+    c[12],
+    c[4],
+    c[5],
+    c[8],
+    c[3],
+    c[2],
+    c[10],
+    c[9],
+    c[7],
   ];
 
-  const rendererBase =
-    import.meta.env.VITE_COSMETIC_RENDERER_URL;
-
-  if (!rendererBase) {
-    return null;
-  }
-
-  return `${rendererBase}/${sceneId}/2/1/${params.join("/")}.png`;
+  return `/api/cosmetic?scene=${sceneId}&params=${params.join(",")}`;
 }
