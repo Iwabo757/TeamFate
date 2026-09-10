@@ -399,3 +399,11 @@
     text-align: left;
   }
 }
+
+.cosmetic-character {
+  width: 320px;
+  height: 420px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}

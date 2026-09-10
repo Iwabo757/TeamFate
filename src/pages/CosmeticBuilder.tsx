@@ -207,15 +207,17 @@ export default function CosmeticBuilder() {
           </div>
 
           <div className="cosmetic-stage">
-            {!previewError ? (
-<img
-  key={`${scene}-${JSON.stringify(clothes)}`}
-  className="cosmetic-character"
-  src={getCosmeticSetupImage(scene, clothes) ?? undefined}
-  alt="PokeMMO character preview"
-  onError={() => setPreviewError(true)}
-/>
-            ) : (
+{!previewError ? (
+  <div
+    key={`${scene}-${JSON.stringify(clothes)}`}
+    className="cosmetic-character"
+    style={{
+      backgroundImage: `url("${getCosmeticSetupImage(scene, clothes)}")`,
+    }}
+    role="img"
+    aria-label="PokeMMO character preview"
+  />
+) : (
               <div className="cosmetic-preview-error">
                 <strong>Preview unavailable</strong>
                 <p>
