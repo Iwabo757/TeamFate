@@ -1,53 +1,39 @@
 export type CosmeticSlot =
-  | "back"
-  | "pants"
-  | "shoes"
-  | "top"
+  | "hat"
+  | "hair"
   | "eyes"
   | "face"
-  | "hair"
+  | "back"
+  | "top"
   | "held"
-  | "hat"
+  | "shoes"
+  | "pants"
   | "tool"
   | "mount";
 
 export type Cosmetic = {
-  name?: string;
-  slot: CosmeticSlot;
-  layer: string;
   icon: string;
-  layer_index: number;
+  layer: string;
   icon_index: number;
+  layer_index: number;
   slot_code: number;
+  slot: CosmeticSlot;
+  name?: string;
 };
 
 export type RendererManifest = {
   format_version: number;
-
-  base: Record<
-    string,
-    {
-      frames: string[];
-      previews: string[];
-    }
-  >;
-
+  base: Record<string, { frames: string[]; previews: string[] }>;
+  slot_codes?: Record<string, string>;
   cosmetics: Record<string, Cosmetic>;
 };
 
-/* =========================================================
-   CONSTANTS
-========================================================= */
+export type CosmeticTints = Partial<Record<CosmeticSlot, string>>;
 
-const ASSET_ROOT =
-  "/team-fate-renderer";
+const ASSET_ROOT = "/team-fate-renderer";
+const WIDTH = 57;
+const HEIGHT = 56;
 
-const CHARACTER_WIDTH = 57;
-const CHARACTER_HEIGHT = 56;
-
-/*
- * Draw order.
- */
 export const LAYER_ORDER: CosmeticSlot[] = [
   "back",
   "pants",
@@ -62,48 +48,19 @@ export const LAYER_ORDER: CosmeticSlot[] = [
   "mount",
 ];
 
-/* =========================================================
-   IMAGE CACHE
-========================================================= */
+const imageCache = new Map<string, Promise<HTMLImageElement>>();
 
-const imageCache = new Map<
-  string,
-  Promise<HTMLImageElement>
->();
+export async function loadImage(src: string): Promise<HTMLImageElement> {
+  const cached = imageCache.get(src);
+  if (cached) return cached;
 
-export async function loadImage(
-  src: string
-): Promise<HTMLImageElement> {
-  const cached =
-    imageCache.get(src);
-
-  if (cached) {
-    return cached;
-  }
-
-  const promise =
-    new Promise<HTMLImageElement>(
-      (resolve, reject) => {
-        const image =
-          new Image();
-
-        image.decoding = "async";
-
-        image.onload = () => {
-          resolve(image);
-        };
-
-        image.onerror = () => {
-          reject(
-            new Error(
-              `Failed to load image: ${src}`
-            )
-          );
-        };
-
-        image.src = src;
-      }
-    );
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+    image.src = src;
+  });
 
   imageCache.set(src, promise);
 
@@ -115,451 +72,178 @@ export async function loadImage(
   }
 }
 
-/* =========================================================
-   MANIFEST
-========================================================= */
-
 export async function loadRendererManifest(
   url = `${ASSET_ROOT}/manifest.json`
 ): Promise<RendererManifest> {
-  const response =
-    await fetch(url);
-
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(
-      `Renderer manifest returned ${response.status}`
-    );
+    throw new Error(`Renderer manifest returned ${response.status}`);
   }
-
-  const manifest =
-    (await response.json()) as RendererManifest;
-
-  if (!manifest.base) {
-    throw new Error(
-      "Renderer manifest has no base data."
-    );
-  }
-
-  if (!manifest.cosmetics) {
-    throw new Error(
-      "Renderer manifest has no cosmetics."
-    );
-  }
-
-  return manifest;
+  return (await response.json()) as RendererManifest;
 }
 
-/* =========================================================
-   PATH HELPERS
-========================================================= */
-
-function cleanPath(
-  path: string
-): string {
-  return path
-    .replace(/\\/g, "/")
-    .replace(/^\/+/, "");
+function cleanPath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/^\/+/, "");
 }
 
-function makeAssetUrl(
-  baseUrl: string,
-  relativePath: string
-): string {
-  return (
-    `${baseUrl.replace(
-      /\/+$/,
-      ""
-    )}/${cleanPath(relativePath)}`
-  );
+function assetUrl(baseUrl: string, path: string): string {
+  return `${baseUrl.replace(/\/+$/, "")}/${cleanPath(path)}`;
 }
 
-/*
- * IMPORTANT:
- *
- * Manifest records are not guaranteed to
- * contain their own name property.
- *
- * Therefore this accepts unknown values
- * safely instead of calling toLowerCase()
- * on undefined.
- */
-function slugify(
-  value: unknown
-): string {
-  if (
-    typeof value !== "string" ||
-    value.length === 0
-  ) {
-    return "";
-  }
-
-  return value
-    .toLowerCase()
-    .replace(/['’]/g, "")
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+/, "")
-    .replace(/_+$/, "");
-}
-
-/* =========================================================
-   COSMETIC PATHS
-========================================================= */
-
-function getCosmeticPaths(
-  cosmetic: Cosmetic,
-  cosmeticKey: string
-): string[] {
-  const paths: string[] = [];
-
-  /*
-   * 1. Exact manifest path.
-   *
-   * This is always preferred.
-   */
-  if (
-    typeof cosmetic.layer ===
-      "string" &&
-    cosmetic.layer.length > 0
-  ) {
-    paths.push(
-      cleanPath(
-        cosmetic.layer
-      )
-    );
-  }
-
-  const id =
-    String(
-      cosmetic.layer_index
-    ).padStart(5, "0");
-
-  /*
-   * Use the manifest key when the
-   * record itself doesn't contain name.
-   */
-  const name =
-    slugify(
-      cosmetic.name ??
-        cosmeticKey
-    );
-
-  /*
-   * Current extracted format:
-   *
-   * cosmetics/pants/
-   * pants__03504_layer.png
-   */
-  if (name) {
-    paths.push(
-      `cosmetics/${cosmetic.slot}/${name}__${id}_layer.png`
-    );
-  }
-
-  /*
-   * Older format:
-   *
-   * cosmetics/pants/
-   * 03504_layer.png
-   */
-  paths.push(
-    `cosmetics/${cosmetic.slot}/${id}_layer.png`
-  );
-
-  /*
-   * Simple resource-index fallback.
-   */
-  paths.push(
-    `cosmetics/${cosmetic.slot}/${cosmetic.layer_index}_layer.png`
-  );
-
+function hexToRgb(hex: string): [number, number, number] | null {
+  const value = hex.trim().replace(/^#/, "");
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
   return [
-    ...new Set(paths),
+    parseInt(value.slice(0, 2), 16),
+    parseInt(value.slice(2, 4), 16),
+    parseInt(value.slice(4, 6), 16),
   ];
 }
 
-/* =========================================================
-   LOAD COSMETIC
-========================================================= */
-
-async function loadCosmetic(
-  cosmetic: Cosmetic,
-  cosmeticKey: string,
-  baseUrl: string
-): Promise<HTMLImageElement | null> {
-  const paths =
-    getCosmeticPaths(
-      cosmetic,
-      cosmeticKey
-    );
-
-  for (
-    const path of paths
-  ) {
-    const url =
-      makeAssetUrl(
-        baseUrl,
-        path
-      );
-
-    try {
-      const image =
-        await loadImage(url);
-
-      console.log(
-        `[Local Renderer] Loaded ${cosmeticKey}: ${url}`
-      );
-
-      return image;
-    } catch {
-      /*
-       * Try the next candidate.
-       */
-    }
+async function tintGrayscaleLayer(
+  image: HTMLImageElement,
+  color: string
+): Promise<HTMLCanvasElement> {
+  const rgb = hexToRgb(color);
+  if (!rgb) {
+    const fallback = document.createElement("canvas");
+    fallback.width = WIDTH;
+    fallback.height = HEIGHT;
+    const ctx = fallback.getContext("2d");
+    if (ctx) ctx.drawImage(image, 0, 0, WIDTH, HEIGHT);
+    return fallback;
   }
 
-  console.warn(
-    `[Local Renderer] Could not load ${cosmeticKey}`,
-    paths
-  );
+  const source = document.createElement("canvas");
+  source.width = WIDTH;
+  source.height = HEIGHT;
+  const sourceCtx = source.getContext("2d", { willReadFrequently: true });
+  if (!sourceCtx) return source;
 
-  /*
-   * Never let one missing cosmetic
-   * destroy the entire character.
-   */
-  return null;
+  sourceCtx.clearRect(0, 0, WIDTH, HEIGHT);
+  sourceCtx.drawImage(image, 0, 0, WIDTH, HEIGHT);
+
+  const pixels = sourceCtx.getImageData(0, 0, WIDTH, HEIGHT);
+  const data = pixels.data;
+  const [tr, tg, tb] = rgb;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = data[i + 3];
+
+    if (a === 0) continue;
+
+    // Only recolor grayscale pixels. Colored/graphic cosmetics keep their
+    // original artwork instead of being incorrectly tinted.
+    const grayscale =
+      Math.abs(r - g) <= 2 &&
+      Math.abs(g - b) <= 2 &&
+      Math.abs(r - b) <= 2;
+
+    if (!grayscale) continue;
+
+    if (r === 0 && g === 0 && b === 0) continue;
+
+    const luminance = r / 255;
+
+    data[i] = Math.round(tr * luminance);
+    data[i + 1] = Math.round(tg * luminance);
+    data[i + 2] = Math.round(tb * luminance);
+  }
+
+  sourceCtx.putImageData(pixels, 0, 0);
+  return source;
 }
 
-/* =========================================================
-   CHARACTER RENDERER
-========================================================= */
+async function loadCosmeticLayer(
+  cosmetic: Cosmetic,
+  baseUrl: string,
+  tint?: string
+): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  try {
+    const image = await loadImage(assetUrl(baseUrl, cosmetic.layer));
 
-export async function renderCharacter(
-  opts: {
-    manifest: RendererManifest;
-    baseUrl?: string;
-    skin?: number;
-    frame?: number;
-    cosmetics?: Partial<
-      Record<
-        CosmeticSlot,
-        string
-      >
-    >;
-    scale?: number;
+    if (tint) {
+      return await tintGrayscaleLayer(image, tint);
+    }
+
+    return image;
+  } catch (error) {
+    console.warn(
+      `[Local Renderer] Could not load ${cosmetic.name ?? "cosmetic"}`,
+      cosmetic.layer,
+      error
+    );
+    return null;
   }
-): Promise<HTMLCanvasElement> {
+}
+
+export async function renderCharacter(opts: {
+  manifest: RendererManifest;
+  baseUrl?: string;
+  skin?: number;
+  frame?: number;
+  cosmetics?: Partial<Record<CosmeticSlot, string>>;
+  tints?: CosmeticTints;
+  scale?: number;
+}): Promise<HTMLCanvasElement> {
   const {
     manifest,
     baseUrl = ASSET_ROOT,
     skin = 1,
     frame = 0,
     cosmetics = {},
-    scale = 1,
+    tints = {},
+    scale = 6,
   } = opts;
 
-  /* =======================================================
-     VALIDATE SCALE
-  ======================================================= */
-
-  if (
-    !Number.isFinite(scale) ||
-    scale <= 0
-  ) {
-    throw new Error(
-      `Invalid scale: ${scale}`
-    );
+  const skinData = manifest.base[`skin_${skin}`];
+  if (!skinData) throw new Error(`Invalid skin: ${skin}`);
+  if (!skinData.frames[frame]) {
+    throw new Error(`Invalid frame ${frame} for skin ${skin}`);
   }
 
-  /* =======================================================
-     FIND SKIN
-  ======================================================= */
+  const canvas = document.createElement("canvas");
+  canvas.width = WIDTH * scale;
+  canvas.height = HEIGHT * scale;
 
-  const skinKey =
-    `skin_${skin}`;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas 2D context unavailable");
 
-  const skinData =
-    manifest.base[skinKey];
+  ctx.imageSmoothingEnabled = false;
 
-  if (!skinData) {
-    throw new Error(
-      `Skin ${skin} does not exist.`
-    );
-  }
+  const base = await loadImage(
+    assetUrl(baseUrl, skinData.frames[frame])
+  );
 
-  /* =======================================================
-     FIND FRAME
-  ======================================================= */
+  ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
 
-  if (
-    !Number.isInteger(frame) ||
-    frame < 0 ||
-    frame >=
-      skinData.frames.length
-  ) {
-    throw new Error(
-      `Frame ${frame} does not exist for skin ${skin}.`
-    );
-  }
+  for (const slot of LAYER_ORDER) {
+    const name = cosmetics[slot];
+    if (!name) continue;
 
-  const basePath =
-    cleanPath(
-      skinData.frames[frame]
-    );
+    const cosmetic = manifest.cosmetics[name];
+    if (!cosmetic || cosmetic.slot !== slot) continue;
 
-  if (!basePath) {
-    throw new Error(
-      `No base image for skin ${skin}, frame ${frame}.`
-    );
-  }
-
-  /* =======================================================
-     CREATE CANVAS
-  ======================================================= */
-
-  const width =
-    CHARACTER_WIDTH * scale;
-
-  const height =
-    CHARACTER_HEIGHT * scale;
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx =
-    canvas.getContext("2d");
-
-  if (!ctx) {
-    throw new Error(
-      "Could not create canvas context."
-    );
-  }
-
-  /*
-   * Keep pixel art sharp.
-   */
-  ctx.imageSmoothingEnabled =
-    false;
-
-  /* =======================================================
-     DRAW BASE
-  ======================================================= */
-
-  const baseUrlFull =
-    makeAssetUrl(
+    const layer = await loadCosmeticLayer(
+      cosmetic,
       baseUrl,
-      basePath
+      tints[slot]
     );
 
-  console.log(
-    `[Local Renderer] Base: ${baseUrlFull}`
-  );
+    if (!layer) continue;
 
-  const base =
-    await loadImage(
-      baseUrlFull
-    );
-
-  ctx.drawImage(
-    base,
-    0,
-    0,
-    width,
-    height
-  );
-
-  /* =======================================================
-     DRAW COSMETICS
-  ======================================================= */
-
-  for (
-    const slot of LAYER_ORDER
-  ) {
-    const cosmeticName =
-      cosmetics[slot];
-
-    if (!cosmeticName) {
-      continue;
-    }
-
-    /*
-     * The cosmetics object is keyed
-     * by cosmetic name.
-     */
-    const cosmetic =
-      manifest.cosmetics[
-        cosmeticName
-      ];
-
-    if (!cosmetic) {
-      console.warn(
-        `[Local Renderer] Cosmetic not found: ${cosmeticName}`
-      );
-
-      continue;
-    }
-
-    /*
-     * Verify slot.
-     */
-    if (
-      cosmetic.slot !== slot
-    ) {
-      console.warn(
-        `[Local Renderer] Slot mismatch: ` +
-          `${cosmeticName} is ${cosmetic.slot}, ` +
-          `expected ${slot}`
-      );
-
-      continue;
-    }
-
-    const layer =
-      await loadCosmetic(
-        cosmetic,
-        cosmeticName,
-        baseUrl
-      );
-
-    /*
-     * Missing layer is no longer fatal.
-     */
-    if (!layer) {
-      continue;
-    }
-
-    ctx.drawImage(
-      layer,
-      0,
-      0,
-      width,
-      height
-    );
+    ctx.drawImage(layer, 0, 0, canvas.width, canvas.height);
   }
 
   return canvas;
 }
 
-/* =========================================================
-   DATA URL
-========================================================= */
-
 export async function renderCharacterToDataUrl(
-  opts: Parameters<
-    typeof renderCharacter
-  >[0]
+  opts: Parameters<typeof renderCharacter>[0]
 ): Promise<string> {
-  const canvas =
-    await renderCharacter(
-      opts
-    );
-
-  return canvas.toDataURL(
-    "image/png"
-  );
+  const canvas = await renderCharacter(opts);
+  return canvas.toDataURL("image/png");
 }
