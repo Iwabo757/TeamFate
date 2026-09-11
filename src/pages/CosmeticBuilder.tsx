@@ -89,14 +89,14 @@ export default function CosmeticBuilder() {
         if (cancelled) return;
 
         setManifest(loaded);
-        setCosmetics(
-          Object.entries(loaded.cosmetics).map(
-            ([name, value]) => ({
-              name,
-              ...value,
-            })
-          )
-        );
+setCosmetics(
+  Object.entries(loaded.cosmetics).map(
+    ([name, value]) => ({
+      ...value,
+      name,
+    })
+  )
+);
       } catch (error) {
         console.error(
           "Failed to load local cosmetic renderer:",
