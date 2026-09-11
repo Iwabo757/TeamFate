@@ -53,14 +53,36 @@ const SCENES = [
   { label: "Side", id: 3 },
 ];
 
+const GENDERS = [
+  { label: "♂ Male", id: 2 },
+  { label: "♀ Female", id: 1 },
+];
+
 export default function CosmeticBuilder() {
   const [cosmetics, setCosmetics] = useState<Cosmetic[]>([]);
   const [loadingCosmetics, setLoadingCosmetics] = useState(true);
+
   const [selectedSlot, setSelectedSlot] = useState(2);
   const [query, setQuery] = useState("");
+
   const [scene, setScene] = useState(2);
-  const [clothes, setClothes] = useState(DEFAULT_CLOTHES);
+
+  // PokeMMO renderer:
+  // 1 = Female
+  // 2 = Male
+  const [gender, setGender] = useState(2);
+
+  const [clothes, setClothes] = useState({
+    ...DEFAULT_CLOTHES,
+  });
+
   const [previewError, setPreviewError] = useState(false);
+
+  /*
+   * ---------------------------------------------------------
+   * LOAD COSMETICS
+   * ---------------------------------------------------------
+   */
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +133,12 @@ export default function CosmeticBuilder() {
     };
   }, []);
 
+  /*
+   * ---------------------------------------------------------
+   * FILTER CURRENT SLOT
+   * ---------------------------------------------------------
+   */
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -130,7 +158,17 @@ export default function CosmeticBuilder() {
         String(item.year).includes(q)
       );
     });
-  }, [cosmetics, selectedSlot, query]);
+  }, [
+    cosmetics,
+    selectedSlot,
+    query,
+  ]);
+
+  /*
+   * ---------------------------------------------------------
+   * CURRENTLY SELECTED ITEM
+   * ---------------------------------------------------------
+   */
 
   const selectedItem = cosmetics.find(
     (item) =>
@@ -138,8 +176,15 @@ export default function CosmeticBuilder() {
       item.internal_id === clothes[selectedSlot]
   );
 
+  /*
+   * ---------------------------------------------------------
+   * SELECT COSMETIC
+   * ---------------------------------------------------------
+   */
+
   function selectCosmetic(item: Cosmetic) {
-    const rendererId = item.internal_id ?? item.item_id;
+    const rendererId =
+      item.internal_id ?? item.item_id;
 
     setClothes((current) => ({
       ...current,
@@ -149,13 +194,32 @@ export default function CosmeticBuilder() {
     setPreviewError(false);
   }
 
+  /*
+   * ---------------------------------------------------------
+   * RESET
+   * ---------------------------------------------------------
+   */
+
   function resetOutfit() {
-    setClothes({ ...DEFAULT_CLOTHES });
+    setClothes({
+      ...DEFAULT_CLOTHES,
+    });
+
+    setGender(2);
+    setScene(2);
     setPreviewError(false);
   }
 
+  /*
+   * ---------------------------------------------------------
+   * RANDOMIZE
+   * ---------------------------------------------------------
+   */
+
   function randomize() {
-    const next = { ...DEFAULT_CLOTHES };
+    const next = {
+      ...DEFAULT_CLOTHES,
+    };
 
     for (const slotId of SLOT_IDS) {
       const choices = cosmetics.filter(
@@ -167,11 +231,14 @@ export default function CosmeticBuilder() {
       if (choices.length) {
         const choice =
           choices[
-            Math.floor(Math.random() * choices.length)
+            Math.floor(
+              Math.random() * choices.length
+            )
           ];
 
         next[slotId] =
-          choice.internal_id ?? choice.item_id;
+          choice.internal_id ??
+          choice.item_id;
       }
     }
 
@@ -179,8 +246,40 @@ export default function CosmeticBuilder() {
     setPreviewError(false);
   }
 
+  /*
+   * ---------------------------------------------------------
+   * CHANGE GENDER
+   * ---------------------------------------------------------
+   */
+
+  function changeGender(genderId: number) {
+    setGender(genderId);
+    setPreviewError(false);
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * CHANGE SCENE
+   * ---------------------------------------------------------
+   */
+
+  function changeScene(sceneId: number) {
+    setScene(sceneId);
+    setPreviewError(false);
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * RENDER
+   * ---------------------------------------------------------
+   */
+
   return (
     <div className="cosmetic-builder-page">
+      {/* =====================================================
+          HERO
+          ===================================================== */}
+
       <div className="cosmetic-builder-hero">
         <div>
           <div className="cosmetic-eyebrow">
@@ -198,7 +297,10 @@ export default function CosmeticBuilder() {
         <div className="cosmetic-actions">
           <button
             onClick={randomize}
-            disabled={loadingCosmetics || !cosmetics.length}
+            disabled={
+              loadingCosmetics ||
+              !cosmetics.length
+            }
           >
             Randomize
           </button>
@@ -212,7 +314,15 @@ export default function CosmeticBuilder() {
         </div>
       </div>
 
+      {/* =====================================================
+          MAIN LAYOUT
+          ===================================================== */}
+
       <div className="cosmetic-builder-layout">
+        {/* ===================================================
+            COSMETIC CATALOG
+            =================================================== */}
+
         <section className="cosmetic-panel cosmetic-catalog">
           <div className="cosmetic-panel-heading">
             <div>
@@ -236,6 +346,10 @@ export default function CosmeticBuilder() {
             />
           </div>
 
+          {/* ===============================================
+              COSMETIC SLOTS
+              =============================================== */}
+
           <div className="cosmetic-slots">
             {SLOT_IDS.map((slotId) => (
               <button
@@ -255,6 +369,10 @@ export default function CosmeticBuilder() {
             ))}
           </div>
 
+          {/* ===============================================
+              COSMETIC LIST
+              =============================================== */}
+
           <div className="cosmetic-list">
             {loadingCosmetics ? (
               <div className="cosmetic-empty">
@@ -264,11 +382,14 @@ export default function CosmeticBuilder() {
               <>
                 {filtered.map((item, index) => {
                   const rendererId =
-                    item.internal_id ?? item.item_id;
+                    item.internal_id ??
+                    item.item_id;
 
                   const isSelected =
-                    clothes[selectedSlot] === rendererId ||
-                    clothes[selectedSlot] === item.item_id;
+                    clothes[selectedSlot] ===
+                      rendererId ||
+                    clothes[selectedSlot] ===
+                      item.item_id;
 
                   return (
                     <button
@@ -283,11 +404,14 @@ export default function CosmeticBuilder() {
                       }
                     >
                       <div className="cosmetic-item-icon">
-                        {item.icon_id ?? item.item_id}
+                        {item.icon_id ??
+                          item.item_id}
                       </div>
 
                       <div className="cosmetic-item-copy">
-                        <strong>{item.name}</strong>
+                        <strong>
+                          {item.name}
+                        </strong>
 
                         <small>
                           ID {item.item_id}
@@ -310,6 +434,10 @@ export default function CosmeticBuilder() {
           </div>
         </section>
 
+        {/* ===================================================
+            CHARACTER PREVIEW
+            =================================================== */}
+
         <section className="cosmetic-panel cosmetic-preview">
           <div className="cosmetic-preview-heading">
             <div>
@@ -322,38 +450,78 @@ export default function CosmeticBuilder() {
               </span>
             </div>
 
-            <div className="cosmetic-scenes">
-              {SCENES.map((item) => (
-                <button
-                  key={item.id}
-                  className={
-                    scene === item.id
-                      ? "active"
-                      : ""
-                  }
-                  onClick={() => {
-                    setScene(item.id);
-                    setPreviewError(false);
-                  }}
-                >
-                  {item.label}
-                </button>
-              ))}
+            {/* =============================================
+                GENDER SELECTOR + SCENES
+                ============================================= */}
+
+            <div className="cosmetic-preview-controls">
+              <div className="cosmetic-gender">
+                <span className="cosmetic-control-label">
+                  Character
+                </span>
+
+                <div className="cosmetic-gender-buttons">
+                  {GENDERS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={
+                        gender === item.id
+                          ? "active"
+                          : ""
+                      }
+                      onClick={() =>
+                        changeGender(item.id)
+                      }
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="cosmetic-scenes">
+                {SCENES.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    className={
+                      scene === item.id
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() =>
+                      changeScene(item.id)
+                    }
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* ===============================================
+              CHARACTER STAGE
+              =============================================== */}
 
           <div className="cosmetic-stage">
             {!previewError ? (
               <img
-                key={`${scene}-${JSON.stringify(
+                key={`${scene}-${gender}-${JSON.stringify(
                   clothes
                 )}`}
                 className="cosmetic-character"
                 src={getCosmeticSetupImage(
                   scene,
+                  gender,
                   clothes
                 )}
-                alt="PokeMMO character preview"
+                alt={`PokeMMO ${
+                  gender === 2
+                    ? "male"
+                    : "female"
+                } character preview`}
                 onError={() =>
                   setPreviewError(true)
                 }
@@ -374,6 +542,10 @@ export default function CosmeticBuilder() {
             )}
           </div>
 
+          {/* ===============================================
+              SELECTED OUTFIT
+              =============================================== */}
+
           <div className="cosmetic-selected">
             <div className="cosmetic-selected-title">
               Selected Outfit
@@ -388,7 +560,8 @@ export default function CosmeticBuilder() {
                   (entry) =>
                     entry.internal_id ===
                       rendererId ||
-                    entry.item_id === rendererId
+                    entry.item_id ===
+                      rendererId
                 );
 
                 if (!item) {
@@ -417,6 +590,10 @@ export default function CosmeticBuilder() {
           </div>
         </section>
       </div>
+
+      {/* =====================================================
+          STATUS
+          ===================================================== */}
 
       <div className="cosmetic-builder-note">
         {loadingCosmetics

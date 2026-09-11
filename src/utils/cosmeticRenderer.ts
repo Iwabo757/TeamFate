@@ -1,4 +1,4 @@
-export const DEFAULT_CLOTHES = {
+const DEFAULT_CLOTHES: Record<number, number> = {
   1: 0,
   2: 0,
   3: 1183,
@@ -15,6 +15,7 @@ export const DEFAULT_CLOTHES = {
 
 export function getCosmeticSetupImage(
   sceneId: number,
+  genderId: number,
   clothes: Record<number, number>
 ) {
   const c = {
@@ -35,5 +36,7 @@ export function getCosmeticSetupImage(
     c[7],
   ];
 
-  return `/api/cosmetic?scene=${sceneId}&params=${params.join(",")}`;
+  return `/api/cosmetic?scene=${sceneId}&gender=${genderId}&params=${params.join(
+    ","
+  )}`;
 }

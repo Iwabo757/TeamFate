@@ -1,65 +1,77 @@
 export default async function handler(req: any, res: any) {
   try {
-    const [cosmeticsResponse, itemsResponse] = await Promise.all([
-      fetch(
-        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items-cosmetic.json"
-      ),
-      fetch(
-        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items.json"
-      ),
-    ]);
+    const scene = String(req.query.scene || "2");
+    const gender = String(req.query.gender || "2");
+    const params = String(req.query.params || "");
 
-    if (!cosmeticsResponse.ok || !itemsResponse.ok) {
-      return res.status(502).json({
-        error: "Unable to load cosmetic data",
-      });
+    if (!/^\d+$/.test(scene)) {
+      return res.status(400).send("Invalid scene");
     }
 
-    const cosmeticData = await cosmeticsResponse.json();
-    const itemData = await itemsResponse.json();
-
-    const itemsById = new Map<number, any>();
-
-    for (const item of itemData) {
-      itemsById.set(Number(item.id), item);
+    if (!/^\d+$/.test(gender)) {
+      return res.status(400).send("Invalid gender");
     }
 
-    const cosmetics: any[] = [];
-
-    for (const cosmetic of cosmeticData) {
-      const ids = Array.isArray(cosmetic.item_id)
-        ? cosmetic.item_id
-        : [cosmetic.item_id];
-
-      for (const id of ids) {
-        const numericId = Number(id);
-        const item = itemsById.get(numericId);
-
-        cosmetics.push({
-          item_id: numericId,
-          name: item?.name || `Item ${numericId}`,
-          icon_id: item?.icon_id ?? numericId,
-          slot: Number(cosmetic.slot),
-          attribute: Number(cosmetic.attribute ?? 0),
-          festival: Number(cosmetic.festival ?? 0),
-          limitation: Number(cosmetic.limitation ?? 0),
-          month: Number(cosmetic.month ?? 0),
-          year: Number(cosmetic.year ?? 0),
-        });
-      }
+    if (!/^\d+(,\d+){9}$/.test(params)) {
+      return res.status(400).send("Invalid cosmetic parameters");
     }
+
+    /*
+     * IMPORTANT:
+     *
+     * CosmeticBuilder already sends INTERNAL renderer IDs.
+     *
+     * Do not convert them through apiItems.json here.
+     */
+
+    const rendererUrl =
+      `https://apis.fiereu.de/pokemmoclothes/v1/` +
+      `${scene}/${gender}/1/${params
+        .split(",")
+        .join("/")}.png`;
+
+    console.log(
+      "Cosmetic renderer:",
+      rendererUrl
+    );
+
+    const response =
+      await fetch(rendererUrl);
+
+    if (!response.ok) {
+      return res
+        .status(response.status)
+        .send("Renderer unavailable");
+    }
+
+    const image =
+      Buffer.from(
+        await response.arrayBuffer()
+      );
+
+    res.setHeader(
+      "Content-Type",
+      "image/png"
+    );
 
     res.setHeader(
       "Cache-Control",
-      "public, s-maxage=3600, stale-while-revalidate=86400"
+      "public, max-age=3600, s-maxage=3600"
     );
 
-    return res.status(200).json(cosmetics);
+    return res
+      .status(200)
+      .send(image);
   } catch (error) {
-    console.error("Cosmetic data error:", error);
+    console.error(
+      "Cosmetic renderer error:",
+      error
+    );
 
-    return res.status(500).json({
-      error: "Failed to load cosmetic data",
-    });
+    return res
+      .status(500)
+      .send(
+        "Cosmetic renderer error"
+      );
   }
 }
