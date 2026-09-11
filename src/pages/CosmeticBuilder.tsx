@@ -276,14 +276,12 @@ export default function CosmeticBuilder() {
     };
 
     for (const slotId of SLOT_IDS) {
-      const choices =
-        cosmetics.filter(
-          (item) =>
-            item.slot === slotId &&
-            (item.internal_id ??
-              item.item_id) > 0
-        );
 
+const choices = cosmetics.filter(
+  (item) =>
+    item.slot === slotId &&
+    item.internal_id > 0
+);
       if (!choices.length) {
         continue;
       }
@@ -296,9 +294,7 @@ export default function CosmeticBuilder() {
           )
         ];
 
-      next[slotId] =
-        choice.internal_id ??
-        choice.item_id;
+next[slotId] = choice.internal_id;
     }
 
     setClothes(next);
@@ -502,9 +498,12 @@ export default function CosmeticBuilder() {
               <>
                 {filtered.map(
                   (item, index) => {
-                    const rendererId =
-                      item.internal_id ??
-                      item.item_id;
+const rendererId = item.internal_id;
+
+if (!rendererId) {
+  setPreviewError(true);
+  return;
+}
 
                     const isSelected =
                       clothes[

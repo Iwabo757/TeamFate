@@ -493,10 +493,7 @@ export default async function handler(req: any, res: any) {
           normalizeName(name)
         );
 
-      const internalId =
-        directInternal ??
-        nameInternal ??
-        apiId;
+const internalId = apiToInternal.get(apiId);
 
       const metadata =
         metadataByApiId.get(apiId) ||
@@ -510,11 +507,11 @@ export default async function handler(req: any, res: any) {
           ? metadataSlot
           : inferSlot(name);
 
-      cosmetics.push({
-        item_id: apiId,
-        internal_id: internalId,
-        name,
-        icon_id: internalId,
+cosmetics.push({
+  item_id: apiId,
+  internal_id: internalId ?? 0,
+  name,
+  icon_id: internalId ?? apiId,
         slot,
         attribute:
           Number(metadata.attribute ?? 0),
