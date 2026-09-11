@@ -12,7 +12,7 @@ export type CosmeticSlot =
   | "mount";
 
 export type Cosmetic = {
-  name: string;
+  name?: string;
   slot: CosmeticSlot;
   layer: string;
   icon: string;
@@ -23,6 +23,7 @@ export type Cosmetic = {
 
 export type RendererManifest = {
   format_version: number;
+
   base: Record<
     string,
     {
@@ -30,6 +31,7 @@ export type RendererManifest = {
       previews: string[];
     }
   >;
+
   cosmetics: Record<string, Cosmetic>;
 };
 
@@ -37,11 +39,15 @@ export type RendererManifest = {
    CONSTANTS
 ========================================================= */
 
-const ASSET_ROOT = "/team-fate-renderer";
+const ASSET_ROOT =
+  "/team-fate-renderer";
 
 const CHARACTER_WIDTH = 57;
 const CHARACTER_HEIGHT = 56;
 
+/*
+ * Draw order.
+ */
 export const LAYER_ORDER: CosmeticSlot[] = [
   "back",
   "pants",
@@ -68,7 +74,8 @@ const imageCache = new Map<
 export async function loadImage(
   src: string
 ): Promise<HTMLImageElement> {
-  const cached = imageCache.get(src);
+  const cached =
+    imageCache.get(src);
 
   if (cached) {
     return cached;
@@ -77,7 +84,8 @@ export async function loadImage(
   const promise =
     new Promise<HTMLImageElement>(
       (resolve, reject) => {
-        const image = new Image();
+        const image =
+          new Image();
 
         image.decoding = "async";
 
@@ -114,7 +122,8 @@ export async function loadImage(
 export async function loadRendererManifest(
   url = `${ASSET_ROOT}/manifest.json`
 ): Promise<RendererManifest> {
-  const response = await fetch(url);
+  const response =
+    await fetch(url);
 
   if (!response.ok) {
     throw new Error(
@@ -156,14 +165,34 @@ function makeAssetUrl(
   baseUrl: string,
   relativePath: string
 ): string {
-  return `${baseUrl.replace(/\/+$/, "")}/${cleanPath(
-    relativePath
-  )}`;
+  return (
+    `${baseUrl.replace(
+      /\/+$/,
+      ""
+    )}/${cleanPath(relativePath)}`
+  );
 }
 
+/*
+ * IMPORTANT:
+ *
+ * Manifest records are not guaranteed to
+ * contain their own name property.
+ *
+ * Therefore this accepts unknown values
+ * safely instead of calling toLowerCase()
+ * on undefined.
+ */
 function slugify(
-  value: string
+  value: unknown
 ): string {
+  if (
+    typeof value !== "string" ||
+    value.length === 0
+  ) {
+    return "";
+  }
+
   return value
     .toLowerCase()
     .replace(/['’]/g, "")
@@ -178,43 +207,67 @@ function slugify(
 ========================================================= */
 
 function getCosmeticPaths(
-  cosmetic: Cosmetic
+  cosmetic: Cosmetic,
+  cosmeticKey: string
 ): string[] {
   const paths: string[] = [];
 
   /*
-   * Use the manifest path first.
+   * 1. Exact manifest path.
+   *
+   * This is always preferred.
    */
-  if (cosmetic.layer) {
+  if (
+    typeof cosmetic.layer ===
+      "string" &&
+    cosmetic.layer.length > 0
+  ) {
     paths.push(
-      cleanPath(cosmetic.layer)
+      cleanPath(
+        cosmetic.layer
+      )
     );
   }
 
-  const id = String(
-    cosmetic.layer_index
-  ).padStart(5, "0");
-
-  const name = slugify(
-    cosmetic.name
-  );
+  const id =
+    String(
+      cosmetic.layer_index
+    ).padStart(5, "0");
 
   /*
-   * Current extracted format.
+   * Use the manifest key when the
+   * record itself doesn't contain name.
    */
-  paths.push(
-    `cosmetics/${cosmetic.slot}/${name}__${id}_layer.png`
-  );
+  const name =
+    slugify(
+      cosmetic.name ??
+        cosmeticKey
+    );
 
   /*
-   * Older extracted format.
+   * Current extracted format:
+   *
+   * cosmetics/pants/
+   * pants__03504_layer.png
+   */
+  if (name) {
+    paths.push(
+      `cosmetics/${cosmetic.slot}/${name}__${id}_layer.png`
+    );
+  }
+
+  /*
+   * Older format:
+   *
+   * cosmetics/pants/
+   * 03504_layer.png
    */
   paths.push(
     `cosmetics/${cosmetic.slot}/${id}_layer.png`
   );
 
   /*
-   * Resource-index fallback.
+   * Simple resource-index fallback.
    */
   paths.push(
     `cosmetics/${cosmetic.slot}/${cosmetic.layer_index}_layer.png`
@@ -231,12 +284,18 @@ function getCosmeticPaths(
 
 async function loadCosmetic(
   cosmetic: Cosmetic,
+  cosmeticKey: string,
   baseUrl: string
 ): Promise<HTMLImageElement | null> {
   const paths =
-    getCosmeticPaths(cosmetic);
+    getCosmeticPaths(
+      cosmetic,
+      cosmeticKey
+    );
 
-  for (const path of paths) {
+  for (
+    const path of paths
+  ) {
     const url =
       makeAssetUrl(
         baseUrl,
@@ -248,33 +307,31 @@ async function loadCosmetic(
         await loadImage(url);
 
       console.log(
-        `[Local Renderer] Loaded ${cosmetic.name}: ${url}`
+        `[Local Renderer] Loaded ${cosmeticKey}: ${url}`
       );
 
       return image;
     } catch {
       /*
-       * Try the next filename.
+       * Try the next candidate.
        */
     }
   }
 
   console.warn(
-    `[Local Renderer] Could not load ${cosmetic.name}`,
+    `[Local Renderer] Could not load ${cosmeticKey}`,
     paths
   );
 
   /*
-   * IMPORTANT:
-   *
-   * A missing cosmetic no longer
-   * destroys the entire character.
+   * Never let one missing cosmetic
+   * destroy the entire character.
    */
   return null;
 }
 
 /* =========================================================
-   RENDER CHARACTER
+   CHARACTER RENDERER
 ========================================================= */
 
 export async function renderCharacter(
@@ -284,7 +341,10 @@ export async function renderCharacter(
     skin?: number;
     frame?: number;
     cosmetics?: Partial<
-      Record<CosmeticSlot, string>
+      Record<
+        CosmeticSlot,
+        string
+      >
     >;
     scale?: number;
   }
@@ -298,6 +358,10 @@ export async function renderCharacter(
     scale = 1,
   } = opts;
 
+  /* =======================================================
+     VALIDATE SCALE
+  ======================================================= */
+
   if (
     !Number.isFinite(scale) ||
     scale <= 0
@@ -308,7 +372,7 @@ export async function renderCharacter(
   }
 
   /* =======================================================
-     SKIN
+     FIND SKIN
   ======================================================= */
 
   const skinKey =
@@ -324,7 +388,7 @@ export async function renderCharacter(
   }
 
   /* =======================================================
-     FRAME
+     FIND FRAME
   ======================================================= */
 
   if (
@@ -350,7 +414,7 @@ export async function renderCharacter(
   }
 
   /* =======================================================
-     CANVAS
+     CREATE CANVAS
   ======================================================= */
 
   const width =
@@ -376,11 +440,14 @@ export async function renderCharacter(
     );
   }
 
+  /*
+   * Keep pixel art sharp.
+   */
   ctx.imageSmoothingEnabled =
     false;
 
   /* =======================================================
-     BASE
+     DRAW BASE
   ======================================================= */
 
   const baseUrlFull =
@@ -407,7 +474,7 @@ export async function renderCharacter(
   );
 
   /* =======================================================
-     COSMETICS
+     DRAW COSMETICS
   ======================================================= */
 
   for (
@@ -420,6 +487,10 @@ export async function renderCharacter(
       continue;
     }
 
+    /*
+     * The cosmetics object is keyed
+     * by cosmetic name.
+     */
     const cosmetic =
       manifest.cosmetics[
         cosmeticName
@@ -427,18 +498,22 @@ export async function renderCharacter(
 
     if (!cosmetic) {
       console.warn(
-        `[Local Renderer] Unknown cosmetic: ${cosmeticName}`
+        `[Local Renderer] Cosmetic not found: ${cosmeticName}`
       );
 
       continue;
     }
 
+    /*
+     * Verify slot.
+     */
     if (
       cosmetic.slot !== slot
     ) {
       console.warn(
-        `[Local Renderer] Slot mismatch for ${cosmetic.name}: ` +
-          `expected ${slot}, got ${cosmetic.slot}`
+        `[Local Renderer] Slot mismatch: ` +
+          `${cosmeticName} is ${cosmetic.slot}, ` +
+          `expected ${slot}`
       );
 
       continue;
@@ -447,14 +522,12 @@ export async function renderCharacter(
     const layer =
       await loadCosmetic(
         cosmetic,
+        cosmeticName,
         baseUrl
       );
 
     /*
-     * Missing layer?
-     *
-     * Skip it instead of killing
-     * the entire preview.
+     * Missing layer is no longer fatal.
      */
     if (!layer) {
       continue;
