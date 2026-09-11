@@ -210,24 +210,26 @@ setCosmetics(
       entry !== null
   );
 
-  function selectCosmetic(item: Cosmetic) {
-    setEquippedCosmetics((current) => ({
-      ...current,
-      [item.slot]: item.name,
-    }));
+function selectCosmetic(item: Cosmetic) {
+  setEquippedCosmetics((current) => ({
+    ...DEFAULT_COSMETICS,
+    ...current,
+    [item.slot]: item.name,
+  }));
 
-    setPreviewError("");
-  }
+  setPreviewError("");
+}
 
-  function removeCosmetic(slotId: string) {
-    setEquippedCosmetics((current) => {
-      const next = { ...current };
-      delete next[slotId as Cosmetic["slot"]];
-      return next;
-    });
+function removeCosmetic(slotId: string) {
+  setEquippedCosmetics((current) => ({
+    ...DEFAULT_COSMETICS,
+    ...current,
+    [slotId as Cosmetic["slot"]]:
+      DEFAULT_COSMETICS[slotId as Cosmetic["slot"]] ?? undefined,
+  }));
 
-    setPreviewError("");
-  }
+  setPreviewError("");
+}
 
   function resetOutfit() {
     setEquippedCosmetics(DEFAULT_COSMETICS);
