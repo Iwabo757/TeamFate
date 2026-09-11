@@ -30,6 +30,7 @@ type ApiItem = {
 type CosmeticResult = {
   item_id: number;
   internal_id?: number;
+  renderer_supported: boolean;
   name: string;
   icon_id: number;
   slot: number;
@@ -700,8 +701,7 @@ export default async function handler(
 
 const internalId =
   directInternal ??
-  nameInternal ??
-  apiId;
+  nameInternal;
 
       /*
        * -------------------------------------------------------
@@ -753,6 +753,8 @@ const internalId =
               internal_id: internalId,
             }
           : {}),
+
+        renderer_supported: internalId !== undefined,
 
         name,
 
