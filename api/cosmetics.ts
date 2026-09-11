@@ -698,9 +698,10 @@ export default async function handler(
           normalizeName(name)
         );
 
-      const internalId =
-        directInternal ??
-        nameInternal;
+const internalId =
+  directInternal ??
+  nameInternal ??
+  apiId;
 
       /*
        * -------------------------------------------------------
