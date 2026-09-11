@@ -26,17 +26,24 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    const catalogHtml = await catalogResponse.text();
-    const cosmeticData = await cosmeticDataResponse.json();
-    const apiItems = await apiItemsResponse.json();
+    const catalogHtml =
+      await catalogResponse.text();
+
+    const cosmeticData =
+      await cosmeticDataResponse.json();
+
+    const apiItems =
+      await apiItemsResponse.json();
 
     /*
      * ---------------------------------------------------------
      * API ID -> INTERNAL RENDERER ID
      * ---------------------------------------------------------
+     *
+     * This is the existing mapping used by the renderer.
      */
-
-    const apiToInternal = new Map<number, number>();
+    const apiToInternal =
+      new Map<number, number>();
 
     for (const item of apiItems) {
       const apiId = Number(item.apiID);
@@ -46,23 +53,99 @@ export default async function handler(req: any, res: any) {
         Number.isFinite(apiId) &&
         Number.isFinite(internalId)
       ) {
-        apiToInternal.set(apiId, internalId);
+        apiToInternal.set(
+          apiId,
+          internalId
+        );
+      }
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * INTERNAL ID -> NAME
+     * ---------------------------------------------------------
+     *
+     * The cosmetic metadata dataset uses renderer/internal IDs.
+     *
+     * Example:
+     *
+     * API item:
+     *   Backwards Cap = 2560
+     *
+     * Renderer item:
+     *   Backwards Cap = 2257
+     *
+     * Matching by name gives us a second way to resolve
+     * cosmetics when apiItems.json is missing an entry.
+     */
+    const internalByName =
+      new Map<string, number>();
+
+    const normalizeName = (value: string) =>
+      value
+        .toLowerCase()
+        .replace(/[’']/g, "'")
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    for (const cosmetic of cosmeticData) {
+      const ids = Array.isArray(
+        cosmetic.item_id
+      )
+        ? cosmetic.item_id
+        : [cosmetic.item_id];
+
+      const name =
+        typeof cosmetic.name === "string"
+          ? cosmetic.name
+          : "";
+
+      /*
+       * Older items-cosmetic.json sometimes doesn't contain
+       * a name, so only add entries where one exists.
+       */
+      if (!name) {
+        continue;
+      }
+
+      const normalized =
+        normalizeName(name);
+
+      if (!normalized) {
+        continue;
+      }
+
+      for (const id of ids) {
+        const internalId = Number(id);
+
+        if (!Number.isFinite(internalId)) {
+          continue;
+        }
+
+        if (
+          !internalByName.has(normalized)
+        ) {
+          internalByName.set(
+            normalized,
+            internalId
+          );
+        }
       }
     }
 
     /*
      * ---------------------------------------------------------
      * OLD COSMETIC METADATA
-     *
-     * This still contains useful slot information for older
-     * cosmetics. Newer items are handled by inferSlot().
      * ---------------------------------------------------------
      */
-
-    const metadataByApiId = new Map<number, any>();
+    const metadataByApiId =
+      new Map<number, any>();
 
     for (const cosmetic of cosmeticData) {
-      const ids = Array.isArray(cosmetic.item_id)
+      const ids = Array.isArray(
+        cosmetic.item_id
+      )
         ? cosmetic.item_id
         : [cosmetic.item_id];
 
@@ -73,39 +156,43 @@ export default async function handler(req: any, res: any) {
           continue;
         }
 
-        metadataByApiId.set(numericId, {
-          attribute: Number(cosmetic.attribute ?? 0),
-          festival: Number(cosmetic.festival ?? 0),
-          limitation: Number(cosmetic.limitation ?? 0),
-          month: Number(cosmetic.month ?? 0),
-          slot: Number(cosmetic.slot ?? 0),
-          year: Number(cosmetic.year ?? 0),
-        });
+        metadataByApiId.set(
+          numericId,
+          {
+            attribute: Number(
+              cosmetic.attribute ?? 0
+            ),
+            festival: Number(
+              cosmetic.festival ?? 0
+            ),
+            limitation: Number(
+              cosmetic.limitation ?? 0
+            ),
+            month: Number(
+              cosmetic.month ?? 0
+            ),
+            slot: Number(
+              cosmetic.slot ?? 0
+            ),
+            year: Number(
+              cosmetic.year ?? 0
+            ),
+          }
+        );
       }
     }
 
     /*
      * ---------------------------------------------------------
-     * SLOT INFERENCE FOR NEWER COSMETICS
-     *
-     * PikaMMO has the current item catalog, while the older
-     * cosmetic metadata file does not always contain newly
-     * released cosmetics.
-     *
-     * Existing slot data always wins.
-     * These rules are only used when no slot exists.
+     * SLOT INFERENCE
      * ---------------------------------------------------------
      */
-
     function inferSlot(name: string): number {
       const value = name
         .toLowerCase()
         .replace(/[’']/g, "'")
         .trim();
 
-      /*
-       * BICYCLE
-       */
       if (
         value.includes("bicycle") ||
         value.includes("bike") ||
@@ -115,9 +202,6 @@ export default async function handler(req: any, res: any) {
         return 12;
       }
 
-      /*
-       * GLOVES
-       */
       if (
         value.includes("glove") ||
         value.includes("boxing glove")
@@ -125,9 +209,6 @@ export default async function handler(req: any, res: any) {
         return 8;
       }
 
-      /*
-       * SHOES
-       */
       if (
         value.includes("shoe") ||
         value.includes("boots") ||
@@ -138,9 +219,6 @@ export default async function handler(req: any, res: any) {
         return 9;
       }
 
-      /*
-       * LEGS
-       */
       if (
         value === "shorts" ||
         value.includes("pants") ||
@@ -151,9 +229,6 @@ export default async function handler(req: any, res: any) {
         return 10;
       }
 
-      /*
-       * EYES
-       */
       if (
         value.includes("contact") ||
         value.includes("glasses") ||
@@ -164,9 +239,6 @@ export default async function handler(req: any, res: any) {
         return 4;
       }
 
-      /*
-       * FACE
-       */
       if (
         value.includes("mask") ||
         value.includes("moustache") ||
@@ -180,9 +252,6 @@ export default async function handler(req: any, res: any) {
         return 5;
       }
 
-      /*
-       * BACK
-       */
       if (
         value.includes("wing") ||
         value.includes("cape") ||
@@ -195,9 +264,6 @@ export default async function handler(req: any, res: any) {
         return 6;
       }
 
-      /*
-       * ROD / HELD COSMETIC
-       */
       if (
         value.includes("rod") ||
         value.includes("staff") ||
@@ -220,13 +286,6 @@ export default async function handler(req: any, res: any) {
         return 11;
       }
 
-      /*
-       * HAIR
-       *
-       * These are intentionally checked BEFORE hats/headwear.
-       * Newer cosmetics such as Mermaid Hair and Idol Hairstyle
-       * were not present in the older slot metadata.
-       */
       if (
         value === "afro" ||
         value.includes("hair") ||
@@ -248,9 +307,6 @@ export default async function handler(req: any, res: any) {
         return 3;
       }
 
-      /*
-       * FOREHEAD / SMALL HEAD ACCESSORIES
-       */
       if (
         value.includes("hairpin") ||
         value.includes("hair pin") ||
@@ -262,9 +318,6 @@ export default async function handler(req: any, res: any) {
         return 1;
       }
 
-      /*
-       * HATS / HEADWEAR
-       */
       if (
         value.includes("hat") ||
         value.includes("cap") ||
@@ -293,9 +346,6 @@ export default async function handler(req: any, res: any) {
         return 2;
       }
 
-      /*
-       * TOP / BODY
-       */
       if (
         value.includes("outfit") ||
         value.includes("costume") ||
@@ -324,16 +374,11 @@ export default async function handler(req: any, res: any) {
         value.includes("attire") ||
         value.includes("bodysuit") ||
         value.includes("hoodie") ||
-        value.includes("scarf") ||
-        value.includes("cape")
+        value.includes("scarf")
       ) {
         return 7;
       }
 
-      /*
-       * Unknown items stay uncategorized rather than being
-       * incorrectly forced into a clothing slot.
-       */
       return 0;
     }
 
@@ -342,7 +387,6 @@ export default async function handler(req: any, res: any) {
      * HTML HELPERS
      * ---------------------------------------------------------
      */
-
     const stripHtml = (value: string) =>
       value
         .replace(/<[^>]*>/g, " ")
@@ -356,7 +400,8 @@ export default async function handler(req: any, res: any) {
         .replace(/\s+/g, " ")
         .trim();
 
-    const rowRegex = /<tr[\s\S]*?<\/tr>/gi;
+    const rowRegex =
+      /<tr[\s\S]*?<\/tr>/gi;
 
     const imageRegex =
       /vanity\/(\d+)\.png/i;
@@ -369,16 +414,12 @@ export default async function handler(req: any, res: any) {
 
     /*
      * ---------------------------------------------------------
-     * BUILD CURRENT COSMETIC CATALOG
+     * BUILD CATALOG
      * ---------------------------------------------------------
      */
-
     const cosmetics: any[] = [];
 
     for (const row of rows) {
-      /*
-       * Every catalog entry has an image containing the API ID.
-       */
       const imageMatch =
         row.match(imageRegex);
 
@@ -404,18 +445,9 @@ export default async function handler(req: any, res: any) {
       }
 
       /*
-       * PikaMMO's current table contains:
-       *
-       * French name
-       * English/GTL name
-       * Type
-       *
-       * We ONLY accept rows whose type is Cosmetic.
-       *
-       * This is the important change that removes the
-       * 38 particle effects from the clothing catalog.
+       * Only include actual cosmetics.
+       * Particle effects are excluded.
        */
-
       const typeCell =
         cells[cells.length - 1]
           ?.toLowerCase()
@@ -425,15 +457,14 @@ export default async function handler(req: any, res: any) {
         continue;
       }
 
-      /*
-       * Prefer the English/GTL name.
-       */
       const possibleNames =
         cells.filter(
           (value) =>
             value &&
-            value.toLowerCase() !== "cosmetic" &&
-            value.toLowerCase() !== "particle"
+            value.toLowerCase() !==
+              "cosmetic" &&
+            value.toLowerCase() !==
+              "particle"
         );
 
       const name =
@@ -442,25 +473,35 @@ export default async function handler(req: any, res: any) {
         `Item ${apiId}`;
 
       /*
-       * Convert the public/API item ID into the internal
-       * renderer ID used by the PokeMMO clothes renderer.
+       * -------------------------------------------------------
+       * RESOLVE INTERNAL RENDERER ID
+       * -------------------------------------------------------
+       *
+       * Priority:
+       *
+       * 1. apiItems.json direct mapping
+       * 2. cosmetic metadata name mapping
+       * 3. API ID as final fallback
+       *
+       * The first two are real renderer IDs.
        */
+      const directInternal =
+        apiToInternal.get(apiId);
+
+      const nameInternal =
+        internalByName.get(
+          normalizeName(name)
+        );
+
       const internalId =
-        apiToInternal.get(apiId) ??
+        directInternal ??
+        nameInternal ??
         apiId;
 
-      /*
-       * Old metadata if available.
-       */
       const metadata =
-        metadataByApiId.get(apiId) || {};
+        metadataByApiId.get(apiId) ||
+        {};
 
-      /*
-       * Existing metadata wins.
-       *
-       * If the old data has no slot, infer one from the
-       * current catalog name.
-       */
       const metadataSlot =
         Number(metadata.slot ?? 0);
 
@@ -472,28 +513,17 @@ export default async function handler(req: any, res: any) {
       cosmetics.push({
         item_id: apiId,
         internal_id: internalId,
-
         name,
-
-        /*
-         * Renderer/icon data uses the internal ID.
-         */
         icon_id: internalId,
-
         slot,
-
         attribute:
           Number(metadata.attribute ?? 0),
-
         festival:
           Number(metadata.festival ?? 0),
-
         limitation:
           Number(metadata.limitation ?? 0),
-
         month:
           Number(metadata.month ?? 0),
-
         year:
           Number(metadata.year ?? 0),
       });
@@ -504,12 +534,13 @@ export default async function handler(req: any, res: any) {
      * REMOVE DUPLICATES
      * ---------------------------------------------------------
      */
-
     const unique =
       new Map<number, any>();
 
     for (const cosmetic of cosmetics) {
-      if (!unique.has(cosmetic.item_id)) {
+      if (
+        !unique.has(cosmetic.item_id)
+      ) {
         unique.set(
           cosmetic.item_id,
           cosmetic
@@ -523,11 +554,8 @@ export default async function handler(req: any, res: any) {
     /*
      * ---------------------------------------------------------
      * SORT
-     *
-     * Slot first, then alphabetical name.
      * ---------------------------------------------------------
      */
-
     result.sort((a, b) => {
       if (a.slot !== b.slot) {
         return a.slot - b.slot;
@@ -543,7 +571,6 @@ export default async function handler(req: any, res: any) {
      * RESPONSE
      * ---------------------------------------------------------
      */
-
     res.setHeader(
       "Content-Type",
       "application/json"
@@ -554,7 +581,9 @@ export default async function handler(req: any, res: any) {
       "public, s-maxage=3600, stale-while-revalidate=86400"
     );
 
-    return res.status(200).json(result);
+    return res.status(200).json(
+      result
+    );
   } catch (error) {
     console.error(
       "Cosmetic catalog error:",
