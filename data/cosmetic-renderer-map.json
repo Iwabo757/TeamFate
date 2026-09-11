@@ -2658,5 +2658,115 @@
     "internal_id": 2245,
     "slot": 12,
     "name": "Xuanwu"
+  },
+  "2277": {
+    "internal_id": 1260,
+    "slot": 2,
+    "name": "Flat Clap"
+  },
+  "2278": {
+    "internal_id": 1264,
+    "slot": 2,
+    "name": "Reflctive Goggles"
+  },
+  "2304": {
+    "internal_id": 1270,
+    "slot": 2,
+    "name": "Straw Hat"
+  },
+  "2352": {
+    "internal_id": 1057,
+    "slot": 2,
+    "name": "Earnyffs"
+  },
+  "2353": {
+    "internal_id": 1037,
+    "slot": 2,
+    "name": "Nutcracke Hat"
+  },
+  "2396": {
+    "internal_id": 1136,
+    "slot": 2,
+    "name": "W Cat Headphones Pink LED"
+  },
+  "2397": {
+    "internal_id": 1135,
+    "slot": 2,
+    "name": "W Cat Headphones Blue LED"
+  },
+  "2406": {
+    "internal_id": 1094,
+    "slot": 2,
+    "name": "Red Dragon Hat"
+  },
+  "2411": {
+    "internal_id": 1130,
+    "slot": 2,
+    "name": "Pharoah Headdress"
+  },
+  "2463": {
+    "internal_id": 1159,
+    "slot": 2,
+    "name": "Detective Hat"
+  },
+  "2464": {
+    "internal_id": 1121,
+    "slot": 2,
+    "name": "Military Hat"
+  },
+  "2554": {
+    "internal_id": 1006,
+    "slot": 3,
+    "name": "Electric Storm"
+  },
+  "2561": {
+    "internal_id": 2257,
+    "slot": 3,
+    "name": "Mermaid Hair"
+  },
+  "3029": {
+    "internal_id": 1319,
+    "slot": 5,
+    "name": "Moustache(M)"
+  },
+  "3290": {
+    "internal_id": 1010,
+    "slot": 6,
+    "name": "Witch's Broom"
+  },
+  "3291": {
+    "internal_id": 1012,
+    "slot": 6,
+    "name": "Pumpking Backpack"
+  },
+  "3313": {
+    "internal_id": 1081,
+    "slot": 6,
+    "name": "Chirstmas Light"
+  },
+  "3316": {
+    "internal_id": 1388,
+    "slot": 2,
+    "name": "Wreath Cap"
+  },
+  "3324": {
+    "internal_id": 1377,
+    "slot": 6,
+    "name": "Red Xmas Stocking"
+  },
+  "3325": {
+    "internal_id": 1449,
+    "slot": 6,
+    "name": "Green Xmas Stocking"
+  },
+  "3346": {
+    "internal_id": 1460,
+    "slot": 6,
+    "name": "Gaint Turtle Shell"
+  },
+  "4306": {
+    "internal_id": 1317,
+    "slot": 10,
+    "name": "Skirt(F)"
   }
 }
