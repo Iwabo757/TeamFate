@@ -1,147 +1,112 @@
 import { useEffect, useMemo, useState } from "react";
 import "../cosmetic-builder.css";
-import { getCosmeticSetupImage } from "../utils/cosmeticRenderer";
+import {
+  getCosmeticSetupImage,
+  getRendererManifest,
+} from "../utils/cosmeticRenderer";
+import type { RendererManifest } from "../renderer/renderer";
 
 type Cosmetic = {
-  item_id: number;
-  internal_id?: number;
   name: string;
-  icon_id: number;
-  slot: number;
-  attribute: number;
-  festival: number;
-  limitation: number;
-  month: number;
-  year: number;
+  slot:
+    | "back"
+    | "pants"
+    | "shoes"
+    | "top"
+    | "eyes"
+    | "face"
+    | "hair"
+    | "held"
+    | "hat"
+    | "tool"
+    | "mount";
+  layer: string;
+  icon: string;
+  layer_index: number;
+  icon_index: number;
+  slot_code: number;
 };
 
-const SLOT_NAMES: Record<number, string> = {
-  1: "Forehead",
-  2: "Hat",
-  3: "Hair",
-  4: "Eyes",
-  5: "Face",
-  6: "Back",
-  7: "Top",
-  8: "Gloves",
-  9: "Shoes",
-  10: "Legs",
-  11: "Rod",
-  12: "Bicycle",
+const SLOT_NAMES: Record<string, string> = {
+  hat: "Hat",
+  hair: "Hair",
+  eyes: "Eyes",
+  face: "Face",
+  back: "Back",
+  top: "Top",
+  held: "Held Item",
+  shoes: "Shoes",
+  pants: "Pants",
+  tool: "Tool",
+  mount: "Mount",
 };
 
-const SLOT_IDS = Object.keys(SLOT_NAMES).map(Number);
-
-const DEFAULT_CLOTHES: Record<number, number> = {
-  1: 0,
-  2: 0,
-  3: 1183,
-  4: 1441,
-  5: 1322,
-  6: 0,
-  7: 1323,
-  8: 0,
-  9: 1327,
-  10: 1316,
-  11: 0,
-  12: 0,
-};
+const SLOT_IDS = Object.keys(SLOT_NAMES);
 
 const SCENES = [
-  {
-    label: "Back",
-    id: 1,
-  },
-  {
-    label: "Front",
-    id: 2,
-  },
-  {
-    label: "Side",
-    id: 3,
-  },
+  { label: "Back", id: "back", frame: 45 },
+  { label: "Front", id: "front", frame: 0 },
+  { label: "Side", id: "side", frame: 15 },
 ];
 
-const GENDERS = [
-  {
-    label: "♂ Male",
-    id: 2,
-  },
-  {
-    label: "♀ Female",
-    id: 1,
-  },
-];
+const SKINS = [1, 2, 3, 4, 5];
 
-const COSMETIC_ICON_BASE =
-  "https://www.pikammo.fr/Pokemmo/assets/img/vanity";
+const DEFAULT_COSMETICS: Partial<Record<Cosmetic["slot"], string>> = {
+  hair: "Default Hair",
+  top: "T-Shirt",
+  pants: "Pants",
+  shoes: "Shoes",
+};
 
 export default function CosmeticBuilder() {
+  const [manifest, setManifest] =
+    useState<RendererManifest | null>(null);
   const [cosmetics, setCosmetics] = useState<Cosmetic[]>([]);
   const [loadingCosmetics, setLoadingCosmetics] = useState(true);
+  const [rendering, setRendering] = useState(true);
 
-  const [selectedSlot, setSelectedSlot] = useState(2);
-
+  const [selectedSlot, setSelectedSlot] = useState("hat");
   const [query, setQuery] = useState("");
+  const [scene, setScene] = useState("front");
+  const [skin, setSkin] = useState(1);
 
-  const [scene, setScene] = useState(2);
+  const [equippedCosmetics, setEquippedCosmetics] =
+    useState<Partial<Record<Cosmetic["slot"], string>>>(
+      DEFAULT_COSMETICS
+    );
 
-  /*
-   * PokeMMO renderer:
-   *
-   * 1 = Female
-   * 2 = Male
-   */
-  const [gender, setGender] = useState(2);
-
-  const [clothes, setClothes] = useState<Record<number, number>>({
-    ...DEFAULT_CLOTHES,
-  });
-
-  const [equippedCosmetics, setEquippedCosmetics] = useState<Record<number, number | null>>({});
-
-  const [previewError, setPreviewError] = useState(false);
-
-  /*
-   * =========================================================
-   * LOAD COSMETICS
-   * =========================================================
-   */
+  const [previewImage, setPreviewImage] = useState("");
+  const [previewError, setPreviewError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadCosmetics() {
+    async function load() {
       try {
         setLoadingCosmetics(true);
+        const loaded = await getRendererManifest();
 
-        const response = await fetch("/api/cosmetics");
+        if (cancelled) return;
 
-        if (!response.ok) {
-          throw new Error(
-            `Cosmetic API returned ${response.status}`
-          );
-        }
-
-        const data: Cosmetic[] = await response.json();
-
-        if (!Array.isArray(data)) {
-          throw new Error(
-            "Cosmetic API returned invalid data"
-          );
-        }
-
-        if (!cancelled) {
-          setCosmetics(data);
-        }
+        setManifest(loaded);
+        setCosmetics(
+          Object.entries(loaded.cosmetics).map(
+            ([name, value]) => ({
+              name,
+              ...value,
+            })
+          )
+        );
       } catch (error) {
         console.error(
-          "Failed to load cosmetics:",
+          "Failed to load local cosmetic renderer:",
           error
         );
 
         if (!cancelled) {
-          setCosmetics([]);
+          setPreviewError(
+            "The local PokeMMO cosmetic renderer could not be loaded."
+          );
         }
       } finally {
         if (!cancelled) {
@@ -150,221 +115,166 @@ export default function CosmeticBuilder() {
       }
     }
 
-    loadCosmetics();
+    load();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  /*
-   * =========================================================
-   * FILTER COSMETICS
-   * =========================================================
-   */
-
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
     return cosmetics.filter((item) => {
-      if (item.slot !== selectedSlot) {
-        return false;
-      }
+      if (item.slot !== selectedSlot) return false;
 
-      if (!q) {
-        return true;
-      }
+      if (!q) return true;
 
       return (
         item.name.toLowerCase().includes(q) ||
-        String(item.item_id).includes(q) ||
-        String(item.internal_id ?? "").includes(q) ||
-        String(item.year).includes(q)
+        String(item.layer_index).includes(q)
       );
     });
   }, [cosmetics, selectedSlot, query]);
 
-  /*
-   * =========================================================
-   * CURRENT SELECTED ITEM
-   * =========================================================
-   */
+  useEffect(() => {
+    if (!manifest) return;
 
-  const selectedItemId = equippedCosmetics[selectedSlot];
+    let cancelled = false;
 
-  const selectedItem =
-    selectedItemId == null
-      ? undefined
-      : cosmetics.find((item) => item.item_id === selectedItemId);
+    async function render() {
+      try {
+        setRendering(true);
+        setPreviewError("");
 
-  /*
-   * =========================================================
-   * SELECT COSMETIC
-   * =========================================================
-   */
+        const selectedScene = SCENES.find(
+          (item) => item.id === scene
+        );
 
-  function selectCosmetic(item: Cosmetic) {
-    const rendererId = item.internal_id;
+        const image = await getCosmeticSetupImage({
+          skin,
+          frame: selectedScene?.frame ?? 0,
+          cosmetics: equippedCosmetics,
+        });
 
-    if (rendererId === undefined || rendererId <= 0) {
-      setPreviewError(true);
-      return;
+        if (!cancelled) {
+          setPreviewImage(image);
+        }
+      } catch (error) {
+        console.error(
+          "Failed to render local character:",
+          error
+        );
+
+        if (!cancelled) {
+          setPreviewImage("");
+          setPreviewError(
+            "This character could not be rendered."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setRendering(false);
+        }
+      }
     }
 
-    setClothes((current) => ({
-      ...current,
-      [selectedSlot]: rendererId,
-    }));
+    render();
 
-    setEquippedCosmetics((current) => ({
-      ...current,
-      [selectedSlot]: item.item_id,
-    }));
+    return () => {
+      cancelled = true;
+    };
+  }, [manifest, skin, scene, equippedCosmetics]);
 
-    setPreviewError(false);
-  }
-  /*
-   * =========================================================
-   * REMOVE COSMETIC
-   * =========================================================
-   */
-
-  function removeCosmetic(slotId: number) {
-    setClothes((current) => ({
-      ...current,
-      [slotId]: DEFAULT_CLOTHES[slotId] ?? 0,
-    }));
-
-    setEquippedCosmetics((current) => {
-      const next = { ...current };
-      delete next[slotId];
-      return next;
-    });
-
-    setPreviewError(false);
-  }
-  /*
-   * =========================================================
-   * RESET OUTFIT
-   * =========================================================
-   */
-
-  function resetOutfit() {
-    setClothes({ ...DEFAULT_CLOTHES });
-    setEquippedCosmetics({});
-    setGender(2);
-    setScene(2);
-    setSelectedSlot(2);
-    setQuery("");
-    setPreviewError(false);
-  }
-  /*
-   * =========================================================
-   * RANDOMIZE
-   * =========================================================
-   */
-
-  function randomize() {
-    const nextClothes = { ...DEFAULT_CLOTHES };
-    const nextEquipped: Record<number, number | null> = {};
-
-    for (const slotId of SLOT_IDS) {
-      const choices = cosmetics.filter(
-        (item) =>
-          item.slot === slotId &&
-          item.internal_id !== undefined &&
-          item.internal_id > 0
-      );
-
-      if (!choices.length) continue;
-
-      const choice = choices[Math.floor(Math.random() * choices.length)];
-      const rendererId = choice.internal_id;
-
-      if (rendererId === undefined || rendererId <= 0) continue;
-
-      nextClothes[slotId] = rendererId;
-      nextEquipped[slotId] = choice.item_id;
-    }
-
-    setClothes(nextClothes);
-    setEquippedCosmetics(nextEquipped);
-    setPreviewError(false);
-  }
-  /*
-   * =========================================================
-   * SELECTED OUTFIT
-   *
-   * Only categories that currently have an item
-   * equipped are included.
-   * =========================================================
-   */
+  const selectedItem = equippedCosmetics[selectedSlot as Cosmetic["slot"]];
 
   const selectedOutfit = SLOT_IDS.map((slotId) => {
-    const itemId = equippedCosmetics[slotId];
+    const itemName =
+      equippedCosmetics[slotId as Cosmetic["slot"]];
 
-    if (itemId == null) return null;
+    if (!itemName) return null;
 
-    const item = cosmetics.find((entry) => entry.item_id === itemId);
+    const item = cosmetics.find(
+      (entry) =>
+        entry.name === itemName &&
+        entry.slot === slotId
+    );
+
     if (!item) return null;
 
     return { slotId, item };
   }).filter(
-    (entry): entry is { slotId: number; item: Cosmetic } => entry !== null
+    (
+      entry
+    ): entry is { slotId: string; item: Cosmetic } =>
+      entry !== null
   );
 
-  /*
-   * =========================================================
-   * CHANGE GENDER
-   * =========================================================
-   */
+  function selectCosmetic(item: Cosmetic) {
+    setEquippedCosmetics((current) => ({
+      ...current,
+      [item.slot]: item.name,
+    }));
 
-  function changeGender(genderId: number) {
-    setGender(genderId);
-    setPreviewError(false);
+    setPreviewError("");
   }
 
-  /*
-   * =========================================================
-   * CHANGE SCENE
-   * =========================================================
-   */
+  function removeCosmetic(slotId: string) {
+    setEquippedCosmetics((current) => {
+      const next = { ...current };
+      delete next[slotId as Cosmetic["slot"]];
+      return next;
+    });
 
-  function changeScene(sceneId: number) {
-    setScene(sceneId);
-    setPreviewError(false);
+    setPreviewError("");
   }
 
-  /*
-   * =========================================================
-   * COSMETIC ICON
-   * =========================================================
-   */
+  function resetOutfit() {
+    setEquippedCosmetics(DEFAULT_COSMETICS);
+    setSkin(1);
+    setScene("front");
+    setSelectedSlot("hat");
+    setQuery("");
+    setPreviewError("");
+  }
+
+  function randomize() {
+    const next: Partial<
+      Record<Cosmetic["slot"], string>
+    > = {};
+
+    for (const slot of SLOT_IDS) {
+      const choices = cosmetics.filter(
+        (item) => item.slot === slot
+      );
+
+      if (!choices.length) continue;
+
+      const choice =
+        choices[Math.floor(Math.random() * choices.length)];
+
+      next[choice.slot] = choice.name;
+    }
+
+    setEquippedCosmetics(next);
+    setSkin(
+      SKINS[Math.floor(Math.random() * SKINS.length)]
+    );
+    setPreviewError("");
+  }
 
   function getCosmeticIcon(item: Cosmetic) {
-    return `${COSMETIC_ICON_BASE}/${item.item_id}.png`;
+    return `/team-fate-renderer/${item.icon}`;
   }
-
-  /*
-   * =========================================================
-   * PAGE
-   * =========================================================
-   */
 
   return (
     <div className="cosmetic-builder-page">
-
-      {/* =====================================================
-          HEADER
-          ===================================================== */}
-
       <div className="cosmetic-builder-hero">
         <div>
           <h1>Cosmetic Builder</h1>
-
           <p>
-            Build your PokeMMO outfit and preview it
-            from different angles.
+            Build your PokeMMO outfit using the local Team Fate
+            renderer.
           </p>
         </div>
 
@@ -372,10 +282,7 @@ export default function CosmeticBuilder() {
           <button
             type="button"
             onClick={randomize}
-            disabled={
-              loadingCosmetics ||
-              !cosmetics.length
-            }
+            disabled={loadingCosmetics || !cosmetics.length}
           >
             Randomize
           </button>
@@ -390,22 +297,11 @@ export default function CosmeticBuilder() {
         </div>
       </div>
 
-      {/* =====================================================
-          MAIN LAYOUT
-          ===================================================== */}
-
       <div className="cosmetic-builder-layout">
-
-        {/* ===================================================
-            COSMETIC CATALOG
-            =================================================== */}
-
         <section className="cosmetic-panel cosmetic-catalog">
-
           <div className="cosmetic-panel-heading">
             <div>
               <h2>Cosmetics</h2>
-
               <span>
                 {loadingCosmetics
                   ? "Loading..."
@@ -423,10 +319,6 @@ export default function CosmeticBuilder() {
               disabled={loadingCosmetics}
             />
           </div>
-
-          {/* =================================================
-              SLOTS
-              ================================================= */}
 
           <div className="cosmetic-slots">
             {SLOT_IDS.map((slotId) => (
@@ -448,24 +340,20 @@ export default function CosmeticBuilder() {
             ))}
           </div>
 
-          {/* =================================================
-              COSMETIC LIST
-              ================================================= */}
-
           <div className="cosmetic-list">
             {loadingCosmetics ? (
               <div className="cosmetic-empty">
-                Loading cosmetics...
+                Loading local cosmetics...
               </div>
             ) : (
               <>
-                {filtered.map((item, index) => {
+                {filtered.map((item) => {
                   const isSelected =
-                    equippedCosmetics[selectedSlot] === item.item_id;
+                    selectedItem === item.name;
 
                   return (
                     <button
-                      key={`${item.item_id}-${item.slot}-${index}`}
+                      key={`${item.slot}-${item.name}`}
                       type="button"
                       className={
                         isSelected
@@ -488,20 +376,15 @@ export default function CosmeticBuilder() {
                         />
 
                         <span>
-                          {item.item_id}
+                          {item.layer_index}
                         </span>
                       </div>
 
                       <div className="cosmetic-item-copy">
-                        <strong>
-                          {item.name}
-                        </strong>
-
+                        <strong>{item.name}</strong>
                         <small>
-                          ID {item.item_id}
-                          {item.year
-                            ? ` · ${item.year}`
-                            : ""}
+                          Local asset · Resource{" "}
+                          {item.layer_index}
                         </small>
                       </div>
                     </button>
@@ -518,67 +401,39 @@ export default function CosmeticBuilder() {
           </div>
         </section>
 
-        {/* ===================================================
-            CHARACTER PREVIEW
-            =================================================== */}
-
         <section className="cosmetic-panel cosmetic-preview">
-
-          {/* =================================================
-              PREVIEW HEADER
-              ================================================= */}
-
           <div className="cosmetic-preview-heading">
             <div>
-              <h2>
-                Character Preview
-              </h2>
+              <h2>Character Preview</h2>
 
               <span>
                 {selectedItem
-                  ? `${
-                      SLOT_NAMES[selectedSlot]
-                    }: ${
-                      selectedItem.name
-                    }`
+                  ? `${SLOT_NAMES[selectedSlot]}: ${selectedItem}`
                   : "Default outfit"}
               </span>
             </div>
 
             <div className="cosmetic-preview-controls">
-
-              {/* =============================================
-                  GENDER
-                  ============================================= */}
-
               <div className="cosmetic-gender">
                 <span className="cosmetic-control-label">
-                  Character
+                  Skin
                 </span>
 
                 <div className="cosmetic-scenes">
-                  {GENDERS.map((item) => (
+                  {SKINS.map((skinId) => (
                     <button
-                      key={item.id}
+                      key={skinId}
                       type="button"
                       className={
-                        gender === item.id
-                          ? "active"
-                          : ""
+                        skin === skinId ? "active" : ""
                       }
-                      onClick={() =>
-                        changeGender(item.id)
-                      }
+                      onClick={() => setSkin(skinId)}
                     >
-                      {item.label}
+                      {skinId}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* =============================================
-                  CAMERA
-                  ============================================= */}
 
               <div className="cosmetic-scenes">
                 {SCENES.map((item) => (
@@ -586,13 +441,9 @@ export default function CosmeticBuilder() {
                     key={item.id}
                     type="button"
                     className={
-                      scene === item.id
-                        ? "active"
-                        : ""
+                      scene === item.id ? "active" : ""
                     }
-                    onClick={() =>
-                      changeScene(item.id)
-                    }
+                    onClick={() => setScene(item.id)}
                   >
                     {item.label}
                   </button>
@@ -601,63 +452,35 @@ export default function CosmeticBuilder() {
             </div>
           </div>
 
-          {/* =================================================
-              PREVIEW + SELECTED OUTFIT
-              ================================================= */}
-
           <div className="cosmetic-preview-body">
-
-            {/* ===============================================
-                CHARACTER
-                =============================================== */}
-
             <div className="cosmetic-stage">
-              {!previewError ? (
+              {previewImage && !previewError ? (
                 <img
-                  key={`${scene}-${gender}-${JSON.stringify(
-                    clothes
+                  key={`${skin}-${scene}-${JSON.stringify(
+                    equippedCosmetics
                   )}`}
                   className="cosmetic-character"
-                  src={getCosmeticSetupImage(
-                    scene,
-                    gender,
-                    clothes
-                  )}
-                  alt={`PokeMMO ${
-                    gender === 2
-                      ? "male"
-                      : "female"
-                  } character preview`}
-                  onError={() =>
-                    setPreviewError(true)
-                  }
+                  src={previewImage}
+                  alt="PokeMMO character preview"
                 />
+              ) : rendering ? (
+                <div className="cosmetic-preview-error">
+                  <strong>Rendering...</strong>
+                  <p>Building the character locally.</p>
+                </div>
               ) : (
                 <div className="cosmetic-preview-error">
-                  <strong>
-                    Preview unavailable
-                  </strong>
-
-                  <p>
-                    The selected combination
-                    could not be rendered.
-                  </p>
-
+                  <strong>Preview unavailable</strong>
+                  <p>{previewError}</p>
                   <button
                     type="button"
-                    onClick={() =>
-                      setPreviewError(false)
-                    }
+                    onClick={() => setPreviewError("")}
                   >
                     Retry Preview
                   </button>
                 </div>
               )}
             </div>
-
-            {/* ===============================================
-                SELECTED OUTFIT
-                =============================================== */}
 
             <aside className="cosmetic-selected">
               <div className="cosmetic-selected-title">
@@ -671,36 +494,23 @@ export default function CosmeticBuilder() {
               ) : (
                 <div className="cosmetic-selected-list">
                   {selectedOutfit.map(
-                    ({
-                      slotId,
-                      item,
-                    }) => (
+                    ({ slotId, item }) => (
                       <button
                         key={slotId}
                         type="button"
                         className="cosmetic-selected-item"
                         title={`Remove ${item.name}`}
                         onClick={() =>
-                          removeCosmetic(
-                            slotId
-                          )
+                          removeCosmetic(slotId)
                         }
                       >
                         <span>
-                          {
-                            SLOT_NAMES[
-                              slotId
-                            ]
-                          }
+                          {SLOT_NAMES[slotId]}
                         </span>
 
-                        <strong>
-                          {item.name}
-                        </strong>
+                        <strong>{item.name}</strong>
 
-                        <small>
-                          Click to remove
-                        </small>
+                        <small>Click to remove</small>
                       </button>
                     )
                   )}
@@ -711,14 +521,10 @@ export default function CosmeticBuilder() {
         </section>
       </div>
 
-      {/* =====================================================
-          STATUS
-          ===================================================== */}
-
       <div className="cosmetic-builder-note">
         {loadingCosmetics
-          ? "Loading the complete PokeMMO cosmetic catalog..."
-          : `Cosmetic catalog: ${cosmetics.length} records loaded from the Team Fate cosmetic API.`}
+          ? "Loading the local PokeMMO cosmetic catalog..."
+          : `Local cosmetic catalog: ${cosmetics.length} records loaded.`}
       </div>
     </div>
   );

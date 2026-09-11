@@ -1,0 +1,27 @@
+{
+  "layer_order": [
+    "back",
+    "pants",
+    "shoes",
+    "top",
+    "eyes",
+    "face",
+    "hair",
+    "held",
+    "hat",
+    "tool",
+    "mount"
+  ],
+  "skin_count": 5,
+  "frames_per_skin": 52,
+  "preview_poses_per_skin": 7,
+  "canvas": [
+    57,
+    56
+  ],
+  "chroma_key": [
+    255,
+    20,
+    147
+  ]
+}
