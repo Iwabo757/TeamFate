@@ -98,6 +98,8 @@ export default function CosmeticBuilder() {
     ...DEFAULT_CLOTHES,
   });
 
+  const [equippedCosmetics, setEquippedCosmetics] = useState<Record<number, number | null>>({});
+
   const [previewError, setPreviewError] = useState(false);
 
   /*
@@ -188,11 +190,12 @@ export default function CosmeticBuilder() {
    * =========================================================
    */
 
-  const selectedItem = cosmetics.find(
-    (item) =>
-      item.item_id === clothes[selectedSlot] ||
-      item.internal_id === clothes[selectedSlot]
-  );
+  const selectedItemId = equippedCosmetics[selectedSlot];
+
+  const selectedItem =
+    selectedItemId == null
+      ? undefined
+      : cosmetics.find((item) => item.item_id === selectedItemId);
 
   /*
    * =========================================================
@@ -203,12 +206,7 @@ export default function CosmeticBuilder() {
   function selectCosmetic(item: Cosmetic) {
     const rendererId = item.internal_id;
 
-    /*
-     * Some catalog entries currently do not have a renderer
-     * internal ID. Do not send the API/catalog ID to the
-     * renderer because they are not interchangeable.
-     */
-    if (rendererId === undefined) {
+    if (rendererId === undefined || rendererId <= 0) {
       setPreviewError(true);
       return;
     }
@@ -218,9 +216,13 @@ export default function CosmeticBuilder() {
       [selectedSlot]: rendererId,
     }));
 
+    setEquippedCosmetics((current) => ({
+      ...current,
+      [selectedSlot]: item.item_id,
+    }));
+
     setPreviewError(false);
   }
-
   /*
    * =========================================================
    * REMOVE COSMETIC
@@ -230,12 +232,17 @@ export default function CosmeticBuilder() {
   function removeCosmetic(slotId: number) {
     setClothes((current) => ({
       ...current,
-      [slotId]: 0,
+      [slotId]: DEFAULT_CLOTHES[slotId] ?? 0,
     }));
+
+    setEquippedCosmetics((current) => {
+      const next = { ...current };
+      delete next[slotId];
+      return next;
+    });
 
     setPreviewError(false);
   }
-
   /*
    * =========================================================
    * RESET OUTFIT
@@ -243,17 +250,14 @@ export default function CosmeticBuilder() {
    */
 
   function resetOutfit() {
-    setClothes({
-      ...DEFAULT_CLOTHES,
-    });
-
+    setClothes({ ...DEFAULT_CLOTHES });
+    setEquippedCosmetics({});
     setGender(2);
     setScene(2);
     setSelectedSlot(2);
     setQuery("");
     setPreviewError(false);
   }
-
   /*
    * =========================================================
    * RANDOMIZE
@@ -261,9 +265,8 @@ export default function CosmeticBuilder() {
    */
 
   function randomize() {
-    const next = {
-      ...DEFAULT_CLOTHES,
-    };
+    const nextClothes = { ...DEFAULT_CLOTHES };
+    const nextEquipped: Record<number, number | null> = {};
 
     for (const slotId of SLOT_IDS) {
       const choices = cosmetics.filter(
@@ -273,30 +276,21 @@ export default function CosmeticBuilder() {
           item.internal_id > 0
       );
 
-      if (!choices.length) {
-        continue;
-      }
+      if (!choices.length) continue;
 
-      const choice =
-        choices[
-          Math.floor(
-            Math.random() * choices.length
-          )
-        ];
-
+      const choice = choices[Math.floor(Math.random() * choices.length)];
       const rendererId = choice.internal_id;
 
-      if (rendererId === undefined) {
-        continue;
-      }
+      if (rendererId === undefined || rendererId <= 0) continue;
 
-      next[slotId] = rendererId;
+      nextClothes[slotId] = rendererId;
+      nextEquipped[slotId] = choice.item_id;
     }
 
-    setClothes(next);
+    setClothes(nextClothes);
+    setEquippedCosmetics(nextEquipped);
     setPreviewError(false);
   }
-
   /*
    * =========================================================
    * SELECTED OUTFIT
@@ -307,29 +301,16 @@ export default function CosmeticBuilder() {
    */
 
   const selectedOutfit = SLOT_IDS.map((slotId) => {
-    const rendererId = clothes[slotId];
+    const itemId = equippedCosmetics[slotId];
 
-    const item = cosmetics.find(
-      (entry) =>
-        entry.internal_id === rendererId ||
-        entry.item_id === rendererId
-    );
+    if (itemId == null) return null;
 
-    if (!item) {
-      return null;
-    }
+    const item = cosmetics.find((entry) => entry.item_id === itemId);
+    if (!item) return null;
 
-    return {
-      slotId,
-      item,
-    };
+    return { slotId, item };
   }).filter(
-    (
-      entry
-    ): entry is {
-      slotId: number;
-      item: Cosmetic;
-    } => entry !== null
+    (entry): entry is { slotId: number; item: Cosmetic } => entry !== null
   );
 
   /*
@@ -479,13 +460,8 @@ export default function CosmeticBuilder() {
             ) : (
               <>
                 {filtered.map((item, index) => {
-                  const rendererId =
-                    item.internal_id;
-
                   const isSelected =
-                    rendererId !== undefined &&
-                    clothes[selectedSlot] ===
-                      rendererId;
+                    equippedCosmetics[selectedSlot] === item.item_id;
 
                   return (
                     <button
