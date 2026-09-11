@@ -1,0 +1,2662 @@
+{
+  "2402": {
+    "internal_id": 1413,
+    "slot": 2,
+    "name": "Android Cap"
+  },
+  "2455": {
+    "internal_id": 1332,
+    "slot": 2,
+    "name": "Aura Cap"
+  },
+  "4676": {
+    "internal_id": 1546,
+    "slot": 2,
+    "name": "Aurora Beast Mane"
+  },
+  "2257": {
+    "internal_id": 1266,
+    "slot": 2,
+    "name": "BackWards Cap"
+  },
+  "2299": {
+    "internal_id": 1283,
+    "slot": 2,
+    "name": "Backwards Stripy Cap"
+  },
+  "2258": {
+    "internal_id": 1170,
+    "slot": 2,
+    "name": "Bandana"
+  },
+  "2369": {
+    "internal_id": 1160,
+    "slot": 2,
+    "name": "Baseball Cap"
+  },
+  "4678": {
+    "internal_id": 1567,
+    "slot": 2,
+    "name": "Bat Hat"
+  },
+  "2259": {
+    "internal_id": 1138,
+    "slot": 2,
+    "name": "Beanie"
+  },
+  "2493": {
+    "internal_id": 1334,
+    "slot": 2,
+    "name": "Beaver Hat"
+  },
+  "2413": {
+    "internal_id": 1168,
+    "slot": 2,
+    "name": "Bee Hairband"
+  },
+  "2480": {
+    "internal_id": 1429,
+    "slot": 2,
+    "name": "Berd Hat"
+  },
+  "2260": {
+    "internal_id": 1253,
+    "slot": 2,
+    "name": "Beret"
+  },
+  "2342": {
+    "internal_id": 1173,
+    "slot": 2,
+    "name": "Bird Nest Hat"
+  },
+  "2284": {
+    "internal_id": 1240,
+    "slot": 2,
+    "name": "Black Cat Ears "
+  },
+  "2499": {
+    "internal_id": 1101,
+    "slot": 2,
+    "name": "Black Plague Doctor Mask"
+  },
+  "2372": {
+    "internal_id": 1066,
+    "slot": 2,
+    "name": "Black Reaper Hood"
+  },
+  "2404": {
+    "internal_id": 1415,
+    "slot": 2,
+    "name": "Blue Dragon Body"
+  },
+  "2403": {
+    "internal_id": 1414,
+    "slot": 2,
+    "name": "Blue Dragon Head"
+  },
+  "2405": {
+    "internal_id": 1416,
+    "slot": 2,
+    "name": "Blue Dragon Tail"
+  },
+  "4687": {
+    "internal_id": 2185,
+    "slot": 2,
+    "name": "Blue Flaming Demon Skull"
+  },
+  "2328": {
+    "internal_id": 1021,
+    "slot": 2,
+    "name": "Blue Flaming Skull Mask"
+  },
+  "2315": {
+    "internal_id": 1163,
+    "slot": 2,
+    "name": "Blue Frog Hat"
+  },
+  "2468": {
+    "internal_id": 1092,
+    "slot": 2,
+    "name": "Boar Hood"
+  },
+  "2263": {
+    "internal_id": 1245,
+    "slot": 2,
+    "name": "Boater"
+  },
+  "2313": {
+    "internal_id": 1250,
+    "slot": 2,
+    "name": "Boater & Sunglasses"
+  },
+  "2340": {
+    "internal_id": 1157,
+    "slot": 2,
+    "name": "Bobble Hat"
+  },
+  "2354": {
+    "internal_id": 1391,
+    "slot": 2,
+    "name": "Bones Cap"
+  },
+  "2264": {
+    "internal_id": 1261,
+    "slot": 2,
+    "name": "Bow"
+  },
+  "2327": {
+    "internal_id": 1156,
+    "slot": 2,
+    "name": "Breeder's Bandana"
+  },
+  "2446": {
+    "internal_id": 1359,
+    "slot": 2,
+    "name": "Bronze Autumn Crown"
+  },
+  "2431": {
+    "internal_id": 1344,
+    "slot": 2,
+    "name": "Bronze NU Crown"
+  },
+  "2433": {
+    "internal_id": 1350,
+    "slot": 2,
+    "name": "Bronze OU Crown"
+  },
+  "2440": {
+    "internal_id": 1353,
+    "slot": 2,
+    "name": "Bronze Spring Crown"
+  },
+  "2443": {
+    "internal_id": 1356,
+    "slot": 2,
+    "name": "Bronze Summer Crown"
+  },
+  "2432": {
+    "internal_id": 1347,
+    "slot": 2,
+    "name": "Bronze UU Crown"
+  },
+  "2449": {
+    "internal_id": 1362,
+    "slot": 2,
+    "name": "Bronze Winter Crown"
+  },
+  "4631": {
+    "internal_id": 1368,
+    "slot": 2,
+    "name": "Brown Werewolf Mask"
+  },
+  "2387": {
+    "internal_id": 1040,
+    "slot": 2,
+    "name": "Bug Elfbot Hat"
+  },
+  "2305": {
+    "internal_id": 1177,
+    "slot": 2,
+    "name": "Bunny Ears"
+  },
+  "2395": {
+    "internal_id": 1058,
+    "slot": 2,
+    "name": "Bunny Hood"
+  },
+  "4593": {
+    "internal_id": 1134,
+    "slot": 2,
+    "name": "Burger Hat"
+  },
+  "2452": {
+    "internal_id": 1424,
+    "slot": 2,
+    "name": "Bycocket"
+  },
+  "2321": {
+    "internal_id": 1248,
+    "slot": 2,
+    "name": "Camping Cap"
+  },
+  "2311": {
+    "internal_id": 1154,
+    "slot": 2,
+    "name": "Candy Horns"
+  },
+  "2267": {
+    "internal_id": 1262,
+    "slot": 2,
+    "name": "Cap"
+  },
+  "2312": {
+    "internal_id": 1273,
+    "slot": 2,
+    "name": "Cap & Sunglasses"
+  },
+  "4698": {
+    "internal_id": 2272,
+    "slot": 2,
+    "name": "Charcoal Dragon Horns"
+  },
+  "2268": {
+    "internal_id": 1179,
+    "slot": 2,
+    "name": "Chef Hat"
+  },
+  "2316": {
+    "internal_id": 1176,
+    "slot": 2,
+    "name": "Chestnut Hat"
+  },
+  "4716": {
+    "internal_id": 2307,
+    "slot": 2,
+    "name": "Christmas Camo"
+  },
+  "2297": {
+    "internal_id": 1251,
+    "slot": 2,
+    "name": "Chunky Beret"
+  },
+  "2271": {
+    "internal_id": 1244,
+    "slot": 2,
+    "name": "Classic Cap"
+  },
+  "2322": {
+    "internal_id": 1120,
+    "slot": 2,
+    "name": "Cloud Nest Hat"
+  },
+  "2492": {
+    "internal_id": 1112,
+    "slot": 2,
+    "name": "Clown Hat"
+  },
+  "4591": {
+    "internal_id": 1430,
+    "slot": 2,
+    "name": "Coconut Tree Hat"
+  },
+  "4697": {
+    "internal_id": 2244,
+    "slot": 2,
+    "name": "Coiled Snake Hat"
+  },
+  "2323": {
+    "internal_id": 1280,
+    "slot": 2,
+    "name": "Conical"
+  },
+  "2272": {
+    "internal_id": 1151,
+    "slot": 2,
+    "name": "Cowboy Hat"
+  },
+  "4701": {
+    "internal_id": 2275,
+    "slot": 2,
+    "name": "Cyclops Mask"
+  },
+  "2392": {
+    "internal_id": 1069,
+    "slot": 2,
+    "name": "Dark Elfbot Hat"
+  },
+  "4706": {
+    "internal_id": 2280,
+    "slot": 2,
+    "name": "Deer Skull"
+  },
+  "4702": {
+    "internal_id": 2276,
+    "slot": 2,
+    "name": "Demon Horns"
+  },
+  "4707": {
+    "internal_id": 2281,
+    "slot": 2,
+    "name": "Demon Queen Crown"
+  },
+  "2265": {
+    "internal_id": 1274,
+    "slot": 2,
+    "name": "Derby"
+  },
+  "2329": {
+    "internal_id": 2150,
+    "slot": 2,
+    "name": "Dragon Antlers"
+  },
+  "2391": {
+    "internal_id": 1042,
+    "slot": 2,
+    "name": "Dragon Elfbot Hat"
+  },
+  "2363": {
+    "internal_id": 1146,
+    "slot": 2,
+    "name": "Duck Cap"
+  },
+  "2459": {
+    "internal_id": 1063,
+    "slot": 2,
+    "name": "Ecto Goggles"
+  },
+  "2356": {
+    "internal_id": 1030,
+    "slot": 2,
+    "name": "Electric Elfbot Hat"
+  },
+  "4696": {
+    "internal_id": 2243,
+    "slot": 2,
+    "name": "Elegant Antennae"
+  },
+  "2273": {
+    "internal_id": 1158,
+    "slot": 2,
+    "name": "Elf Hat"
+  },
+  "2335": {
+    "internal_id": 1278,
+    "slot": 2,
+    "name": "Emerald Knit Hat"
+  },
+  "2274": {
+    "internal_id": 1252,
+    "slot": 2,
+    "name": "Explorer's Hat"
+  },
+  "4675": {
+    "internal_id": 1545,
+    "slot": 2,
+    "name": "Explosive Hat"
+  },
+  "4684": {
+    "internal_id": 1571,
+    "slot": 2,
+    "name": "Fairy Elfbot Hat"
+  },
+  "2275": {
+    "internal_id": 1275,
+    "slot": 2,
+    "name": "Fedora"
+  },
+  "2314": {
+    "internal_id": 1148,
+    "slot": 2,
+    "name": "Fennec Fox Ears"
+  },
+  "4728": {
+    "internal_id": 2333,
+    "slot": 2,
+    "name": "Festive Lion Mask"
+  },
+  "2276": {
+    "internal_id": 1180,
+    "slot": 2,
+    "name": "Fez"
+  },
+  "2281": {
+    "internal_id": 1140,
+    "slot": 2,
+    "name": "Fighter's Headband"
+  },
+  "2383": {
+    "internal_id": 1075,
+    "slot": 2,
+    "name": "Fighting Elfbot Hat"
+  },
+  "2471": {
+    "internal_id": 1143,
+    "slot": 2,
+    "name": "Fire Bunny Ears"
+  },
+  "2360": {
+    "internal_id": 1024,
+    "slot": 2,
+    "name": "Fire Elfbot Hat"
+  },
+  "4653": {
+    "internal_id": 1459,
+    "slot": 2,
+    "name": "Fishing Cap"
+  },
+  "4685": {
+    "internal_id": 2184,
+    "slot": 2,
+    "name": "Flaming Demon Skull"
+  },
+  "2307": {
+    "internal_id": 1164,
+    "slot": 2,
+    "name": "Floppy Bunny Ears"
+  },
+  "2368": {
+    "internal_id": 1162,
+    "slot": 2,
+    "name": "Football Helmet"
+  },
+  "4699": {
+    "internal_id": 2273,
+    "slot": 2,
+    "name": "Frankenstein Mask"
+  },
+  "2375": {
+    "internal_id": 1149,
+    "slot": 2,
+    "name": "Frog Hood"
+  },
+  "4708": {
+    "internal_id": 2282,
+    "slot": 2,
+    "name": "Froggy"
+  },
+  "4600": {
+    "internal_id": 1435,
+    "slot": 2,
+    "name": "Futou"
+  },
+  "2308": {
+    "internal_id": 1389,
+    "slot": 2,
+    "name": "Get Out Hat"
+  },
+  "2345": {
+    "internal_id": 1009,
+    "slot": 2,
+    "name": "Ghost Costume"
+  },
+  "2388": {
+    "internal_id": 1046,
+    "slot": 2,
+    "name": "Ghost Elfbot Hat"
+  },
+  "4689": {
+    "internal_id": 2186,
+    "slot": 2,
+    "name": "Ghostly Candle"
+  },
+  "2458": {
+    "internal_id": 1103,
+    "slot": 2,
+    "name": "Ghostly Pointed Hat"
+  },
+  "2415": {
+    "internal_id": 1423,
+    "slot": 2,
+    "name": "Gladiator Helmet"
+  },
+  "2448": {
+    "internal_id": 1361,
+    "slot": 2,
+    "name": "Gold Autumn Crown"
+  },
+  "4722": {
+    "internal_id": 2326,
+    "slot": 2,
+    "name": "Gold Hair Ornament"
+  },
+  "2437": {
+    "internal_id": 1346,
+    "slot": 2,
+    "name": "Gold NU Crown"
+  },
+  "2439": {
+    "internal_id": 1352,
+    "slot": 2,
+    "name": "Gold OU Crown"
+  },
+  "2442": {
+    "internal_id": 1355,
+    "slot": 2,
+    "name": "Gold Spring Crown"
+  },
+  "2445": {
+    "internal_id": 1358,
+    "slot": 2,
+    "name": "Gold Summer Crown"
+  },
+  "2438": {
+    "internal_id": 1349,
+    "slot": 2,
+    "name": "Gold UU Crown"
+  },
+  "2451": {
+    "internal_id": 1364,
+    "slot": 2,
+    "name": "Gold Winter Crown"
+  },
+  "4610": {
+    "internal_id": 1293,
+    "slot": 2,
+    "name": "Golden Dragon Mask"
+  },
+  "4667": {
+    "internal_id": 1537,
+    "slot": 2,
+    "name": "Golden Rabbit Mask"
+  },
+  "4640": {
+    "internal_id": 1431,
+    "slot": 2,
+    "name": "Golden Tiger Mask"
+  },
+  "2472": {
+    "internal_id": 1174,
+    "slot": 2,
+    "name": "Grass Chimp Hood"
+  },
+  "2357": {
+    "internal_id": 1028,
+    "slot": 2,
+    "name": "Grass Elfbot Hat"
+  },
+  "2456": {
+    "internal_id": 1330,
+    "slot": 2,
+    "name": "Grassquerade Mask"
+  },
+  "4664": {
+    "internal_id": 1574,
+    "slot": 2,
+    "name": "Green Christmas Present Hat"
+  },
+  "4658": {
+    "internal_id": 1511,
+    "slot": 2,
+    "name": "Green Cthulhu Mask"
+  },
+  "4597": {
+    "internal_id": 1129,
+    "slot": 2,
+    "name": "Green Eyeball Mask"
+  },
+  "4668": {
+    "internal_id": 1538,
+    "slot": 2,
+    "name": "Green Harvest Crown"
+  },
+  "4705": {
+    "internal_id": 2279,
+    "slot": 2,
+    "name": "Green Slime"
+  },
+  "4627": {
+    "internal_id": 1369,
+    "slot": 2,
+    "name": "Grey Werewolf Mask"
+  },
+  "2361": {
+    "internal_id": 1034,
+    "slot": 2,
+    "name": "Ground Elfbot Hat"
+  },
+  "2282": {
+    "internal_id": 1272,
+    "slot": 2,
+    "name": "Guardian Hat"
+  },
+  "2310": {
+    "internal_id": 1137,
+    "slot": 2,
+    "name": "Halo"
+  },
+  "2279": {
+    "internal_id": 1259,
+    "slot": 2,
+    "name": "HeadBand"
+  },
+  "2280": {
+    "internal_id": 1139,
+    "slot": 2,
+    "name": "Headphones"
+  },
+  "2467": {
+    "internal_id": 1497,
+    "slot": 2,
+    "name": "Hellcat Hood"
+  },
+  "2346": {
+    "internal_id": 1017,
+    "slot": 2,
+    "name": "Holly HairClip"
+  },
+  "2283": {
+    "internal_id": 1276,
+    "slot": 2,
+    "name": "Hood"
+  },
+  "2309": {
+    "internal_id": 1277,
+    "slot": 2,
+    "name": "Horns"
+  },
+  "4724": {
+    "internal_id": 2328,
+    "slot": 2,
+    "name": "Horse Mask"
+  },
+  "4603": {
+    "internal_id": 1380,
+    "slot": 2,
+    "name": "Ice Cream Hood"
+  },
+  "2390": {
+    "internal_id": 1071,
+    "slot": 2,
+    "name": "Ice Elfbot Hat"
+  },
+  "4713": {
+    "internal_id": 2304,
+    "slot": 2,
+    "name": "Ice Horns"
+  },
+  "2478": {
+    "internal_id": 1514,
+    "slot": 2,
+    "name": "Iron Hero Helmet"
+  },
+  "2343": {
+    "internal_id": 1011,
+    "slot": 2,
+    "name": "Jack-O-Lantern Mask"
+  },
+  "4584": {
+    "internal_id": 1329,
+    "slot": 2,
+    "name": "Jellyfish Hat"
+  },
+  "2326": {
+    "internal_id": 1118,
+    "slot": 2,
+    "name": "Jester Hat"
+  },
+  "2494": {
+    "internal_id": 1097,
+    "slot": 2,
+    "name": "Kaiju Hood"
+  },
+  "4677": {
+    "internal_id": 1971,
+    "slot": 2,
+    "name": "Kitsune Mask"
+  },
+  "2482": {
+    "internal_id": 1343,
+    "slot": 2,
+    "name": "Kitten Hat"
+  },
+  "2285": {
+    "internal_id": 1007,
+    "slot": 2,
+    "name": "Knight Helmet"
+  },
+  "2286": {
+    "internal_id": 1008,
+    "slot": 2,
+    "name": "Kyu Hat"
+  },
+  "2379": {
+    "internal_id": 1366,
+    "slot": 2,
+    "name": "Land Snake Hat"
+  },
+  "2287": {
+    "internal_id": 1145,
+    "slot": 2,
+    "name": "Lava Hood"
+  },
+  "2291": {
+    "internal_id": 1169,
+    "slot": 2,
+    "name": "Liberty Hood"
+  },
+  "2364": {
+    "internal_id": 1053,
+    "slot": 2,
+    "name": "Lillipad Sombrero"
+  },
+  "2409": {
+    "internal_id": 1417,
+    "slot": 2,
+    "name": "Lion Hood"
+  },
+  "4635": {
+    "internal_id": 1370,
+    "slot": 2,
+    "name": "Mage's Hat"
+  },
+  "4714": {
+    "internal_id": 2305,
+    "slot": 2,
+    "name": "Melty the Snowman"
+  },
+  "4683": {
+    "internal_id": 1568,
+    "slot": 2,
+    "name": "Mini Halloween Top Hat"
+  },
+  "2365": {
+    "internal_id": 1401,
+    "slot": 2,
+    "name": "Mining Hard Hat"
+  },
+  "2412": {
+    "internal_id": 1340,
+    "slot": 2,
+    "name": "Monkey Hood"
+  },
+  "2318": {
+    "internal_id": 1141,
+    "slot": 2,
+    "name": "Motorcycle Helmet"
+  },
+  "2410": {
+    "internal_id": 1419,
+    "slot": 2,
+    "name": "Mummy Head Wrap"
+  },
+  "4725": {
+    "internal_id": 2329,
+    "slot": 2,
+    "name": "Musketeer Hat"
+  },
+  "2355": {
+    "internal_id": 1393,
+    "slot": 2,
+    "name": "Neo Liberty Hat"
+  },
+  "2294": {
+    "internal_id": 1281,
+    "slot": 2,
+    "name": "Newsboy Cap"
+  },
+  "4611": {
+    "internal_id": 1295,
+    "slot": 2,
+    "name": "Nian Hood"
+  },
+  "2288": {
+    "internal_id": 1241,
+    "slot": 2,
+    "name": "Ninja Mask"
+  },
+  "4704": {
+    "internal_id": 2278,
+    "slot": 2,
+    "name": "Noh Mask"
+  },
+  "4605": {
+    "internal_id": 1288,
+    "slot": 2,
+    "name": "Normal Elfbot Hat"
+  },
+  "2289": {
+    "internal_id": 1249,
+    "slot": 2,
+    "name": "Nurse Hat"
+  },
+  "2256": {
+    "internal_id": 1161,
+    "slot": 2,
+    "name": "Ocean Bandana"
+  },
+  "2336": {
+    "internal_id": 1022,
+    "slot": 2,
+    "name": "Orange Flaming Skull Mask"
+  },
+  "2481": {
+    "internal_id": 1338,
+    "slot": 2,
+    "name": "Owl Hood"
+  },
+  "4609": {
+    "internal_id": 1290,
+    "slot": 2,
+    "name": "Ox Horns"
+  },
+  "4721": {
+    "internal_id": 2325,
+    "slot": 2,
+    "name": "Panda Hat"
+  },
+  "2393": {
+    "internal_id": 1144,
+    "slot": 2,
+    "name": "Panda Hood"
+  },
+  "2320": {
+    "internal_id": 1003,
+    "slot": 2,
+    "name": "Party Hat"
+  },
+  "4718": {
+    "internal_id": 2308,
+    "slot": 2,
+    "name": "Peace Apple Hat"
+  },
+  "2296": {
+    "internal_id": 1265,
+    "slot": 2,
+    "name": "Peaked Cap"
+  },
+  "2373": {
+    "internal_id": 1054,
+    "slot": 2,
+    "name": "Penguin Hood"
+  },
+  "2466": {
+    "internal_id": 1109,
+    "slot": 2,
+    "name": "Phoenix Hood"
+  },
+  "2469": {
+    "internal_id": 1089,
+    "slot": 2,
+    "name": "Pig Hood"
+  },
+  "2338": {
+    "internal_id": 1119,
+    "slot": 2,
+    "name": "Pillar of Hats"
+  },
+  "2399": {
+    "internal_id": 1427,
+    "slot": 2,
+    "name": "Pilot Cap"
+  },
+  "2290": {
+    "internal_id": 1172,
+    "slot": 2,
+    "name": "Pink Cat Ears"
+  },
+  "4665": {
+    "internal_id": 1517,
+    "slot": 2,
+    "name": "Pink Christmas Present Hat"
+  },
+  "2414": {
+    "internal_id": 1422,
+    "slot": 2,
+    "name": "Pirate Hat"
+  },
+  "4727": {
+    "internal_id": 2330,
+    "slot": 2,
+    "name": "Plum Blossom Hairpin"
+  },
+  "2349": {
+    "internal_id": 1152,
+    "slot": 2,
+    "name": "Plumber's Cap"
+  },
+  "2293": {
+    "internal_id": 1254,
+    "slot": 2,
+    "name": "Pointed Hat"
+  },
+  "2292": {
+    "internal_id": 1153,
+    "slot": 2,
+    "name": "Pointy Yellow Ears"
+  },
+  "2385": {
+    "internal_id": 1073,
+    "slot": 2,
+    "name": "Poison Elfbot Hat"
+  },
+  "4651": {
+    "internal_id": 1467,
+    "slot": 2,
+    "name": "Poisonous Flower Hat"
+  },
+  "4650": {
+    "internal_id": 1457,
+    "slot": 2,
+    "name": "PokeMMO Cap"
+  },
+  "2477": {
+    "internal_id": 1337,
+    "slot": 2,
+    "name": "Polygon Cap"
+  },
+  "2348": {
+    "internal_id": 1150,
+    "slot": 2,
+    "name": "Propeller Cap"
+  },
+  "4666": {
+    "internal_id": 1519,
+    "slot": 2,
+    "name": "Psychic Bird Mask"
+  },
+  "2358": {
+    "internal_id": 1032,
+    "slot": 2,
+    "name": "Psychic Elfbot Hat"
+  },
+  "4652": {
+    "internal_id": 1456,
+    "slot": 2,
+    "name": "Psychic Training Helmet"
+  },
+  "4715": {
+    "internal_id": 2306,
+    "slot": 2,
+    "name": "Pudgy Penguin"
+  },
+  "4700": {
+    "internal_id": 2274,
+    "slot": 2,
+    "name": "Puffy Witch Hat"
+  },
+  "4681": {
+    "internal_id": 1562,
+    "slot": 2,
+    "name": "Pumpcat"
+  },
+  "2495": {
+    "internal_id": 1099,
+    "slot": 2,
+    "name": "Pumpkin Cap"
+  },
+  "4659": {
+    "internal_id": 1512,
+    "slot": 2,
+    "name": "Purple Cthulhu Mask"
+  },
+  "2295": {
+    "internal_id": 1124,
+    "slot": 2,
+    "name": "R Cap"
+  },
+  "4662": {
+    "internal_id": 1515,
+    "slot": 2,
+    "name": "Red Christmas Present Hat"
+  },
+  "2407": {
+    "internal_id": 1095,
+    "slot": 2,
+    "name": "Red Dragon Body"
+  },
+  "2408": {
+    "internal_id": 1096,
+    "slot": 2,
+    "name": "Red Dragon Tail"
+  },
+  "4594": {
+    "internal_id": 1128,
+    "slot": 2,
+    "name": "Red Eyeball Mask"
+  },
+  "4669": {
+    "internal_id": 1539,
+    "slot": 2,
+    "name": "Red Harvest Crown"
+  },
+  "4709": {
+    "internal_id": 2284,
+    "slot": 2,
+    "name": "Red Lotus Crown"
+  },
+  "4648": {
+    "internal_id": 1436,
+    "slot": 2,
+    "name": "Red Mandarin Hat"
+  },
+  "4585": {
+    "internal_id": 1373,
+    "slot": 2,
+    "name": "Red Oni Mask"
+  },
+  "2454": {
+    "internal_id": 1067,
+    "slot": 2,
+    "name": "Red Reaper Hood"
+  },
+  "4723": {
+    "internal_id": 2327,
+    "slot": 2,
+    "name": "Red Tassel Hairclips"
+  },
+  "4693": {
+    "internal_id": 2224,
+    "slot": 2,
+    "name": "Red Wish Tag Earrings"
+  },
+  "2341": {
+    "internal_id": 1039,
+    "slot": 2,
+    "name": "Reindeer Antlers"
+  },
+  "2462": {
+    "internal_id": 1533,
+    "slot": 2,
+    "name": "Reindeer Hood"
+  },
+  "2386": {
+    "internal_id": 1048,
+    "slot": 2,
+    "name": "Rock Elfbot Hat"
+  },
+  "2330": {
+    "internal_id": 1167,
+    "slot": 2,
+    "name": "Rock Helmet"
+  },
+  "2376": {
+    "internal_id": 1056,
+    "slot": 2,
+    "name": "Rudolph's Antlers"
+  },
+  "2366": {
+    "internal_id": 1175,
+    "slot": 2,
+    "name": "Sailor Cap"
+  },
+  "2380": {
+    "internal_id": 1142,
+    "slot": 2,
+    "name": "Samurai Helmet"
+  },
+  "2269": {
+    "internal_id": 1004,
+    "slot": 2,
+    "name": "Santa Hat"
+  },
+  "2347": {
+    "internal_id": 1013,
+    "slot": 2,
+    "name": "Santa's Little Helper Hat"
+  },
+  "4674": {
+    "internal_id": 1565,
+    "slot": 2,
+    "name": "Scary Clown Mask"
+  },
+  "2351": {
+    "internal_id": 1023,
+    "slot": 2,
+    "name": "Scary Hockey Mask"
+  },
+  "2486": {
+    "internal_id": 1341,
+    "slot": 2,
+    "name": "Sealion Cap"
+  },
+  "4661": {
+    "internal_id": 1502,
+    "slot": 2,
+    "name": "Shadow Skull Helmet"
+  },
+  "2488": {
+    "internal_id": 1331,
+    "slot": 2,
+    "name": "Sheep Hood"
+  },
+  "2490": {
+    "internal_id": 1342,
+    "slot": 2,
+    "name": "Shell Turban"
+  },
+  "4647": {
+    "internal_id": 1437,
+    "slot": 2,
+    "name": "Shiny Nian Hood"
+  },
+  "2331": {
+    "internal_id": 1279,
+    "slot": 2,
+    "name": "Side Tie Bandana"
+  },
+  "2447": {
+    "internal_id": 1360,
+    "slot": 2,
+    "name": "Silver Autumn Crown"
+  },
+  "2434": {
+    "internal_id": 1345,
+    "slot": 2,
+    "name": "Silver NU Crown"
+  },
+  "2436": {
+    "internal_id": 1351,
+    "slot": 2,
+    "name": "Silver OU Crown"
+  },
+  "2441": {
+    "internal_id": 1354,
+    "slot": 2,
+    "name": "Silver Spring Crown"
+  },
+  "2444": {
+    "internal_id": 1357,
+    "slot": 2,
+    "name": "Silver Summer Crown"
+  },
+  "2435": {
+    "internal_id": 1348,
+    "slot": 2,
+    "name": "Silver UU Crown"
+  },
+  "2450": {
+    "internal_id": 1363,
+    "slot": 2,
+    "name": "Silver Winter Crown"
+  },
+  "4660": {
+    "internal_id": 1501,
+    "slot": 2,
+    "name": "Skull Helmet"
+  },
+  "2484": {
+    "internal_id": 1336,
+    "slot": 2,
+    "name": "Snake Hat"
+  },
+  "4606": {
+    "internal_id": 1284,
+    "slot": 2,
+    "name": "Snow Globe Hat"
+  },
+  "4692": {
+    "internal_id": 2223,
+    "slot": 2,
+    "name": "Snow Leopard Ears"
+  },
+  "2510": {
+    "internal_id": 1339,
+    "slot": 2,
+    "name": "Snow Mountain Beanie"
+  },
+  "2374": {
+    "internal_id": 1079,
+    "slot": 2,
+    "name": "Snowman Hood"
+  },
+  "2398": {
+    "internal_id": 1410,
+    "slot": 2,
+    "name": "Space Helmet"
+  },
+  "4690": {
+    "internal_id": 2187,
+    "slot": 2,
+    "name": "Spooky Beanie"
+  },
+  "4671": {
+    "internal_id": 1541,
+    "slot": 2,
+    "name": "Spring Flower Hairpin"
+  },
+  "2487": {
+    "internal_id": 1335,
+    "slot": 2,
+    "name": "Squirrel Hairband"
+  },
+  "4691": {
+    "internal_id": 2222,
+    "slot": 2,
+    "name": "Star Cone Hat"
+  },
+  "4711": {
+    "internal_id": 2302,
+    "slot": 2,
+    "name": "Star Hairband"
+  },
+  "4636": {
+    "internal_id": 1382,
+    "slot": 2,
+    "name": "Starlight Bobble Hat"
+  },
+  "2389": {
+    "internal_id": 1077,
+    "slot": 2,
+    "name": "Steel Elfbot Hat"
+  },
+  "2325": {
+    "internal_id": 1270,
+    "slot": 2,
+    "name": "Straw Hat"
+  },
+  "2298": {
+    "internal_id": 1263,
+    "slot": 2,
+    "name": "Stripy Cap"
+  },
+  "2261": {
+    "internal_id": 1267,
+    "slot": 2,
+    "name": "Swimming Cap"
+  },
+  "4694": {
+    "internal_id": 2225,
+    "slot": 2,
+    "name": "Teal Wish Tag Earrings"
+  },
+  "2300": {
+    "internal_id": 1255,
+    "slot": 2,
+    "name": "Teddy Ears"
+  },
+  "4639": {
+    "internal_id": 1432,
+    "slot": 2,
+    "name": "Tiger Hood"
+  },
+  "4695": {
+    "internal_id": 2242,
+    "slot": 2,
+    "name": "Tiny White Wings"
+  },
+  "2301": {
+    "internal_id": 1271,
+    "slot": 2,
+    "name": "Top Hat"
+  },
+  "4679": {
+    "internal_id": 1563,
+    "slot": 2,
+    "name": "Trick Kitty"
+  },
+  "2302": {
+    "internal_id": 1256,
+    "slot": 2,
+    "name": "Tricorne"
+  },
+  "2378": {
+    "internal_id": 1127,
+    "slot": 2,
+    "name": "Turkey Hat"
+  },
+  "2461": {
+    "internal_id": 1083,
+    "slot": 2,
+    "name": "Turkey Hood"
+  },
+  "2306": {
+    "internal_id": 1282,
+    "slot": 2,
+    "name": "Two Tone Cap"
+  },
+  "2511": {
+    "internal_id": 1115,
+    "slot": 2,
+    "name": "UFO Hat"
+  },
+  "2344": {
+    "internal_id": 1020,
+    "slot": 2,
+    "name": "Vampire Fangs"
+  },
+  "2266": {
+    "internal_id": 1166,
+    "slot": 2,
+    "name": "Veil"
+  },
+  "2303": {
+    "internal_id": 1171,
+    "slot": 2,
+    "name": "Viking Helmet"
+  },
+  "2270": {
+    "internal_id": 1155,
+    "slot": 2,
+    "name": "Visor Cap"
+  },
+  "2324": {
+    "internal_id": 1165,
+    "slot": 2,
+    "name": "Watch Cap"
+  },
+  "2359": {
+    "internal_id": 1026,
+    "slot": 2,
+    "name": "Water Elfbot Hat"
+  },
+  "2473": {
+    "internal_id": 1178,
+    "slot": 2,
+    "name": "Water Newt Hat"
+  },
+  "4710": {
+    "internal_id": 2301,
+    "slot": 2,
+    "name": "Weasel Headdress"
+  },
+  "2317": {
+    "internal_id": 1147,
+    "slot": 2,
+    "name": "White Cat Ears"
+  },
+  "2453": {
+    "internal_id": 1102,
+    "slot": 2,
+    "name": "White Plague Doctor Mask"
+  },
+  "4670": {
+    "internal_id": 1540,
+    "slot": 2,
+    "name": "White Rabbit Plush"
+  },
+  "4602": {
+    "internal_id": 1376,
+    "slot": 2,
+    "name": "Winged Helmet"
+  },
+  "2333": {
+    "internal_id": 2151,
+    "slot": 2,
+    "name": "Wyrm Worm"
+  },
+  "2465": {
+    "internal_id": 1333,
+    "slot": 2,
+    "name": "Yawn Hood"
+  },
+  "2457": {
+    "internal_id": 1371,
+    "slot": 2,
+    "name": "Zombie Head"
+  },
+  "2513": {
+    "internal_id": 1185,
+    "slot": 3,
+    "name": "Afro"
+  },
+  "2566": {
+    "internal_id": 2319,
+    "slot": 3,
+    "name": "Colorful Unicorn Hair"
+  },
+  "4617": {
+    "internal_id": 1184,
+    "slot": 3,
+    "name": "Cursed Mask"
+  },
+  "2521": {
+    "internal_id": 1186,
+    "slot": 3,
+    "name": "Disco Afro"
+  },
+  "2562": {
+    "internal_id": 2292,
+    "slot": 3,
+    "name": "Elven Ponytail"
+  },
+  "2526": {
+    "internal_id": 1182,
+    "slot": 3,
+    "name": "Faux Hawk"
+  },
+  "2559": {
+    "internal_id": 2235,
+    "slot": 3,
+    "name": "Golden Cuffed Ponytail"
+  },
+  "2560": {
+    "internal_id": 2257,
+    "slot": 3,
+    "name": "Mermaid Hair"
+  },
+  "2565": {
+    "internal_id": 2318,
+    "slot": 3,
+    "name": "Origin Hairstyle"
+  },
+  "2535": {
+    "internal_id": 1181,
+    "slot": 3,
+    "name": "Reverse Scene"
+  },
+  "2517": {
+    "internal_id": 1183,
+    "slot": 3,
+    "name": "Sideswept"
+  },
+  "2780": {
+    "internal_id": 1193,
+    "slot": 4,
+    "name": "Amethyst Contacts"
+  },
+  "2785": {
+    "internal_id": 1187,
+    "slot": 4,
+    "name": "Flame Glasses"
+  },
+  "2771": {
+    "internal_id": 1190,
+    "slot": 4,
+    "name": "Glasses"
+  },
+  "2777": {
+    "internal_id": 1191,
+    "slot": 4,
+    "name": "Red Contacts"
+  },
+  "2772": {
+    "internal_id": 1189,
+    "slot": 4,
+    "name": "Rockstar"
+  },
+  "2773": {
+    "internal_id": 1188,
+    "slot": 4,
+    "name": "Sunglasses"
+  },
+  "2776": {
+    "internal_id": 1194,
+    "slot": 4,
+    "name": "Swimming Goggles"
+  },
+  "2787": {
+    "internal_id": 2258,
+    "slot": 4,
+    "name": "Villain Mask"
+  },
+  "2784": {
+    "internal_id": 1192,
+    "slot": 4,
+    "name": "Violet Contacts"
+  },
+  "3047": {
+    "internal_id": 2261,
+    "slot": 5,
+    "name": "Cheeky Face Mask"
+  },
+  "3046": {
+    "internal_id": 2260,
+    "slot": 5,
+    "name": "Frowny Face Mask"
+  },
+  "3045": {
+    "internal_id": 2259,
+    "slot": 5,
+    "name": "Kitty Face Mask"
+  },
+  "3044": {
+    "internal_id": 2212,
+    "slot": 5,
+    "name": "Santa Beard"
+  },
+  "3383": {
+    "internal_id": 2262,
+    "slot": 6,
+    "name": "Ancient Coin"
+  },
+  "3280": {
+    "internal_id": 1198,
+    "slot": 6,
+    "name": "Angel Wings"
+  },
+  "3281": {
+    "internal_id": 1246,
+    "slot": 6,
+    "name": "BackPack"
+  },
+  "3288": {
+    "internal_id": 1390,
+    "slot": 6,
+    "name": "Ban Hammer"
+  },
+  "3367": {
+    "internal_id": 2146,
+    "slot": 6,
+    "name": "Battle Axe"
+  },
+  "3302": {
+    "internal_id": 1203,
+    "slot": 6,
+    "name": "Black Kitty Tail"
+  },
+  "3385": {
+    "internal_id": 2264,
+    "slot": 6,
+    "name": "Blue Flaming Wings"
+  },
+  "3301": {
+    "internal_id": 1403,
+    "slot": 6,
+    "name": "Bug Catcher's Net"
+  },
+  "3360": {
+    "internal_id": 1544,
+    "slot": 6,
+    "name": "Bunny Tail"
+  },
+  "3287": {
+    "internal_id": 1201,
+    "slot": 6,
+    "name": "Butterfly Wings"
+  },
+  "3292": {
+    "internal_id": 1015,
+    "slot": 6,
+    "name": "Candy Cane"
+  },
+  "3282": {
+    "internal_id": 1200,
+    "slot": 6,
+    "name": "Cape"
+  },
+  "3308": {
+    "internal_id": 1204,
+    "slot": 6,
+    "name": "Chipmunk Tail"
+  },
+  "3304": {
+    "internal_id": 1199,
+    "slot": 6,
+    "name": "Collared Cape"
+  },
+  "3330": {
+    "internal_id": 1132,
+    "slot": 6,
+    "name": "Crook & Flail"
+  },
+  "3283": {
+    "internal_id": 1196,
+    "slot": 6,
+    "name": "Devil Wings"
+  },
+  "3368": {
+    "internal_id": 2147,
+    "slot": 6,
+    "name": "Dragon Wings"
+  },
+  "3307": {
+    "internal_id": 1408,
+    "slot": 6,
+    "name": "Easter Egg Backpack"
+  },
+  "3381": {
+    "internal_id": 2236,
+    "slot": 6,
+    "name": "Elegant Scarf"
+  },
+  "3387": {
+    "internal_id": 2293,
+    "slot": 6,
+    "name": "Elven Quiver"
+  },
+  "3284": {
+    "internal_id": 1206,
+    "slot": 6,
+    "name": "Fairy Wings"
+  },
+  "3289": {
+    "internal_id": 1114,
+    "slot": 6,
+    "name": "Fancy Butterfly Wings"
+  },
+  "3390": {
+    "internal_id": 2332,
+    "slot": 6,
+    "name": "Flower Cape"
+  },
+  "3296": {
+    "internal_id": 1461,
+    "slot": 6,
+    "name": "Fox Tail"
+  },
+  "3294": {
+    "internal_id": 1036,
+    "slot": 6,
+    "name": "Gingerbread Man"
+  },
+  "3348": {
+    "internal_id": 1521,
+    "slot": 6,
+    "name": "Glistening Blue Wings"
+  },
+  "3353": {
+    "internal_id": 1522,
+    "slot": 6,
+    "name": "Glistening Purple Wings"
+  },
+  "3358": {
+    "internal_id": 1542,
+    "slot": 6,
+    "name": "Green Unity Cape"
+  },
+  "3323": {
+    "internal_id": 1449,
+    "slot": 6,
+    "name": "Green Xmas Stocking"
+  },
+  "3305": {
+    "internal_id": 1068,
+    "slot": 6,
+    "name": "Hex Cloak"
+  },
+  "3339": {
+    "internal_id": 1374,
+    "slot": 6,
+    "name": "Mage's Staff"
+  },
+  "3303": {
+    "internal_id": 1197,
+    "slot": 6,
+    "name": "Ninja Scarf"
+  },
+  "3340": {
+    "internal_id": 1379,
+    "slot": 6,
+    "name": "Nutcracker Doll"
+  },
+  "3384": {
+    "internal_id": 2263,
+    "slot": 6,
+    "name": "Orange Flaming Wings"
+  },
+  "3389": {
+    "internal_id": 2321,
+    "slot": 6,
+    "name": "Origin Ring"
+  },
+  "3336": {
+    "internal_id": 1291,
+    "slot": 6,
+    "name": "Ox Tail"
+  },
+  "3347": {
+    "internal_id": 1494,
+    "slot": 6,
+    "name": "Paladin's Shield"
+  },
+  "3315": {
+    "internal_id": 1111,
+    "slot": 6,
+    "name": "Phoenix Tail"
+  },
+  "3317": {
+    "internal_id": 1091,
+    "slot": 6,
+    "name": "Pig Tail"
+  },
+  "3293": {
+    "internal_id": 1016,
+    "slot": 6,
+    "name": "Pink Candy Cane"
+  },
+  "3345": {
+    "internal_id": 1462,
+    "slot": 6,
+    "name": "Pointed Yellow Tail"
+  },
+  "3300": {
+    "internal_id": 1195,
+    "slot": 6,
+    "name": "Poncho"
+  },
+  "3309": {
+    "internal_id": 1065,
+    "slot": 6,
+    "name": "Proto Pack"
+  },
+  "3297": {
+    "internal_id": 1202,
+    "slot": 6,
+    "name": "Raccoon Tail"
+  },
+  "3388": {
+    "internal_id": 2320,
+    "slot": 6,
+    "name": "Red Petal Scarf"
+  },
+  "3359": {
+    "internal_id": 1543,
+    "slot": 6,
+    "name": "Red Unity Cape"
+  },
+  "3321": {
+    "internal_id": 1377,
+    "slot": 6,
+    "name": "Red Xmas Stocking"
+  },
+  "3382": {
+    "internal_id": 2237,
+    "slot": 6,
+    "name": "Sand Snake Scarf"
+  },
+  "3295": {
+    "internal_id": 1082,
+    "slot": 6,
+    "name": "Scarf"
+  },
+  "3286": {
+    "internal_id": 1019,
+    "slot": 6,
+    "name": "Scythe"
+  },
+  "3371": {
+    "internal_id": 2175,
+    "slot": 6,
+    "name": "Shadow Cape"
+  },
+  "3285": {
+    "internal_id": 1247,
+    "slot": 6,
+    "name": "Shoulder Bag"
+  },
+  "3369": {
+    "internal_id": 2173,
+    "slot": 6,
+    "name": "Shovel"
+  },
+  "3370": {
+    "internal_id": 2174,
+    "slot": 6,
+    "name": "Skull Moth Wings"
+  },
+  "3327": {
+    "internal_id": 1126,
+    "slot": 6,
+    "name": "Small Black Rat Tail"
+  },
+  "3326": {
+    "internal_id": 1125,
+    "slot": 6,
+    "name": "Small Purple Rat Tail"
+  },
+  "3380": {
+    "internal_id": 2215,
+    "slot": 6,
+    "name": "Snow Leopard Tail"
+  },
+  "3378": {
+    "internal_id": 2213,
+    "slot": 6,
+    "name": "Snowboarder Scarf"
+  },
+  "3374": {
+    "internal_id": 2178,
+    "slot": 6,
+    "name": "Sparkling Charcoal Dragon Wings"
+  },
+  "3331": {
+    "internal_id": 1133,
+    "slot": 6,
+    "name": "Spooky Arms"
+  },
+  "3379": {
+    "internal_id": 2214,
+    "slot": 6,
+    "name": "Star Backpiece"
+  },
+  "3386": {
+    "internal_id": 2265,
+    "slot": 6,
+    "name": "Strange Tentacles"
+  },
+  "3334": {
+    "internal_id": 1287,
+    "slot": 6,
+    "name": "Teddy Bear"
+  },
+  "3366": {
+    "internal_id": 2145,
+    "slot": 6,
+    "name": "Temporal Cape"
+  },
+  "3341": {
+    "internal_id": 1434,
+    "slot": 6,
+    "name": "Tiger Tail"
+  },
+  "3332": {
+    "internal_id": 1286,
+    "slot": 6,
+    "name": "Toy Plane"
+  },
+  "3310": {
+    "internal_id": 1085,
+    "slot": 6,
+    "name": "Turkey Tail"
+  },
+  "3364": {
+    "internal_id": 1547,
+    "slot": 6,
+    "name": "Volcano Beast Wings"
+  },
+  "3298": {
+    "internal_id": 1205,
+    "slot": 6,
+    "name": "White Kitty Tail"
+  },
+  "3299": {
+    "internal_id": 1062,
+    "slot": 6,
+    "name": "Winged Heart Backpack"
+  },
+  "3335": {
+    "internal_id": 1378,
+    "slot": 6,
+    "name": "Xmas Gift Sack"
+  },
+  "3638": {
+    "internal_id": 1425,
+    "slot": 7,
+    "name": "Aura Jacket"
+  },
+  "3590": {
+    "internal_id": 1232,
+    "slot": 7,
+    "name": "Baseball Jersey"
+  },
+  "3599": {
+    "internal_id": 1235,
+    "slot": 7,
+    "name": "Basketball Jersey"
+  },
+  "3636": {
+    "internal_id": 1231,
+    "slot": 7,
+    "name": "Bee Costume"
+  },
+  "3667": {
+    "internal_id": 1104,
+    "slot": 7,
+    "name": "Black Pinstripe Suit"
+  },
+  "3712": {
+    "internal_id": 2239,
+    "slot": 7,
+    "name": "Black Sky Serpent Armor"
+  },
+  "3551": {
+    "internal_id": 1221,
+    "slot": 7,
+    "name": "Blue Overalls"
+  },
+  "3650": {
+    "internal_id": 1093,
+    "slot": 7,
+    "name": "Boar Costume"
+  },
+  "3568": {
+    "internal_id": 1392,
+    "slot": 7,
+    "name": "Bones Uniform"
+  },
+  "3559": {
+    "internal_id": 1233,
+    "slot": 7,
+    "name": "Breeder's Overalls"
+  },
+  "3665": {
+    "internal_id": 1208,
+    "slot": 7,
+    "name": "Brown School Uniform"
+  },
+  "3616": {
+    "internal_id": 1041,
+    "slot": 7,
+    "name": "Bug Elfbot Outfit"
+  },
+  "3623": {
+    "internal_id": 1464,
+    "slot": 7,
+    "name": "Bug Enthusiast Outfit"
+  },
+  "3627": {
+    "internal_id": 1059,
+    "slot": 7,
+    "name": "Bunny Costume"
+  },
+  "3600": {
+    "internal_id": 1216,
+    "slot": 7,
+    "name": "Business Suit"
+  },
+  "3584": {
+    "internal_id": 1400,
+    "slot": 7,
+    "name": "Camping Outfit"
+  },
+  "3706": {
+    "internal_id": 2181,
+    "slot": 7,
+    "name": "Candy Corn Sweater"
+  },
+  "3607": {
+    "internal_id": 1113,
+    "slot": 7,
+    "name": "Clown Outfit"
+  },
+  "3713": {
+    "internal_id": 2240,
+    "slot": 7,
+    "name": "Cobra Hoodie"
+  },
+  "3557": {
+    "internal_id": 1217,
+    "slot": 7,
+    "name": "Combat Armor"
+  },
+  "3552": {
+    "internal_id": 1243,
+    "slot": 7,
+    "name": "Cool Jacket"
+  },
+  "3556": {
+    "internal_id": 1229,
+    "slot": 7,
+    "name": "Crossed Jumper"
+  },
+  "3621": {
+    "internal_id": 1070,
+    "slot": 7,
+    "name": "Dark Elfbot Outfit"
+  },
+  "3620": {
+    "internal_id": 1043,
+    "slot": 7,
+    "name": "Dragon Elfbot Outfit"
+  },
+  "3570": {
+    "internal_id": 1031,
+    "slot": 7,
+    "name": "Electric Elfbot Outfit"
+  },
+  "3561": {
+    "internal_id": 1228,
+    "slot": 7,
+    "name": "Elf Tunic"
+  },
+  "3719": {
+    "internal_id": 2294,
+    "slot": 7,
+    "name": "Elven Outfit"
+  },
+  "3583": {
+    "internal_id": 1399,
+    "slot": 7,
+    "name": "Explorer's Outfit"
+  },
+  "3705": {
+    "internal_id": 1572,
+    "slot": 7,
+    "name": "Fairy Elfbot Outfit"
+  },
+  "3721": {
+    "internal_id": 2296,
+    "slot": 7,
+    "name": "Festive Dress"
+  },
+  "3612": {
+    "internal_id": 1076,
+    "slot": 7,
+    "name": "Fighting Elfbot Outfit"
+  },
+  "3695": {
+    "internal_id": 1466,
+    "slot": 7,
+    "name": "Fire Dragon Robes"
+  },
+  "3560": {
+    "internal_id": 1394,
+    "slot": 7,
+    "name": "Fishing Outfit"
+  },
+  "3567": {
+    "internal_id": 1215,
+    "slot": 7,
+    "name": "Flame Uniform"
+  },
+  "3591": {
+    "internal_id": 1224,
+    "slot": 7,
+    "name": "Football Jersey"
+  },
+  "3716": {
+    "internal_id": 2266,
+    "slot": 7,
+    "name": "Frankenstein Coat"
+  },
+  "3605": {
+    "internal_id": 1225,
+    "slot": 7,
+    "name": "Frog Costume"
+  },
+  "3674": {
+    "internal_id": 1570,
+    "slot": 7,
+    "name": "Frosty Tree Outfit"
+  },
+  "3566": {
+    "internal_id": 1222,
+    "slot": 7,
+    "name": "Galaxy Uniform"
+  },
+  "3596": {
+    "internal_id": 1405,
+    "slot": 7,
+    "name": "Gardener's Overalls"
+  },
+  "3617": {
+    "internal_id": 1047,
+    "slot": 7,
+    "name": "Ghost Elfbot Outfit"
+  },
+  "3642": {
+    "internal_id": 1064,
+    "slot": 7,
+    "name": "Ghost Purging Outfit"
+  },
+  "3554": {
+    "internal_id": 1237,
+    "slot": 7,
+    "name": "Gi"
+  },
+  "3610": {
+    "internal_id": 1052,
+    "slot": 7,
+    "name": "Gingerbread Costume"
+  },
+  "3571": {
+    "internal_id": 1029,
+    "slot": 7,
+    "name": "Grass Elfbot Outfit"
+  },
+  "3640": {
+    "internal_id": 1426,
+    "slot": 7,
+    "name": "Grassquerade Outfit"
+  },
+  "3699": {
+    "internal_id": 1575,
+    "slot": 7,
+    "name": "Green Christmas Present Costume"
+  },
+  "3711": {
+    "internal_id": 2238,
+    "slot": 7,
+    "name": "Green Sky Serpent Armor"
+  },
+  "3578": {
+    "internal_id": 1398,
+    "slot": 7,
+    "name": "Groom Suit"
+  },
+  "3575": {
+    "internal_id": 1035,
+    "slot": 7,
+    "name": "Ground Elfbot Outfit"
+  },
+  "3649": {
+    "internal_id": 1498,
+    "slot": 7,
+    "name": "Hellcat Costume"
+  },
+  "3683": {
+    "internal_id": 1381,
+    "slot": 7,
+    "name": "Ice Cream Clerk Uniform"
+  },
+  "3619": {
+    "internal_id": 1072,
+    "slot": 7,
+    "name": "Ice Elfbot Outfit"
+  },
+  "3648": {
+    "internal_id": 1209,
+    "slot": 7,
+    "name": "Ice Spirit Robe"
+  },
+  "3657": {
+    "internal_id": 1496,
+    "slot": 7,
+    "name": "Iron Hero Costume"
+  },
+  "3664": {
+    "internal_id": 1098,
+    "slot": 7,
+    "name": "Kaiju Costume"
+  },
+  "3550": {
+    "internal_id": 1213,
+    "slot": 7,
+    "name": "Lava Uniform"
+  },
+  "3702": {
+    "internal_id": 1523,
+    "slot": 7,
+    "name": "Legendary Blue Robes"
+  },
+  "3703": {
+    "internal_id": 1524,
+    "slot": 7,
+    "name": "Legendary Purple Robes"
+  },
+  "3631": {
+    "internal_id": 1087,
+    "slot": 7,
+    "name": "Leprechaun Suit"
+  },
+  "3579": {
+    "internal_id": 1230,
+    "slot": 7,
+    "name": "Liberty Uniform"
+  },
+  "3633": {
+    "internal_id": 1418,
+    "slot": 7,
+    "name": "Lion Costume"
+  },
+  "3565": {
+    "internal_id": 1212,
+    "slot": 7,
+    "name": "Maid Outfit"
+  },
+  "3718": {
+    "internal_id": 2268,
+    "slot": 7,
+    "name": "Mermaid Costume"
+  },
+  "3645": {
+    "internal_id": 1122,
+    "slot": 7,
+    "name": "Military Uniform"
+  },
+  "3635": {
+    "internal_id": 1421,
+    "slot": 7,
+    "name": "Monkey Costume"
+  },
+  "3634": {
+    "internal_id": 1420,
+    "slot": 7,
+    "name": "Mummy Body Wrap"
+  },
+  "3724": {
+    "internal_id": 2322,
+    "slot": 7,
+    "name": "Musketeer Tabard"
+  },
+  "3569": {
+    "internal_id": 1395,
+    "slot": 7,
+    "name": "Neo Liberty Uniform"
+  },
+  "3593": {
+    "internal_id": 1242,
+    "slot": 7,
+    "name": "Ninja Outfit"
+  },
+  "3686": {
+    "internal_id": 1289,
+    "slot": 7,
+    "name": "Normal Elfbot Outfit"
+  },
+  "3658": {
+    "internal_id": 1207,
+    "slot": 7,
+    "name": "Nurse Uniform"
+  },
+  "3563": {
+    "internal_id": 1226,
+    "slot": 7,
+    "name": "Ocean Uniform"
+  },
+  "3725": {
+    "internal_id": 2323,
+    "slot": 7,
+    "name": "Origin Outfit"
+  },
+  "3537": {
+    "internal_id": 1210,
+    "slot": 7,
+    "name": "Overcoat"
+  },
+  "3687": {
+    "internal_id": 1292,
+    "slot": 7,
+    "name": "Ox Costume"
+  },
+  "3625": {
+    "internal_id": 1223,
+    "slot": 7,
+    "name": "Panda Costume"
+  },
+  "3629": {
+    "internal_id": 1412,
+    "slot": 7,
+    "name": "Paramedic Uniform"
+  },
+  "3601": {
+    "internal_id": 1055,
+    "slot": 7,
+    "name": "Penguin Costume"
+  },
+  "3720": {
+    "internal_id": 2295,
+    "slot": 7,
+    "name": "Peppermint Shirt"
+  },
+  "3679": {
+    "internal_id": 1131,
+    "slot": 7,
+    "name": "Pharaoh Outfit"
+  },
+  "3647": {
+    "internal_id": 1110,
+    "slot": 7,
+    "name": "Phoenix Robe"
+  },
+  "3651": {
+    "internal_id": 1090,
+    "slot": 7,
+    "name": "Pig Costume"
+  },
+  "3700": {
+    "internal_id": 1518,
+    "slot": 7,
+    "name": "Pink Christmas Present Costume"
+  },
+  "3553": {
+    "internal_id": 1220,
+    "slot": 7,
+    "name": "Pink Overalls"
+  },
+  "3614": {
+    "internal_id": 1074,
+    "slot": 7,
+    "name": "Poison Elfbot Outfit"
+  },
+  "3609": {
+    "internal_id": 1407,
+    "slot": 7,
+    "name": "Police Officer Uniform"
+  },
+  "3572": {
+    "internal_id": 1033,
+    "slot": 7,
+    "name": "Psychic Elfbot Outfit"
+  },
+  "3717": {
+    "internal_id": 2267,
+    "slot": 7,
+    "name": "Puffy Witch Dress"
+  },
+  "3668": {
+    "internal_id": 1100,
+    "slot": 7,
+    "name": "Pumpkin Costume"
+  },
+  "3544": {
+    "internal_id": 1258,
+    "slot": 7,
+    "name": "R Uniform"
+  },
+  "3577": {
+    "internal_id": 1396,
+    "slot": 7,
+    "name": "Ranger Uniform"
+  },
+  "3697": {
+    "internal_id": 1516,
+    "slot": 7,
+    "name": "Red Christmas Present Costume"
+  },
+  "3709": {
+    "internal_id": 2218,
+    "slot": 7,
+    "name": "Red Wishmaker Robes"
+  },
+  "3644": {
+    "internal_id": 1534,
+    "slot": 7,
+    "name": "Reindeer Costume"
+  },
+  "3580": {
+    "internal_id": 1218,
+    "slot": 7,
+    "name": "Restaurant Uniform"
+  },
+  "3678": {
+    "internal_id": 1406,
+    "slot": 7,
+    "name": "Rock 'n Roll Outfit"
+  },
+  "3615": {
+    "internal_id": 1049,
+    "slot": 7,
+    "name": "Rock Elfbot Outfit"
+  },
+  "3587": {
+    "internal_id": 1227,
+    "slot": 7,
+    "name": "Sailor Uniform"
+  },
+  "3622": {
+    "internal_id": 1211,
+    "slot": 7,
+    "name": "Samurai Armor"
+  },
+  "3714": {
+    "internal_id": 2241,
+    "slot": 7,
+    "name": "Sand Snake Coat"
+  },
+  "3546": {
+    "internal_id": 1005,
+    "slot": 7,
+    "name": "Santa Suit"
+  },
+  "3690": {
+    "internal_id": 1513,
+    "slot": 7,
+    "name": "Shinigami Robe"
+  },
+  "3558": {
+    "internal_id": 1018,
+    "slot": 7,
+    "name": "Skeleton Costume"
+  },
+  "3538": {
+    "internal_id": 1324,
+    "slot": 7,
+    "name": "Sleeveless Top"
+  },
+  "3673": {
+    "internal_id": 1108,
+    "slot": 7,
+    "name": "Small Black Rat Costume"
+  },
+  "3672": {
+    "internal_id": 1106,
+    "slot": 7,
+    "name": "Small Purple Rat Costume"
+  },
+  "3708": {
+    "internal_id": 2217,
+    "slot": 7,
+    "name": "Snow Leopard Outfit"
+  },
+  "3598": {
+    "internal_id": 1236,
+    "slot": 7,
+    "name": "Soccer Jersey"
+  },
+  "3628": {
+    "internal_id": 1411,
+    "slot": 7,
+    "name": "Space Suit"
+  },
+  "3722": {
+    "internal_id": 2297,
+    "slot": 7,
+    "name": "Spruce Coat"
+  },
+  "3707": {
+    "internal_id": 2216,
+    "slot": 7,
+    "name": "Star Bodysuit"
+  },
+  "3618": {
+    "internal_id": 1078,
+    "slot": 7,
+    "name": "Steel Elfbot Outfit"
+  },
+  "3654": {
+    "internal_id": 1495,
+    "slot": 7,
+    "name": "Super Hero Costume"
+  },
+  "3539": {
+    "internal_id": 1323,
+    "slot": 7,
+    "name": "T-Shirt"
+  },
+  "3666": {
+    "internal_id": 1463,
+    "slot": 7,
+    "name": "Tamer Outfit"
+  },
+  "3710": {
+    "internal_id": 2219,
+    "slot": 7,
+    "name": "Teal Wishmaker Robes"
+  },
+  "3701": {
+    "internal_id": 1520,
+    "slot": 7,
+    "name": "Thick Winter Coat"
+  },
+  "3704": {
+    "internal_id": 1548,
+    "slot": 7,
+    "name": "Thunder Beast Daopao"
+  },
+  "3694": {
+    "internal_id": 1433,
+    "slot": 7,
+    "name": "Tiger Costume"
+  },
+  "3608": {
+    "internal_id": 1214,
+    "slot": 7,
+    "name": "Tracksuit"
+  },
+  "3624": {
+    "internal_id": 1409,
+    "slot": 7,
+    "name": "Traditional Monk Robes"
+  },
+  "3576": {
+    "internal_id": 1397,
+    "slot": 7,
+    "name": "Trainer's Jacket"
+  },
+  "3643": {
+    "internal_id": 1084,
+    "slot": 7,
+    "name": "Turkey Costume"
+  },
+  "3555": {
+    "internal_id": 1219,
+    "slot": 7,
+    "name": "Turtle Gi"
+  },
+  "3543": {
+    "internal_id": 1257,
+    "slot": 7,
+    "name": "Tuxedo"
+  },
+  "3540": {
+    "internal_id": 1268,
+    "slot": 7,
+    "name": "Vest"
+  },
+  "3573": {
+    "internal_id": 1027,
+    "slot": 7,
+    "name": "Water Elfbot Outfit"
+  },
+  "3588": {
+    "internal_id": 1402,
+    "slot": 7,
+    "name": "White R Uniform"
+  },
+  "3564": {
+    "internal_id": 1234,
+    "slot": 7,
+    "name": "White Striped Top"
+  },
+  "3545": {
+    "internal_id": 2152,
+    "slot": 7,
+    "name": "Zodiac Dragon Outfit"
+  },
+  "3715": {
+    "internal_id": 2246,
+    "slot": 7,
+    "name": "Zodiac Tangzhuang"
+  },
+  "3641": {
+    "internal_id": 1372,
+    "slot": 7,
+    "name": "Zombie Costume"
+  },
+  "3809": {
+    "internal_id": 2270,
+    "slot": 8,
+    "name": "Blue Flaming Sword"
+  },
+  "3799": {
+    "internal_id": 1499,
+    "slot": 8,
+    "name": "Bone Club"
+  },
+  "3805": {
+    "internal_id": 1573,
+    "slot": 8,
+    "name": "Boxing Gloves"
+  },
+  "3810": {
+    "internal_id": 2299,
+    "slot": 8,
+    "name": "Elven Bow"
+  },
+  "3801": {
+    "internal_id": 1566,
+    "slot": 8,
+    "name": "Ghostly Lantern"
+  },
+  "3793": {
+    "internal_id": 1238,
+    "slot": 8,
+    "name": "Gloves"
+  },
+  "3797": {
+    "internal_id": 1465,
+    "slot": 8,
+    "name": "Lollipop"
+  },
+  "3811": {
+    "internal_id": 2324,
+    "slot": 8,
+    "name": "Musketeer Rapier"
+  },
+  "3808": {
+    "internal_id": 2269,
+    "slot": 8,
+    "name": "Orange Flaming Sword"
+  },
+  "3807": {
+    "internal_id": 2221,
+    "slot": 8,
+    "name": "Red Star Rod"
+  },
+  "3800": {
+    "internal_id": 1500,
+    "slot": 8,
+    "name": "Shadow Bone Club"
+  },
+  "3806": {
+    "internal_id": 2220,
+    "slot": 8,
+    "name": "Teal Star Rod"
+  },
+  "3794": {
+    "internal_id": 1116,
+    "slot": 8,
+    "name": "Torch"
+  },
+  "3802": {
+    "internal_id": 1569,
+    "slot": 8,
+    "name": "Trick or Treat Bucket"
+  },
+  "4048": {
+    "internal_id": 1327,
+    "slot": 9,
+    "name": "Boots"
+  },
+  "4050": {
+    "internal_id": 2182,
+    "slot": 9,
+    "name": "Candy Corn Shoes"
+  },
+  "4049": {
+    "internal_id": 1326,
+    "slot": 9,
+    "name": "Shoes"
+  },
+  "4308": {
+    "internal_id": 2183,
+    "slot": 10,
+    "name": "Candy Corn Pants"
+  },
+  "4309": {
+    "internal_id": 2271,
+    "slot": 10,
+    "name": "Frankenstein Pants"
+  },
+  "4304": {
+    "internal_id": 1316,
+    "slot": 10,
+    "name": "Pants"
+  },
+  "4305": {
+    "internal_id": 1269,
+    "slot": 10,
+    "name": "Shorts"
+  },
+  "4310": {
+    "internal_id": 2300,
+    "slot": 10,
+    "name": "Spruce Pants"
+  },
+  "4856": {
+    "internal_id": 2188,
+    "slot": 12,
+    "name": "Blue Flaming Motorcycle"
+  },
+  "4833": {
+    "internal_id": 1564,
+    "slot": 12,
+    "name": "Flaming Motorcycle"
+  },
+  "4846": {
+    "internal_id": 2149,
+    "slot": 12,
+    "name": "Lucky Gold Dragon"
+  },
+  "4844": {
+    "internal_id": 2148,
+    "slot": 12,
+    "name": "Lucky Red Dragon"
+  },
+  "4818": {
+    "internal_id": 1239,
+    "slot": 12,
+    "name": "Motorcycle"
+  },
+  "4878": {
+    "internal_id": 2331,
+    "slot": 12,
+    "name": "Noble Steed"
+  },
+  "4867": {
+    "internal_id": 2226,
+    "slot": 12,
+    "name": "Purple Christmas Sleigh"
+  },
+  "4873": {
+    "internal_id": 2311,
+    "slot": 12,
+    "name": "Rudolph"
+  },
+  "4868": {
+    "internal_id": 2245,
+    "slot": 12,
+    "name": "Xuanwu"
+  }
+}
