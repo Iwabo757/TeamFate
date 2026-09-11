@@ -23,7 +23,6 @@ export type Cosmetic = {
 
 export type RendererManifest = {
   format_version: number;
-
   base: Record<
     string,
     {
@@ -31,9 +30,31 @@ export type RendererManifest = {
       previews: string[];
     }
   >;
-
   cosmetics: Record<string, Cosmetic>;
 };
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
+const ASSET_ROOT = "/team-fate-renderer";
+
+const CHARACTER_WIDTH = 57;
+const CHARACTER_HEIGHT = 56;
+
+export const LAYER_ORDER: CosmeticSlot[] = [
+  "back",
+  "pants",
+  "shoes",
+  "top",
+  "eyes",
+  "face",
+  "hair",
+  "held",
+  "hat",
+  "tool",
+  "mount",
+];
 
 /* =========================================================
    IMAGE CACHE
@@ -53,27 +74,28 @@ export async function loadImage(
     return cached;
   }
 
-  const promise = new Promise<HTMLImageElement>(
-    (resolve, reject) => {
-      const img = new Image();
+  const promise =
+    new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const image = new Image();
 
-      img.decoding = "async";
+        image.decoding = "async";
 
-      img.onload = () => {
-        resolve(img);
-      };
+        image.onload = () => {
+          resolve(image);
+        };
 
-      img.onerror = () => {
-        reject(
-          new Error(
-            `Failed to load image: ${src}`
-          )
-        );
-      };
+        image.onerror = () => {
+          reject(
+            new Error(
+              `Failed to load image: ${src}`
+            )
+          );
+        };
 
-      img.src = src;
-    }
-  );
+        image.src = src;
+      }
+    );
 
   imageCache.set(src, promise);
 
@@ -90,7 +112,7 @@ export async function loadImage(
 ========================================================= */
 
 export async function loadRendererManifest(
-  url = "/team-fate-renderer/manifest.json"
+  url = `${ASSET_ROOT}/manifest.json`
 ): Promise<RendererManifest> {
   const response = await fetch(url);
 
@@ -100,43 +122,29 @@ export async function loadRendererManifest(
     );
   }
 
-  return (await response.json()) as RendererManifest;
+  const manifest =
+    (await response.json()) as RendererManifest;
+
+  if (!manifest.base) {
+    throw new Error(
+      "Renderer manifest has no base data."
+    );
+  }
+
+  if (!manifest.cosmetics) {
+    throw new Error(
+      "Renderer manifest has no cosmetics."
+    );
+  }
+
+  return manifest;
 }
 
 /* =========================================================
-   LAYER ORDER
+   PATH HELPERS
 ========================================================= */
 
-export const LAYER_ORDER: CosmeticSlot[] = [
-  "back",
-  "pants",
-  "shoes",
-  "top",
-  "eyes",
-  "face",
-  "hair",
-  "held",
-  "hat",
-  "tool",
-  "mount",
-];
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function normalizeBaseUrl(
-  baseUrl?: string
-): string {
-  const value =
-    baseUrl && baseUrl.trim().length > 0
-      ? baseUrl
-      : "/team-fate-renderer";
-
-  return value.replace(/\/+$/, "");
-}
-
-function normalizeAssetPath(
+function cleanPath(
   path: string
 ): string {
   return path
@@ -144,10 +152,19 @@ function normalizeAssetPath(
     .replace(/^\/+/, "");
 }
 
-function slugifyName(
-  name: string
+function makeAssetUrl(
+  baseUrl: string,
+  relativePath: string
 ): string {
-  return name
+  return `${baseUrl.replace(/\/+$/, "")}/${cleanPath(
+    relativePath
+  )}`;
+}
+
+function slugify(
+  value: string
+): string {
+  return value
     .toLowerCase()
     .replace(/['’]/g, "")
     .replace(/&/g, "and")
@@ -157,178 +174,141 @@ function slugifyName(
 }
 
 /* =========================================================
-   COSMETIC PATH RESOLUTION
+   COSMETIC PATHS
 ========================================================= */
 
-function getCosmeticPathCandidates(
+function getCosmeticPaths(
   cosmetic: Cosmetic
 ): string[] {
-  const candidates: string[] = [];
+  const paths: string[] = [];
 
   /*
-   * 1. Exact path supplied by the manifest.
+   * Use the manifest path first.
    */
   if (cosmetic.layer) {
-    candidates.push(
-      normalizeAssetPath(
-        cosmetic.layer
-      )
+    paths.push(
+      cleanPath(cosmetic.layer)
     );
   }
-
-  /*
-   * The extracted Team Fate assets use:
-   *
-   * cosmetics/pants/pants__03504_layer.png
-   *
-   * cosmetics/hat/acorn_hat__17120_layer.png
-   */
-  const slug = slugifyName(
-    cosmetic.name
-  );
 
   const id = String(
     cosmetic.layer_index
   ).padStart(5, "0");
 
-  candidates.push(
-    `cosmetics/${cosmetic.slot}/${slug}__${id}_layer.png`
+  const name = slugify(
+    cosmetic.name
   );
 
   /*
-   * Compatibility with the older naming format:
-   *
-   * cosmetics/pants/03504_layer.png
+   * Current extracted format.
    */
-  candidates.push(
+  paths.push(
+    `cosmetics/${cosmetic.slot}/${name}__${id}_layer.png`
+  );
+
+  /*
+   * Older extracted format.
+   */
+  paths.push(
     `cosmetics/${cosmetic.slot}/${id}_layer.png`
   );
 
-  return [...new Set(candidates)];
+  /*
+   * Resource-index fallback.
+   */
+  paths.push(
+    `cosmetics/${cosmetic.slot}/${cosmetic.layer_index}_layer.png`
+  );
+
+  return [
+    ...new Set(paths),
+  ];
 }
 
 /* =========================================================
-   LOAD COSMETIC LAYER
+   LOAD COSMETIC
 ========================================================= */
 
-async function loadCosmeticLayer(
+async function loadCosmetic(
   cosmetic: Cosmetic,
   baseUrl: string
-): Promise<HTMLImageElement> {
-  const candidates =
-    getCosmeticPathCandidates(
-      cosmetic
-    );
+): Promise<HTMLImageElement | null> {
+  const paths =
+    getCosmeticPaths(cosmetic);
 
-  for (
-    const relativePath of candidates
-  ) {
-    const src =
-      `${baseUrl}/${relativePath}`;
+  for (const path of paths) {
+    const url =
+      makeAssetUrl(
+        baseUrl,
+        path
+      );
 
     try {
-      return await loadImage(src);
+      const image =
+        await loadImage(url);
+
+      console.log(
+        `[Local Renderer] Loaded ${cosmetic.name}: ${url}`
+      );
+
+      return image;
     } catch {
       /*
-       * Try the next possible filename.
+       * Try the next filename.
        */
     }
   }
 
-  throw new Error(
-    `Failed to load cosmetic layer "${cosmetic.name}". ` +
-      `Tried: ${candidates
-        .map(
-          (path) =>
-            `${baseUrl}/${path}`
-        )
-        .join(", ")}`
+  console.warn(
+    `[Local Renderer] Could not load ${cosmetic.name}`,
+    paths
   );
+
+  /*
+   * IMPORTANT:
+   *
+   * A missing cosmetic no longer
+   * destroys the entire character.
+   */
+  return null;
 }
 
 /* =========================================================
-   CHARACTER RENDERER
+   RENDER CHARACTER
 ========================================================= */
 
 export async function renderCharacter(
   opts: {
     manifest: RendererManifest;
-
-    /*
-     * Defaults to:
-     *
-     * /team-fate-renderer
-     */
     baseUrl?: string;
-
-    /*
-     * Skin 1-5.
-     */
     skin?: number;
-
-    /*
-     * Animation frame.
-     */
     frame?: number;
-
-    /*
-     * Equipped cosmetics.
-     */
     cosmetics?: Partial<
-      Record<
-        CosmeticSlot,
-        string
-      >
+      Record<CosmeticSlot, string>
     >;
-
-    /*
-     * Pixel scaling.
-     */
     scale?: number;
   }
 ): Promise<HTMLCanvasElement> {
   const {
     manifest,
-
-    /*
-     * IMPORTANT:
-     *
-     * The renderer must load assets from
-     * /team-fate-renderer rather than the
-     * website root.
-     */
-    baseUrl =
-      "/team-fate-renderer",
-
+    baseUrl = ASSET_ROOT,
     skin = 1,
-
     frame = 0,
-
     cosmetics = {},
-
     scale = 1,
   } = opts;
-
-  const assetRoot =
-    normalizeBaseUrl(
-      baseUrl
-    );
-
-  /* =======================================================
-     VALIDATE SCALE
-  ======================================================= */
 
   if (
     !Number.isFinite(scale) ||
     scale <= 0
   ) {
     throw new Error(
-      `Invalid renderer scale: ${scale}`
+      `Invalid scale: ${scale}`
     );
   }
 
   /* =======================================================
-     FIND SKIN
+     SKIN
   ======================================================= */
 
   const skinKey =
@@ -339,12 +319,12 @@ export async function renderCharacter(
 
   if (!skinData) {
     throw new Error(
-      `Invalid skin: ${skin}`
+      `Skin ${skin} does not exist.`
     );
   }
 
   /* =======================================================
-     VALIDATE FRAME
+     FRAME
   ======================================================= */
 
   if (
@@ -354,20 +334,18 @@ export async function renderCharacter(
       skinData.frames.length
   ) {
     throw new Error(
-      `Invalid frame ${frame}. ` +
-        `Skin ${skin} contains ` +
-        `${skinData.frames.length} frames.`
+      `Frame ${frame} does not exist for skin ${skin}.`
     );
   }
 
   const basePath =
-    normalizeAssetPath(
+    cleanPath(
       skinData.frames[frame]
     );
 
   if (!basePath) {
     throw new Error(
-      `No base frame found for skin ${skin}, frame ${frame}.`
+      `No base image for skin ${skin}, frame ${frame}.`
     );
   }
 
@@ -376,10 +354,10 @@ export async function renderCharacter(
   ======================================================= */
 
   const width =
-    57 * scale;
+    CHARACTER_WIDTH * scale;
 
   const height =
-    56 * scale;
+    CHARACTER_HEIGHT * scale;
 
   const canvas =
     document.createElement(
@@ -394,27 +372,34 @@ export async function renderCharacter(
 
   if (!ctx) {
     throw new Error(
-      "Canvas 2D context unavailable."
+      "Could not create canvas context."
     );
   }
 
-  /*
-   * Preserve pixel-art edges.
-   */
   ctx.imageSmoothingEnabled =
     false;
 
   /* =======================================================
-     BASE CHARACTER
+     BASE
   ======================================================= */
 
-  const baseImage =
+  const baseUrlFull =
+    makeAssetUrl(
+      baseUrl,
+      basePath
+    );
+
+  console.log(
+    `[Local Renderer] Base: ${baseUrlFull}`
+  );
+
+  const base =
     await loadImage(
-      `${assetRoot}/${basePath}`
+      baseUrlFull
     );
 
   ctx.drawImage(
-    baseImage,
+    base,
     0,
     0,
     width,
@@ -422,7 +407,7 @@ export async function renderCharacter(
   );
 
   /* =======================================================
-     COSMETIC LAYERS
+     COSMETICS
   ======================================================= */
 
   for (
@@ -431,9 +416,6 @@ export async function renderCharacter(
     const cosmeticName =
       cosmetics[slot];
 
-    /*
-     * No cosmetic equipped.
-     */
     if (!cosmeticName) {
       continue;
     }
@@ -443,48 +425,41 @@ export async function renderCharacter(
         cosmeticName
       ];
 
-    /*
-     * Cosmetic doesn't exist
-     * in the local manifest.
-     */
     if (!cosmetic) {
       console.warn(
-        `[Renderer] Cosmetic not found: ${cosmeticName}`
+        `[Local Renderer] Unknown cosmetic: ${cosmeticName}`
       );
 
       continue;
     }
 
-    /*
-     * Prevent an incorrectly assigned
-     * cosmetic from being rendered.
-     */
     if (
       cosmetic.slot !== slot
     ) {
       console.warn(
-        `[Renderer] Slot mismatch: ` +
-          `${cosmetic.name} is ${cosmetic.slot}, ` +
-          `but was requested as ${slot}.`
+        `[Local Renderer] Slot mismatch for ${cosmetic.name}: ` +
+          `expected ${slot}, got ${cosmetic.slot}`
       );
 
       continue;
     }
 
-    /*
-     * Load the actual local layer.
-     */
     const layer =
-      await loadCosmeticLayer(
+      await loadCosmetic(
         cosmetic,
-        assetRoot
+        baseUrl
       );
 
     /*
-     * All extracted cosmetic layers
-     * are already positioned for the
-     * 57x56 character canvas.
+     * Missing layer?
+     *
+     * Skip it instead of killing
+     * the entire preview.
      */
+    if (!layer) {
+      continue;
+    }
+
     ctx.drawImage(
       layer,
       0,
@@ -498,7 +473,7 @@ export async function renderCharacter(
 }
 
 /* =========================================================
-   RENDER → DATA URL
+   DATA URL
 ========================================================= */
 
 export async function renderCharacterToDataUrl(
