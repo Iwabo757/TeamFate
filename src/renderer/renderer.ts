@@ -644,8 +644,7 @@ export async function renderCharacter(
       frame === 1 &&
       (
         slot === "eyes" ||
-        slot === "face" ||
-        slot === "glasses"
+        slot === "face" 
       )
     ) {
       continue;
