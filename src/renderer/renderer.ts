@@ -160,14 +160,14 @@ function getCosmeticFrameIndex(
 
   // T-Shirt: 13 Front + 13 Back + 13 Side.
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 1) return 26; // Back
-    if (baseFrame === 2) return 13; // Side
+    if (baseFrame === 1) return 13; // Back
+    if (baseFrame === 2) return 26; // Side
   }
 
   // Pants: 10 Front + 10 Back + 9 Side.
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 1) return 20; // Back
-    if (baseFrame === 2) return 10; // Side
+    if (baseFrame === 1) return 10; // Back
+    if (baseFrame === 2) return 20; // Side
   }
 
   // Shoes: 5 Front + 5 Back + 6 Side.
