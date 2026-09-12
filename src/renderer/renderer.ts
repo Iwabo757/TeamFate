@@ -127,50 +127,47 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * The builder requests these base frames for the three preview views:
+   * Cosmetic direction mapping from the extracted assets:
    *
-   *   Front = base frame 0
-   *   Side  = base frame 4
-   *   Back  = base frame 1
+   *   frame_1 = BACK
+   *   frame_2 = SIDE
+   *   frame_3 = FRONT
    *
-   * Cosmetic direction frames are:
-   *   frame_1 = Back
-   *   frame_2 = Side
+   * The base renderer uses:
+   *   baseFrame 0 = FRONT
+   *   baseFrame 1 = BACK
+   *   baseFrame 2 = SIDE
    *
-   * Front intentionally stays on the cosmetic's static layer.
+   * Therefore:
+   *   Front -> static layer (-1)
+   *   Back  -> cosmetic index 0 (frame_1)
+   *   Side  -> cosmetic index 1 (frame_2)
    *
-   * IMPORTANT:
-   * Defaults and selected cosmetics go through this exact same mapping.
-   * We do not give defaults a different frame selection.
+   * Do NOT use the old 13/26 or 10/20 directional offsets here.
    */
   if (frameCount <= 0) return -1;
 
   // Brown eyes:
-  // Front = static layer
-  // Side = frame_4 when the asset provides it
-  // Back = hidden
+  // Front uses the static layer.
+  // Side uses frame_3.
+  // Back is hidden.
   if (slot === "eyes") {
-    if (baseFrame === 1) return -2;
-
-    if (baseFrame === 4) {
-      // Prefer frame_4 for Side when it exists.
-      if (frameCount >= 4) return 3;
-      // If this cosmetic only has the extracted directional frame,
-      // use its Side frame rather than removing the eyes.
-      if (frameCount >= 2) return 1;
-      return -1;
-    }
-
-    return -1;
+    if (baseFrame === 1) return -2; // Back: hide eyes
+    if (baseFrame === 2) return 1;  // Side -> frame_2
+    return -1; // Front -> static layer
   }
 
-  // Front always uses the original static cosmetic layer.
+  // Front keeps using the cosmetic's static layer.
   if (baseFrame === 0) return -1;
 
-  // Back = frame_1, Side = frame_2.
-  if (baseFrame === 1) return 0;
-  if (baseFrame === 4) return frameCount >= 2 ? 1 : -1;
+  // Directional cosmetic frames:
+  // frame_1 = Back, frame_2 = Side.
+  if (frameCount >= 2) {
+    if (baseFrame === 1) return 0; // Back -> frame_1
+    if (baseFrame === 2) return 1; // Side -> frame_2
+  }
 
+  // A one-frame cosmetic can only be used as a static layer.
   return -1;
 }
 
