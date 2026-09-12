@@ -220,8 +220,17 @@ if (frame === 1 && (slot === "eyes" || slot === "face")) {
 
     // Each cosmetic has five directional/action layer frames in the PAK.
     // Fall back to the original single layer if an older manifest is used.
-    const cosmeticPath =
-      cosmetic.frames?.[frame] ?? cosmetic.layer;
+const cosmeticFrame =
+  frame === 0
+    ? 0       // Front
+    : frame === 15
+      ? 2     // Side
+      : frame === 30
+        ? 1   // Back
+        : 0;
+
+const cosmeticPath =
+  cosmetic.frames?.[cosmeticFrame] ?? cosmetic.layer;
 
     if (!cosmeticPath) continue;
 
