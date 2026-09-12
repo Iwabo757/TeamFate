@@ -153,7 +153,7 @@ function getCosmeticFrameIndex(
   // Back is hidden.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2; // Back: hide eyes
-    if (baseFrame === 2) return 1;  // Side -> frame_2
+    if (baseFrame === 4) return 0;  // Side -> Brown frame_1
     return -1; // Front -> static layer
   }
 
@@ -164,7 +164,7 @@ function getCosmeticFrameIndex(
   // frame_1 = Back, frame_2 = Side.
   if (frameCount >= 2) {
     if (baseFrame === 1) return 0; // Back -> frame_1
-    if (baseFrame === 2) return 1; // Side -> frame_2
+    if (baseFrame === 4) return 1; // Side -> frame_2
   }
 
   // A one-frame cosmetic can only be used as a static layer.
