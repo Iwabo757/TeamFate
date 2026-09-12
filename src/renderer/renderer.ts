@@ -126,27 +126,68 @@ function getCosmeticFrameIndex(
   frameCount: number
 ): number {
   /*
-   * The preview uses the actual base standing-pose frame numbers:
+   * The base preview uses these standing poses:
    *   0 = Front
    *   2 = Side
    *   1 = Back
    *
-   * Cosmetic directional frames are animation frames in the same local
-   * standing-pose sequence. The extracted arrays are 1-based in their
-   * filenames, while the manifest array is 0-based.
+   * Cosmetic resources are laid out differently.  After the static `layer`
+   * image, their extracted frames are grouped in this order:
    *
-   * Front intentionally uses the original static layer, so only Side/Back
-   * need a directional frame. For those views, use the same base-frame
-   * position inside the cosmetic sequence instead of jumping to an
-   * unrelated 13/26 frame group.
+   *   group 0 = Side animation
+   *   group 1 = alternate/front animation
+   *   group 2 = Back animation
+   *
+   * Therefore the first frame of each cosmetic direction is selected from
+   * those groups, rather than using the base frame number directly.
    */
-  if (baseFrame === 0) return -1;
+  if (baseFrame === 0) return -1; // use static layer for Front
   if (frameCount <= 0) return -1;
 
-  // base frame 1 -> cosmetic array index 1 (filename frame_2)
-  // base frame 2 -> cosmetic array index 2 (filename frame_3)
-  // For very short cosmetic sequences, clamp to the last available frame.
-  return Math.min(baseFrame, frameCount - 1);
+  let group = 0;
+  if (baseFrame === 1) group = 2;      // Back
+  else if (baseFrame === 2) group = 0; // Side
+  else return -1;
+
+  // Known resource layouts from the extracted PokeMMO assets.
+  if (frameCount === 3) {
+    return Math.min(group, frameCount - 1);
+  }
+
+  if (frameCount === 4) {
+    // Backwards Cap and similar 4-frame directional cosmetics.
+    return Math.min(group, frameCount - 1);
+  }
+
+  if (frameCount === 16) {
+    // Shoes: 5 front / 5 back / 6 side.
+    const starts = [0, 5, 10];
+    return starts[group];
+  }
+
+  if (frameCount === 29) {
+    // Pants: 10 front / 10 back / 9 side.
+    const starts = [0, 10, 20];
+    return starts[group];
+  }
+
+  if (frameCount === 39) {
+    // T-Shirt: 13 front / 13 back / 13 side.
+    const starts = [0, 13, 26];
+    return starts[group];
+  }
+
+  if (frameCount === 79) {
+    // Samurai Armor: 27 front / 26 back / 26 side.
+    const starts = [0, 27, 53];
+    return starts[group];
+  }
+
+  // Generic cosmetics: divide the extracted frames into the same
+  // Front / Back / Side groups, preserving their animation blocks.
+  const groupSize = Math.floor(frameCount / 3);
+  const starts = [0, groupSize, groupSize * 2];
+  return Math.min(starts[group], frameCount - 1);
 }
 
 async function loadCosmeticImage(
