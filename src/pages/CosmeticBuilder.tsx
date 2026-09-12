@@ -409,9 +409,7 @@ export default function CosmeticBuilder() {
                         view.frame,
 
                       cosmetics:
-                        view.frame === 0
-                          ? equipped
-                          : { ...equipped, eyes: undefined },
+                        equipped,
 
                       tints:
                         colors,
