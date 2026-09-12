@@ -12,17 +12,29 @@ export type CosmeticSlot =
   | "mount";
 
 export type Cosmetic = {
-  name: string;
+  name?: string;
   slot: CosmeticSlot;
   layer: string;
   icon: string;
   layer_index: number;
   icon_index: number;
   slot_code: number;
+
+  /*
+   * Directional/action frames.
+   *
+   * 0 = front
+   * 1 = back
+   * 2 = side
+   * 3 = opposite side
+   * 4 = additional/action pose
+   */
+  frames?: string[];
 };
 
 export type RendererManifest = {
   format_version: number;
+  source_pak_sha256?: string;
 
   base: Record<
     string,
@@ -32,6 +44,8 @@ export type RendererManifest = {
     }
   >;
 
+  slot_codes?: Record<string, string>;
+
   cosmetics: Record<
     string,
     Cosmetic
@@ -40,8 +54,18 @@ export type RendererManifest = {
 
 type RenderOptions = {
   manifest: RendererManifest;
+
   baseUrl?: string;
+
   skin?: number;
+
+  /*
+   * Base-character frame.
+   *
+   * 0 = Front
+   * 1 = Back
+   * 2 = Side
+   */
   frame?: number;
 
   cosmetics?: Partial<
@@ -55,10 +79,15 @@ type RenderOptions = {
   scale?: number;
 };
 
-const imageCache = new Map<
-  string,
-  Promise<HTMLImageElement>
->();
+/* =========================================================
+   IMAGE CACHE
+   ========================================================= */
+
+const imageCache =
+  new Map<
+    string,
+    Promise<HTMLImageElement>
+  >();
 
 /* =========================================================
    LAYER ORDER
@@ -93,105 +122,12 @@ const COLORABLE_SLOTS =
   ]);
 
 /* =========================================================
-   BACK-ONLY RULES
-   =========================================================
-
-   Eyes and face artwork is front-facing artwork.
-
-   The base character itself contains the correct
-   back-facing body/head when frame 1 is used.
-
-   Therefore we must NOT draw front facial layers
-   on the back view.
-   ========================================================= */
-
-const HIDDEN_ON_BACK: CosmeticSlot[] = [
-  "eyes",
-  "face",
-];
-
-/* =========================================================
-   IMAGE LOADING
-   ========================================================= */
-
-export async function loadImage(
-  src: string
-): Promise<HTMLImageElement> {
-  const cached =
-    imageCache.get(src);
-
-  if (cached) {
-    return cached;
-  }
-
-  const promise =
-    new Promise<HTMLImageElement>(
-      (resolve, reject) => {
-        const image =
-          new Image();
-
-        image.decoding =
-          "async";
-
-        image.onload = () => {
-          resolve(image);
-        };
-
-        image.onerror = () => {
-          reject(
-            new Error(
-              `Failed to load image: ${src}`
-            )
-          );
-        };
-
-        image.src = src;
-      }
-    );
-
-  imageCache.set(
-    src,
-    promise
-  );
-
-  try {
-    return await promise;
-  } catch (error) {
-    imageCache.delete(src);
-    throw error;
-  }
-}
-
-/* =========================================================
-   LOAD MANIFEST
-   ========================================================= */
-
-export async function loadRendererManifest(
-  url = "/team-fate-renderer/manifest.json"
-): Promise<RendererManifest> {
-  const response =
-    await fetch(url);
-
-  if (!response.ok) {
-    throw new Error(
-      `Renderer manifest returned ${response.status}`
-    );
-  }
-
-  return response.json() as Promise<RendererManifest>;
-}
-
-/* =========================================================
    HEX → RGB
    ========================================================= */
 
 function hexToRgb(
   hex: string
-): {
-  r: number;
-  g: number;
-  b: number;
-} | null {
+) {
   let value =
     hex
       .replace("#", "")
@@ -237,7 +173,81 @@ function hexToRgb(
 }
 
 /* =========================================================
-   TINT COSMETIC
+   LOAD IMAGE
+   ========================================================= */
+
+async function loadImage(
+  src: string
+): Promise<HTMLImageElement> {
+  const cached =
+    imageCache.get(src);
+
+  if (cached) {
+    return cached;
+  }
+
+  const promise =
+    new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const image =
+          new Image();
+
+        image.decoding =
+          "async";
+
+        image.onload =
+          () => {
+            resolve(image);
+          };
+
+        image.onerror =
+          () => {
+            reject(
+              new Error(
+                `Failed to load image: ${src}`
+              )
+            );
+          };
+
+        image.src = src;
+      }
+    );
+
+  imageCache.set(
+    src,
+    promise
+  );
+
+  try {
+    return await promise;
+  } catch (error) {
+    imageCache.delete(src);
+    throw error;
+  }
+}
+
+/* =========================================================
+   LOAD MANIFEST
+   ========================================================= */
+
+export async function loadRendererManifest(
+  url =
+    "/team-fate-renderer/manifest.json"
+): Promise<RendererManifest> {
+  const response =
+    await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(
+      `Renderer manifest returned ${response.status}`
+    );
+  }
+
+  return response.json() as Promise<RendererManifest>;
+}
+
+/* =========================================================
+   TINT IMAGE
    ========================================================= */
 
 function tintImage(
@@ -275,6 +285,13 @@ function tintImage(
     0
   );
 
+  const rgb =
+    hexToRgb(color);
+
+  if (!rgb) {
+    return canvas;
+  }
+
   const imageData =
     ctx.getImageData(
       0,
@@ -282,13 +299,6 @@ function tintImage(
       canvas.width,
       canvas.height
     );
-
-  const rgb =
-    hexToRgb(color);
-
-  if (!rgb) {
-    return canvas;
-  }
 
   const data =
     imageData.data;
@@ -310,29 +320,26 @@ function tintImage(
     const alpha =
       data[i + 3];
 
-    /*
-     * Transparent.
-     */
     if (alpha === 0) {
       continue;
     }
 
     /*
-     * Keep black/dark outlines.
+     * Preserve dark pixel outlines.
      */
-    const darkest =
+    if (
       Math.max(
         r,
         g,
         b
-      );
-
-    if (darkest <= 45) {
+      ) <= 45
+    ) {
       continue;
     }
 
     /*
-     * Preserve original shading.
+     * Preserve the original
+     * shading of the cosmetic.
      */
     const luminance =
       0.299 * r +
@@ -383,10 +390,10 @@ function tintImage(
 }
 
 /* =========================================================
-   DRAW LAYER
+   DRAW
    ========================================================= */
 
-function drawLayer(
+function draw(
   ctx: CanvasRenderingContext2D,
   image: CanvasImageSource,
   scale: number
@@ -439,7 +446,7 @@ export async function renderCharacter(
   }
 
   /* -------------------------------------------------------
-     FRAME
+     BASE FRAME
      ------------------------------------------------------- */
 
   const basePath =
@@ -449,15 +456,9 @@ export async function renderCharacter(
 
   if (!basePath) {
     throw new Error(
-      `Invalid frame: ${frame}`
+      `Invalid base frame: ${frame}`
     );
   }
-
-  /*
-   * Frame 1 is the actual back-facing pose.
-   */
-  const isBackView =
-    frame === 1;
 
   /* -------------------------------------------------------
      CANVAS
@@ -497,31 +498,19 @@ export async function renderCharacter(
       `${cleanBaseUrl}/${basePath}`
     );
 
-  drawLayer(
+  draw(
     ctx,
     base,
     scale
   );
 
   /* -------------------------------------------------------
-     COSMETIC LAYERS
+     COSMETICS
      ------------------------------------------------------- */
 
   for (
     const slot of LAYER_ORDER
   ) {
-    /*
-     * Skip facial layers on the back.
-     */
-    if (
-      isBackView &&
-      HIDDEN_ON_BACK.includes(
-        slot
-      )
-    ) {
-      continue;
-    }
-
     const name =
       cosmetics[slot];
 
@@ -539,8 +528,8 @@ export async function renderCharacter(
     }
 
     /*
-     * Protect against a cosmetic being assigned
-     * to the wrong slot.
+     * Make sure the cosmetic is
+     * actually assigned to this slot.
      */
     if (
       cosmetic.slot !==
@@ -549,20 +538,36 @@ export async function renderCharacter(
       continue;
     }
 
-    const layerPath =
-      `${cleanBaseUrl}/${cosmetic.layer}`;
+    /*
+     * THIS IS THE IMPORTANT FIX.
+     *
+     * Previously we always used:
+     *
+     * cosmetic.layer
+     *
+     * which is frame 0.
+     *
+     * Now each cosmetic gets its
+     * matching directional frame.
+     */
+    const cosmeticPath =
+      cosmetic.frames?.[
+        frame
+      ] ??
+      cosmetic.layer;
+
+    if (!cosmeticPath) {
+      continue;
+    }
 
     const layer =
       await loadImage(
-        layerPath
+        `${cleanBaseUrl}/${cosmeticPath}`
       );
 
     const tint =
       tints[slot];
 
-    /*
-     * Apply tint only to slots that support it.
-     */
     if (
       tint &&
       COLORABLE_SLOTS.has(
@@ -575,13 +580,13 @@ export async function renderCharacter(
           tint
         );
 
-      drawLayer(
+      draw(
         ctx,
         tinted,
         scale
       );
     } else {
-      drawLayer(
+      draw(
         ctx,
         layer,
         scale
