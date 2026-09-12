@@ -134,108 +134,94 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Some cosmetics have fewer frames than the base character. In that case
  * we use the last available frame only as a safe fallback.
  */
-function getPreviewDirection(baseFrame: number): "front" | "side" | "back" | "other" {
+function getDirectionGroup(baseFrame: number): number {
   /*
-   * The 52 base resources are animation frames with directions interleaved.
-   * Verified representative frames:
+   * IMPORTANT: the base character and cosmetic resources do NOT use the
+   * same direction order.
    *
-   *   0 = Front
-   *   2 = Side
-   *   3 = Back
+   * Base:     0 = Front, 1 = Back, 2 = Side, 3 = opposite Side
+   * Cosmetic: 0 = Front, 1 = Side, 2 = Back, 3 = opposite Side
    *
-   * Frame 1 is another Front animation frame, so it is not used for the
-   * static Back preview.
+   * Therefore the cosmetic direction index must be remapped when a base
+   * direction is selected: Front -> Front, Back -> Back, Side -> Side.
    */
-  if (baseFrame === 0) return "front";
-  if (baseFrame === 2) return "side";
-  if (baseFrame === 3) return "back";
-  return "other";
+  if (baseFrame === 1) return 2; // base Back -> cosmetic Back
+  if (baseFrame === 2) return 1; // base Side -> cosmetic Side
+  if (baseFrame === 3) return 3; // opposite side
+  return 0; // Front
 }
 
 function getCosmeticFrameIndex(
-  cosmetic: Cosmetic,
   baseFrame: number,
   frameCount: number
-): number | null {
-  if (frameCount <= 0) return null;
-
-  const direction = getPreviewDirection(baseFrame);
-
+): number {
   /*
-   * These are directional resources extracted from the PAK. Their order is
-   * cosmetic-specific, so do not derive the mapping from the base frame
-   * number.
+   * The cosmetic resources have a different structure from the base.
+   * The normal `layer` image is the FRONT/static resource.  The extracted
+   * `frames` are the non-front directional resources.
+   *
+   * Base preview directions:
+   *   0 = Front
+   *   1 = Back
+   *   2 = Side
+   *   3 = opposite Side
+   *
+   * Cosmetic directional groups:
+   *   group 0 = Back
+   *   group 1 = Side
+   *   group 2 = opposite Side
+   *
+   * Therefore FRONT must use the cosmetic.layer, not frames[0].
    */
+  if (baseFrame === 0) return -1;
 
-  // Brown/standard eye colors are front-only layers. Do not paint eyes onto
-  // the back of the head or onto a side view when no side asset exists.
-  if (cosmetic.slot === "eyes" && frameCount === 1) {
-    return direction === "front" ? 0 : null;
-  }
+  if (frameCount <= 0) return -1;
 
-  // Four-frame cosmetics: Front, Side, Back, Other Side.
-  if (frameCount === 4) {
-    if (direction === "front") return 0;
-    if (direction === "side") return 1;
-    if (direction === "back") return 2;
-    return 3;
-  }
+  const direction =
+    baseFrame === 1 ? 0 :
+    baseFrame === 2 ? 1 :
+    2;
 
-  // Three-frame cosmetics: Front, Side, Back.
+  /* Known extracted layouts. The frame arrays are the resources after
+     the static layer, so these starts are zero-based within `frames`. */
   if (frameCount === 3) {
-    if (direction === "front") return 0;
-    if (direction === "side") return 1;
-    if (direction === "back") return 2;
-    return 2;
+    return direction;
   }
 
-  // The main clothing assets are three directional groups in their
-  // extracted frame sequence.
-  if (cosmetic.slot === "top" && frameCount === 39) {
-    if (direction === "front") return 0;
-    if (direction === "side") return 13;
-    if (direction === "back") return 26;
-    return 13;
+  if (frameCount === 4) {
+    /* Backwards Cap has four extracted directional resources. The first
+       three are the three character directions needed by this preview. */
+    return Math.min(direction, 2);
   }
 
-  if (cosmetic.slot === "pants" && frameCount === 29) {
-    if (direction === "front") return 0;
-    if (direction === "side") return 10;
-    if (direction === "back") return 20;
-    return 10;
+  if (frameCount === 16) {
+    // Shoes: 5 / 5 / 6 directional animation resources.
+    const starts = [0, 5, 10];
+    return starts[direction];
   }
 
-  if (cosmetic.slot === "shoes" && frameCount === 16) {
-    if (direction === "front") return 0;
-    if (direction === "side") return 4;
-    if (direction === "back") return 8;
-    return 12;
+  if (frameCount === 29) {
+    // Pants: 10 / 10 / 9 directional animation resources.
+    const starts = [0, 10, 20];
+    return starts[direction];
   }
 
-  // Generic four-direction sequences. Use the first frame of each group.
-  if (frameCount % 4 === 0) {
-    const groupSize = frameCount / 4;
-    if (direction === "front") return 0;
-    if (direction === "side") return groupSize;
-    if (direction === "back") return groupSize * 2;
-    return groupSize * 3;
+  if (frameCount === 39) {
+    // T-Shirt: 13 / 13 / 13 directional animation resources.
+    const starts = [0, 13, 26];
+    return starts[direction];
   }
 
-  // Generic three-direction sequences.
-  if (frameCount % 3 === 0) {
-    const groupSize = frameCount / 3;
-    if (direction === "front") return 0;
-    if (direction === "side") return groupSize;
-    if (direction === "back") return groupSize * 2;
-    return groupSize;
+  if (frameCount === 79) {
+    // Samurai Armor: 27 / 26 / 26 directional animation resources.
+    const starts = [0, 27, 53];
+    return starts[direction];
   }
 
-  // For irregular resources, use the first/center/last thirds rather than
-  // indexing by the base animation frame.
-  if (direction === "front") return 0;
-  if (direction === "side") return Math.min(Math.floor(frameCount / 3), frameCount - 1);
-  if (direction === "back") return Math.min(Math.floor((frameCount * 2) / 3), frameCount - 1);
-  return Math.min(Math.floor(frameCount / 3), frameCount - 1);
+  // Generic fallback for other cosmetics with three directional groups.
+  const groupSize = Math.floor(frameCount / 3);
+  const starts = [0, groupSize, groupSize * 2];
+  return Math.min(starts[direction], frameCount - 1);
 }
 
 async function loadCosmeticImage(
@@ -249,31 +235,39 @@ async function loadCosmeticImage(
     );
   }
 
-  if (cosmetic.frames && cosmetic.frames.length > 0) {
-    const index = getCosmeticFrameIndex(
-      cosmetic,
-      baseFrame,
-      cosmetic.frames.length
-    );
+  const frames = cosmetic.frames ?? [];
+  const index = getCosmeticFrameIndex(
+    baseFrame,
+    frames.length
+  );
 
-    if (index === null) return null;
-
-    const framePath = cosmetic.frames[index];
-
-    if (framePath) {
-      try {
-        return await loadImage(
-          joinUrl(baseUrl, framePath)
-        );
-      } catch {
-        // Fall back to the normal layer below.
-      }
+  /* Front uses the original static layer. */
+  if (index === -1) {
+    if (baseFrame === 0) {
+      return loadImage(
+        joinUrl(baseUrl, cosmetic.layer)
+      );
     }
+
+    /* A front-only cosmetic should not be painted onto Side/Back. */
+    return null;
   }
 
-  return loadImage(
-    joinUrl(baseUrl, cosmetic.layer)
-  );
+  const framePath = frames[index];
+
+  if (!framePath) {
+    return null;
+  }
+
+  try {
+    return await loadImage(
+      joinUrl(baseUrl, framePath)
+    );
+  } catch {
+    /* Do NOT fall back to the front layer on Side/Back. That was the
+       source of the backwards-looking clothing problem. */
+    return null;
+  }
 }
 
 function createCanvas(
