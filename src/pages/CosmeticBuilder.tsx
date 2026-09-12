@@ -390,7 +390,8 @@ export default function CosmeticBuilder() {
                       frame:
                         view.frame,
 
-                      cosmetics: equipped,
+                      cosmetics:
+                        equipped,
 
                       tints:
                         colors,

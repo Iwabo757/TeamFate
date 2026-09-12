@@ -129,43 +129,63 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+const DEFAULT_DIRECTIONAL_FRAMES: Record<
+  string,
+  Partial<Record<number, number>>
+> = {
+  // The default clothing assets contain animation frames grouped by
+  // direction. These are zero-based indexes into cosmetic.frames.
+  // Base direction: 0 = Front, 1 = Back, 2 = Side.
+  "T-Shirt": {
+    1: 13, // cosmetic frame_14 = Back
+    2: 26, // cosmetic frame_27 = Side
+  },
+  "Pants": {
+    1: 10, // cosmetic frame_11 = Back
+    2: 20, // cosmetic frame_21 = Side
+  },
+  "Shoes": {
+    1: 4, // cosmetic frame_5 = Back
+    2: 8, // cosmetic frame_9 = Side
+  },
+  "Default Hair": {
+    1: 0, // cosmetic frame_1 = Back
+    2: 1, // cosmetic frame_2 = Side
+  },
+};
+
 function getCosmeticFrameIndex(
   baseFrame: number,
   frameCount: number,
+  cosmeticName: string,
   slot: CosmeticSlot
 ): number {
-  /*
-   * Base direction:
-   *   0 = Front
-   *   2 = Side
-   *   1 = Back
-   *
-   * Cosmetic direction:
-   *   frame_1 = Back
-   *   frame_2 = Side
-   *
-   * Front deliberately uses the static layer.
-   */
   if (frameCount <= 0) return -1;
 
-  // Eyes have their own directional extraction.
-  // Front = static layer, Side = frame_4 when present, Back = hidden.
+  // Front uses the original static layer.
+  if (baseFrame === 0) return -1;
+
+  // Default assets have known direction groups and must not use frame_1 /
+  // frame_2 directly for Side/Back.
+  const defaultMapping =
+    DEFAULT_DIRECTIONAL_FRAMES[cosmeticName];
+
+  if (defaultMapping && defaultMapping[baseFrame] !== undefined) {
+    const index = defaultMapping[baseFrame];
+
+    return index < frameCount ? index : -1;
+  }
+
+  // Eyes are special: they are not shown from the back.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2;
-    if (baseFrame === 2) {
-      if (frameCount >= 4) return 3; // frame_4
-      if (frameCount >= 2) return 1; // fallback frame_2
-    }
+    if (baseFrame === 2 && frameCount >= 4) return 3;
+    if (baseFrame === 2 && frameCount >= 2) return 1;
     return -1;
   }
 
-  // Front = static cosmetic layer.
-  if (baseFrame === 0) return -1;
-
-  // Back = frame_1.
+  // Generic directional cosmetics use the first extracted directional frames.
   if (baseFrame === 1) return 0;
-
-  // Side = frame_2.
   if (baseFrame === 2) return 1;
 
   return -1;
@@ -186,6 +206,7 @@ async function loadCosmeticImage(
   const index = getCosmeticFrameIndex(
     baseFrame,
     frames.length,
+    cosmetic.name ?? "",
     cosmetic.slot
   );
 
