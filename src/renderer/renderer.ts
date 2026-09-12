@@ -456,8 +456,28 @@ function getCosmeticFrameIndex(
   }
 
   /*
-   * If the cosmetic actually contains
-   * this animation frame, use it.
+   * The three preview directions are:
+   *
+   * 0 = Front
+   * 1 = Back
+   * 2 = Side
+   */
+
+  if (baseFrame === 0) {
+    return 0;
+  }
+
+  if (baseFrame === 1) {
+    return Math.min(1, frameCount - 1);
+  }
+
+  if (baseFrame === 2) {
+    return Math.min(2, frameCount - 1);
+  }
+
+  /*
+   * For actual animation frames, use the matching
+   * cosmetic frame when available.
    */
   if (
     baseFrame >= 0 &&
@@ -466,46 +486,8 @@ function getCosmeticFrameIndex(
     return baseFrame;
   }
 
-  /*
-   * Front.
-   */
-  if (baseFrame === 0) {
-    return 0;
-  }
-
-  /*
-   * Back.
-   *
-   * Static directional cosmetics normally
-   * store their back at frame 1.
-   */
-  if (baseFrame === 1) {
-    return Math.min(
-      1,
-      frameCount - 1
-    );
-  }
-
-  /*
-   * Side.
-   *
-   * Static directional cosmetics normally
-   * store their side at frame 2.
-   */
-  if (baseFrame === 2) {
-    return Math.min(
-      2,
-      frameCount - 1
-    );
-  }
-
-  /*
-   * Unknown animation frame.
-   * Safely fall back to front.
-   */
   return 0;
 }
-
 
 /* =========================================================
    DRAW
@@ -675,11 +657,54 @@ export async function renderCharacter(
        COSMETIC FRAMES
        ===================================================== */
 
-    const frames =
-      cosmetic.frames &&
-      cosmetic.frames.length > 0
-        ? cosmetic.frames
-        : [cosmetic.layer];
+let frames: string[];
+
+if (
+  cosmetic.frames &&
+  cosmetic.frames.length > 0
+) {
+  frames = cosmetic.frames;
+} else {
+  /*
+   * Older manifests only contain the original layer.
+   *
+   * Our directional asset patch stores additional frames
+   * beside the original layer using:
+   *
+   *   layer.png
+   *   __frame_1.png
+   *   __frame_2.png
+   *   __frame_3.png
+   *   ...
+   *
+   * Build the first three directional paths automatically.
+   */
+  const layerPath = cosmetic.layer;
+
+  const extensionIndex =
+    layerPath.lastIndexOf(".");
+
+  if (extensionIndex === -1) {
+    frames = [layerPath];
+  } else {
+    const basePath =
+      layerPath.substring(
+        0,
+        extensionIndex
+      );
+
+    const extension =
+      layerPath.substring(
+        extensionIndex
+      );
+
+    frames = [
+      layerPath,
+      `${basePath}__frame_1${extension}`,
+      `${basePath}__frame_2${extension}`,
+    ];
+  }
+}
 
     const cosmeticFrame =
       getCosmeticFrameIndex(
