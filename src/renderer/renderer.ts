@@ -133,24 +133,25 @@ const DEFAULT_DIRECTIONAL_FRAMES: Record<
   string,
   Partial<Record<number, number>>
 > = {
-  // The default clothing assets contain animation frames grouped by
-  // direction. These are zero-based indexes into cosmetic.frames.
+  // Cosmetic frame lists do NOT include the front static layer.
+  // Their extracted frames start with Back, then Side, then the
+  // opposite-side animation group.
   // Base direction: 0 = Front, 1 = Back, 2 = Side.
   "T-Shirt": {
-    1: 13, // cosmetic frame_14 = Back
-    2: 26, // cosmetic frame_27 = Side
+    1: 0,  // frame_1 = Back
+    2: 13, // frame_14 = Side
   },
   "Pants": {
-    1: 10, // cosmetic frame_11 = Back
-    2: 20, // cosmetic frame_21 = Side
+    1: 0,  // frame_1 = Back
+    2: 10, // frame_11 = Side
   },
   "Shoes": {
-    1: 4, // cosmetic frame_5 = Back
-    2: 8, // cosmetic frame_9 = Side
+    1: 0, // frame_1 = Back
+    2: 4, // frame_5 = Side
   },
   "Default Hair": {
-    1: 0, // cosmetic frame_1 = Back
-    2: 1, // cosmetic frame_2 = Side
+    1: 0, // frame_1 = Back
+    2: 1, // frame_2 = Side
   },
 };
 
@@ -177,10 +178,10 @@ function getCosmeticFrameIndex(
   }
 
   // Eyes are special: they are not shown from the back.
+  // Side-view eyes use cosmetic frame_1 (zero-based index 0).
   if (slot === "eyes") {
     if (baseFrame === 1) return -2;
-    if (baseFrame === 2 && frameCount >= 4) return 3;
-    if (baseFrame === 2 && frameCount >= 2) return 1;
+    if (baseFrame === 2) return 0;
     return -1;
   }
 
