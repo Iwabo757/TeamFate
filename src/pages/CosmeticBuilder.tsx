@@ -70,16 +70,10 @@ const DEFAULT_COSMETICS: Partial<
 };
 
 /*
- * The 52 base frames are arranged as four
- * directional animation groups.
+ * Three permanent character views.
  *
- * We use the first frame of each group:
- *
- * 0  = Front
- * 13 = Side
- * 26 = Back
- *
- * Only three views are displayed in the builder.
+ * The character is rendered from the same
+ * selected outfit in all three directions.
  */
 const VIEW_DEFINITIONS = [
   {
@@ -194,7 +188,7 @@ export default function CosmeticBuilder() {
     useState("");
 
   /*
-   * Load local renderer manifest.
+   * Load renderer manifest.
    */
   useEffect(() => {
     let cancelled = false;
@@ -257,7 +251,7 @@ export default function CosmeticBuilder() {
   }, []);
 
   /*
-   * Convert manifest cosmetics into an array.
+   * Convert manifest cosmetics to an array.
    */
   const cosmetics = useMemo<
     LocalCosmetic[]
@@ -275,7 +269,8 @@ export default function CosmeticBuilder() {
   }, [manifest]);
 
   /*
-   * Filter cosmetics.
+   * Filter cosmetics by selected slot
+   * and search query.
    */
   const filtered = useMemo(() => {
     const search =
@@ -315,7 +310,7 @@ export default function CosmeticBuilder() {
     DEFAULT_COLOR;
 
   /*
-   * Render ALL THREE views whenever
+   * Render all three views whenever
    * the character changes.
    */
   useEffect(() => {
@@ -356,7 +351,16 @@ export default function CosmeticBuilder() {
                       tints:
                         colors,
 
-                      scale: 8,
+                      /*
+                       * 4x instead of 8x.
+                       *
+                       * Native sprite:
+                       * 57x56
+                       *
+                       * Preview:
+                       * 228x224
+                       */
+                      scale: 4,
                     }
                   );
 
@@ -451,7 +455,7 @@ export default function CosmeticBuilder() {
   }
 
   /*
-   * Change selected color.
+   * Change color.
    */
   function changeColor(
     color: string
@@ -484,7 +488,7 @@ export default function CosmeticBuilder() {
   }
 
   /*
-   * Random outfit.
+   * Randomize.
    */
   function randomize() {
     if (!cosmetics.length) {
@@ -532,7 +536,7 @@ export default function CosmeticBuilder() {
   }
 
   /*
-   * Currently equipped outfit.
+   * Selected outfit.
    */
   const selectedOutfit =
     useMemo<
@@ -576,6 +580,7 @@ export default function CosmeticBuilder() {
 
       {/* HEADER */}
       <div className="cosmetic-builder-hero">
+
         <div>
           <h1>
             Cosmetic Builder
@@ -590,6 +595,7 @@ export default function CosmeticBuilder() {
         </div>
 
         <div className="cosmetic-actions">
+
           <button
             type="button"
             onClick={randomize}
@@ -605,6 +611,7 @@ export default function CosmeticBuilder() {
           >
             Reset
           </button>
+
         </div>
       </div>
 
@@ -615,6 +622,7 @@ export default function CosmeticBuilder() {
         <section className="cosmetic-panel cosmetic-catalog">
 
           <div className="cosmetic-panel-heading">
+
             <div>
               <h2>
                 Cosmetics
@@ -637,10 +645,12 @@ export default function CosmeticBuilder() {
               placeholder="Search cosmetics..."
               aria-label="Search cosmetics"
             />
+
           </div>
 
-          {/* SLOTS */}
+          {/* SLOT BUTTONS */}
           <div className="cosmetic-slots">
+
             {SLOT_IDS.map(
               (slot) => (
                 <button
@@ -656,6 +666,7 @@ export default function CosmeticBuilder() {
                     setSelectedSlot(
                       slot
                     );
+
                     setQuery("");
                   }}
                 >
@@ -667,9 +678,10 @@ export default function CosmeticBuilder() {
                 </button>
               )
             )}
+
           </div>
 
-          {/* LIST */}
+          {/* COSMETIC LIST */}
           <div className="cosmetic-list">
 
             {loadError ? (
@@ -706,7 +718,9 @@ export default function CosmeticBuilder() {
                           )
                         }
                       >
+
                         <div className="cosmetic-item-icon">
+
                           <img
                             src={`${ASSET_ROOT}/${item.icon}`}
                             alt=""
@@ -718,9 +732,11 @@ export default function CosmeticBuilder() {
                               item.layer_index
                             }
                           </span>
+
                         </div>
 
                         <div className="cosmetic-item-copy">
+
                           <strong>
                             {
                               item.name
@@ -734,7 +750,9 @@ export default function CosmeticBuilder() {
                               item.layer_index
                             }
                           </small>
+
                         </div>
+
                       </button>
                     );
                   }
@@ -755,6 +773,7 @@ export default function CosmeticBuilder() {
         {/* PREVIEW */}
         <section className="cosmetic-panel cosmetic-preview">
 
+          {/* PREVIEW HEADER */}
           <div className="cosmetic-preview-heading">
 
             <div>
@@ -769,8 +788,9 @@ export default function CosmeticBuilder() {
               </span>
             </div>
 
-            {/* SKIN ONLY */}
+            {/* SKIN */}
             <div className="cosmetic-preview-controls">
+
               <div className="cosmetic-gender">
 
                 <span className="cosmetic-control-label">
@@ -778,6 +798,7 @@ export default function CosmeticBuilder() {
                 </span>
 
                 <div className="cosmetic-scenes">
+
                   {[1, 2, 3, 4, 5].map(
                     (value) => (
                       <button
@@ -799,31 +820,62 @@ export default function CosmeticBuilder() {
                       </button>
                     )
                   )}
+
                 </div>
 
               </div>
+
             </div>
 
           </div>
 
-          {/* THREE VIEWS */}
-          <div className="cosmetic-preview-body">
+          {/* PREVIEW AREA */}
+          <div
+            className="cosmetic-preview-body"
+            style={{
+              minHeight: 0,
+            }}
+          >
 
+            {/* THREE VIEWS */}
             <div
               className="cosmetic-stage"
               style={{
-                display: "flex",
+                display:
+                  "flex",
+
+                flexDirection:
+                  "row",
+
                 justifyContent:
-                  "center",
+                  "space-evenly",
+
                 alignItems:
                   "center",
-                gap: 40,
+
+                gap: 8,
+
                 flexWrap:
-                  "wrap",
+                  "nowrap",
+
+                width:
+                  "100%",
+
+                minWidth:
+                  0,
+
+                minHeight:
+                  0,
+
+                overflow:
+                  "hidden",
+
+                padding:
+                  "10px 4px",
               }}
             >
 
-              {views.length ? (
+              {views.length > 0 ? (
                 views.map(
                   (view) => (
                     <div
@@ -833,21 +885,42 @@ export default function CosmeticBuilder() {
                       style={{
                         display:
                           "flex",
+
                         flexDirection:
                           "column",
+
                         alignItems:
                           "center",
-                        gap: 12,
+
+                        justifyContent:
+                          "center",
+
+                        gap: 6,
+
+                        flex:
+                          "1 1 0",
+
+                        minWidth:
+                          0,
+
+                        overflow:
+                          "hidden",
                       }}
                     >
+
                       <span
                         style={{
                           fontWeight:
                             700,
+
                           fontSize:
-                            14,
+                            13,
+
                           opacity:
                             0.8,
+
+                          whiteSpace:
+                            "nowrap",
                         }}
                       >
                         {
@@ -856,16 +929,31 @@ export default function CosmeticBuilder() {
                       </span>
 
                       <img
-                        className="cosmetic-character"
                         src={
                           view.image
                         }
                         alt={`${view.label} PokeMMO character preview`}
                         style={{
+                          width:
+                            180,
+
+                          height:
+                            176,
+
+                          maxWidth:
+                            "100%",
+
+                          objectFit:
+                            "contain",
+
                           imageRendering:
                             "pixelated",
+
+                          display:
+                            "block",
                         }}
                       />
+
                     </div>
                   )
                 )
@@ -890,6 +978,7 @@ export default function CosmeticBuilder() {
               </div>
 
               <div className="cosmetic-selected-list">
+
                 {selectedOutfit.map(
                   ({
                     slot,
@@ -905,6 +994,7 @@ export default function CosmeticBuilder() {
                         )
                       }
                     >
+
                       <span>
                         {
                           SLOT_NAMES[
@@ -921,9 +1011,11 @@ export default function CosmeticBuilder() {
                         Click to
                         remove
                       </small>
+
                     </button>
                   )
                 )}
+
               </div>
 
               {/* COLOR */}
@@ -958,16 +1050,23 @@ export default function CosmeticBuilder() {
                   selectedSlot
                 ) ? (
                   <>
+
+                    {/* COLOR PRESETS */}
                     <div
                       style={{
                         display:
                           "flex",
+
                         gap: 7,
+
                         flexWrap:
                           "wrap",
-                        marginTop: 12,
+
+                        marginTop:
+                          12,
                       }}
                     >
+
                       {COLOR_PRESETS.map(
                         (color) => (
                           <button
@@ -987,19 +1086,27 @@ export default function CosmeticBuilder() {
                               )
                             }
                             style={{
-                              width: 28,
-                              height: 28,
+                              width:
+                                28,
+
+                              height:
+                                28,
+
                               borderRadius:
                                 "50%",
+
                               border:
                                 selectedColor ===
                                 color.value
                                   ? "3px solid white"
                                   : "2px solid rgba(255,255,255,.35)",
+
                               background:
                                 color.value,
+
                               cursor:
                                 "pointer",
+
                               boxShadow:
                                 selectedColor ===
                                 color.value
@@ -1009,18 +1116,25 @@ export default function CosmeticBuilder() {
                           />
                         )
                       )}
+
                     </div>
 
+                    {/* CUSTOM COLOR */}
                     <div
                       style={{
                         display:
                           "flex",
+
                         alignItems:
                           "center",
+
                         gap: 10,
-                        marginTop: 12,
+
+                        marginTop:
+                          12,
                       }}
                     >
+
                       <input
                         type="color"
                         value={
@@ -1037,9 +1151,15 @@ export default function CosmeticBuilder() {
                         }
                         aria-label={`Choose ${SLOT_NAMES[selectedSlot]} color`}
                         style={{
-                          width: 42,
-                          height: 34,
-                          padding: 2,
+                          width:
+                            42,
+
+                          height:
+                            34,
+
+                          padding:
+                            2,
+
                           cursor:
                             "pointer",
                         }}
@@ -1047,22 +1167,31 @@ export default function CosmeticBuilder() {
 
                       <span
                         style={{
-                          fontSize: 12,
-                          opacity: 0.7,
+                          fontSize:
+                            12,
+
+                          opacity:
+                            0.7,
                         }}
                       >
                         Custom
                         color
                       </span>
+
                     </div>
+
                   </>
                 ) : (
                   <small
                     style={{
                       display:
                         "block",
-                      marginTop: 8,
-                      opacity: 0.7,
+
+                      marginTop:
+                        8,
+
+                      opacity:
+                        0.7,
                     }}
                   >
                     This slot
@@ -1076,7 +1205,9 @@ export default function CosmeticBuilder() {
               </div>
 
             </aside>
+
           </div>
+
         </section>
       </div>
 
