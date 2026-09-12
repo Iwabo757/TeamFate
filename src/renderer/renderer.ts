@@ -540,7 +540,7 @@ export async function renderCharacter(
     }
 
     let cosmeticImage:
-      HTMLImageElement;
+      HTMLImageElement | null;
 
     try {
       cosmeticImage =
@@ -554,6 +554,10 @@ export async function renderCharacter(
         `[Renderer] Could not load ${slot} cosmetic "${cosmetic.name ?? cosmeticId}".`,
         error
       );
+      continue;
+    }
+
+    if (!cosmeticImage) {
       continue;
     }
 
