@@ -82,6 +82,26 @@ const CHROMA = {
   tolerance: 8,
 };
 
+const DIRECTION_FRAME_LIMIT = 5;
+
+type Direction = "back" | "side";
+
+type DirectionalFrames = Partial<Record<Direction, number>>;
+
+type SpriteSignature = {
+  pixels: number;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+};
+
+const directionCache = new Map<string, Promise<DirectionalFrames>>();
+
 function joinUrl(baseUrl: string, path: string): string {
   if (!path) return "";
 
@@ -127,122 +147,6 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
     image.src = url;
   });
-}
-
-const DEFAULT_DIRECTIONAL_FRAMES: Record<
-  string,
-  Partial<Record<number, number>>
-> = {
-  // Cosmetic frame lists do NOT include the front static layer.
-  // Their extracted frames start with Back, then Side, then the
-  // opposite-side animation group.
-  // Base direction: 0 = Front, 1 = Back, 2 = Side.
-  "T-Shirt": {
-    1: 0,  // frame_1 = Back
-    2: 13, // frame_14 = Side
-  },
-  "Pants": {
-    1: 0,  // frame_1 = Back
-    2: 10, // frame_11 = Side
-  },
-  "Shoes": {
-    1: 0, // frame_1 = Back
-    2: 4, // frame_5 = Side
-  },
-  "Default Hair": {
-    1: 0, // frame_1 = Back
-    2: 1, // frame_2 = Side
-  },
-};
-
-function getCosmeticFrameIndex(
-  baseFrame: number,
-  frameCount: number,
-  cosmeticName: string,
-  slot: CosmeticSlot
-): number {
-  if (frameCount <= 0) return -1;
-
-  // Front uses the original static layer.
-  if (baseFrame === 0) return -1;
-
-  // Default assets have known direction groups and must not use frame_1 /
-  // frame_2 directly for Side/Back.
-  const defaultMapping =
-    DEFAULT_DIRECTIONAL_FRAMES[cosmeticName];
-
-  if (defaultMapping && defaultMapping[baseFrame] !== undefined) {
-    const index = defaultMapping[baseFrame];
-
-    return index < frameCount ? index : -1;
-  }
-
-  // Eyes are special: they are not shown from the back.
-  // Side-view eyes use cosmetic frame_1 (zero-based index 0).
-  if (slot === "eyes") {
-    if (baseFrame === 1) return -2;
-    if (baseFrame === 2) return 0;
-    return -1;
-  }
-
-  // Generic directional cosmetics use the first extracted directional frames.
-  if (baseFrame === 1) return 0;
-  if (baseFrame === 2) return 1;
-
-  return -1;
-}
-
-async function loadCosmeticImage(
-  cosmetic: Cosmetic,
-  baseFrame: number,
-  baseUrl: string
-): Promise<HTMLImageElement | null> {
-  if (!cosmetic.layer) {
-    throw new Error(
-      `Cosmetic has no layer: ${cosmetic.name ?? "Unknown"}`
-    );
-  }
-
-  const frames = cosmetic.frames ?? [];
-  const index = getCosmeticFrameIndex(
-    baseFrame,
-    frames.length,
-    cosmetic.name ?? "",
-    cosmetic.slot
-  );
-
-  /* Explicitly hidden direction (for example Back eyes). */
-  if (index === -2) {
-    return null;
-  }
-
-  /* Front uses the original static layer. */
-  if (index === -1) {
-    if (baseFrame === 0) {
-      return loadImage(
-        joinUrl(baseUrl, cosmetic.layer)
-      );
-    }
-
-    /* A front-only cosmetic should not be painted onto Side/Back. */
-    return null;
-  }
-
-  const framePath = frames[index];
-
-  if (!framePath) {
-    return null;
-  }
-
-  try {
-    return await loadImage(
-      joinUrl(baseUrl, framePath)
-    );
-  } catch {
-    /* Do NOT fall back to the front layer on Side/Back. That was the
-       source of the backwards-looking clothing problem. */
-    return null;
-  }
 }
 
 function createCanvas(
@@ -301,16 +205,597 @@ function removeChromaKey(
   context.putImageData(imageData, 0, 0);
 }
 
+function getSpriteSignature(
+  image: HTMLImageElement
+): SpriteSignature {
+  const width =
+    image.naturalWidth ||
+    image.width;
+
+  const height =
+    image.naturalHeight ||
+    image.height;
+
+  const canvas = createCanvas(width, height);
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Unable to inspect sprite.");
+  }
+
+  context.imageSmoothingEnabled = false;
+
+  drawImage(
+    context,
+    image,
+    width,
+    height
+  );
+
+  removeChromaKey(
+    context,
+    width,
+    height
+  );
+
+  const data = context.getImageData(
+    0,
+    0,
+    width,
+    height
+  ).data;
+
+  let pixels = 0;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  let sumX = 0;
+  let sumY = 0;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const alpha =
+        data[(y * width + x) * 4 + 3];
+
+      if (alpha === 0) continue;
+
+      pixels++;
+      sumX += x;
+      sumY += y;
+
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+
+  if (pixels === 0) {
+    return {
+      pixels: 0,
+      minX: 0,
+      minY: 0,
+      maxX: 0,
+      maxY: 0,
+      width: 0,
+      height: 0,
+      centerX: 0,
+      centerY: 0,
+    };
+  }
+
+  return {
+    pixels,
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX + 1,
+    height: maxY - minY + 1,
+    centerX: sumX / pixels / width,
+    centerY: sumY / pixels / height,
+  };
+}
+
+function signatureDistance(
+  candidate: SpriteSignature,
+  reference: SpriteSignature
+): number {
+  if (
+    candidate.pixels === 0 ||
+    reference.pixels === 0
+  ) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const candidateArea =
+    candidate.width *
+    candidate.height;
+
+  const referenceArea =
+    reference.width *
+    reference.height;
+
+  const pixelRatio =
+    Math.abs(
+      Math.log(
+        (candidate.pixels + 1) /
+        (reference.pixels + 1)
+      )
+    );
+
+  const widthRatio =
+    Math.abs(
+      Math.log(
+        (candidate.width + 1) /
+        (reference.width + 1)
+      )
+    );
+
+  const heightRatio =
+    Math.abs(
+      Math.log(
+        (candidate.height + 1) /
+        (reference.height + 1)
+      )
+    );
+
+  const areaRatio =
+    Math.abs(
+      Math.log(
+        (candidateArea + 1) /
+        (referenceArea + 1)
+      )
+    );
+
+  const centerDistance =
+    Math.hypot(
+      candidate.centerX - reference.centerX,
+      candidate.centerY - reference.centerY
+    );
+
+  const leftDistance =
+    Math.abs(
+      candidate.minX -
+      reference.minX
+    );
+
+  const rightDistance =
+    Math.abs(
+      candidate.maxX -
+      reference.maxX
+    );
+
+  const topDistance =
+    Math.abs(
+      candidate.minY -
+      reference.minY
+    );
+
+  const bottomDistance =
+    Math.abs(
+      candidate.maxY -
+      reference.maxY
+    );
+
+  const maxWidth = Math.max(
+    candidate.width,
+    reference.width,
+    1
+  );
+
+  const maxHeight = Math.max(
+    candidate.height,
+    reference.height,
+    1
+  );
+
+  return (
+    pixelRatio * 2 +
+    widthRatio * 1.5 +
+    heightRatio * 1.5 +
+    areaRatio +
+    centerDistance * 4 +
+    (leftDistance + rightDistance) /
+      maxWidth +
+    (topDistance + bottomDistance) /
+      maxHeight
+  );
+}
+
+function getCandidateFrameIndexes(
+  frames: string[]
+): number[] {
+  const candidates: number[] = [];
+
+  for (
+    let index = 0;
+    index < frames.length;
+    index++
+  ) {
+    const path = frames[index];
+
+    if (!path) continue;
+
+    const match =
+      path.match(/frame_(\d+)/i);
+
+    if (!match) continue;
+
+    const frameNumber =
+      Number(match[1]);
+
+    if (
+      frameNumber >= 0 &&
+      frameNumber < DIRECTION_FRAME_LIMIT
+    ) {
+      candidates.push(index);
+    }
+  }
+
+  return candidates;
+}
+
+async function findDirectionalFrames(
+  cosmetic: Cosmetic,
+  baseFrames: string[],
+  baseUrl: string
+): Promise<DirectionalFrames> {
+  const frames =
+    cosmetic.frames ?? [];
+
+  const candidates =
+    getCandidateFrameIndexes(frames);
+
+  if (candidates.length === 0) {
+    return {};
+  }
+
+  /*
+   * The base character is the reference:
+   *   base frame 0 = Front
+   *   base frame 1 = Back
+   *   base frame 2 = Side
+   *
+   * Cosmetic frame numbering is NOT assumed to match.
+   * We inspect cosmetic frames 0-4 and choose the two
+   * whose sprite geometry most closely matches Back/Side.
+   */
+
+  const backImage =
+    await loadImage(
+      joinUrl(
+        baseUrl,
+        baseFrames[1]
+      )
+    );
+
+  const sideImage =
+    await loadImage(
+      joinUrl(
+        baseUrl,
+        baseFrames[2]
+      )
+    );
+
+  const backSignature =
+    getSpriteSignature(backImage);
+
+  const sideSignature =
+    getSpriteSignature(sideImage);
+
+  const candidateSignatures =
+    await Promise.all(
+      candidates.map(async (index) => {
+        try {
+          const image =
+            await loadImage(
+              joinUrl(
+                baseUrl,
+                frames[index]
+              )
+            );
+
+          return {
+            index,
+            signature:
+              getSpriteSignature(image),
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+
+  const validCandidates =
+    candidateSignatures.filter(
+      (
+        candidate
+      ): candidate is {
+        index: number;
+        signature: SpriteSignature;
+      } => candidate !== null
+    );
+
+  if (validCandidates.length === 0) {
+    return {};
+  }
+
+  let bestBack:
+    | { index: number; score: number }
+    | null = null;
+
+  let bestSide:
+    | { index: number; score: number }
+    | null = null;
+
+  for (const candidate of validCandidates) {
+    const backScore =
+      signatureDistance(
+        candidate.signature,
+        backSignature
+      );
+
+    const sideScore =
+      signatureDistance(
+        candidate.signature,
+        sideSignature
+      );
+
+    if (
+      !bestBack ||
+      backScore < bestBack.score
+    ) {
+      bestBack = {
+        index: candidate.index,
+        score: backScore,
+      };
+    }
+
+    if (
+      !bestSide ||
+      sideScore < bestSide.score
+    ) {
+      bestSide = {
+        index: candidate.index,
+        score: sideScore,
+      };
+    }
+  }
+
+  const result: DirectionalFrames = {};
+
+  /*
+   * If the same frame is the closest match for both directions,
+   * choose the second-best candidate for Side. This prevents one
+   * frame from being used for both Back and Side.
+   */
+  if (
+    bestBack &&
+    bestSide &&
+    bestBack.index === bestSide.index
+  ) {
+    const remaining =
+      validCandidates.filter(
+        (candidate) =>
+          candidate.index !==
+          bestBack!.index
+      );
+
+    if (remaining.length > 0) {
+      remaining.sort(
+        (a, b) =>
+          signatureDistance(
+            a.signature,
+            sideSignature
+          ) -
+          signatureDistance(
+            b.signature,
+            sideSignature
+          )
+      );
+
+      bestSide = {
+        index: remaining[0].index,
+        score:
+          signatureDistance(
+            remaining[0].signature,
+            sideSignature
+          ),
+      };
+    }
+  }
+
+  if (bestBack) {
+    result.back = bestBack.index;
+  }
+
+  if (bestSide) {
+    result.side = bestSide.index;
+  }
+
+  return result;
+}
+
+async function getDirectionalFrames(
+  cosmetic: Cosmetic,
+  baseFrames: string[],
+  baseUrl: string
+): Promise<DirectionalFrames> {
+  const cacheKey =
+    [
+      baseUrl,
+      cosmetic.id ??
+        cosmetic.name ??
+        cosmetic.layer,
+      cosmetic.layer,
+      ...(cosmetic.frames ?? []),
+    ].join("|");
+
+  const cached =
+    directionCache.get(cacheKey);
+
+  if (cached) {
+    return cached;
+  }
+
+  const promise =
+    findDirectionalFrames(
+      cosmetic,
+      baseFrames,
+      baseUrl
+    ).catch(() => ({}));
+
+  directionCache.set(
+    cacheKey,
+    promise
+  );
+
+  return promise;
+}
+
+async function getCosmeticFrameIndex(
+  baseFrame: number,
+  cosmetic: Cosmetic,
+  baseFrames: string[],
+  baseUrl: string
+): Promise<number> {
+  const frames =
+    cosmetic.frames ?? [];
+
+  if (frames.length === 0) {
+    return -1;
+  }
+
+  /*
+   * Front always uses the original static cosmetic layer.
+   */
+  if (baseFrame === 0) {
+    return -1;
+  }
+
+  /*
+   * Eyes are not visible from the Back.
+   * For Side we still automatically inspect frames 0-4.
+   */
+  if (
+    cosmetic.slot === "eyes" &&
+    baseFrame === 1
+  ) {
+    return -2;
+  }
+
+  const directionalFrames =
+    await getDirectionalFrames(
+      cosmetic,
+      baseFrames,
+      baseUrl
+    );
+
+  if (baseFrame === 1) {
+    return directionalFrames.back ??
+      -1;
+  }
+
+  if (baseFrame === 2) {
+    return directionalFrames.side ??
+      -1;
+  }
+
+  return -1;
+}
+
+async function loadCosmeticImage(
+  cosmetic: Cosmetic,
+  baseFrame: number,
+  baseFrames: string[],
+  baseUrl: string
+): Promise<HTMLImageElement | null> {
+  if (!cosmetic.layer) {
+    throw new Error(
+      `Cosmetic has no layer: ${
+        cosmetic.name ?? "Unknown"
+      }`
+    );
+  }
+
+  const index =
+    await getCosmeticFrameIndex(
+      baseFrame,
+      cosmetic,
+      baseFrames,
+      baseUrl
+    );
+
+  /*
+   * Explicitly hidden direction.
+   */
+  if (index === -2) {
+    return null;
+  }
+
+  /*
+   * Front uses the static layer.
+   */
+  if (index === -1) {
+    if (baseFrame === 0) {
+      return loadImage(
+        joinUrl(
+          baseUrl,
+          cosmetic.layer
+        )
+      );
+    }
+
+    /*
+     * Do not put the front layer on Back/Side.
+     */
+    return null;
+  }
+
+  const framePath =
+    cosmetic.frames?.[index];
+
+  if (!framePath) {
+    return null;
+  }
+
+  try {
+    return await loadImage(
+      joinUrl(
+        baseUrl,
+        framePath
+      )
+    );
+  } catch {
+    /*
+     * Never fall back to the front layer
+     * on Back/Side.
+     */
+    return null;
+  }
+}
+
 function hexToRgb(
   color: string
 ): { r: number; g: number; b: number } | null {
-  const value = color.trim().replace("#", "");
+  const value =
+    color.trim().replace("#", "");
 
-  if (value.length !== 6) return null;
+  if (value.length !== 6) {
+    return null;
+  }
 
-  const number = Number.parseInt(value, 16);
+  const number =
+    Number.parseInt(
+      value,
+      16
+    );
 
-  if (!Number.isFinite(number)) return null;
+  if (!Number.isFinite(number)) {
+    return null;
+  }
 
   return {
     r: (number >> 16) & 255,
@@ -325,21 +810,30 @@ function applyTint(
   height: number,
   color: string
 ): void {
-  const rgb = hexToRgb(color);
+  const rgb =
+    hexToRgb(color);
 
   if (!rgb) return;
 
-  const imageData = context.getImageData(
-    0,
-    0,
-    width,
-    height
-  );
+  const imageData =
+    context.getImageData(
+      0,
+      0,
+      width,
+      height
+    );
 
-  const data = imageData.data;
+  const data =
+    imageData.data;
 
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] === 0) continue;
+  for (
+    let i = 0;
+    i < data.length;
+    i += 4
+  ) {
+    if (data[i + 3] === 0) {
+      continue;
+    }
 
     const r = data[i];
     const g = data[i + 1];
@@ -350,22 +844,32 @@ function applyTint(
       0.7152 * g +
       0.0722 * b;
 
-    const factor = luminance / 255;
+    const factor =
+      luminance / 255;
 
-    data[i] = Math.min(
-      255,
-      Math.round(rgb.r * factor)
-    );
+    data[i] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.r * factor
+        )
+      );
 
-    data[i + 1] = Math.min(
-      255,
-      Math.round(rgb.g * factor)
-    );
+    data[i + 1] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.g * factor
+        )
+      );
 
-    data[i + 2] = Math.min(
-      255,
-      Math.round(rgb.b * factor)
-    );
+    data[i + 2] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.b * factor
+        )
+      );
   }
 
   context.putImageData(
@@ -397,9 +901,10 @@ function getBaseData(
     return manifest.base.skin_1;
   }
 
-  const firstKey = Object.keys(
-    manifest.base
-  )[0];
+  const firstKey =
+    Object.keys(
+      manifest.base
+    )[0];
 
   if (firstKey) {
     return manifest.base[firstKey];
@@ -423,22 +928,37 @@ export async function renderCharacter(
     scale = 1,
   } = options;
 
-  // Renderer owns the default outfit. Explicit Builder selections override it.
-  const resolvedCosmetics: Partial<Record<CosmeticSlot, string>> = {
+  /*
+   * Renderer owns the default outfit.
+   * Explicit Builder selections override it.
+   */
+  const resolvedCosmetics:
+    Partial<Record<CosmeticSlot, string>> = {
     ...DEFAULT_COSMETICS,
   };
 
-  for (const slot of Object.keys(cosmetics) as CosmeticSlot[]) {
-    const selected = cosmetics[slot];
-    if (typeof selected === "string" && selected.trim()) {
-      resolvedCosmetics[slot] = selected;
+  for (
+    const slot of Object.keys(
+      cosmetics
+    ) as CosmeticSlot[]
+  ) {
+    const selected =
+      cosmetics[slot];
+
+    if (
+      typeof selected === "string" &&
+      selected.trim()
+    ) {
+      resolvedCosmetics[slot] =
+        selected;
     }
   }
 
-  const base = getBaseData(
-    manifest,
-    skin
-  );
+  const base =
+    getBaseData(
+      manifest,
+      skin
+    );
 
   if (
     !base.frames ||
@@ -449,16 +969,19 @@ export async function renderCharacter(
     );
   }
 
-  const baseFrameIndex = Math.max(
-    0,
-    Math.min(
-      frame,
-      base.frames.length - 1
-    )
-  );
+  const baseFrameIndex =
+    Math.max(
+      0,
+      Math.min(
+        frame,
+        base.frames.length - 1
+      )
+    );
 
   const basePath =
-    base.frames[baseFrameIndex];
+    base.frames[
+      baseFrameIndex
+    ];
 
   if (!basePath) {
     throw new Error(
@@ -466,9 +989,13 @@ export async function renderCharacter(
     );
   }
 
-  const baseImage = await loadImage(
-    joinUrl(baseUrl, basePath)
-  );
+  const baseImage =
+    await loadImage(
+      joinUrl(
+        baseUrl,
+        basePath
+      )
+    );
 
   const width =
     baseImage.naturalWidth ||
@@ -485,10 +1012,15 @@ export async function renderCharacter(
   }
 
   const nativeCanvas =
-    createCanvas(width, height);
+    createCanvas(
+      width,
+      height
+    );
 
   const nativeContext =
-    nativeCanvas.getContext("2d");
+    nativeCanvas.getContext(
+      "2d"
+    );
 
   if (!nativeContext) {
     throw new Error(
@@ -496,7 +1028,8 @@ export async function renderCharacter(
     );
   }
 
-  nativeContext.imageSmoothingEnabled = false;
+  nativeContext.imageSmoothingEnabled =
+    false;
 
   drawImage(
     nativeContext,
@@ -511,14 +1044,25 @@ export async function renderCharacter(
     height
   );
 
-  for (const slot of LAYER_ORDER) {
+  /*
+   * Draw cosmetics in the correct layer order.
+   */
+  for (
+    const slot of LAYER_ORDER
+  ) {
     const cosmeticId =
-      resolvedCosmetics[slot];
+      resolvedCosmetics[
+        slot
+      ];
 
-    if (!cosmeticId) continue;
+    if (!cosmeticId) {
+      continue;
+    }
 
     const cosmetic =
-      manifest.cosmetics?.[cosmeticId];
+      manifest.cosmetics?.[
+        cosmeticId
+      ];
 
     if (!cosmetic) {
       console.warn(
@@ -527,7 +1071,9 @@ export async function renderCharacter(
       continue;
     }
 
-    if (cosmetic.slot !== slot) {
+    if (
+      cosmetic.slot !== slot
+    ) {
       console.warn(
         `[Renderer] Cosmetic "${cosmeticId}" has slot "${cosmetic.slot}" but was assigned to "${slot}".`
       );
@@ -541,7 +1087,8 @@ export async function renderCharacter(
       cosmeticImage =
         await loadCosmeticImage(
           cosmetic,
-          frame,
+          baseFrameIndex,
+          base.frames,
           baseUrl
         );
     } catch (error) {
@@ -557,12 +1104,19 @@ export async function renderCharacter(
     }
 
     const layerCanvas =
-      createCanvas(width, height);
+      createCanvas(
+        width,
+        height
+      );
 
     const layerContext =
-      layerCanvas.getContext("2d");
+      layerCanvas.getContext(
+        "2d"
+      );
 
-    if (!layerContext) continue;
+    if (!layerContext) {
+      continue;
+    }
 
     layerContext.imageSmoothingEnabled =
       false;
@@ -609,12 +1163,18 @@ export async function renderCharacter(
 
   const finalCanvas =
     createCanvas(
-      Math.round(width * safeScale),
-      Math.round(height * safeScale)
+      Math.round(
+        width * safeScale
+      ),
+      Math.round(
+        height * safeScale
+      )
     );
 
   const finalContext =
-    finalCanvas.getContext("2d");
+    finalCanvas.getContext(
+      "2d"
+    );
 
   if (!finalContext) {
     throw new Error(
@@ -640,7 +1200,9 @@ export async function renderCharacterToDataUrl(
   options: RenderOptions
 ): Promise<string> {
   const canvas =
-    await renderCharacter(options);
+    await renderCharacter(
+      options
+    );
 
   return canvas.toDataURL(
     "image/png"
@@ -655,5 +1217,7 @@ export async function renderCharacterToImage(
       options
     );
 
-  return loadImage(dataUrl);
+  return loadImage(
+    dataUrl
+  );
 }
