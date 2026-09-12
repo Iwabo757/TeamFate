@@ -127,89 +127,43 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * The base character has THREE directional frames:
-   *   base 0 = FRONT
-   *   base 1 = BACK
-   *   base 2 = SIDE
+   * Cosmetic direction mapping from the extracted assets:
    *
-   * Every directional cosmetic must follow the same view.  The large
-   * cosmetic frame arrays are animation frames grouped by direction, so
-   * we select the first frame of the correct directional group.
+   *   frame_1 = BACK
+   *   frame_2 = SIDE
+   *   frame_3 = FRONT
    *
-   * This function intentionally does NOT treat baseFrame as a cosmetic
-   * frame number.  It is a VIEW selector.
+   * The base renderer uses:
+   *   baseFrame 0 = FRONT
+   *   baseFrame 1 = BACK
+   *   baseFrame 2 = SIDE
+   *
+   * Therefore:
+   *   Front -> static layer (-1)
+   *   Back  -> cosmetic index 0 (frame_1)
+   *   Side  -> cosmetic index 1 (frame_2)
+   *
+   * Do NOT use the old 13/26 or 10/20 directional offsets here.
    */
   if (frameCount <= 0) return -1;
 
-  // Front uses the cosmetic's static layer when available.
+  // Brown eyes only has one extracted frame.
+  if (slot === "eyes") {
+    if (baseFrame === 1) return -2; // Back: hide eyes
+    return 0; // Front/Side
+  }
+
+  // Front keeps using the cosmetic's static layer.
   if (baseFrame === 0) return -1;
 
-  // Eyes are a special resource. The current Brown eyes asset only has
-  // one extracted frame, so use it for Side and hide it on Back.
-  if (slot === "eyes") {
-    if (baseFrame === 1) return -2;
-    if (baseFrame === 2) return 0;
+  // Directional cosmetic frames:
+  // frame_1 = Back, frame_2 = Side.
+  if (frameCount >= 2) {
+    if (baseFrame === 1) return 0; // Back -> frame_1
+    if (baseFrame === 2) return 1; // Side -> frame_2
   }
 
-  // Default Hair: 3 directional frames.
-  // frame 0 = Back, frame 1 = Side, frame 2 = Front/alternate.
-  if (slot === "hair" && frameCount === 3) {
-    if (baseFrame === 1) return 0; // Back
-    if (baseFrame === 2) return 1; // Side
-  }
-
-  /*
-   * Clothing frames are ANIMATION frames inside each direction group.
-   * We must keep the same animation phase as the selected base frame;
-   * taking the first frame of a direction produces the wrong clothing pose.
-   *
-   * T-Shirt: 13 Front + 13 Side + 13 Back
-   *   Side phase 2 -> frames[15]  (frame_16)
-   *   Back phase 1 -> frames[27]  (frame_28)
-   */
-  if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 1) return 13 + 2; // Side, same phase as base 2
-    if (baseFrame === 2) return 26 + 1; // Back, same phase as base 1
-  }
-
-  /*
-   * Pants: 10 Front + 10 Side + 9 Back
-   */
-  if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 1) return 10 + 2; // Side -> frame_13
-    if (baseFrame === 2) return 20 + 1; // Back -> frame_22
-  }
-
-  /*
-   * Shoes: 5 Front + 6 Side + 5 Back
-   */
-  if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 1) return 5 + 2;  // Side -> frame_8
-    if (baseFrame === 2) return 11 + 1; // Back -> frame_13
-  }
-
-  // Other cosmetics with exactly 3 directional frames.
-  if (frameCount === 3) {
-    if (baseFrame === 2) return 0; // Back
-    if (baseFrame === 1) return 1; // Side
-  }
-
-  // Generic 3-direction resource: Front / Side / Back.
-  // Preserve the selected base animation phase when possible.
-  if (frameCount % 3 === 0) {
-    const groupSize = frameCount / 3;
-    if (baseFrame === 1) return Math.min(groupSize + 2, frameCount - 1);
-    if (baseFrame === 2) return Math.min(groupSize * 2 + 1, frameCount - 1);
-  }
-
-  // Generic 4-direction resource. Frames are grouped Front/Side/Back/Other.
-  if (frameCount % 4 === 0) {
-    const groupSize = frameCount / 4;
-    if (baseFrame === 1) return Math.min(groupSize, frameCount - 1); // Side
-    if (baseFrame === 2) return Math.min(groupSize * 2, frameCount - 1); // Back
-  }
-
-  // Fallback: do not reuse an unrelated front frame for another view.
+  // A one-frame cosmetic can only be used as a static layer.
   return -1;
 }
 
