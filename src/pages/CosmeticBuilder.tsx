@@ -13,11 +13,11 @@ import type {
 type LocalCosmetic = {
   name: string;
   slot: CosmeticSlot;
-  icon: string;
+  icon?: string;
   layer: string;
-  icon_index: number;
-  layer_index: number;
-  slot_code: number;
+  icon_index?: number;
+  layer_index?: number;
+  slot_code?: number;
 };
 
 type ViewPreview = {
@@ -819,11 +819,13 @@ export default function CosmeticBuilder() {
 
                         <div className="cosmetic-item-icon">
 
-                          <img
-                            src={`${ASSET_ROOT}/${item.icon}`}
-                            alt=""
-                            loading="lazy"
-                          />
+{item.icon && (
+  <img
+    src={`${ASSET_ROOT}/${item.icon}`}
+    alt=""
+    loading="lazy"
+  />
+)}
 
                           <span>
                             {
