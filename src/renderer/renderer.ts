@@ -136,20 +136,19 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  */
 function getPreviewDirection(baseFrame: number): "front" | "side" | "back" | "other" {
   /*
-   * The 52 base resources are animation frames, not four contiguous
-   * directional blocks.  The preview uses these verified representative
-   * base frames:
+   * The 52 base resources are animation frames with directions interleaved.
+   * Verified representative frames:
    *
-   *   3 = Front
+   *   0 = Front
    *   2 = Side
-   *   0 = Back
+   *   3 = Back
    *
-   * Keep this function based on the actual selected base frame so cosmetic
-   * resources can be mapped independently from the base animation order.
+   * Frame 1 is another Front animation frame, so it is not used for the
+   * static Back preview.
    */
-  if (baseFrame === 3) return "front";
+  if (baseFrame === 0) return "front";
   if (baseFrame === 2) return "side";
-  if (baseFrame === 0) return "back";
+  if (baseFrame === 3) return "back";
   return "other";
 }
 
