@@ -102,7 +102,7 @@ const DEFAULT_COSMETICS: Partial<
 const VIEW_DEFINITIONS = [
   {
     label: "Front",
-    frame: 0,
+    frame: 1,
   },
   {
     label: "Side",
@@ -110,7 +110,7 @@ const VIEW_DEFINITIONS = [
   },
   {
     label: "Back",
-    frame: 1,
+    frame: 0,
   },
 ];
 /* =========================================================
