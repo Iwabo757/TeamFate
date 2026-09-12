@@ -147,10 +147,14 @@ function getCosmeticFrameIndex(
    */
   if (frameCount <= 0) return -1;
 
-  // Brown eyes only has one extracted frame.
+  // Brown eyes:
+  // Front uses the static layer.
+  // Side uses frame_1.
+  // Back is hidden.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2; // Back: hide eyes
-    return 0; // Front/Side
+    if (baseFrame === 2) return 0;  // Side -> frame_1
+    return -1; // Front -> static layer
   }
 
   // Front keeps using the cosmetic's static layer.
