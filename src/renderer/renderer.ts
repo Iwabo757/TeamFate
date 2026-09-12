@@ -153,7 +153,7 @@ function getCosmeticFrameIndex(
   // Back is hidden.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2; // Back: hide eyes
-    if (baseFrame === 2) return 2;  // Side -> frame_3
+    if (baseFrame === 2) return 1;  // Side -> frame_2
     return -1; // Front -> static layer
   }
 
@@ -401,6 +401,19 @@ export async function renderCharacter(
     scale = 1,
   } = options;
 
+  // The base skin contains the underlying/default clothing pixels.
+  // Always apply the renderer's default clothing when a slot is not
+  // explicitly supplied so the base outfit is covered by the correct
+  // directional clothing layers.
+  const resolvedCosmetics: Partial<Record<CosmeticSlot, string>> = {
+    hair: "Default Hair",
+    eyes: "Brown",
+    top: "T-Shirt",
+    pants: "Pants",
+    shoes: "Shoes",
+    ...cosmetics,
+  };
+
   const base = getBaseData(
     manifest,
     skin
@@ -479,7 +492,7 @@ export async function renderCharacter(
 
   for (const slot of LAYER_ORDER) {
     const cosmeticId =
-      cosmetics[slot];
+      resolvedCosmetics[slot];
 
     if (!cosmeticId) continue;
 
