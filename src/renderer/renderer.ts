@@ -127,38 +127,38 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * Base character direction frames:
+   * Base direction:
    *   0 = Front
-   *   1 = Back
    *   2 = Side
+   *   1 = Back
    *
-   * Cosmetic direction frames:
+   * Cosmetic direction:
    *   frame_1 = Back
    *   frame_2 = Side
    *
-   * Front intentionally uses the cosmetic's static layer.
+   * Front deliberately uses the static layer.
    */
   if (frameCount <= 0) return -1;
 
-  // Brown eyes:
-  // Front = static layer
-  // Side = frame_4 when available
-  // Back = hidden
+  // Eyes have their own directional extraction.
+  // Front = static layer, Side = frame_4 when present, Back = hidden.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2;
     if (baseFrame === 2) {
-      if (frameCount >= 4) return 3; // Side -> frame_4
-      if (frameCount >= 2) return 1; // fallback -> frame_2
+      if (frameCount >= 4) return 3; // frame_4
+      if (frameCount >= 2) return 1; // fallback frame_2
     }
-    return -1; // Front -> static layer
+    return -1;
   }
 
-  // Front always uses the original static cosmetic layer.
+  // Front = static cosmetic layer.
   if (baseFrame === 0) return -1;
 
-  // Back = frame_1, Side = frame_2.
+  // Back = frame_1.
   if (baseFrame === 1) return 0;
-  if (baseFrame === 2) return frameCount >= 2 ? 1 : -1;
+
+  // Side = frame_2.
+  if (baseFrame === 2) return 1;
 
   return -1;
 }
@@ -397,14 +397,27 @@ export async function renderCharacter(
   // Always apply the renderer's default clothing when a slot is not
   // explicitly supplied so the base outfit is covered by the correct
   // directional clothing layers.
-  const resolvedCosmetics: Partial<Record<CosmeticSlot, string>> = {
+  const defaultCosmetics: Partial<Record<CosmeticSlot, string>> = {
     hair: "Default Hair",
     eyes: "Brown",
     top: "T-Shirt",
     pants: "Pants",
     shoes: "Shoes",
-    ...cosmetics,
   };
+
+  // Only let an actually selected cosmetic replace the default.
+  // Some callers pass slot keys with undefined values; spreading those over
+  // the defaults would silently remove the default clothing.
+  const resolvedCosmetics: Partial<Record<CosmeticSlot, string>> = {
+    ...defaultCosmetics,
+  };
+
+  for (const slot of Object.keys(cosmetics) as CosmeticSlot[]) {
+    const selected = cosmetics[slot];
+    if (typeof selected === "string" && selected.trim()) {
+      resolvedCosmetics[slot] = selected;
+    }
+  }
 
   const base = getBaseData(
     manifest,
