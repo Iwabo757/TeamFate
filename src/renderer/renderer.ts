@@ -32,7 +32,10 @@ export type RendererManifest = {
     }
   >;
 
-  cosmetics: Record<string, Cosmetic>;
+  cosmetics: Record<
+    string,
+    Cosmetic
+  >;
 };
 
 type RenderOptions = {
@@ -40,12 +43,15 @@ type RenderOptions = {
   baseUrl?: string;
   skin?: number;
   frame?: number;
+
   cosmetics?: Partial<
     Record<CosmeticSlot, string>
   >;
+
   tints?: Partial<
     Record<CosmeticSlot, string>
   >;
+
   scale?: number;
 };
 
@@ -54,9 +60,10 @@ const imageCache = new Map<
   Promise<HTMLImageElement>
 >();
 
-/*
- * Rendering order.
- */
+/* =========================================================
+   LAYER ORDER
+   ========================================================= */
+
 export const LAYER_ORDER: CosmeticSlot[] = [
   "back",
   "pants",
@@ -71,25 +78,47 @@ export const LAYER_ORDER: CosmeticSlot[] = [
   "mount",
 ];
 
-/*
- * Slots that support color tinting.
- */
-const COLORABLE_SLOTS = new Set<CosmeticSlot>([
-  "hair",
-  "top",
-  "pants",
-  "shoes",
-  "back",
-  "hat",
-]);
+/* =========================================================
+   COLORABLE SLOTS
+   ========================================================= */
 
-/*
- * Image loader with caching.
- */
+const COLORABLE_SLOTS =
+  new Set<CosmeticSlot>([
+    "hair",
+    "top",
+    "pants",
+    "shoes",
+    "back",
+    "hat",
+  ]);
+
+/* =========================================================
+   BACK-ONLY RULES
+   =========================================================
+
+   Eyes and face artwork is front-facing artwork.
+
+   The base character itself contains the correct
+   back-facing body/head when frame 1 is used.
+
+   Therefore we must NOT draw front facial layers
+   on the back view.
+   ========================================================= */
+
+const HIDDEN_ON_BACK: CosmeticSlot[] = [
+  "eyes",
+  "face",
+];
+
+/* =========================================================
+   IMAGE LOADING
+   ========================================================= */
+
 export async function loadImage(
   src: string
 ): Promise<HTMLImageElement> {
-  const cached = imageCache.get(src);
+  const cached =
+    imageCache.get(src);
 
   if (cached) {
     return cached;
@@ -98,15 +127,17 @@ export async function loadImage(
   const promise =
     new Promise<HTMLImageElement>(
       (resolve, reject) => {
-        const img = new Image();
+        const image =
+          new Image();
 
-        img.decoding = "async";
+        image.decoding =
+          "async";
 
-        img.onload = () => {
-          resolve(img);
+        image.onload = () => {
+          resolve(image);
         };
 
-        img.onerror = () => {
+        image.onerror = () => {
           reject(
             new Error(
               `Failed to load image: ${src}`
@@ -114,11 +145,14 @@ export async function loadImage(
           );
         };
 
-        img.src = src;
+        image.src = src;
       }
     );
 
-  imageCache.set(src, promise);
+  imageCache.set(
+    src,
+    promise
+  );
 
   try {
     return await promise;
@@ -128,13 +162,15 @@ export async function loadImage(
   }
 }
 
-/*
- * Load the renderer manifest.
- */
+/* =========================================================
+   LOAD MANIFEST
+   ========================================================= */
+
 export async function loadRendererManifest(
   url = "/team-fate-renderer/manifest.json"
 ): Promise<RendererManifest> {
-  const response = await fetch(url);
+  const response =
+    await fetch(url);
 
   if (!response.ok) {
     throw new Error(
@@ -145,9 +181,10 @@ export async function loadRendererManifest(
   return response.json() as Promise<RendererManifest>;
 }
 
-/*
- * Convert hex color to RGB.
- */
+/* =========================================================
+   HEX → RGB
+   ========================================================= */
+
 function hexToRgb(
   hex: string
 ): {
@@ -155,15 +192,20 @@ function hexToRgb(
   g: number;
   b: number;
 } | null {
-  let value = hex
-    .replace("#", "")
-    .trim();
+  let value =
+    hex
+      .replace("#", "")
+      .trim();
 
   if (value.length === 3) {
-    value = value
-      .split("")
-      .map((char) => char + char)
-      .join("");
+    value =
+      value
+        .split("")
+        .map(
+          (char) =>
+            char + char
+        )
+        .join("");
   }
 
   if (value.length !== 6) {
@@ -171,39 +213,41 @@ function hexToRgb(
   }
 
   const number =
-    Number.parseInt(value, 16);
+    Number.parseInt(
+      value,
+      16
+    );
 
   if (!Number.isFinite(number)) {
     return null;
   }
 
   return {
-    r: (number >> 16) & 255,
-    g: (number >> 8) & 255,
-    b: number & 255,
+    r:
+      (number >> 16) &
+      255,
+
+    g:
+      (number >> 8) &
+      255,
+
+    b:
+      number & 255,
   };
 }
 
-/*
- * Tint a cosmetic while preserving:
- *
- * - transparency
- * - black/dark outlines
- * - original brightness/shading
- *
- * This intentionally does NOT require the source
- * pixels to be mathematically grayscale.
- *
- * PokeMMO artwork uses slightly blue/gray palette
- * colors, so a strict grayscale test causes valid
- * hair/clothing pixels to be skipped.
- */
+/* =========================================================
+   TINT COSMETIC
+   ========================================================= */
+
 function tintImage(
   image: HTMLImageElement,
   color: string
 ): HTMLCanvasElement {
   const canvas =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
   canvas.width =
     image.naturalWidth;
@@ -212,7 +256,9 @@ function tintImage(
     image.naturalHeight;
 
   const ctx =
-    canvas.getContext("2d");
+    canvas.getContext(
+      "2d"
+    );
 
   if (!ctx) {
     throw new Error(
@@ -220,7 +266,8 @@ function tintImage(
     );
   }
 
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled =
+    false;
 
   ctx.drawImage(
     image,
@@ -236,7 +283,8 @@ function tintImage(
       canvas.height
     );
 
-  const rgb = hexToRgb(color);
+  const rgb =
+    hexToRgb(color);
 
   if (!rgb) {
     return canvas;
@@ -250,37 +298,41 @@ function tintImage(
     i < data.length;
     i += 4
   ) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const alpha = data[i + 3];
+    const r =
+      data[i];
+
+    const g =
+      data[i + 1];
+
+    const b =
+      data[i + 2];
+
+    const alpha =
+      data[i + 3];
 
     /*
-     * Transparent pixel.
+     * Transparent.
      */
     if (alpha === 0) {
       continue;
     }
 
     /*
-     * Preserve dark outlines.
-     *
-     * This keeps the pixel-art outline intact
-     * instead of turning the outline into the
-     * selected color.
+     * Keep black/dark outlines.
      */
     const darkest =
-      Math.max(r, g, b);
+      Math.max(
+        r,
+        g,
+        b
+      );
 
     if (darkest <= 45) {
       continue;
     }
 
     /*
-     * Calculate original brightness.
-     *
-     * This is what keeps highlights and shadows
-     * from becoming one flat color.
+     * Preserve original shading.
      */
     const luminance =
       0.299 * r +
@@ -293,30 +345,32 @@ function tintImage(
         luminance / 255
       );
 
-    /*
-     * Apply selected color while retaining
-     * the original brightness.
-     */
-    data[i] = Math.min(
-      255,
-      Math.round(
-        rgb.r * brightness
-      )
-    );
+    data[i] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.r *
+            brightness
+        )
+      );
 
-    data[i + 1] = Math.min(
-      255,
-      Math.round(
-        rgb.g * brightness
-      )
-    );
+    data[i + 1] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.g *
+            brightness
+        )
+      );
 
-    data[i + 2] = Math.min(
-      255,
-      Math.round(
-        rgb.b * brightness
-      )
-    );
+    data[i + 2] =
+      Math.min(
+        255,
+        Math.round(
+          rgb.b *
+            brightness
+        )
+      );
   }
 
   ctx.putImageData(
@@ -328,10 +382,10 @@ function tintImage(
   return canvas;
 }
 
-/*
- * Draw a layer at native 57x56 size,
- * scaled for the preview.
- */
+/* =========================================================
+   DRAW LAYER
+   ========================================================= */
+
 function drawLayer(
   ctx: CanvasRenderingContext2D,
   image: CanvasImageSource,
@@ -346,9 +400,10 @@ function drawLayer(
   );
 }
 
-/*
- * Render the complete character.
- */
+/* =========================================================
+   RENDER CHARACTER
+   ========================================================= */
+
 export async function renderCharacter(
   opts: RenderOptions
 ): Promise<HTMLCanvasElement> {
@@ -363,13 +418,19 @@ export async function renderCharacter(
   } = opts;
 
   const cleanBaseUrl =
-    baseUrl.replace(/\/$/, "");
+    baseUrl.replace(
+      /\/$/,
+      ""
+    );
 
-  /*
-   * Get selected skin.
-   */
+  /* -------------------------------------------------------
+     SKIN
+     ------------------------------------------------------- */
+
   const skinData =
-    manifest.base[`skin_${skin}`];
+    manifest.base[
+      `skin_${skin}`
+    ];
 
   if (!skinData) {
     throw new Error(
@@ -377,11 +438,14 @@ export async function renderCharacter(
     );
   }
 
-  /*
-   * Get selected frame.
-   */
+  /* -------------------------------------------------------
+     FRAME
+     ------------------------------------------------------- */
+
   const basePath =
-    skinData.frames[frame];
+    skinData.frames[
+      frame
+    ];
 
   if (!basePath) {
     throw new Error(
@@ -390,10 +454,19 @@ export async function renderCharacter(
   }
 
   /*
-   * Create canvas.
+   * Frame 1 is the actual back-facing pose.
    */
+  const isBackView =
+    frame === 1;
+
+  /* -------------------------------------------------------
+     CANVAS
+     ------------------------------------------------------- */
+
   const canvas =
-    document.createElement("canvas");
+    document.createElement(
+      "canvas"
+    );
 
   canvas.width =
     57 * scale;
@@ -402,19 +475,23 @@ export async function renderCharacter(
     56 * scale;
 
   const ctx =
-    canvas.getContext("2d");
+    canvas.getContext(
+      "2d"
+    );
 
   if (!ctx) {
     throw new Error(
-      "Canvas 2D unavailable"
+      "Canvas 2D unavailable."
     );
   }
 
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled =
+    false;
 
-  /*
-   * Draw base character.
-   */
+  /* -------------------------------------------------------
+     BASE CHARACTER
+     ------------------------------------------------------- */
+
   const base =
     await loadImage(
       `${cleanBaseUrl}/${basePath}`
@@ -426,12 +503,25 @@ export async function renderCharacter(
     scale
   );
 
-  /*
-   * Draw cosmetics in order.
-   */
+  /* -------------------------------------------------------
+     COSMETIC LAYERS
+     ------------------------------------------------------- */
+
   for (
     const slot of LAYER_ORDER
   ) {
+    /*
+     * Skip facial layers on the back.
+     */
+    if (
+      isBackView &&
+      HIDDEN_ON_BACK.includes(
+        slot
+      )
+    ) {
+      continue;
+    }
+
     const name =
       cosmetics[slot];
 
@@ -440,30 +530,44 @@ export async function renderCharacter(
     }
 
     const cosmetic =
-      manifest.cosmetics[name];
+      manifest.cosmetics[
+        name
+      ];
 
+    if (!cosmetic) {
+      continue;
+    }
+
+    /*
+     * Protect against a cosmetic being assigned
+     * to the wrong slot.
+     */
     if (
-      !cosmetic ||
-      cosmetic.slot !== slot
+      cosmetic.slot !==
+      slot
     ) {
       continue;
     }
 
+    const layerPath =
+      `${cleanBaseUrl}/${cosmetic.layer}`;
+
     const layer =
       await loadImage(
-        `${cleanBaseUrl}/${cosmetic.layer}`
+        layerPath
       );
 
     const tint =
       tints[slot];
 
     /*
-     * Apply tint when this slot is colorable
-     * and a color has been selected.
+     * Apply tint only to slots that support it.
      */
     if (
       tint &&
-      COLORABLE_SLOTS.has(slot)
+      COLORABLE_SLOTS.has(
+        slot
+      )
     ) {
       const tinted =
         tintImage(
@@ -477,9 +581,6 @@ export async function renderCharacter(
         scale
       );
     } else {
-      /*
-       * Original artwork.
-       */
       drawLayer(
         ctx,
         layer,
@@ -491,14 +592,17 @@ export async function renderCharacter(
   return canvas;
 }
 
-/*
- * Render directly to PNG data URL.
- */
+/* =========================================================
+   RENDER → DATA URL
+   ========================================================= */
+
 export async function renderCharacterToDataUrl(
   opts: RenderOptions
 ): Promise<string> {
   const canvas =
-    await renderCharacter(opts);
+    await renderCharacter(
+      opts
+    );
 
   return canvas.toDataURL(
     "image/png"
