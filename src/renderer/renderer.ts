@@ -206,6 +206,12 @@ export async function renderCharacter(
   draw(ctx, base, scale);
 
   for (const slot of LAYER_ORDER) {
+// Eyes and face are front/side-only layers.
+// They must not be rendered from the back.
+if (frame === 1 && (slot === "eyes" || slot === "face")) {
+  continue;
+}
+
     const name = cosmetics[slot];
     if (!name) continue;
 
