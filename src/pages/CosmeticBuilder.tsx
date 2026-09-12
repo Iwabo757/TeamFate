@@ -70,20 +70,6 @@ const SLOT_IDS: CosmeticSlot[] = [
 ];
 
 /* =========================================================
-   DEFAULT OUTFIT
-   ========================================================= */
-
-const DEFAULT_COSMETICS: Partial<
-  Record<CosmeticSlot, string>
-> = {
-  eyes: "Brown",
-  hair: "Default Hair",
-  top: "T-Shirt",
-  pants: "Pants",
-  shoes: "Shoes",
-};
-
-/* =========================================================
    CHARACTER VIEWS
    =========================================================
 
@@ -207,12 +193,8 @@ export default function CosmeticBuilder() {
 
   const [equipped, setEquipped] =
     useState<
-      Partial<
-        Record<CosmeticSlot, string>
-      >
-    >({
-      ...DEFAULT_COSMETICS,
-    });
+      Partial<Record<CosmeticSlot, string>>
+    >({});
 
   const [colors, setColors] =
     useState<
@@ -384,19 +366,6 @@ export default function CosmeticBuilder() {
     const rendererManifest =
       manifest;
 
-    // Always render the real default outfit. Selected cosmetics override
-    // defaults, but undefined/empty values can never remove a default.
-    const previewCosmetics: Partial<Record<CosmeticSlot, string>> = {
-      ...DEFAULT_COSMETICS,
-      ...Object.fromEntries(
-        Object.entries(equipped).filter(
-          ([, value]) =>
-            typeof value === "string" &&
-            value.trim().length > 0
-        )
-      ),
-    };
-
     let cancelled = false;
 
     async function renderAllViews() {
@@ -421,8 +390,7 @@ export default function CosmeticBuilder() {
                       frame:
                         view.frame,
 
-                      cosmetics:
-                        previewCosmetics,
+                      cosmetics: equipped,
 
                       tints:
                         colors,
@@ -517,17 +485,7 @@ export default function CosmeticBuilder() {
           ...current,
         };
 
-        const defaultItem =
-          DEFAULT_COSMETICS[
-            slot
-          ];
-
-        if (defaultItem) {
-          next[slot] =
-            defaultItem;
-        } else {
-          delete next[slot];
-        }
+        delete next[slot];
 
         return next;
       }
@@ -563,9 +521,7 @@ export default function CosmeticBuilder() {
 
     setQuery("");
 
-    setEquipped({
-      ...DEFAULT_COSMETICS,
-    });
+    setEquipped({});
 
     setColors({
       hair: DEFAULT_COLOR,
@@ -585,9 +541,7 @@ export default function CosmeticBuilder() {
 
     const next: Partial<
       Record<CosmeticSlot, string>
-    > = {
-      ...DEFAULT_COSMETICS,
-    };
+    > = {};
 
     for (
       const slot of SLOT_IDS

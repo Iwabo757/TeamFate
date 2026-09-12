@@ -53,6 +53,14 @@ export type RenderOptions = {
 
 const DEFAULT_BASE_URL = "/team-fate-renderer";
 
+const DEFAULT_COSMETICS: Partial<Record<CosmeticSlot, string>> = {
+  hair: "Default Hair",
+  eyes: "Brown",
+  top: "T-Shirt",
+  pants: "Pants",
+  shoes: "Shoes",
+};
+
 const LAYER_ORDER: CosmeticSlot[] = [
   "back",
   "pants",
@@ -127,35 +135,28 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * Base character directions:
+   * Base direction:
    *   0 = Front
    *   2 = Side
    *   1 = Back
    *
-   * Cosmetic directions:
+   * Cosmetic direction:
    *   frame_1 = Back
    *   frame_2 = Side
    *
-   * Front uses the cosmetic's static layer.
-   *
-   * The caller (CosmeticBuilder) supplies the default outfit as normal
-   * cosmetics, so there is intentionally NO default-cosmetic injection here.
+   * Front deliberately uses the static layer.
    */
   if (frameCount <= 0) return -1;
 
-  // Brown eyes:
-  // Front = static layer
-  // Side = frame_4 when the asset contains it
-  // Back = hidden
+  // Eyes have their own directional extraction.
+  // Front = static layer, Side = frame_4 when present, Back = hidden.
   if (slot === "eyes") {
     if (baseFrame === 1) return -2;
-
     if (baseFrame === 2) {
       if (frameCount >= 4) return 3; // frame_4
       if (frameCount >= 2) return 1; // fallback frame_2
     }
-
-    return -1; // Front -> static layer
+    return -1;
   }
 
   // Front = static cosmetic layer.
@@ -400,10 +401,18 @@ export async function renderCharacter(
     scale = 1,
   } = options;
 
-  // The base skin contains the underlying/default clothing pixels.
-  // Always apply the renderer's default clothing when a slot is not
-  // explicitly supplied so the base outfit is covered by the correct
-  // directional clothing layers.
+  // Renderer owns the default outfit. Explicit Builder selections override it.
+  const resolvedCosmetics: Partial<Record<CosmeticSlot, string>> = {
+    ...DEFAULT_COSMETICS,
+  };
+
+  for (const slot of Object.keys(cosmetics) as CosmeticSlot[]) {
+    const selected = cosmetics[slot];
+    if (typeof selected === "string" && selected.trim()) {
+      resolvedCosmetics[slot] = selected;
+    }
+  }
+
   const base = getBaseData(
     manifest,
     skin
@@ -482,7 +491,7 @@ export async function renderCharacter(
 
   for (const slot of LAYER_ORDER) {
     const cosmeticId =
-      cosmetics[slot];
+      resolvedCosmetics[slot];
 
     if (!cosmeticId) continue;
 
