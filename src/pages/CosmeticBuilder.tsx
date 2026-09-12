@@ -87,23 +87,29 @@ const DEFAULT_COSMETICS: Partial<
    CHARACTER VIEWS
    =========================================================
 
-   Frame 0 = Front
-   Frame 1 = Back
-   Frame 2 = Side
+   The local renderer contains four directional animation groups.
+   Their first base frames are:
+
+   0  = Front
+   13 = Back
+   26 = Side
+   39 = Opposite Side
+
+   The builder only displays the three requested views.
 */
 
 const VIEW_DEFINITIONS = [
   {
     label: "Front",
-    frame: 3,
+    frame: 0,
   },
   {
     label: "Side",
-    frame: 2,
+    frame: 26,
   },
   {
     label: "Back",
-    frame: 1,
+    frame: 13,
   },
 ];
 /* =========================================================
