@@ -123,7 +123,8 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 
 function getCosmeticFrameIndex(
   baseFrame: number,
-  frameCount: number
+  frameCount: number,
+  slot: CosmeticSlot
 ): number {
   if (frameCount <= 0) {
     return -1;
@@ -142,7 +143,7 @@ function getCosmeticFrameIndex(
    *   1 = Side
    *   2 = Back
    *   3 = Opposite Side
-   *
+   *getCosmeticFrameIndex
    * Therefore:
    *
    *   Base Front -> Cosmetic Front
@@ -266,10 +267,11 @@ async function loadCosmeticImage(
   }
 
   const frames = cosmetic.frames ?? [];
-  const index = getCosmeticFrameIndex(
-    baseFrame,
-    frames.length
-  );
+const index = getCosmeticFrameIndex(
+  baseFrame,
+  frames.length,
+  cosmetic.slot
+);
 
   /* Front uses the original static layer. */
   if (index === -1) {
