@@ -384,6 +384,19 @@ export default function CosmeticBuilder() {
     const rendererManifest =
       manifest;
 
+    // Always render the real default outfit. Selected cosmetics override
+    // defaults, but undefined/empty values can never remove a default.
+    const previewCosmetics: Partial<Record<CosmeticSlot, string>> = {
+      ...DEFAULT_COSMETICS,
+      ...Object.fromEntries(
+        Object.entries(equipped).filter(
+          ([, value]) =>
+            typeof value === "string" &&
+            value.trim().length > 0
+        )
+      ),
+    };
+
     let cancelled = false;
 
     async function renderAllViews() {
@@ -409,7 +422,7 @@ export default function CosmeticBuilder() {
                         view.frame,
 
                       cosmetics:
-                        equipped,
+                        previewCosmetics,
 
                       tints:
                         colors,
