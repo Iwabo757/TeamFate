@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import "../cosmetic-builder.css";
 
-import { renderCharacterToDataUrl } from "../renderer/renderer";
+import {
+  renderCharacterToDataUrl,
+} from "../renderer/renderer";
 
 import type {
   CosmeticSlot,
@@ -29,9 +31,17 @@ type SelectedOutfitItem = {
   name: string;
 };
 
-const ASSET_ROOT = "/team-fate-renderer";
+const ASSET_ROOT =
+  "/team-fate-renderer";
 
-const SLOT_NAMES: Record<CosmeticSlot, string> = {
+/* =========================================================
+   SLOTS
+   ========================================================= */
+
+const SLOT_NAMES: Record<
+  CosmeticSlot,
+  string
+> = {
   hat: "Hat",
   hair: "Hair",
   eyes: "Eyes",
@@ -59,6 +69,10 @@ const SLOT_IDS: CosmeticSlot[] = [
   "mount",
 ];
 
+/* =========================================================
+   DEFAULT OUTFIT
+   ========================================================= */
+
 const DEFAULT_COSMETICS: Partial<
   Record<CosmeticSlot, string>
 > = {
@@ -69,12 +83,15 @@ const DEFAULT_COSMETICS: Partial<
   shoes: "Shoes",
 };
 
-/*
- * Three permanent character views.
- *
- * The character is rendered from the same
- * selected outfit in all three directions.
- */
+/* =========================================================
+   CHARACTER VIEWS
+   =========================================================
+
+   Frame 0 = Front
+   Frame 1 = Back
+   Frame 2 = Side
+*/
+
 const VIEW_DEFINITIONS = [
   {
     label: "Front",
@@ -82,13 +99,17 @@ const VIEW_DEFINITIONS = [
   },
   {
     label: "Side",
-    frame: 13,
+    frame: 2,
   },
   {
     label: "Back",
-    frame: 26,
+    frame: 1,
   },
 ];
+
+/* =========================================================
+   COLORS
+   ========================================================= */
 
 const COLOR_PRESETS = [
   {
@@ -133,24 +154,35 @@ const COLOR_PRESETS = [
   },
 ];
 
-const DEFAULT_COLOR = "#6B4634";
+const DEFAULT_COLOR =
+  "#6B4634";
+
+/* =========================================================
+   COLORABLE SLOTS
+   ========================================================= */
 
 function isColorableSlot(
   slot: CosmeticSlot
 ): boolean {
-  return [
-    "hair",
-    "top",
-    "pants",
-    "shoes",
-    "back",
-    "hat",
-  ].includes(slot);
+  return (
+    slot === "hair" ||
+    slot === "top" ||
+    slot === "pants" ||
+    slot === "shoes" ||
+    slot === "back" ||
+    slot === "hat"
+  );
 }
+
+/* =========================================================
+   COMPONENT
+   ========================================================= */
 
 export default function CosmeticBuilder() {
   const [manifest, setManifest] =
-    useState<RendererManifest | null>(null);
+    useState<RendererManifest | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -169,14 +201,18 @@ export default function CosmeticBuilder() {
 
   const [equipped, setEquipped] =
     useState<
-      Partial<Record<CosmeticSlot, string>>
+      Partial<
+        Record<CosmeticSlot, string>
+      >
     >({
       ...DEFAULT_COSMETICS,
     });
 
   const [colors, setColors] =
     useState<
-      Partial<Record<CosmeticSlot, string>>
+      Partial<
+        Record<CosmeticSlot, string>
+      >
     >({
       hair: DEFAULT_COLOR,
     });
@@ -187,9 +223,10 @@ export default function CosmeticBuilder() {
   const [previewError, setPreviewError] =
     useState("");
 
-  /*
-   * Load renderer manifest.
-   */
+  /* =======================================================
+     LOAD MANIFEST
+     ======================================================= */
+
   useEffect(() => {
     let cancelled = false;
 
@@ -198,9 +235,10 @@ export default function CosmeticBuilder() {
         setLoading(true);
         setLoadError("");
 
-        const response = await fetch(
-          `${ASSET_ROOT}/manifest.json`
-        );
+        const response =
+          await fetch(
+            `${ASSET_ROOT}/manifest.json`
+          );
 
         if (!response.ok) {
           throw new Error(
@@ -250,75 +288,94 @@ export default function CosmeticBuilder() {
     };
   }, []);
 
-  /*
-   * Convert manifest cosmetics to an array.
-   */
-  const cosmetics = useMemo<
-    LocalCosmetic[]
-  >(() => {
-    if (!manifest) {
-      return [];
-    }
+  /* =======================================================
+     COSMETIC ARRAY
+     ======================================================= */
 
-    return Object.entries(
-      manifest.cosmetics
-    ).map(([name, item]) => ({
-      ...item,
-      name,
-    }));
-  }, [manifest]);
+  const cosmetics =
+    useMemo<LocalCosmetic[]>(
+      () => {
+        if (!manifest) {
+          return [];
+        }
 
-  /*
-   * Filter cosmetics by selected slot
-   * and search query.
-   */
-  const filtered = useMemo(() => {
-    const search =
-      query.trim().toLowerCase();
+        return Object.entries(
+          manifest.cosmetics
+        ).map(
+          ([name, item]) => ({
+            ...item,
+            name,
+          })
+        );
+      },
+      [manifest]
+    );
 
-    return cosmetics.filter((item) => {
-      if (
-        item.slot !== selectedSlot
-      ) {
-        return false;
-      }
+  /* =======================================================
+     FILTERED COSMETICS
+     ======================================================= */
 
-      if (!search) {
-        return true;
-      }
+  const filtered =
+    useMemo(() => {
+      const search =
+        query
+          .trim()
+          .toLowerCase();
 
-      return (
-        item.name
-          .toLowerCase()
-          .includes(search) ||
-        String(
-          item.layer_index
-        ).includes(search)
+      return cosmetics.filter(
+        (item) => {
+          if (
+            item.slot !==
+            selectedSlot
+          ) {
+            return false;
+          }
+
+          if (!search) {
+            return true;
+          }
+
+          return (
+            item.name
+              .toLowerCase()
+              .includes(search) ||
+            String(
+              item.layer_index
+            ).includes(search)
+          );
+        }
       );
-    });
-  }, [
-    cosmetics,
-    selectedSlot,
-    query,
-  ]);
+    }, [
+      cosmetics,
+      selectedSlot,
+      query,
+    ]);
 
-  const selectedName =
-    equipped[selectedSlot];
+  /* =======================================================
+     CURRENT COLOR
+     ======================================================= */
 
   const selectedColor =
     colors[selectedSlot] ??
     DEFAULT_COLOR;
 
-  /*
-   * Render all three views whenever
-   * the character changes.
-   */
+  /* =======================================================
+     RENDER THREE VIEWS
+     ======================================================= */
+
   useEffect(() => {
+    /*
+     * Important:
+     *
+     * Copy manifest into a constant AFTER the null check.
+     * This makes TypeScript understand that the value passed
+     * into the async rendering function cannot be null.
+     */
     if (!manifest) {
       return;
     }
 
-    const currentManifest =
+    const rendererManifest =
       manifest;
 
     let cancelled = false;
@@ -335,7 +392,7 @@ export default function CosmeticBuilder() {
                   await renderCharacterToDataUrl(
                     {
                       manifest:
-                        currentManifest,
+                        rendererManifest,
 
                       baseUrl:
                         ASSET_ROOT,
@@ -352,13 +409,11 @@ export default function CosmeticBuilder() {
                         colors,
 
                       /*
-                       * 4x instead of 8x.
-                       *
                        * Native sprite:
-                       * 57x56
+                       * 57 x 56
                        *
-                       * Preview:
-                       * 228x224
+                       * Render:
+                       * 228 x 224
                        */
                       scale: 4,
                     }
@@ -412,63 +467,76 @@ export default function CosmeticBuilder() {
     colors,
   ]);
 
-  /*
-   * Equip cosmetic.
-   */
+  /* =======================================================
+     SELECT COSMETIC
+     ======================================================= */
+
   function selectCosmetic(
     item: LocalCosmetic
   ) {
-    setEquipped((current) => ({
-      ...current,
-      [selectedSlot]:
-        item.name,
-    }));
+    setEquipped(
+      (current) => ({
+        ...current,
+        [selectedSlot]:
+          item.name,
+      })
+    );
 
     setPreviewError("");
   }
 
-  /*
-   * Remove cosmetic.
-   */
+  /* =======================================================
+     REMOVE COSMETIC
+     ======================================================= */
+
   function removeCosmetic(
     slot: CosmeticSlot
   ) {
-    setEquipped((current) => {
-      const next = {
-        ...current,
-      };
+    setEquipped(
+      (current) => {
+        const next = {
+          ...current,
+        };
 
-      const defaultCosmetic =
-        DEFAULT_COSMETICS[slot];
+        const defaultItem =
+          DEFAULT_COSMETICS[
+            slot
+          ];
 
-      if (defaultCosmetic) {
-        next[slot] =
-          defaultCosmetic;
-      } else {
-        delete next[slot];
+        if (defaultItem) {
+          next[slot] =
+            defaultItem;
+        } else {
+          delete next[slot];
+        }
+
+        return next;
       }
-
-      return next;
-    });
+    );
 
     setPreviewError("");
   }
 
-  /*
-   * Change color.
-   */
+  /* =======================================================
+     CHANGE COLOR
+     ======================================================= */
+
   function changeColor(
     color: string
   ) {
-    setColors((current) => ({
-      ...current,
-      [selectedSlot]: color,
-    }));
+    setColors(
+      (current) => ({
+        ...current,
+        [selectedSlot]:
+          color,
+      })
+    );
   }
 
-  /*
-   * Reset.
-   */
+  /* =======================================================
+     RESET
+     ======================================================= */
+
   function reset() {
     setSkin(1);
 
@@ -487,9 +555,10 @@ export default function CosmeticBuilder() {
     setPreviewError("");
   }
 
-  /*
-   * Randomize.
-   */
+  /* =======================================================
+     RANDOMIZE
+     ======================================================= */
+
   function randomize() {
     if (!cosmetics.length) {
       return;
@@ -533,19 +602,29 @@ export default function CosmeticBuilder() {
         Math.random() * 5
       ) + 1
     );
+
+    setPreviewError("");
   }
 
-  /*
-   * Selected outfit.
-   */
+  /* =======================================================
+     SELECTED OUTFIT
+     ======================================================= */
+
   const selectedOutfit =
     useMemo<
       SelectedOutfitItem[]
     >(() => {
+      if (!manifest) {
+        return [];
+      }
+
       return SLOT_IDS.reduce<
         SelectedOutfitItem[]
       >(
-        (result, slot) => {
+        (
+          result,
+          slot
+        ) => {
           const name =
             equipped[slot];
 
@@ -554,7 +633,7 @@ export default function CosmeticBuilder() {
           }
 
           if (
-            !manifest?.cosmetics[
+            !manifest.cosmetics[
               name
             ]
           ) {
@@ -575,10 +654,17 @@ export default function CosmeticBuilder() {
       equipped,
     ]);
 
+  /* =======================================================
+     RENDER PAGE
+     ======================================================= */
+
   return (
     <div className="cosmetic-builder-page">
 
-      {/* HEADER */}
+      {/* =================================================
+          HEADER
+          ================================================= */}
+
       <div className="cosmetic-builder-hero">
 
         <div>
@@ -613,12 +699,19 @@ export default function CosmeticBuilder() {
           </button>
 
         </div>
+
       </div>
 
-      {/* MAIN */}
+      {/* =================================================
+          MAIN
+          ================================================= */}
+
       <div className="cosmetic-builder-layout">
 
-        {/* CATALOG */}
+        {/* =================================================
+            CATALOG
+            ================================================= */}
+
         <section className="cosmetic-panel cosmetic-catalog">
 
           <div className="cosmetic-panel-heading">
@@ -636,8 +729,11 @@ export default function CosmeticBuilder() {
             </div>
 
             <input
+              type="text"
               value={query}
-              onChange={(event) =>
+              onChange={(
+                event
+              ) =>
                 setQuery(
                   event.target.value
                 )
@@ -649,6 +745,7 @@ export default function CosmeticBuilder() {
           </div>
 
           {/* SLOT BUTTONS */}
+
           <div className="cosmetic-slots">
 
             {SLOT_IDS.map(
@@ -682,6 +779,7 @@ export default function CosmeticBuilder() {
           </div>
 
           {/* COSMETIC LIST */}
+
           <div className="cosmetic-list">
 
             {loadError ? (
@@ -705,7 +803,7 @@ export default function CosmeticBuilder() {
 
                     return (
                       <button
-                        key={`${item.slot}-${item.name}`}
+                        key={`${item.slot}-${item.name}-${item.layer_index}`}
                         type="button"
                         className={
                           selected
@@ -768,12 +866,17 @@ export default function CosmeticBuilder() {
             )}
 
           </div>
+
         </section>
 
-        {/* PREVIEW */}
+        {/* =================================================
+            PREVIEW
+            ================================================= */}
+
         <section className="cosmetic-panel cosmetic-preview">
 
           {/* PREVIEW HEADER */}
+
           <div className="cosmetic-preview-heading">
 
             <div>
@@ -782,13 +885,16 @@ export default function CosmeticBuilder() {
               </h2>
 
               <span>
-                {selectedName
-                  ? `${SLOT_NAMES[selectedSlot]}: ${selectedName}`
+                {equipped[
+                  selectedSlot
+                ]
+                  ? `${SLOT_NAMES[selectedSlot]}: ${equipped[selectedSlot]}`
                   : "Default outfit"}
               </span>
             </div>
 
             {/* SKIN */}
+
             <div className="cosmetic-preview-controls">
 
               <div className="cosmetic-gender">
@@ -829,7 +935,10 @@ export default function CosmeticBuilder() {
 
           </div>
 
-          {/* PREVIEW AREA */}
+          {/* =================================================
+              THREE PERMANENT VIEWS
+              ================================================= */}
+
           <div
             className="cosmetic-preview-body"
             style={{
@@ -837,7 +946,6 @@ export default function CosmeticBuilder() {
             }}
           >
 
-            {/* THREE VIEWS */}
             <div
               className="cosmetic-stage"
               style={{
@@ -959,18 +1067,23 @@ export default function CosmeticBuilder() {
                 )
               ) : (
                 <div className="cosmetic-preview-error">
+
                   <strong>
                     {
                       previewError ||
                         "Loading preview..."
                     }
                   </strong>
+
                 </div>
               )}
 
             </div>
 
-            {/* SELECTED OUTFIT */}
+            {/* =================================================
+                SELECTED OUTFIT
+                ================================================= */}
+
             <aside className="cosmetic-selected">
 
               <div className="cosmetic-selected-title">
@@ -1018,7 +1131,10 @@ export default function CosmeticBuilder() {
 
               </div>
 
-              {/* COLOR */}
+              {/* =================================================
+                  COLOR
+                  ================================================= */}
+
               <div
                 style={{
                   marginTop: 18,
@@ -1051,7 +1167,8 @@ export default function CosmeticBuilder() {
                 ) ? (
                   <>
 
-                    {/* COLOR PRESETS */}
+                    {/* PRESET COLORS */}
+
                     <div
                       style={{
                         display:
@@ -1092,6 +1209,9 @@ export default function CosmeticBuilder() {
                               height:
                                 28,
 
+                              padding:
+                                0,
+
                               borderRadius:
                                 "50%",
 
@@ -1120,6 +1240,7 @@ export default function CosmeticBuilder() {
                     </div>
 
                     {/* CUSTOM COLOR */}
+
                     <div
                       style={{
                         display:
@@ -1209,9 +1330,11 @@ export default function CosmeticBuilder() {
           </div>
 
         </section>
+
       </div>
 
       {/* STATUS */}
+
       <div className="cosmetic-builder-note">
         {manifest
           ? `Local cosmetic catalog: ${cosmetics.length} records loaded.`
