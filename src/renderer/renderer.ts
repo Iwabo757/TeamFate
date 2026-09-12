@@ -121,36 +121,6 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-/*
- * Cosmetic animation resources are indexed against the same base-frame
- * sequence. The important part for the character preview is that we do
- * NOT invent directional groups from the cosmetic frame count.
- *
- * Example:
- *   base frame 0 -> cosmetic frame 0
- *   base frame 1 -> cosmetic frame 1
- *   base frame 2 -> cosmetic frame 2
- *
- * Some cosmetics have fewer frames than the base character. In that case
- * we use the last available frame only as a safe fallback.
- */
-function getDirectionGroup(baseFrame: number): number {
-  /*
-   * IMPORTANT: the base character and cosmetic resources do NOT use the
-   * same direction order.
-   *
-   * Base:     0 = Front, 1 = Back, 2 = Side, 3 = opposite Side
-   * Cosmetic: 0 = Front, 1 = Side, 2 = Back, 3 = opposite Side
-   *
-   * Therefore the cosmetic direction index must be remapped when a base
-   * direction is selected: Front -> Front, Back -> Back, Side -> Side.
-   */
-  if (baseFrame === 1) return 2; // base Back -> cosmetic Back
-  if (baseFrame === 2) return 1; // base Side -> cosmetic Side
-  if (baseFrame === 3) return 3; // opposite side
-  return 0; // Front
-}
-
 function getCosmeticFrameIndex(
   baseFrame: number,
   frameCount: number
