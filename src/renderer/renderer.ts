@@ -170,10 +170,10 @@ function getCosmeticFrameIndex(
     if (baseFrame === 2) return 10; // Side -> frame_11
   }
 
-  // Shoes: 4-frame directional groups: Front / Side / Back / other side.
+  // Shoes: Front / Side / Back / other side.
   if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 1) return 4; // Back -> frame_9
-    if (baseFrame === 2) return 8; // Side -> frame_5
+    if (baseFrame === 2) return 4; // Side -> frame_5
+    if (baseFrame === 1) return 8; // Back -> frame_9
   }
 
   // Other cosmetics with exactly 3 directional frames.
@@ -182,11 +182,12 @@ function getCosmeticFrameIndex(
     if (baseFrame === 2) return 1; // Side
   }
 
-  // Generic 3-direction resource. Frames are grouped Front/Back/Side.
+  // Generic 3-direction resource. PokeMMO cosmetic groups are
+  // extracted in Front / Side / Back order.
   if (frameCount % 3 === 0) {
     const groupSize = frameCount / 3;
-    if (baseFrame === 1) return Math.min(groupSize, frameCount - 1); // Back
-    if (baseFrame === 2) return Math.min(groupSize * 2, frameCount - 1); // Side
+    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1); // Side
+    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1); // Back
   }
 
   // Generic 4-direction resource. Frames are grouped Front/Side/Back/Other.
@@ -196,8 +197,8 @@ function getCosmeticFrameIndex(
     if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1); // Back
   }
 
-  // Fallback for a resource that only has a single directional frame.
-  return Math.min(baseFrame - 1, frameCount - 1);
+  // Fallback: do not reuse an unrelated front frame for another view.
+  return -1;
 }
 
 async function loadCosmeticImage(
