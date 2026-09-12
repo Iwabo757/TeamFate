@@ -135,8 +135,8 @@ function getCosmeticFrameIndex(
    * image, their extracted frames are grouped in this order:
    *
    *   group 0 = Front animation
-   *   group 1 = Side animation
-   *   group 2 = Back animation
+   *   group 1 = Back animation
+   *   group 2 = Side animation
    *
    * Therefore the first frame of each cosmetic direction is selected from
    * those groups, rather than using the base frame number directly.
@@ -145,8 +145,8 @@ function getCosmeticFrameIndex(
   if (frameCount <= 0) return -1;
 
   let group = 0;
-  if (baseFrame === 1) group = 2;      // Back
-  else if (baseFrame === 2) group = 1; // Side
+  if (baseFrame === 1) group = 1;      // Back
+  else if (baseFrame === 2) group = 2; // Side
   else return -1;
 
   // Known resource layouts from the extracted PokeMMO assets.
