@@ -154,75 +154,75 @@ function getCosmeticFrameIndex(
 
   const direction = getDirectionGroup(baseFrame);
 
-  // Index 0 is always the static layer. The extracted directional
-  // resources start at manifest index 1.
-  const actualCount = frameCount - 1;
+  /*
+   * The extracted cosmetic arrays are already ordered by direction.
+   * Importantly, index 0 is NOT universally a disposable static frame.
+   * For several assets it is the first/front frame of the directional
+   * sequence. Treating every index 0 as a static-only frame was the
+   * reason the previous renderer shifted the clothing directions.
+   *
+   * Verified layouts from the extracted PAK assets:
+   *
+   *   4  frames  -> 4 directions, starts 0,1,2,3
+   *   17 frames  -> 4 directions x 4, starts 0,4,8,12
+   *   40 frames  -> 4 directions x 10, starts 0,10,20,30
+   *   80 frames  -> 4 directions x 20, starts 0,20,40,60
+   *   30 frames  -> 3 directions x 10, starts 0,10,20
+   *
+   * Other short assets use the same idea: split the sequence into
+   * directional groups and take the first frame of the matching group.
+   */
 
-  // Four-direction cosmetics with equal animation groups.
-  // Examples:
-  //   4 actual frames  -> 1,2,3,4
-  //  16 actual frames  -> 1,5,9,13
-  //  79 actual frames  -> 1,21,41,61 (one extra frame at the end)
-  if (actualCount === 4) {
-    return 1 + direction;
+  if (frameCount === 4) {
+    return direction;
   }
 
-  if (actualCount === 16) {
-    return 1 + direction * 4;
+  if (frameCount === 17) {
+    return Math.min(direction * 4, frameCount - 1);
   }
 
-  if (actualCount === 79) {
-    return 1 + direction * 20;
+  if (frameCount === 40) {
+    return Math.min(direction * 10, frameCount - 1);
   }
 
-  // Three-direction cosmetics.
-  // These are the common clothing sequences extracted from the PAK:
-  // T-Shirt: 39 actual frames = 13 per direction
-  // Pants:   29 actual frames = 10/10/9
-  if (actualCount === 39) {
-    return 1 + Math.min(direction, 2) * 13;
+  if (frameCount === 80) {
+    return Math.min(direction * 20, frameCount - 1);
   }
 
-  if (actualCount === 29) {
-    return 1 + Math.min(direction, 2) * 10;
+  if (frameCount === 30) {
+    return Math.min(Math.min(direction, 2) * 10, frameCount - 1);
   }
 
-  // Generic equal-group fallback. Prefer four directions when possible,
-  // otherwise three. The returned index is always a real directional
-  // resource and never the static layer when directional resources exist.
-  if (actualCount >= 4 && actualCount % 4 === 0) {
-    const groupSize = actualCount / 4;
-    return Math.min(
-      1 + direction * groupSize,
-      frameCount - 1
-    );
+  // A 5-frame asset is normally four directional frames plus one
+  // additional animation/static resource. The first four are the
+  // useful directional starts for the character preview.
+  if (frameCount === 5) {
+    return Math.min(direction, frameCount - 1);
   }
 
-  if (actualCount >= 3 && actualCount % 3 === 0) {
-    const groupSize = actualCount / 3;
-    return Math.min(
-      1 + Math.min(direction, 2) * groupSize,
-      frameCount - 1
-    );
+  // For 2-3 frame cosmetics, use the available directional resources
+  // in order and hold the last one when a fourth direction is requested.
+  if (frameCount <= 3) {
+    return Math.min(direction, frameCount - 1);
   }
 
-  // For irregular short sequences, spread the four directions across
-  // the available directional resources rather than using raw base
-  // frame numbers.
-  if (actualCount >= 4) {
-    const starts = [0, 1, 2, 3].map(
-      (d) => 1 + Math.floor((d * actualCount) / 4)
-    );
-
-    return Math.min(
-      starts[direction],
-      frameCount - 1
-    );
+  // Generic fallback: if the sequence divides cleanly into four
+  // directional groups, use the first frame of each group.
+  if (frameCount % 4 === 0) {
+    const groupSize = frameCount / 4;
+    return Math.min(direction * groupSize, frameCount - 1);
   }
 
-  // Two/three directional resources.
+  // Otherwise prefer three directional groups when that matches the
+  // extracted sequence.
+  if (frameCount % 3 === 0) {
+    const groupSize = frameCount / 3;
+    return Math.min(Math.min(direction, 2) * groupSize, frameCount - 1);
+  }
+
+  // Last-resort directional spread.
   return Math.min(
-    1 + Math.min(direction, actualCount - 1),
+    Math.floor((direction * frameCount) / 4),
     frameCount - 1
   );
 }
