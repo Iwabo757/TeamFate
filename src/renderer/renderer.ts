@@ -1,39 +1,65 @@
 export type CosmeticSlot =
-  | "hat"
-  | "hair"
+  | "back"
+  | "pants"
+  | "shoes"
+  | "top"
   | "eyes"
   | "face"
-  | "back"
-  | "top"
+  | "hair"
   | "held"
-  | "shoes"
-  | "pants"
+  | "hat"
   | "tool"
   | "mount";
 
 export type Cosmetic = {
-  icon: string;
-  layer: string;
-  icon_index: number;
-  layer_index: number;
-  slot_code: number;
+  name: string;
   slot: CosmeticSlot;
-  name?: string;
+  layer: string;
+  icon: string;
+  layer_index: number;
+  icon_index: number;
+  slot_code: number;
 };
 
 export type RendererManifest = {
   format_version: number;
-  base: Record<string, { frames: string[]; previews: string[] }>;
-  slot_codes?: Record<string, string>;
+
+  base: Record<
+    string,
+    {
+      frames: string[];
+      previews: string[];
+    }
+  >;
+
   cosmetics: Record<string, Cosmetic>;
 };
 
-export type CosmeticTints = Partial<Record<CosmeticSlot, string>>;
+type RenderOptions = {
+  manifest: RendererManifest;
+  baseUrl?: string;
+  skin?: number;
+  frame?: number;
+  cosmetics?: Partial<
+    Record<CosmeticSlot, string>
+  >;
+  tints?: Partial<
+    Record<CosmeticSlot, string>
+  >;
+  scale?: number;
+};
 
-const ASSET_ROOT = "/team-fate-renderer";
-const WIDTH = 57;
-const HEIGHT = 56;
+const imageCache = new Map<
+  string,
+  Promise<HTMLImageElement>
+>();
 
+/*
+ * Rendering order.
+ *
+ * Lower layers are drawn first.
+ * Higher layers are drawn on top.
+ */
 export const LAYER_ORDER: CosmeticSlot[] = [
   "back",
   "pants",
@@ -48,19 +74,40 @@ export const LAYER_ORDER: CosmeticSlot[] = [
   "mount",
 ];
 
-const imageCache = new Map<string, Promise<HTMLImageElement>>();
-
-export async function loadImage(src: string): Promise<HTMLImageElement> {
+/*
+ * Load and cache an image.
+ */
+export async function loadImage(
+  src: string
+): Promise<HTMLImageElement> {
   const cached = imageCache.get(src);
-  if (cached) return cached;
 
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.decoding = "async";
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    image.src = src;
-  });
+  if (cached) {
+    return cached;
+  }
+
+  const promise =
+    new Promise<HTMLImageElement>(
+      (resolve, reject) => {
+        const img = new Image();
+
+        img.decoding = "async";
+
+        img.onload = () => {
+          resolve(img);
+        };
+
+        img.onerror = () => {
+          reject(
+            new Error(
+              `Failed to load image: ${src}`
+            )
+          );
+        };
+
+        img.src = src;
+      }
+    );
 
   imageCache.set(src, promise);
 
@@ -72,178 +119,396 @@ export async function loadImage(src: string): Promise<HTMLImageElement> {
   }
 }
 
+/*
+ * Load renderer manifest.
+ */
 export async function loadRendererManifest(
-  url = `${ASSET_ROOT}/manifest.json`
+  url = "/team-fate-renderer/manifest.json"
 ): Promise<RendererManifest> {
   const response = await fetch(url);
+
   if (!response.ok) {
-    throw new Error(`Renderer manifest returned ${response.status}`);
+    throw new Error(
+      `Renderer manifest returned ${response.status}`
+    );
   }
-  return (await response.json()) as RendererManifest;
+
+  return response.json() as Promise<RendererManifest>;
 }
 
-function cleanPath(path: string): string {
-  return path.replace(/\\/g, "/").replace(/^\/+/, "");
+/*
+ * Convert a hex color to RGB.
+ */
+function hexToRgb(
+  hex: string
+): {
+  r: number;
+  g: number;
+  b: number;
+} | null {
+  const clean = hex
+    .replace("#", "")
+    .trim();
+
+  if (
+    clean.length !== 6 &&
+    clean.length !== 3
+  ) {
+    return null;
+  }
+
+  const expanded =
+    clean.length === 3
+      ? clean
+          .split("")
+          .map((char) => char + char)
+          .join("")
+      : clean;
+
+  const value = Number.parseInt(
+    expanded,
+    16
+  );
+
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  return {
+    r: (value >> 16) & 255,
+    g: (value >> 8) & 255,
+    b: value & 255,
+  };
 }
 
-function assetUrl(baseUrl: string, path: string): string {
-  return `${baseUrl.replace(/\/+$/, "")}/${cleanPath(path)}`;
+/*
+ * Determine whether a pixel is grayscale.
+ *
+ * PokeMMO's tintable artwork contains grayscale
+ * pixels while many cosmetics have already-colored
+ * artwork. We only recolor pixels that are sufficiently
+ * grayscale.
+ */
+function isGrayscale(
+  r: number,
+  g: number,
+  b: number
+): boolean {
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+
+  return max - min <= 12;
 }
 
-function hexToRgb(hex: string): [number, number, number] | null {
-  const value = hex.trim().replace(/^#/, "");
-  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
-  return [
-    parseInt(value.slice(0, 2), 16),
-    parseInt(value.slice(2, 4), 16),
-    parseInt(value.slice(4, 6), 16),
-  ];
-}
-
-async function tintGrayscaleLayer(
+/*
+ * Apply a tint to grayscale artwork.
+ *
+ * The brightness of the original pixel is preserved,
+ * which keeps highlights and shadows.
+ *
+ * Very dark pixels are left alone so black outlines
+ * remain black.
+ */
+function tintImage(
   image: HTMLImageElement,
   color: string
-): Promise<HTMLCanvasElement> {
-  const rgb = hexToRgb(color);
-  if (!rgb) {
-    const fallback = document.createElement("canvas");
-    fallback.width = WIDTH;
-    fallback.height = HEIGHT;
-    const ctx = fallback.getContext("2d");
-    if (ctx) ctx.drawImage(image, 0, 0, WIDTH, HEIGHT);
-    return fallback;
+): HTMLCanvasElement {
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error(
+      "Canvas 2D unavailable while tinting."
+    );
   }
 
-  const source = document.createElement("canvas");
-  source.width = WIDTH;
-  source.height = HEIGHT;
-  const sourceCtx = source.getContext("2d", { willReadFrequently: true });
-  if (!sourceCtx) return source;
+  ctx.imageSmoothingEnabled = false;
 
-  sourceCtx.clearRect(0, 0, WIDTH, HEIGHT);
-  sourceCtx.drawImage(image, 0, 0, WIDTH, HEIGHT);
+  ctx.drawImage(
+    image,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
 
-  const pixels = sourceCtx.getImageData(0, 0, WIDTH, HEIGHT);
-  const data = pixels.data;
-  const [tr, tg, tb] = rgb;
+  const imageData =
+    ctx.getImageData(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
 
-  for (let i = 0; i < data.length; i += 4) {
+  const rgb = hexToRgb(color);
+
+  if (!rgb) {
+    return canvas;
+  }
+
+  const data = imageData.data;
+
+  for (
+    let i = 0;
+    i < data.length;
+    i += 4
+  ) {
     const r = data[i];
     const g = data[i + 1];
     const b = data[i + 2];
-    const a = data[i + 3];
+    const alpha = data[i + 3];
 
-    if (a === 0) continue;
-
-    // Only recolor grayscale pixels. Colored/graphic cosmetics keep their
-    // original artwork instead of being incorrectly tinted.
-    const grayscale =
-      Math.abs(r - g) <= 2 &&
-      Math.abs(g - b) <= 2 &&
-      Math.abs(r - b) <= 2;
-
-    if (!grayscale) continue;
-
-    if (r === 0 && g === 0 && b === 0) continue;
-
-    const luminance = r / 255;
-
-    data[i] = Math.round(tr * luminance);
-    data[i + 1] = Math.round(tg * luminance);
-    data[i + 2] = Math.round(tb * luminance);
-  }
-
-  sourceCtx.putImageData(pixels, 0, 0);
-  return source;
-}
-
-async function loadCosmeticLayer(
-  cosmetic: Cosmetic,
-  baseUrl: string,
-  tint?: string
-): Promise<HTMLImageElement | HTMLCanvasElement | null> {
-  try {
-    const image = await loadImage(assetUrl(baseUrl, cosmetic.layer));
-
-    if (tint) {
-      return await tintGrayscaleLayer(image, tint);
+    /*
+     * Ignore transparent pixels.
+     */
+    if (alpha === 0) {
+      continue;
     }
 
-    return image;
-  } catch (error) {
-    console.warn(
-      `[Local Renderer] Could not load ${cosmetic.name ?? "cosmetic"}`,
-      cosmetic.layer,
-      error
+    /*
+     * Leave colored artwork untouched.
+     */
+    if (!isGrayscale(r, g, b)) {
+      continue;
+    }
+
+    /*
+     * Preserve very dark outlines.
+     */
+    if (
+      r <= 22 &&
+      g <= 22 &&
+      b <= 22
+    ) {
+      continue;
+    }
+
+    /*
+     * Calculate perceived brightness.
+     */
+    const luminance =
+      0.299 * r +
+      0.587 * g +
+      0.114 * b;
+
+    /*
+     * Convert the original grayscale brightness
+     * into a multiplier for the selected color.
+     */
+    const brightness =
+      luminance / 255;
+
+    data[i] = Math.min(
+      255,
+      Math.round(
+        rgb.r * brightness
+      )
     );
-    return null;
+
+    data[i + 1] = Math.min(
+      255,
+      Math.round(
+        rgb.g * brightness
+      )
+    );
+
+    data[i + 2] = Math.min(
+      255,
+      Math.round(
+        rgb.b * brightness
+      )
+    );
   }
+
+  ctx.putImageData(
+    imageData,
+    0,
+    0
+  );
+
+  return canvas;
 }
 
-export async function renderCharacter(opts: {
-  manifest: RendererManifest;
-  baseUrl?: string;
-  skin?: number;
-  frame?: number;
-  cosmetics?: Partial<Record<CosmeticSlot, string>>;
-  tints?: CosmeticTints;
-  scale?: number;
-}): Promise<HTMLCanvasElement> {
+/*
+ * Draw an image at the renderer's native size.
+ */
+function drawLayer(
+  ctx: CanvasRenderingContext2D,
+  image: CanvasImageSource,
+  scale: number
+) {
+  ctx.drawImage(
+    image,
+    0,
+    0,
+    57 * scale,
+    56 * scale
+  );
+}
+
+/*
+ * Render a complete character.
+ */
+export async function renderCharacter(
+  opts: RenderOptions
+): Promise<HTMLCanvasElement> {
   const {
     manifest,
-    baseUrl = ASSET_ROOT,
     skin = 1,
     frame = 0,
     cosmetics = {},
     tints = {},
-    scale = 6,
+    scale = 1,
   } = opts;
 
-  const skinData = manifest.base[`skin_${skin}`];
-  if (!skinData) throw new Error(`Invalid skin: ${skin}`);
-  if (!skinData.frames[frame]) {
-    throw new Error(`Invalid frame ${frame} for skin ${skin}`);
+  const baseUrl =
+    (opts.baseUrl ?? "").replace(
+      /\/$/,
+      ""
+    );
+
+  /*
+   * Find skin.
+   */
+  const skinData =
+    manifest.base[`skin_${skin}`];
+
+  if (!skinData) {
+    throw new Error(
+      `Invalid skin: ${skin}`
+    );
   }
 
-  const canvas = document.createElement("canvas");
-  canvas.width = WIDTH * scale;
-  canvas.height = HEIGHT * scale;
+  /*
+   * Find animation frame.
+   */
+  const basePath =
+    skinData.frames[frame];
 
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas 2D context unavailable");
+  if (!basePath) {
+    throw new Error(
+      `Invalid frame: ${frame}`
+    );
+  }
+
+  /*
+   * Create final canvas.
+   */
+  const canvas =
+    document.createElement("canvas");
+
+  canvas.width =
+    57 * scale;
+
+  canvas.height =
+    56 * scale;
+
+  const ctx =
+    canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error(
+      "Canvas 2D unavailable"
+    );
+  }
 
   ctx.imageSmoothingEnabled = false;
 
-  const base = await loadImage(
-    assetUrl(baseUrl, skinData.frames[frame])
-  );
-
-  ctx.drawImage(base, 0, 0, canvas.width, canvas.height);
-
-  for (const slot of LAYER_ORDER) {
-    const name = cosmetics[slot];
-    if (!name) continue;
-
-    const cosmetic = manifest.cosmetics[name];
-    if (!cosmetic || cosmetic.slot !== slot) continue;
-
-    const layer = await loadCosmeticLayer(
-      cosmetic,
-      baseUrl,
-      tints[slot]
+  /*
+   * Draw base character.
+   */
+  const base =
+    await loadImage(
+      `${baseUrl}/${basePath}`
     );
 
-    if (!layer) continue;
+  drawLayer(
+    ctx,
+    base,
+    scale
+  );
 
-    ctx.drawImage(layer, 0, 0, canvas.width, canvas.height);
+  /*
+   * Draw each cosmetic in order.
+   */
+  for (
+    const slot of LAYER_ORDER
+  ) {
+    const name =
+      cosmetics[slot];
+
+    if (!name) {
+      continue;
+    }
+
+    const cosmetic =
+      manifest.cosmetics[name];
+
+    /*
+     * Ignore invalid/mismatched entries.
+     */
+    if (
+      !cosmetic ||
+      cosmetic.slot !== slot
+    ) {
+      continue;
+    }
+
+    const layer =
+      await loadImage(
+        `${baseUrl}/${cosmetic.layer}`
+      );
+
+    /*
+     * If this slot has a selected color,
+     * tint its grayscale artwork.
+     */
+    const tint =
+      tints[slot];
+
+    if (tint) {
+      const tinted =
+        tintImage(
+          layer,
+          tint
+        );
+
+      drawLayer(
+        ctx,
+        tinted,
+        scale
+      );
+    } else {
+      /*
+       * No tint selected:
+       * draw original artwork.
+       */
+      drawLayer(
+        ctx,
+        layer,
+        scale
+      );
+    }
   }
 
   return canvas;
 }
 
+/*
+ * Render character directly to PNG data URL.
+ */
 export async function renderCharacterToDataUrl(
-  opts: Parameters<typeof renderCharacter>[0]
+  opts: RenderOptions
 ): Promise<string> {
-  const canvas = await renderCharacter(opts);
-  return canvas.toDataURL("image/png");
+  const canvas =
+    await renderCharacter(opts);
+
+  return canvas.toDataURL(
+    "image/png"
+  );
 }
