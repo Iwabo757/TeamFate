@@ -58,9 +58,9 @@ const LAYER_ORDER: CosmeticSlot[] = [
   "pants",
   "shoes",
   "top",
-  "eyes",
   "face",
   "hair",
+  "eyes",
   "held",
   "hat",
   "tool",
@@ -127,78 +127,79 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * CosmeticBuilder's three preview views use these base frames:
+   * The base character has THREE directional frames:
+   *   base 0 = FRONT
+   *   base 1 = BACK
+   *   base 2 = SIDE
    *
-   *   0 = Front
-   *   2 = Side
-   *   1 = Back
+   * Every directional cosmetic must follow the same view.  The large
+   * cosmetic frame arrays are animation frames grouped by direction, so
+   * we select the first frame of the correct directional group.
    *
-   * The cosmetic frame arrays are NOT indexed with those numbers.
-   * Clothing resources are animation sequences grouped by direction.
-   *
-   * Front always uses the cosmetic's static `layer` image.
+   * This function intentionally does NOT treat baseFrame as a cosmetic
+   * frame number.  It is a VIEW selector.
    */
-  if (baseFrame === 0) return -1;
   if (frameCount <= 0) return -1;
 
-  /* Hair has exactly three extracted directional frames:
-   *   frames[0] = front/unused for preview
-   *   frames[1] = side
-   *   frames[2] = back
-   */
-  if (slot === "hair") {
-    if (baseFrame === 2) return Math.min(1, frameCount - 1);
-    if (baseFrame === 1) return Math.min(2, frameCount - 1);
+  // Front uses the cosmetic's static layer when available.
+  if (baseFrame === 0) return -1;
+
+  // Eyes are a special resource. The current Brown eyes asset only has
+  // one extracted frame, so use it for Side and hide it on Back.
+  if (slot === "eyes") {
+    if (baseFrame === 1) return -2;
+    if (baseFrame === 2) return 0;
   }
 
-  /*
-   * Standard four-frame cosmetics use:
-   *   frames[0] = front
-   *   frames[1] = side
-   *   frames[2] = back
-   *   frames[3] = opposite side
-   */
-  if (frameCount === 4) {
-    if (baseFrame === 2) return 1;
-    if (baseFrame === 1) return 2;
-    return 3;
+  // Default Hair: 3 directional frames.
+  // frame 0 = Back, frame 1 = Side, frame 2 = Front/alternate.
+  if (slot === "hair" && frameCount === 3) {
+    if (baseFrame === 1) return 0; // Back
+    if (baseFrame === 2) return 1; // Side
   }
 
-  /* Main clothing extracted from the PAK has directional animation groups.
-   * These indices are zero-based inside `frames`.
-   */
+  // T-Shirt: 13 Front + 13 Back + 13 Side.
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 2) return 13; // side
-    if (baseFrame === 1) return 26; // back
+    if (baseFrame === 1) return 13; // Back
+    if (baseFrame === 2) return 26; // Side
   }
 
+  // Pants: 10 Front + 10 Back + 9 Side.
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 2) return 10; // side
-    if (baseFrame === 1) return 20; // back
+    if (baseFrame === 1) return 10; // Back
+    if (baseFrame === 2) return 20; // Side
   }
 
+  // Shoes: 5 Front + 5 Back + 6 Side.
   if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 2) return 4; // side
-    if (baseFrame === 1) return 8; // back
+    if (baseFrame === 1) return 10; // Back
+    if (baseFrame === 2) return 5;  // Side
   }
 
-  /* Generic three-direction animation sequences. */
+  // Other cosmetics with exactly 3 directional frames.
+  if (frameCount === 3) {
+    if (baseFrame === 1) return 0; // Back
+    if (baseFrame === 2) return 1; // Side
+  }
+
+  // Generic 3-direction resource. Frames are grouped Front/Back/Side.
   if (frameCount % 3 === 0) {
     const groupSize = frameCount / 3;
-    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1);
-    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1);
+    if (baseFrame === 1) return Math.min(groupSize, frameCount - 1); // Back
+    if (baseFrame === 2) return Math.min(groupSize * 2, frameCount - 1); // Side
   }
 
-  /* Generic four-direction animation sequences. */
+  // Generic 4-direction resource. Frames are grouped Front/Side/Back/Other.
   if (frameCount % 4 === 0) {
     const groupSize = frameCount / 4;
-    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1);
-    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1);
+    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1); // Side
+    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1); // Back
   }
 
-  /* Short/unknown resources: use the closest available directional frame. */
-  return Math.min(baseFrame, frameCount - 1);
+  // Fallback for a resource that only has a single directional frame.
+  return Math.min(baseFrame - 1, frameCount - 1);
 }
+
 async function loadCosmeticImage(
   cosmetic: Cosmetic,
   baseFrame: number,
@@ -216,6 +217,11 @@ async function loadCosmeticImage(
     frames.length,
     cosmetic.slot
   );
+
+  /* Explicitly hidden direction (for example Back eyes). */
+  if (index === -2) {
+    return null;
+  }
 
   /* Front uses the original static layer. */
   if (index === -1) {
