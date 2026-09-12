@@ -103,7 +103,7 @@ const VIEW_DEFINITIONS = [
   },
   {
     label: "Back",
-    frame: 9,
+    frame: 1,
   },
 ];
 
