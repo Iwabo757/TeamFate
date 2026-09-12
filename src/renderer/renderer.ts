@@ -56,9 +56,6 @@ const imageCache = new Map<
 
 /*
  * Rendering order.
- *
- * Lower layers are drawn first.
- * Higher layers are drawn on top.
  */
 export const LAYER_ORDER: CosmeticSlot[] = [
   "back",
@@ -75,7 +72,19 @@ export const LAYER_ORDER: CosmeticSlot[] = [
 ];
 
 /*
- * Load and cache an image.
+ * Slots that support color tinting.
+ */
+const COLORABLE_SLOTS = new Set<CosmeticSlot>([
+  "hair",
+  "top",
+  "pants",
+  "shoes",
+  "back",
+  "hat",
+]);
+
+/*
+ * Image loader with caching.
  */
 export async function loadImage(
   src: string
@@ -120,7 +129,7 @@ export async function loadImage(
 }
 
 /*
- * Load renderer manifest.
+ * Load the renderer manifest.
  */
 export async function loadRendererManifest(
   url = "/team-fate-renderer/manifest.json"
@@ -137,7 +146,7 @@ export async function loadRendererManifest(
 }
 
 /*
- * Convert a hex color to RGB.
+ * Convert hex color to RGB.
  */
 function hexToRgb(
   hex: string
@@ -146,68 +155,48 @@ function hexToRgb(
   g: number;
   b: number;
 } | null {
-  const clean = hex
+  let value = hex
     .replace("#", "")
     .trim();
 
-  if (
-    clean.length !== 6 &&
-    clean.length !== 3
-  ) {
+  if (value.length === 3) {
+    value = value
+      .split("")
+      .map((char) => char + char)
+      .join("");
+  }
+
+  if (value.length !== 6) {
     return null;
   }
 
-  const expanded =
-    clean.length === 3
-      ? clean
-          .split("")
-          .map((char) => char + char)
-          .join("")
-      : clean;
+  const number =
+    Number.parseInt(value, 16);
 
-  const value = Number.parseInt(
-    expanded,
-    16
-  );
-
-  if (!Number.isFinite(value)) {
+  if (!Number.isFinite(number)) {
     return null;
   }
 
   return {
-    r: (value >> 16) & 255,
-    g: (value >> 8) & 255,
-    b: value & 255,
+    r: (number >> 16) & 255,
+    g: (number >> 8) & 255,
+    b: number & 255,
   };
 }
 
 /*
- * Determine whether a pixel is grayscale.
+ * Tint a cosmetic while preserving:
  *
- * PokeMMO's tintable artwork contains grayscale
- * pixels while many cosmetics have already-colored
- * artwork. We only recolor pixels that are sufficiently
- * grayscale.
- */
-function isGrayscale(
-  r: number,
-  g: number,
-  b: number
-): boolean {
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-
-  return max - min <= 12;
-}
-
-/*
- * Apply a tint to grayscale artwork.
+ * - transparency
+ * - black/dark outlines
+ * - original brightness/shading
  *
- * The brightness of the original pixel is preserved,
- * which keeps highlights and shadows.
+ * This intentionally does NOT require the source
+ * pixels to be mathematically grayscale.
  *
- * Very dark pixels are left alone so black outlines
- * remain black.
+ * PokeMMO artwork uses slightly blue/gray palette
+ * colors, so a strict grayscale test causes valid
+ * hair/clothing pixels to be skipped.
  */
 function tintImage(
   image: HTMLImageElement,
@@ -216,10 +205,14 @@ function tintImage(
   const canvas =
     document.createElement("canvas");
 
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
+  canvas.width =
+    image.naturalWidth;
 
-  const ctx = canvas.getContext("2d");
+  canvas.height =
+    image.naturalHeight;
+
+  const ctx =
+    canvas.getContext("2d");
 
   if (!ctx) {
     throw new Error(
@@ -232,9 +225,7 @@ function tintImage(
   ctx.drawImage(
     image,
     0,
-    0,
-    canvas.width,
-    canvas.height
+    0
   );
 
   const imageData =
@@ -251,7 +242,8 @@ function tintImage(
     return canvas;
   }
 
-  const data = imageData.data;
+  const data =
+    imageData.data;
 
   for (
     let i = 0;
@@ -264,45 +256,47 @@ function tintImage(
     const alpha = data[i + 3];
 
     /*
-     * Ignore transparent pixels.
+     * Transparent pixel.
      */
     if (alpha === 0) {
       continue;
     }
 
     /*
-     * Leave colored artwork untouched.
+     * Preserve dark outlines.
+     *
+     * This keeps the pixel-art outline intact
+     * instead of turning the outline into the
+     * selected color.
      */
-    if (!isGrayscale(r, g, b)) {
+    const darkest =
+      Math.max(r, g, b);
+
+    if (darkest <= 45) {
       continue;
     }
 
     /*
-     * Preserve very dark outlines.
-     */
-    if (
-      r <= 22 &&
-      g <= 22 &&
-      b <= 22
-    ) {
-      continue;
-    }
-
-    /*
-     * Calculate perceived brightness.
+     * Calculate original brightness.
+     *
+     * This is what keeps highlights and shadows
+     * from becoming one flat color.
      */
     const luminance =
       0.299 * r +
       0.587 * g +
       0.114 * b;
 
-    /*
-     * Convert the original grayscale brightness
-     * into a multiplier for the selected color.
-     */
     const brightness =
-      luminance / 255;
+      Math.max(
+        0.18,
+        luminance / 255
+      );
 
+    /*
+     * Apply selected color while retaining
+     * the original brightness.
+     */
     data[i] = Math.min(
       255,
       Math.round(
@@ -335,7 +329,8 @@ function tintImage(
 }
 
 /*
- * Draw an image at the renderer's native size.
+ * Draw a layer at native 57x56 size,
+ * scaled for the preview.
  */
 function drawLayer(
   ctx: CanvasRenderingContext2D,
@@ -352,13 +347,14 @@ function drawLayer(
 }
 
 /*
- * Render a complete character.
+ * Render the complete character.
  */
 export async function renderCharacter(
   opts: RenderOptions
 ): Promise<HTMLCanvasElement> {
   const {
     manifest,
+    baseUrl = "",
     skin = 1,
     frame = 0,
     cosmetics = {},
@@ -366,14 +362,11 @@ export async function renderCharacter(
     scale = 1,
   } = opts;
 
-  const baseUrl =
-    (opts.baseUrl ?? "").replace(
-      /\/$/,
-      ""
-    );
+  const cleanBaseUrl =
+    baseUrl.replace(/\/$/, "");
 
   /*
-   * Find skin.
+   * Get selected skin.
    */
   const skinData =
     manifest.base[`skin_${skin}`];
@@ -385,7 +378,7 @@ export async function renderCharacter(
   }
 
   /*
-   * Find animation frame.
+   * Get selected frame.
    */
   const basePath =
     skinData.frames[frame];
@@ -397,7 +390,7 @@ export async function renderCharacter(
   }
 
   /*
-   * Create final canvas.
+   * Create canvas.
    */
   const canvas =
     document.createElement("canvas");
@@ -424,7 +417,7 @@ export async function renderCharacter(
    */
   const base =
     await loadImage(
-      `${baseUrl}/${basePath}`
+      `${cleanBaseUrl}/${basePath}`
     );
 
   drawLayer(
@@ -434,7 +427,7 @@ export async function renderCharacter(
   );
 
   /*
-   * Draw each cosmetic in order.
+   * Draw cosmetics in order.
    */
   for (
     const slot of LAYER_ORDER
@@ -449,9 +442,6 @@ export async function renderCharacter(
     const cosmetic =
       manifest.cosmetics[name];
 
-    /*
-     * Ignore invalid/mismatched entries.
-     */
     if (
       !cosmetic ||
       cosmetic.slot !== slot
@@ -461,17 +451,20 @@ export async function renderCharacter(
 
     const layer =
       await loadImage(
-        `${baseUrl}/${cosmetic.layer}`
+        `${cleanBaseUrl}/${cosmetic.layer}`
       );
 
-    /*
-     * If this slot has a selected color,
-     * tint its grayscale artwork.
-     */
     const tint =
       tints[slot];
 
-    if (tint) {
+    /*
+     * Apply tint when this slot is colorable
+     * and a color has been selected.
+     */
+    if (
+      tint &&
+      COLORABLE_SLOTS.has(slot)
+    ) {
       const tinted =
         tintImage(
           layer,
@@ -485,8 +478,7 @@ export async function renderCharacter(
       );
     } else {
       /*
-       * No tint selected:
-       * draw original artwork.
+       * Original artwork.
        */
       drawLayer(
         ctx,
@@ -500,7 +492,7 @@ export async function renderCharacter(
 }
 
 /*
- * Render character directly to PNG data URL.
+ * Render directly to PNG data URL.
  */
 export async function renderCharacterToDataUrl(
   opts: RenderOptions
