@@ -158,22 +158,22 @@ function getCosmeticFrameIndex(
     if (baseFrame === 2) return 1; // Side
   }
 
-  // T-Shirt: 13 Front + 13 Back + 13 Side.
+  // T-Shirt: extracted as Front / Side / Back groups.
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 1) return 13; // Back
-    if (baseFrame === 2) return 26; // Side
+    if (baseFrame === 1) return 26; // Back -> frame_27
+    if (baseFrame === 2) return 13; // Side -> frame_14
   }
 
-  // Pants: 10 Front + 10 Back + 9 Side.
+  // Pants: extracted as Front / Side / Back groups.
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 1) return 10; // Back
-    if (baseFrame === 2) return 20; // Side
+    if (baseFrame === 1) return 20; // Back -> frame_21
+    if (baseFrame === 2) return 10; // Side -> frame_11
   }
 
-  // Shoes: 5 Front + 5 Back + 6 Side.
+  // Shoes: 4-frame directional groups: Front / Side / Back / other side.
   if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 1) return 5;  // Back
-    if (baseFrame === 2) return 10; // Side
+    if (baseFrame === 1) return 8; // Back -> frame_9
+    if (baseFrame === 2) return 4; // Side -> frame_5
   }
 
   // Other cosmetics with exactly 3 directional frames.
