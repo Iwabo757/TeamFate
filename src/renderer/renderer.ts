@@ -135,15 +135,20 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * we use the last available frame only as a safe fallback.
  */
 function getDirectionGroup(baseFrame: number): number {
-  // The base character's first four directional poses are:
-  // 0 = front, 1 = back, 2 = side, 3 = opposite side.
-  //
-  // Cosmetic frame arrays include the static `layer.png` at index 0.
-  // Their directional resources therefore start at index 1.
-  if (baseFrame === 1) return 1;
-  if (baseFrame === 2) return 2;
-  if (baseFrame === 3) return 3;
-  return 0;
+  /*
+   * IMPORTANT: the base character and cosmetic resources do NOT use the
+   * same direction order.
+   *
+   * Base:     0 = Front, 1 = Back, 2 = Side, 3 = opposite Side
+   * Cosmetic: 0 = Front, 1 = Side, 2 = Back, 3 = opposite Side
+   *
+   * Therefore the cosmetic direction index must be remapped when a base
+   * direction is selected: Front -> Front, Back -> Back, Side -> Side.
+   */
+  if (baseFrame === 1) return 2; // base Back -> cosmetic Back
+  if (baseFrame === 2) return 1; // base Side -> cosmetic Side
+  if (baseFrame === 3) return 3; // opposite side
+  return 0; // Front
 }
 
 function getCosmeticFrameIndex(
@@ -163,11 +168,11 @@ function getCosmeticFrameIndex(
    *
    * Verified layouts from the extracted PAK assets:
    *
-   *   4  frames  -> 4 directions, starts 0,1,2,3
-   *   17 frames  -> 4 directions x 4, starts 0,4,8,12
-   *   40 frames  -> 4 directions x 10, starts 0,10,20,30
-   *   80 frames  -> 4 directions x 20, starts 0,20,40,60
-   *   30 frames  -> 3 directions x 10, starts 0,10,20
+   *   4  frames  -> cosmetic directions Front, Side, Back, Other Side
+   *   17 frames  -> 4 cosmetic direction groups, starts 0,4,8,12
+   *   40 frames  -> 4 cosmetic direction groups, starts 0,10,20,30
+   *   80 frames  -> 4 cosmetic direction groups, starts 0,20,40,60
+   *   30 frames  -> 3 cosmetic direction groups, starts 0,10,20
    *
    * Other short assets use the same idea: split the sequence into
    * directional groups and take the first frame of the matching group.
