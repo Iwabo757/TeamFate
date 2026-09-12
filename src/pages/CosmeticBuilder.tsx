@@ -87,15 +87,16 @@ const DEFAULT_COSMETICS: Partial<
    CHARACTER VIEWS
    =========================================================
 
-   The local renderer contains four directional animation groups.
-   Their first base frames are:
+   These are the actual idle directional frames from the local base
+   character sequence:
 
-   0  = Front
-   13 = Back
-   26 = Side
-   39 = Opposite Side
+   0 = Front
+   2 = Side
+   1 = Back
 
-   The builder only displays the three requested views.
+   Cosmetic directional resources are indexed against these same frame
+   numbers, so the renderer must receive the real base frame instead of
+   converting it into artificial 13/26/39 direction groups.
 */
 
 const VIEW_DEFINITIONS = [
@@ -105,11 +106,11 @@ const VIEW_DEFINITIONS = [
   },
   {
     label: "Side",
-    frame: 26,
+    frame: 2,
   },
   {
     label: "Back",
-    frame: 13,
+    frame: 1,
   },
 ];
 /* =========================================================
@@ -408,7 +409,9 @@ export default function CosmeticBuilder() {
                         view.frame,
 
                       cosmetics:
-                        equipped,
+                        view.frame === 0
+                          ? equipped
+                          : { ...equipped, eyes: undefined },
 
                       tints:
                         colors,

@@ -122,95 +122,29 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /*
- * The base renderer has four directional groups:
+ * Cosmetic animation resources are indexed against the same base-frame
+ * sequence. The important part for the character preview is that we do
+ * NOT invent directional groups from the cosmetic frame count.
  *
- *   0  = Front
- *   13 = Back
- *   26 = Side
- *   39 = Opposite Side
+ * Example:
+ *   base frame 0 -> cosmetic frame 0
+ *   base frame 1 -> cosmetic frame 1
+ *   base frame 2 -> cosmetic frame 2
  *
- * Cosmetic frame lists use the same directional grouping concept,
- * but individual cosmetics can contain a different number of
- * animation frames.
+ * Some cosmetics have fewer frames than the base character. In that case
+ * we use the last available frame only as a safe fallback.
  */
-function getDirectionGroup(baseFrame: number): number {
-  if (baseFrame >= 39) return 3;
-  if (baseFrame >= 26) return 2;
-  if (baseFrame >= 13) return 1;
-  return 0;
-}
-
 function getCosmeticFrameIndex(
   baseFrame: number,
   frameCount: number
 ): number {
   if (frameCount <= 1) return 0;
 
-  const direction = getDirectionGroup(baseFrame);
-
-  /*
-   * Two/three/four-frame cosmetics are already directional.
-   */
-  if (frameCount <= 4) {
-    return Math.min(direction, frameCount - 1);
+  if (baseFrame < frameCount) {
+    return Math.max(0, baseFrame);
   }
 
-  /*
-   * Five-to-eight-frame assets normally contain four directional
-   * starts followed by animation frames.
-   */
-  if (frameCount <= 8) {
-    const starts = [
-      0,
-      Math.min(1, frameCount - 1),
-      Math.min(2, frameCount - 1),
-      Math.min(3, frameCount - 1),
-    ];
-
-    return starts[direction];
-  }
-
-  /*
-   * A 30-frame asset is a three-direction sequence:
-   * 0 / 10 / 20.
-   */
-  if (frameCount === 30) {
-    const starts = [0, 10, 20];
-    return starts[Math.min(direction, 2)];
-  }
-
-  /*
-   * 40-frame and 80-frame assets are four equal directional groups.
-   * This covers assets such as T-Shirt (40) and Samurai Armor (80).
-   */
-  if (frameCount % 4 === 0) {
-    const groupSize = frameCount / 4;
-    return Math.min(
-      direction * groupSize,
-      frameCount - 1
-    );
-  }
-
-  /*
-   * 33-frame assets are commonly three directional groups.
-   */
-  if (frameCount % 3 === 0) {
-    const groupSize = frameCount / 3;
-    return Math.min(
-      Math.min(direction, 2) * groupSize,
-      frameCount - 1
-    );
-  }
-
-  /*
-   * For irregular animation lengths, divide the sequence into
-   * four directional regions as evenly as possible.
-   */
-  const start = Math.floor(
-    (direction * frameCount) / 4
-  );
-
-  return Math.min(start, frameCount - 1);
+  return frameCount - 1;
 }
 
 async function loadCosmeticImage(
