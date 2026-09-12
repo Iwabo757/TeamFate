@@ -134,17 +134,97 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Some cosmetics have fewer frames than the base character. In that case
  * we use the last available frame only as a safe fallback.
  */
+function getDirectionGroup(baseFrame: number): number {
+  // The base character's first four directional poses are:
+  // 0 = front, 1 = back, 2 = side, 3 = opposite side.
+  //
+  // Cosmetic frame arrays include the static `layer.png` at index 0.
+  // Their directional resources therefore start at index 1.
+  if (baseFrame === 1) return 1;
+  if (baseFrame === 2) return 2;
+  if (baseFrame === 3) return 3;
+  return 0;
+}
+
 function getCosmeticFrameIndex(
   baseFrame: number,
   frameCount: number
 ): number {
   if (frameCount <= 1) return 0;
 
-  if (baseFrame < frameCount) {
-    return Math.max(0, baseFrame);
+  const direction = getDirectionGroup(baseFrame);
+
+  // Index 0 is always the static layer. The extracted directional
+  // resources start at manifest index 1.
+  const actualCount = frameCount - 1;
+
+  // Four-direction cosmetics with equal animation groups.
+  // Examples:
+  //   4 actual frames  -> 1,2,3,4
+  //  16 actual frames  -> 1,5,9,13
+  //  79 actual frames  -> 1,21,41,61 (one extra frame at the end)
+  if (actualCount === 4) {
+    return 1 + direction;
   }
 
-  return frameCount - 1;
+  if (actualCount === 16) {
+    return 1 + direction * 4;
+  }
+
+  if (actualCount === 79) {
+    return 1 + direction * 20;
+  }
+
+  // Three-direction cosmetics.
+  // These are the common clothing sequences extracted from the PAK:
+  // T-Shirt: 39 actual frames = 13 per direction
+  // Pants:   29 actual frames = 10/10/9
+  if (actualCount === 39) {
+    return 1 + Math.min(direction, 2) * 13;
+  }
+
+  if (actualCount === 29) {
+    return 1 + Math.min(direction, 2) * 10;
+  }
+
+  // Generic equal-group fallback. Prefer four directions when possible,
+  // otherwise three. The returned index is always a real directional
+  // resource and never the static layer when directional resources exist.
+  if (actualCount >= 4 && actualCount % 4 === 0) {
+    const groupSize = actualCount / 4;
+    return Math.min(
+      1 + direction * groupSize,
+      frameCount - 1
+    );
+  }
+
+  if (actualCount >= 3 && actualCount % 3 === 0) {
+    const groupSize = actualCount / 3;
+    return Math.min(
+      1 + Math.min(direction, 2) * groupSize,
+      frameCount - 1
+    );
+  }
+
+  // For irregular short sequences, spread the four directions across
+  // the available directional resources rather than using raw base
+  // frame numbers.
+  if (actualCount >= 4) {
+    const starts = [0, 1, 2, 3].map(
+      (d) => 1 + Math.floor((d * actualCount) / 4)
+    );
+
+    return Math.min(
+      starts[direction],
+      frameCount - 1
+    );
+  }
+
+  // Two/three directional resources.
+  return Math.min(
+    1 + Math.min(direction, actualCount - 1),
+    frameCount - 1
+  );
 }
 
 async function loadCosmeticImage(
