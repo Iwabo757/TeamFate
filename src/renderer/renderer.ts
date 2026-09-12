@@ -134,109 +134,116 @@ function loadImage(url: string): Promise<HTMLImageElement> {
  * Some cosmetics have fewer frames than the base character. In that case
  * we use the last available frame only as a safe fallback.
  */
-function getDirectionGroup(baseFrame: number): number {
+function getPreviewDirection(baseFrame: number): "front" | "side" | "back" | "other" {
   /*
-   * IMPORTANT: the base character and cosmetic resources do NOT use the
-   * same direction order.
+   * The 52 base resources are animation frames, not four contiguous
+   * directional blocks.  The preview uses these verified representative
+   * base frames:
    *
-   * Base:     0 = Front, 1 = Back, 2 = Side, 3 = opposite Side
-   * Cosmetic: 0 = Front, 1 = Side, 2 = Back, 3 = opposite Side
+   *   3 = Front
+   *   2 = Side
+   *   0 = Back
    *
-   * Therefore the cosmetic direction index must be remapped when a base
-   * direction is selected: Front -> Front, Back -> Back, Side -> Side.
+   * Keep this function based on the actual selected base frame so cosmetic
+   * resources can be mapped independently from the base animation order.
    */
-  if (baseFrame === 1) return 2; // base Back -> cosmetic Back
-  if (baseFrame === 2) return 1; // base Side -> cosmetic Side
-  if (baseFrame === 3) return 3; // opposite side
-  return 0; // Front
+  if (baseFrame === 3) return "front";
+  if (baseFrame === 2) return "side";
+  if (baseFrame === 0) return "back";
+  return "other";
 }
 
 function getCosmeticFrameIndex(
+  cosmetic: Cosmetic,
   baseFrame: number,
   frameCount: number
-): number {
-  if (frameCount <= 1) return 0;
+): number | null {
+  if (frameCount <= 0) return null;
 
-  const direction = getDirectionGroup(baseFrame);
+  const direction = getPreviewDirection(baseFrame);
 
   /*
-   * The extracted cosmetic arrays are already ordered by direction.
-   * Importantly, index 0 is NOT universally a disposable static frame.
-   * For several assets it is the first/front frame of the directional
-   * sequence. Treating every index 0 as a static-only frame was the
-   * reason the previous renderer shifted the clothing directions.
-   *
-   * Verified layouts from the extracted PAK assets:
-   *
-   *   4  frames  -> cosmetic directions Front, Side, Back, Other Side
-   *   17 frames  -> 4 cosmetic direction groups, starts 0,4,8,12
-   *   40 frames  -> 4 cosmetic direction groups, starts 0,10,20,30
-   *   80 frames  -> 4 cosmetic direction groups, starts 0,20,40,60
-   *   30 frames  -> 3 cosmetic direction groups, starts 0,10,20
-   *
-   * Other short assets use the same idea: split the sequence into
-   * directional groups and take the first frame of the matching group.
+   * These are directional resources extracted from the PAK. Their order is
+   * cosmetic-specific, so do not derive the mapping from the base frame
+   * number.
    */
 
+  // Brown/standard eye colors are front-only layers. Do not paint eyes onto
+  // the back of the head or onto a side view when no side asset exists.
+  if (cosmetic.slot === "eyes" && frameCount === 1) {
+    return direction === "front" ? 0 : null;
+  }
+
+  // Four-frame cosmetics: Front, Side, Back, Other Side.
   if (frameCount === 4) {
-    return direction;
+    if (direction === "front") return 0;
+    if (direction === "side") return 1;
+    if (direction === "back") return 2;
+    return 3;
   }
 
-  if (frameCount === 17) {
-    return Math.min(direction * 4, frameCount - 1);
+  // Three-frame cosmetics: Front, Side, Back.
+  if (frameCount === 3) {
+    if (direction === "front") return 0;
+    if (direction === "side") return 1;
+    if (direction === "back") return 2;
+    return 2;
   }
 
-  if (frameCount === 40) {
-    return Math.min(direction * 10, frameCount - 1);
+  // The main clothing assets are three directional groups in their
+  // extracted frame sequence.
+  if (cosmetic.slot === "top" && frameCount === 39) {
+    if (direction === "front") return 0;
+    if (direction === "side") return 13;
+    if (direction === "back") return 26;
+    return 13;
   }
 
-  if (frameCount === 80) {
-    return Math.min(direction * 20, frameCount - 1);
+  if (cosmetic.slot === "pants" && frameCount === 29) {
+    if (direction === "front") return 0;
+    if (direction === "side") return 10;
+    if (direction === "back") return 20;
+    return 10;
   }
 
-  if (frameCount === 30) {
-    return Math.min(Math.min(direction, 2) * 10, frameCount - 1);
+  if (cosmetic.slot === "shoes" && frameCount === 16) {
+    if (direction === "front") return 0;
+    if (direction === "side") return 4;
+    if (direction === "back") return 8;
+    return 12;
   }
 
-  // A 5-frame asset is normally four directional frames plus one
-  // additional animation/static resource. The first four are the
-  // useful directional starts for the character preview.
-  if (frameCount === 5) {
-    return Math.min(direction, frameCount - 1);
-  }
-
-  // For 2-3 frame cosmetics, use the available directional resources
-  // in order and hold the last one when a fourth direction is requested.
-  if (frameCount <= 3) {
-    return Math.min(direction, frameCount - 1);
-  }
-
-  // Generic fallback: if the sequence divides cleanly into four
-  // directional groups, use the first frame of each group.
+  // Generic four-direction sequences. Use the first frame of each group.
   if (frameCount % 4 === 0) {
     const groupSize = frameCount / 4;
-    return Math.min(direction * groupSize, frameCount - 1);
+    if (direction === "front") return 0;
+    if (direction === "side") return groupSize;
+    if (direction === "back") return groupSize * 2;
+    return groupSize * 3;
   }
 
-  // Otherwise prefer three directional groups when that matches the
-  // extracted sequence.
+  // Generic three-direction sequences.
   if (frameCount % 3 === 0) {
     const groupSize = frameCount / 3;
-    return Math.min(Math.min(direction, 2) * groupSize, frameCount - 1);
+    if (direction === "front") return 0;
+    if (direction === "side") return groupSize;
+    if (direction === "back") return groupSize * 2;
+    return groupSize;
   }
 
-  // Last-resort directional spread.
-  return Math.min(
-    Math.floor((direction * frameCount) / 4),
-    frameCount - 1
-  );
+  // For irregular resources, use the first/center/last thirds rather than
+  // indexing by the base animation frame.
+  if (direction === "front") return 0;
+  if (direction === "side") return Math.min(Math.floor(frameCount / 3), frameCount - 1);
+  if (direction === "back") return Math.min(Math.floor((frameCount * 2) / 3), frameCount - 1);
+  return Math.min(Math.floor(frameCount / 3), frameCount - 1);
 }
 
 async function loadCosmeticImage(
   cosmetic: Cosmetic,
   baseFrame: number,
   baseUrl: string
-): Promise<HTMLImageElement> {
+): Promise<HTMLImageElement | null> {
   if (!cosmetic.layer) {
     throw new Error(
       `Cosmetic has no layer: ${cosmetic.name ?? "Unknown"}`
@@ -245,9 +252,12 @@ async function loadCosmeticImage(
 
   if (cosmetic.frames && cosmetic.frames.length > 0) {
     const index = getCosmeticFrameIndex(
+      cosmetic,
       baseFrame,
       cosmetic.frames.length
     );
+
+    if (index === null) return null;
 
     const framePath = cosmetic.frames[index];
 
