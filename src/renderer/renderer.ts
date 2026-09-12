@@ -129,7 +129,7 @@ function getCosmeticFrameIndex(
    * The base preview uses these standing poses:
    *   0 = Front
    *   2 = Side
-   *   3 = Back
+   *   1 = Back
    *
    * Cosmetic resources are laid out differently.  After the static `layer`
    * image, their extracted frames are grouped in this order:
@@ -145,7 +145,7 @@ function getCosmeticFrameIndex(
   if (frameCount <= 0) return -1;
 
   let group = 0;
-  if (baseFrame === 3) group = 1;      // Back
+  if (baseFrame === 1) group = 1;      // Back
   else if (baseFrame === 2) group = 2; // Side
   else return -1;
 
