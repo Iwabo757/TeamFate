@@ -127,20 +127,31 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * Base character preview directions:
+   * Base character standing poses:
    *
    *   0 = Front
    *   1 = Back
    *   2 = Side
    *
-   * Front cosmetics use their static `layer` image.
-   * Side/Back cosmetics use entries from `frames`.
+   * The cosmetic manifest contains the extracted directional frames.
+   * Front intentionally uses the cosmetic's static `layer` image.
    *
-   * Different cosmetic resources use different frame layouts, so
-   * clothing layouts are handled separately from hair/other cosmetics.
+   * IMPORTANT:
+   * Clothing, eyes, face, etc. use the actual base-frame index directly.
+   * They must NOT be split into artificial 16/29/39/79 frame groups.
+   *
+   * Hair is the exception. The currently extracted hair resource has its
+   * Side and Back directional images offset by one:
+   *
+   *   Side -> frames[1]
+   *   Back -> frames[2]
+   *
+   * This keeps the hair Side view that is already correct while allowing
+   * the other cosmetic layers to use their real directional indices.
    */
 
   if (baseFrame === 0) {
+    // Front uses the original static cosmetic layer.
     return -1;
   }
 
@@ -148,92 +159,20 @@ function getCosmeticFrameIndex(
     return -1;
   }
 
+  if (slot === "hair") {
+    if (baseFrame === 2) return Math.min(1, frameCount - 1);
+    if (baseFrame === 1) return Math.min(2, frameCount - 1);
+  }
+
   /*
-   * Hair and short directional cosmetics.
+   * All other cosmetic layers follow the actual base-frame index.
    *
-   * These resources use:
-   *   0 = Front
-   *   1 = Side
-   *   2 = Back
-   */
-  if (
-    slot === "hair" ||
-    frameCount === 3 ||
-    frameCount === 4
-  ) {
-    if (baseFrame === 2) return 1;
-    if (baseFrame === 1) return 2;
-  }
-
-  /*
-   * Known clothing layouts from the extracted PokeMMO assets.
+   *   base 1 (Back) -> frames[1]
+   *   base 2 (Side) -> frames[2]
    *
-   * The frame arrays are directional animation blocks.
-   * We select the first frame of the appropriate block.
+   * Short resources are safely clamped.
    */
-
-  // Shoes: 5 front / 5 back / 6 side
-  if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 2) return 5;  // Side
-    if (baseFrame === 1) return 10; // Back
-  }
-
-  // Pants: 10 front / 10 back / 9 side
-  if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 2) return 20; // Side
-    if (baseFrame === 1) return 10; // Back
-  }
-
-  // T-Shirt / top: 13 front / 13 back / 13 side
-  if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 2) return 26; // Side
-    if (baseFrame === 1) return 13; // Back
-  }
-
-  // Samurai Armor: 27 front / 26 back / 26 side
-  if (slot === "top" && frameCount === 79) {
-    if (baseFrame === 2) return 53; // Side
-    if (baseFrame === 1) return 27; // Back
-  }
-
-  /*
-   * Generic directional cosmetics.
-   *
-   * For three-frame resources:
-   *   0 = Front
-   *   1 = Side
-   *   2 = Back
-   */
-  if (frameCount === 3) {
-    if (baseFrame === 2) return 1;
-    if (baseFrame === 1) return 2;
-  }
-
-  /*
-   * Four-frame directional resources:
-   *   0 = Front
-   *   1 = Side
-   *   2 = Back
-   *   3 = Opposite Side
-   */
-  if (frameCount === 4) {
-    if (baseFrame === 2) return 1;
-    if (baseFrame === 1) return 2;
-  }
-
-  /*
-   * Safe generic fallback.
-   * Do not use the static front layer for Side/Back.
-   */
-  if (baseFrame === 2) {
-    return Math.min(1, frameCount - 1);
-  }
-
-  if (baseFrame === 1) {
-    return Math.min(2, frameCount - 1);
-  }
-
-  return -1;
+  return Math.min(baseFrame, frameCount - 1);
 }
 async function loadCosmeticImage(
   cosmetic: Cosmetic,
