@@ -160,14 +160,14 @@ function getCosmeticFrameIndex(
 
   // T-Shirt: extracted as Front / Side / Back groups.
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 1) return 13; // Back -> frame_27
-    if (baseFrame === 2) return 26; // Side -> frame_14
+    if (baseFrame === 1) return 26; // Back -> frame_27
+    if (baseFrame === 2) return 13; // Side -> frame_14
   }
 
   // Pants: extracted as Front / Side / Back groups.
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 1) return 10; // Back -> frame_21
-    if (baseFrame === 2) return 20; // Side -> frame_11
+    if (baseFrame === 1) return 20; // Back -> frame_21
+    if (baseFrame === 2) return 10; // Side -> frame_11
   }
 
   // Shoes: 4-frame directional groups: Front / Side / Back / other side.
