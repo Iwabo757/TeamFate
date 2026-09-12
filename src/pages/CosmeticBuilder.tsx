@@ -95,7 +95,7 @@ const DEFAULT_COSMETICS: Partial<
 const VIEW_DEFINITIONS = [
   {
     label: "Front",
-    frame: 0,
+    frame: 3,
   },
   {
     label: "Side",
@@ -106,7 +106,6 @@ const VIEW_DEFINITIONS = [
     frame: 1,
   },
 ];
-
 /* =========================================================
    COLORS
    ========================================================= */

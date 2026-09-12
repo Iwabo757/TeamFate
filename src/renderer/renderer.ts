@@ -193,8 +193,22 @@ function loadImage(
 
 async function loadCosmeticImage(
   cosmetic: Cosmetic,
+  frame: number,
   baseUrl: string
 ): Promise<HTMLImageElement> {
+  /*
+   * Cosmetics are tied to the same animation/frame sequence
+   * as the base character.
+   *
+   * Static preview:
+   *
+   * Front = base frame 3 → cosmetic frame 3
+   * Side  = base frame 2 → cosmetic frame 2
+   * Back  = base frame 1 → cosmetic frame 1
+   *
+   * Cosmetics with fewer frames use their last available frame.
+   */
+
   if (!cosmetic.layer) {
     throw new Error(
       `Cosmetic has no layer: ${
@@ -203,12 +217,48 @@ async function loadCosmeticImage(
     );
   }
 
-  const url = joinUrl(
-    baseUrl,
-    cosmetic.layer
-  );
+  /*
+   * If the manifest contains the extracted frame list,
+   * use the frame corresponding to the base character.
+   */
+  if (
+    cosmetic.frames &&
+    cosmetic.frames.length > 0
+  ) {
+    const index = Math.min(
+      Math.max(frame, 0),
+      cosmetic.frames.length - 1
+    );
 
-  return loadImage(url);
+    const framePath =
+      cosmetic.frames[index];
+
+    if (framePath) {
+      try {
+        return await loadImage(
+          joinUrl(
+            baseUrl,
+            framePath
+          )
+        );
+      } catch {
+        /*
+         * Fall back to the original layer if the
+         * directional frame isn't available.
+         */
+      }
+    }
+  }
+
+  /*
+   * No frame data → use normal layer.
+   */
+  return loadImage(
+    joinUrl(
+      baseUrl,
+      cosmetic.layer
+    )
+  );
 }
 
 /*
@@ -639,11 +689,12 @@ export async function renderCharacter(
       HTMLImageElement;
 
     try {
-      cosmeticImage =
-        await loadCosmeticImage(
-          cosmetic,
-          baseUrl
-        );
+cosmeticImage =
+  await loadCosmeticImage(
+    cosmetic,
+    frame,
+    baseUrl
+  );
     } catch (error) {
       /*
        * Don't destroy the whole character because
