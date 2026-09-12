@@ -168,45 +168,45 @@ function getCosmeticFrameIndex(
    *   Back phase 1 -> frames[27]  (frame_28)
    */
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 2) return 13 + 2; // Side, same phase as base 2
-    if (baseFrame === 1) return 26 + 1; // Back, same phase as base 1
+    if (baseFrame === 1) return 13 + 2; // Side, same phase as base 2
+    if (baseFrame === 2) return 26 + 1; // Back, same phase as base 1
   }
 
   /*
    * Pants: 10 Front + 10 Side + 9 Back
    */
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 2) return 10 + 2; // Side -> frame_13
-    if (baseFrame === 1) return 20 + 1; // Back -> frame_22
+    if (baseFrame === 1) return 10 + 2; // Side -> frame_13
+    if (baseFrame === 2) return 20 + 1; // Back -> frame_22
   }
 
   /*
    * Shoes: 5 Front + 6 Side + 5 Back
    */
   if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 2) return 5 + 2;  // Side -> frame_8
-    if (baseFrame === 1) return 11 + 1; // Back -> frame_13
+    if (baseFrame === 1) return 5 + 2;  // Side -> frame_8
+    if (baseFrame === 2) return 11 + 1; // Back -> frame_13
   }
 
   // Other cosmetics with exactly 3 directional frames.
   if (frameCount === 3) {
-    if (baseFrame === 1) return 0; // Back
-    if (baseFrame === 2) return 1; // Side
+    if (baseFrame === 2) return 0; // Back
+    if (baseFrame === 1) return 1; // Side
   }
 
   // Generic 3-direction resource: Front / Side / Back.
   // Preserve the selected base animation phase when possible.
   if (frameCount % 3 === 0) {
     const groupSize = frameCount / 3;
-    if (baseFrame === 2) return Math.min(groupSize + 2, frameCount - 1);
-    if (baseFrame === 1) return Math.min(groupSize * 2 + 1, frameCount - 1);
+    if (baseFrame === 1) return Math.min(groupSize + 2, frameCount - 1);
+    if (baseFrame === 2) return Math.min(groupSize * 2 + 1, frameCount - 1);
   }
 
   // Generic 4-direction resource. Frames are grouped Front/Side/Back/Other.
   if (frameCount % 4 === 0) {
     const groupSize = frameCount / 4;
-    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1); // Side
-    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1); // Back
+    if (baseFrame === 1) return Math.min(groupSize, frameCount - 1); // Side
+    if (baseFrame === 2) return Math.min(groupSize * 2, frameCount - 1); // Back
   }
 
   // Fallback: do not reuse an unrelated front frame for another view.
