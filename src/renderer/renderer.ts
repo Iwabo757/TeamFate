@@ -158,22 +158,34 @@ function getCosmeticFrameIndex(
     if (baseFrame === 2) return 1; // Side
   }
 
-  // T-Shirt: extracted as Front / Side / Back groups.
+  /*
+   * Clothing frames are ANIMATION frames inside each direction group.
+   * We must keep the same animation phase as the selected base frame;
+   * taking the first frame of a direction produces the wrong clothing pose.
+   *
+   * T-Shirt: 13 Front + 13 Side + 13 Back
+   *   Side phase 2 -> frames[15]  (frame_16)
+   *   Back phase 1 -> frames[27]  (frame_28)
+   */
   if (slot === "top" && frameCount === 39) {
-    if (baseFrame === 1) return 26; // Back -> frame_27
-    if (baseFrame === 2) return 13; // Side -> frame_14
+    if (baseFrame === 2) return 13 + 2; // Side, same phase as base 2
+    if (baseFrame === 1) return 26 + 1; // Back, same phase as base 1
   }
 
-  // Pants: extracted as Front / Side / Back groups.
+  /*
+   * Pants: 10 Front + 10 Side + 9 Back
+   */
   if (slot === "pants" && frameCount === 29) {
-    if (baseFrame === 1) return 20; // Back -> frame_21
-    if (baseFrame === 2) return 10; // Side -> frame_11
+    if (baseFrame === 2) return 10 + 2; // Side -> frame_13
+    if (baseFrame === 1) return 20 + 1; // Back -> frame_22
   }
 
-  // Shoes: Front / Side / Back / other side.
+  /*
+   * Shoes: 5 Front + 6 Side + 5 Back
+   */
   if (slot === "shoes" && frameCount === 16) {
-    if (baseFrame === 2) return 4; // Side -> frame_5
-    if (baseFrame === 1) return 8; // Back -> frame_9
+    if (baseFrame === 2) return 5 + 2;  // Side -> frame_8
+    if (baseFrame === 1) return 11 + 1; // Back -> frame_13
   }
 
   // Other cosmetics with exactly 3 directional frames.
@@ -182,12 +194,12 @@ function getCosmeticFrameIndex(
     if (baseFrame === 2) return 1; // Side
   }
 
-  // Generic 3-direction resource. PokeMMO cosmetic groups are
-  // extracted in Front / Side / Back order.
+  // Generic 3-direction resource: Front / Side / Back.
+  // Preserve the selected base animation phase when possible.
   if (frameCount % 3 === 0) {
     const groupSize = frameCount / 3;
-    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1); // Side
-    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1); // Back
+    if (baseFrame === 2) return Math.min(groupSize + 2, frameCount - 1);
+    if (baseFrame === 1) return Math.min(groupSize * 2 + 1, frameCount - 1);
   }
 
   // Generic 4-direction resource. Frames are grouped Front/Side/Back/Other.
