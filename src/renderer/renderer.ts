@@ -247,7 +247,7 @@ export async function renderCharacter(
 
   for (const slot of LAYER_ORDER) {
     // Eyes and face are not rendered from the back.
-    if (frame === 30 && (slot === "eyes" || slot === "face")) {
+    if (frame === 9 && (slot === "eyes" || slot === "face")) {
       continue;
     }
 
