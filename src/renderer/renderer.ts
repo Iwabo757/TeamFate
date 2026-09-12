@@ -127,51 +127,76 @@ function getCosmeticFrameIndex(
   slot: CosmeticSlot
 ): number {
   /*
-   * Base character standing poses:
+   * CosmeticBuilder's three preview views use these base frames:
    *
    *   0 = Front
-   *   1 = Back
    *   2 = Side
+   *   1 = Back
    *
-   * The cosmetic manifest contains the extracted directional frames.
-   * Front intentionally uses the cosmetic's static `layer` image.
+   * The cosmetic frame arrays are NOT indexed with those numbers.
+   * Clothing resources are animation sequences grouped by direction.
    *
-   * IMPORTANT:
-   * Clothing, eyes, face, etc. use the actual base-frame index directly.
-   * They must NOT be split into artificial 16/29/39/79 frame groups.
-   *
-   * Hair is the exception. The currently extracted hair resource has its
-   * Side and Back directional images offset by one:
-   *
-   *   Side -> frames[1]
-   *   Back -> frames[2]
-   *
-   * This keeps the hair Side view that is already correct while allowing
-   * the other cosmetic layers to use their real directional indices.
+   * Front always uses the cosmetic's static `layer` image.
    */
+  if (baseFrame === 0) return -1;
+  if (frameCount <= 0) return -1;
 
-  if (baseFrame === 0) {
-    // Front uses the original static cosmetic layer.
-    return -1;
-  }
-
-  if (frameCount <= 0) {
-    return -1;
-  }
-
+  /* Hair has exactly three extracted directional frames:
+   *   frames[0] = front/unused for preview
+   *   frames[1] = side
+   *   frames[2] = back
+   */
   if (slot === "hair") {
     if (baseFrame === 2) return Math.min(1, frameCount - 1);
     if (baseFrame === 1) return Math.min(2, frameCount - 1);
   }
 
   /*
-   * All other cosmetic layers follow the actual base-frame index.
-   *
-   *   base 1 (Back) -> frames[1]
-   *   base 2 (Side) -> frames[2]
-   *
-   * Short resources are safely clamped.
+   * Standard four-frame cosmetics use:
+   *   frames[0] = front
+   *   frames[1] = side
+   *   frames[2] = back
+   *   frames[3] = opposite side
    */
+  if (frameCount === 4) {
+    if (baseFrame === 2) return 1;
+    if (baseFrame === 1) return 2;
+    return 3;
+  }
+
+  /* Main clothing extracted from the PAK has directional animation groups.
+   * These indices are zero-based inside `frames`.
+   */
+  if (slot === "top" && frameCount === 39) {
+    if (baseFrame === 2) return 13; // side
+    if (baseFrame === 1) return 26; // back
+  }
+
+  if (slot === "pants" && frameCount === 29) {
+    if (baseFrame === 2) return 10; // side
+    if (baseFrame === 1) return 20; // back
+  }
+
+  if (slot === "shoes" && frameCount === 16) {
+    if (baseFrame === 2) return 4; // side
+    if (baseFrame === 1) return 8; // back
+  }
+
+  /* Generic three-direction animation sequences. */
+  if (frameCount % 3 === 0) {
+    const groupSize = frameCount / 3;
+    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1);
+    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1);
+  }
+
+  /* Generic four-direction animation sequences. */
+  if (frameCount % 4 === 0) {
+    const groupSize = frameCount / 4;
+    if (baseFrame === 2) return Math.min(groupSize, frameCount - 1);
+    if (baseFrame === 1) return Math.min(groupSize * 2, frameCount - 1);
+  }
+
+  /* Short/unknown resources: use the closest available directional frame. */
   return Math.min(baseFrame, frameCount - 1);
 }
 async function loadCosmeticImage(
