@@ -126,135 +126,115 @@ function getCosmeticFrameIndex(
   frameCount: number,
   slot: CosmeticSlot
 ): number {
+  /*
+   * Base character preview directions:
+   *
+   *   0 = Front
+   *   1 = Back
+   *   2 = Side
+   *
+   * Front cosmetics use their static `layer` image.
+   * Side/Back cosmetics use entries from `frames`.
+   *
+   * Different cosmetic resources use different frame layouts, so
+   * clothing layouts are handled separately from hair/other cosmetics.
+   */
+
+  if (baseFrame === 0) {
+    return -1;
+  }
+
   if (frameCount <= 0) {
     return -1;
   }
 
   /*
-   * CosmeticBuilder uses:
+   * Hair and short directional cosmetics.
    *
+   * These resources use:
    *   0 = Front
-   *   2 = Side
-   *   1 = Back
+   *   1 = Side
+   *   2 = Back
+   */
+  if (
+    slot === "hair" ||
+    frameCount === 3 ||
+    frameCount === 4
+  ) {
+    if (baseFrame === 2) return 1;
+    if (baseFrame === 1) return 2;
+  }
+
+  /*
+   * Known clothing layouts from the extracted PokeMMO assets.
    *
-   * The extracted cosmetic frame arrays use:
+   * The frame arrays are directional animation blocks.
+   * We select the first frame of the appropriate block.
+   */
+
+  // Shoes: 5 front / 5 back / 6 side
+  if (slot === "shoes" && frameCount === 16) {
+    if (baseFrame === 2) return 5;  // Side
+    if (baseFrame === 1) return 10; // Back
+  }
+
+  // Pants: 10 front / 10 back / 9 side
+  if (slot === "pants" && frameCount === 29) {
+    if (baseFrame === 2) return 20; // Side
+    if (baseFrame === 1) return 10; // Back
+  }
+
+  // T-Shirt / top: 13 front / 13 back / 13 side
+  if (slot === "top" && frameCount === 39) {
+    if (baseFrame === 2) return 26; // Side
+    if (baseFrame === 1) return 13; // Back
+  }
+
+  // Samurai Armor: 27 front / 26 back / 26 side
+  if (slot === "top" && frameCount === 79) {
+    if (baseFrame === 2) return 53; // Side
+    if (baseFrame === 1) return 27; // Back
+  }
+
+  /*
+   * Generic directional cosmetics.
    *
+   * For three-frame resources:
+   *   0 = Front
+   *   1 = Side
+   *   2 = Back
+   */
+  if (frameCount === 3) {
+    if (baseFrame === 2) return 1;
+    if (baseFrame === 1) return 2;
+  }
+
+  /*
+   * Four-frame directional resources:
    *   0 = Front
    *   1 = Side
    *   2 = Back
    *   3 = Opposite Side
-   *getCosmeticFrameIndex
-   * Therefore:
-   *
-   *   Base Front -> Cosmetic Front
-   *   Base Side  -> Cosmetic Side
-   *   Base Back  -> Cosmetic Back
    */
-
-  if (baseFrame === 0) {
-    // Front uses the normal static layer.
-    return -1;
+  if (frameCount === 4) {
+    if (baseFrame === 2) return 1;
+    if (baseFrame === 1) return 2;
   }
 
+  /*
+   * Safe generic fallback.
+   * Do not use the static front layer for Side/Back.
+   */
   if (baseFrame === 2) {
-    // Side
-    if (frameCount === 1) return 0;
-
-    // Three-direction resources:
-    // Front / Side / Back
-    if (frameCount === 3) {
-      return 1;
-    }
-
-    // Four-direction resources:
-    // Front / Side / Back / Other Side
-    if (frameCount === 4) {
-      return 1;
-    }
-
-    // Existing clothing layouts.
-    if (frameCount === 16) {
-      return 5;
-    }
-
-    if (frameCount === 29) {
-      return 20;
-    }
-
-    if (frameCount === 39) {
-      return 26;
-    }
-
-    if (frameCount === 79) {
-      return 53;
-    }
-
-    /*
-     * Generic directional fallback.
-     * Side is the middle directional group.
-     */
-    if (frameCount % 3 === 0) {
-      return Math.floor(frameCount / 3);
-    }
-
-    if (frameCount % 4 === 0) {
-      return frameCount / 4;
-    }
-
     return Math.min(1, frameCount - 1);
   }
 
   if (baseFrame === 1) {
-    // Back
-    if (frameCount === 1) return 0;
-
-    // Three-direction resources:
-    // Front / Side / Back
-    if (frameCount === 3) {
-      return 2;
-    }
-
-    // Four-direction resources:
-    // Front / Side / Back / Other Side
-    if (frameCount === 4) {
-      return 2;
-    }
-
-    // Existing clothing layouts.
-    if (frameCount === 16) {
-      return 10;
-    }
-
-    if (frameCount === 29) {
-      return 10;
-    }
-
-    if (frameCount === 39) {
-      return 13;
-    }
-
-    if (frameCount === 79) {
-      return 27;
-    }
-
-    /*
-     * Generic directional fallback.
-     * Back is the final group in a 3-direction resource.
-     */
-    if (frameCount % 3 === 0) {
-      return (Math.floor(frameCount / 3) * 2);
-    }
-
-    if (frameCount % 4 === 0) {
-      return frameCount / 2;
-    }
-
     return Math.min(2, frameCount - 1);
   }
 
-  return 0;
+  return -1;
 }
-
 async function loadCosmeticImage(
   cosmetic: Cosmetic,
   baseFrame: number,
@@ -267,11 +247,11 @@ async function loadCosmeticImage(
   }
 
   const frames = cosmetic.frames ?? [];
-const index = getCosmeticFrameIndex(
-  baseFrame,
-  frames.length,
-  cosmetic.slot
-);
+  const index = getCosmeticFrameIndex(
+    baseFrame,
+    frames.length,
+    cosmetic.slot
+  );
 
   /* Front uses the original static layer. */
   if (index === -1) {
