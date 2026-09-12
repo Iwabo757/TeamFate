@@ -82,7 +82,7 @@ const CHROMA = {
   tolerance: 8,
 };
 
-const DIRECTION_FRAME_LIMIT = 5;
+const DIRECTION_FRAME_LIMIT = 3;
 
 type Direction = "back" | "side";
 
@@ -459,7 +459,7 @@ async function findDirectionalFrames(
    *   base frame 2 = Side
    *
    * Cosmetic frame numbering is NOT assumed to match.
-   * We inspect cosmetic frames 0-4 and choose the two
+   * We inspect cosmetic frames 0-2 and choose the two
    * whose sprite geometry most closely matches Back/Side.
    */
 
@@ -677,7 +677,7 @@ async function getCosmeticFrameIndex(
 
   /*
    * Eyes are not visible from the Back.
-   * For Side we still automatically inspect frames 0-4.
+   * For Side we still automatically inspect frames 0-2.
    */
   if (
     cosmetic.slot === "eyes" &&
