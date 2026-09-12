@@ -126,72 +126,68 @@ function getCosmeticFrameIndex(
   frameCount: number
 ): number {
   /*
-   * The cosmetic resources have a different structure from the base.
-   * The normal `layer` image is the FRONT/static resource.  The extracted
-   * `frames` are the non-front directional resources.
-   *
-   * Base preview directions:
+   * The base preview uses these standing poses:
    *   0 = Front
-   *   1 = Back
    *   2 = Side
-   *   3 = opposite Side
+   *   3 = Back
    *
-   * Cosmetic directional groups:
-   *   group 0 = Back
-   *   group 1 = Side
-   *   group 2 = opposite Side
+   * Cosmetic resources are laid out differently.  After the static `layer`
+   * image, their extracted frames are grouped in this order:
    *
-   * Therefore FRONT must use the cosmetic.layer, not frames[0].
+   *   group 0 = Front animation
+   *   group 1 = Back animation
+   *   group 2 = Side animation
+   *
+   * Therefore the first frame of each cosmetic direction is selected from
+   * those groups, rather than using the base frame number directly.
    */
-  if (baseFrame === 0) return -1;
-
+  if (baseFrame === 0) return -1; // use static layer for Front
   if (frameCount <= 0) return -1;
 
-  const direction =
-    baseFrame === 1 ? 0 :
-    baseFrame === 2 ? 1 :
-    2;
+  let group = 0;
+  if (baseFrame === 3) group = 1;      // Back
+  else if (baseFrame === 2) group = 2; // Side
+  else return -1;
 
-  /* Known extracted layouts. The frame arrays are the resources after
-     the static layer, so these starts are zero-based within `frames`. */
+  // Known resource layouts from the extracted PokeMMO assets.
   if (frameCount === 3) {
-    return direction;
+    return Math.min(group, frameCount - 1);
   }
 
   if (frameCount === 4) {
-    /* Backwards Cap has four extracted directional resources. The first
-       three are the three character directions needed by this preview. */
-    return Math.min(direction, 2);
+    // Backwards Cap and similar 4-frame directional cosmetics.
+    return Math.min(group, frameCount - 1);
   }
 
   if (frameCount === 16) {
-    // Shoes: 5 / 5 / 6 directional animation resources.
+    // Shoes: 5 front / 5 back / 6 side.
     const starts = [0, 5, 10];
-    return starts[direction];
+    return starts[group];
   }
 
   if (frameCount === 29) {
-    // Pants: 10 / 10 / 9 directional animation resources.
+    // Pants: 10 front / 10 back / 9 side.
     const starts = [0, 10, 20];
-    return starts[direction];
+    return starts[group];
   }
 
   if (frameCount === 39) {
-    // T-Shirt: 13 / 13 / 13 directional animation resources.
+    // T-Shirt: 13 front / 13 back / 13 side.
     const starts = [0, 13, 26];
-    return starts[direction];
+    return starts[group];
   }
 
   if (frameCount === 79) {
-    // Samurai Armor: 27 / 26 / 26 directional animation resources.
+    // Samurai Armor: 27 front / 26 back / 26 side.
     const starts = [0, 27, 53];
-    return starts[direction];
+    return starts[group];
   }
 
-  // Generic fallback for other cosmetics with three directional groups.
+  // Generic cosmetics: divide the extracted frames into the same
+  // Front / Back / Side groups, preserving their animation blocks.
   const groupSize = Math.floor(frameCount / 3);
   const starts = [0, groupSize, groupSize * 2];
-  return Math.min(starts[direction], frameCount - 1);
+  return Math.min(starts[group], frameCount - 1);
 }
 
 async function loadCosmeticImage(
