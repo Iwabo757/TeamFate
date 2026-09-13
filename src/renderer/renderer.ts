@@ -816,45 +816,107 @@ async function loadCosmeticImages(
   const frames = cosmetic.frames ?? [];
 
   /*
-   * Mermaid Hair Crown:
+   * Exact Mermaid Hair mappings supplied for the renderer:
    *
-   * Front = frame_5 + frame_1 on top
-   * Side  = frame_3 + frame_4 on top
-   * Back  = mermaid_hair_crown__31599__frame_3
+   * Mermaid Hair
+   *   Front = mermaid_hair_crown__31599__frame_3
+   *   Side  = mermaid_hair_crown__31599__frame_2
+   *   Back  = mermaid_hair_crown__31599__frame_1
    */
-  if (isMermaidHairCrown(cosmetic)) {
-    const paths: string[] = [];
+  if (isNormalMermaidHair(cosmetic)) {
+    const crownCosmetic =
+      manifest.cosmetics?.["Mermaid Hair Crown"];
 
-    /* The supplied hair assets are reversed relative to the builder's
-     * view labels. Swap Front and Back here; Side stays unchanged.
-     *
-     * Builder/base views:
-     *   0 = Front
-     *   2 = Side
-     *   1 = Back
-     */
+    const crownFrames = crownCosmetic?.frames ?? [];
+    let path: string | null = null;
+
     if (baseFrame === 0) {
-      // Builder Front -> use the asset that was previously being used for Back.
-      const front = findFramePath(
-        frames,
+      path = findFramePath(
+        crownFrames,
         3,
         "mermaid_hair_crown__31599__frame_3"
       );
-
-      if (front) paths.push(front);
     } else if (baseFrame === 2) {
-      const base = findFramePath(frames, 3);
-      const overlay = findFramePath(frames, 4);
+      path = findFramePath(
+        crownFrames,
+        2,
+        "mermaid_hair_crown__31599__frame_2"
+      );
+    } else if (baseFrame === 1) {
+      path = findFramePath(
+        crownFrames,
+        1,
+        "mermaid_hair_crown__31599__frame_1"
+      );
+    }
+
+    if (!path) return [];
+
+    try {
+      return [
+        await loadImage(joinUrl(baseUrl, path)),
+      ];
+    } catch {
+      return [];
+    }
+  }
+
+  /*
+   * Exact Mermaid Hair Crown mappings supplied for the renderer.
+   * The Crown is a composite hairstyle:
+   *
+   *   Front = Mermaid Hair frame_5, then Mermaid Hair frame_6
+   *   Side  = Mermaid Hair frame_3, then Mermaid Hair frame_4
+   *   Back  = Mermaid Hair frame_2
+   *
+   * These are intentionally loaded from the separate Mermaid Hair
+   * cosmetic because the Crown cosmetic is an add-on/composite set.
+   */
+  if (isMermaidHairCrown(cosmetic)) {
+    const mermaidHairCosmetic =
+      manifest.cosmetics?.["Mermaid Hair"];
+
+    const mermaidHairFrames =
+      mermaidHairCosmetic?.frames ?? [];
+
+    const paths: string[] = [];
+
+    if (baseFrame === 0) {
+      const base = findFramePath(
+        mermaidHairFrames,
+        5,
+        "mermaid_hair__31461__frame_5"
+      );
+      const overlay = findFramePath(
+        mermaidHairFrames,
+        6,
+        "mermaid_hair__31461__frame_6"
+      );
+
+      if (base) paths.push(base);
+      if (overlay) paths.push(overlay);
+    } else if (baseFrame === 2) {
+      const base = findFramePath(
+        mermaidHairFrames,
+        3,
+        "mermaid_hair__31461__frame_3"
+      );
+      const overlay = findFramePath(
+        mermaidHairFrames,
+        4,
+        "mermaid_hair__31461__frame_4"
+      );
 
       if (base) paths.push(base);
       if (overlay) paths.push(overlay);
     } else if (baseFrame === 1) {
-      // Builder Back -> use the asset that was previously being used for Front.
-      const base = findFramePath(frames, 5);
-      const overlay = findFramePath(frames, 1);
+      const back = findFramePath(
+        mermaidHairFrames,
+        2,
+        "mermaid_hair__31461__frame_2"
+      );
 
-      if (base) paths.push(base);
-      if (overlay) paths.push(overlay);
+      if (back) paths.push(back);
     }
 
     const images: HTMLImageElement[] = [];
@@ -862,81 +924,14 @@ async function loadCosmeticImages(
     for (const path of paths) {
       try {
         images.push(
-          await loadImage(
-            joinUrl(baseUrl, path)
-          )
+          await loadImage(joinUrl(baseUrl, path))
         );
       } catch {
-        // Keep rendering the other layer if one file is missing.
+        // Keep rendering any other layer that loaded successfully.
       }
     }
 
     return images;
-  }
-
-  /*
-   * Normal Mermaid Hair:
-   * Front = frame_2
-   * Side  = mermaid_hair_crown__31599__frame_2
-   * Back  = mermaid_hair_crown__31599__frame_3
-   */
-  if (isNormalMermaidHair(cosmetic)) {
-    /*
-     * Normal Mermaid Hair uses its own frame_2 for Front.
-     * Its Side and Back artwork comes from the separate
-     * Mermaid Hair Crown cosmetic.
-     */
-    let sourceCosmetic = cosmetic;
-    let path: string | null = null;
-
-    /* Front/Back are reversed for these Mermaid assets. */
-    if (baseFrame === 0) {
-      // Builder Front -> old Back asset.
-      sourceCosmetic =
-        manifest.cosmetics?.[
-          "Mermaid Hair Crown"
-        ] ?? cosmetic;
-
-      const sourceFrames =
-        sourceCosmetic.frames ?? [];
-
-      path = findFramePath(
-        sourceFrames,
-        3,
-        "mermaid_hair_crown__31599__frame_3"
-      );
-    } else {
-      sourceCosmetic =
-        manifest.cosmetics?.[
-          "Mermaid Hair Crown"
-        ] ?? cosmetic;
-
-      const sourceFrames =
-        sourceCosmetic.frames ?? [];
-
-      if (baseFrame === 2) {
-        path = findFramePath(
-          sourceFrames,
-          2,
-          "mermaid_hair_crown__31599__frame_2"
-        );
-      } else if (baseFrame === 1) {
-        // Builder Back -> old Front asset.
-        path = findFramePath(frames, 2);
-      }
-    }
-
-    if (!path) return [];
-
-    try {
-      return [
-        await loadImage(
-          joinUrl(baseUrl, path)
-        ),
-      ];
-    } catch {
-      return [];
-    }
   }
 
   const index = await getCosmeticFrameIndex(
@@ -968,7 +963,9 @@ async function loadCosmeticImages(
 
   const framePath = frames[index];
 
-  if (!framePath) return [];
+  if (!framePath) {
+    return [];
+  }
 
   try {
     return [
