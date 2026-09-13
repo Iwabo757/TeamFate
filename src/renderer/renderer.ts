@@ -175,15 +175,6 @@ function slug(value: string): string {
   return normalizeName(value).replace(/\s+/g, "-");
 }
 
-function addLookup(
-  map: Map<string, number>,
-  key: string | undefined,
-  id: number
-): void {
-  if (!key) return;
-  if (!map.has(key)) map.set(key, id);
-}
-
 async function loadApiCatalog(): Promise<ApiCatalog> {
   if (!apiCatalogPromise) {
     apiCatalogPromise = fetch(ITEM_DATA_URL, { cache: "force-cache" }).then(
