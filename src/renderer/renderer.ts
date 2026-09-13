@@ -677,13 +677,64 @@ async function getCosmeticFrameIndex(
 
   /*
    * Eyes are not visible from the Back.
-   * For Side we still automatically inspect frames 0-2.
+   * Side-view eyes always use cosmetic frame_1.
    */
-  if (
-    cosmetic.slot === "eyes" &&
-    baseFrame === 1
-  ) {
-    return -2;
+  if (cosmetic.slot === "eyes") {
+    if (baseFrame === 1) {
+      return -2;
+    }
+
+    if (baseFrame === 2) {
+      const eyeFrames = cosmetic.frames ?? [];
+
+      for (let index = 0; index < eyeFrames.length; index++) {
+        if (/frame_1/i.test(eyeFrames[index])) {
+          return index;
+        }
+      }
+
+      return -1;
+    }
+  }
+
+  /*
+   * Hair uses a fixed direction layout:
+   *
+   *   frame_1 = Back
+   *   frame_2 = Side
+   *
+   * Hair is NOT auto-detected.
+   */
+  if (cosmetic.slot === "hair") {
+    const hairFrames = cosmetic.frames ?? [];
+
+    if (baseFrame === 1) {
+      for (let index = 0; index < hairFrames.length; index++) {
+        if (/frame_1/i.test(hairFrames[index])) {
+          return index;
+        }
+      }
+    }
+
+    if (baseFrame === 2) {
+      for (let index = 0; index < hairFrames.length; index++) {
+        if (/frame_2/i.test(hairFrames[index])) {
+          return index;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /*
+   * Shoes have a very small sprite area, so full-character
+   * silhouette matching is unreliable for them.
+   */
+  if (cosmetic.slot === "shoes") {
+    if (baseFrame === 1) return 0;
+    if (baseFrame === 2) return 1;
+    return -1;
   }
 
   const directionalFrames =
@@ -706,74 +757,189 @@ async function getCosmeticFrameIndex(
   return -1;
 }
 
-async function loadCosmeticImage(
+function findFramePath(
+  frames: string[],
+  frameNumber: number,
+  exactToken?: string
+): string | null {
+  if (exactToken) {
+    const exact = frames.find((path) =>
+      path.toLowerCase().includes(exactToken.toLowerCase())
+    );
+    if (exact) return exact;
+  }
+
+  const pattern = new RegExp(
+    `frame_${frameNumber}(?:\\D|$)`,
+    "i"
+  );
+
+  return frames.find((path) =>
+    pattern.test(path)
+  ) ?? null;
+}
+
+function isMermaidHairCrown(cosmetic: Cosmetic): boolean {
+  const name = (cosmetic.name ?? "").toLowerCase();
+  const layer = (cosmetic.layer ?? "").toLowerCase();
+
+  return (
+    name.includes("mermaid hair crown") ||
+    layer.includes("mermaid_hair_crown")
+  );
+}
+
+function isNormalMermaidHair(cosmetic: Cosmetic): boolean {
+  const name = (cosmetic.name ?? "").toLowerCase();
+  const layer = (cosmetic.layer ?? "").toLowerCase();
+
+  return (
+    (name.includes("mermaid hair") ||
+      layer.includes("mermaid_hair")) &&
+    !isMermaidHairCrown(cosmetic)
+  );
+}
+
+async function loadCosmeticImages(
   cosmetic: Cosmetic,
   baseFrame: number,
   baseFrames: string[],
   baseUrl: string
-): Promise<HTMLImageElement | null> {
+): Promise<HTMLImageElement[]> {
   if (!cosmetic.layer) {
     throw new Error(
-      `Cosmetic has no layer: ${
-        cosmetic.name ?? "Unknown"
-      }`
+      `Cosmetic has no layer: ${cosmetic.name ?? "Unknown"}`
     );
   }
 
-  const index =
-    await getCosmeticFrameIndex(
-      baseFrame,
-      cosmetic,
-      baseFrames,
-      baseUrl
-    );
+  const frames = cosmetic.frames ?? [];
 
   /*
-   * Explicitly hidden direction.
+   * Mermaid Hair Crown:
+   *
+   * Front = frame_5 + frame_1 on top
+   * Side  = frame_3 + frame_4 on top
+   * Back  = mermaid_hair_crown__31599__frame_3
    */
-  if (index === -2) {
-    return null;
-  }
+  if (isMermaidHairCrown(cosmetic)) {
+    const paths: string[] = [];
 
-  /*
-   * Front uses the static layer.
-   */
-  if (index === -1) {
     if (baseFrame === 0) {
-      return loadImage(
-        joinUrl(
-          baseUrl,
-          cosmetic.layer
-        )
+      const base = findFramePath(frames, 5);
+      const overlay = findFramePath(frames, 1);
+
+      if (base) paths.push(base);
+      if (overlay) paths.push(overlay);
+    } else if (baseFrame === 2) {
+      const base = findFramePath(frames, 3);
+      const overlay = findFramePath(frames, 4);
+
+      if (base) paths.push(base);
+      if (overlay) paths.push(overlay);
+    } else if (baseFrame === 1) {
+      const back = findFramePath(
+        frames,
+        3,
+        "mermaid_hair_crown__31599__frame_3"
+      );
+
+      if (back) paths.push(back);
+    }
+
+    const images: HTMLImageElement[] = [];
+
+    for (const path of paths) {
+      try {
+        images.push(
+          await loadImage(
+            joinUrl(baseUrl, path)
+          )
+        );
+      } catch {
+        // Keep rendering the other layer if one file is missing.
+      }
+    }
+
+    return images;
+  }
+
+  /*
+   * Normal Mermaid Hair:
+   * Front = frame_2
+   * Side  = mermaid_hair_crown__31599__frame_2
+   * Back  = mermaid_hair_crown__31599__frame_3
+   */
+  if (isNormalMermaidHair(cosmetic)) {
+    let path: string | null = null;
+
+    if (baseFrame === 0) {
+      path = findFramePath(frames, 2);
+    } else if (baseFrame === 2) {
+      path = findFramePath(
+        frames,
+        2,
+        "mermaid_hair_crown__31599__frame_2"
+      );
+    } else if (baseFrame === 1) {
+      path = findFramePath(
+        frames,
+        3,
+        "mermaid_hair_crown__31599__frame_3"
       );
     }
 
-    /*
-     * Do not put the front layer on Back/Side.
-     */
-    return null;
+    if (!path) return [];
+
+    try {
+      return [
+        await loadImage(
+          joinUrl(baseUrl, path)
+        ),
+      ];
+    } catch {
+      return [];
+    }
   }
 
-  const framePath =
-    cosmetic.frames?.[index];
+  const index = await getCosmeticFrameIndex(
+    baseFrame,
+    cosmetic,
+    baseFrames,
+    baseUrl
+  );
 
-  if (!framePath) {
-    return null;
+  if (index === -2) {
+    return [];
   }
+
+  if (index === -1) {
+    if (baseFrame === 0) {
+      try {
+        return [
+          await loadImage(
+            joinUrl(baseUrl, cosmetic.layer)
+          ),
+        ];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
+  }
+
+  const framePath = frames[index];
+
+  if (!framePath) return [];
 
   try {
-    return await loadImage(
-      joinUrl(
-        baseUrl,
-        framePath
-      )
-    );
+    return [
+      await loadImage(
+        joinUrl(baseUrl, framePath)
+      ),
+    ];
   } catch {
-    /*
-     * Never fall back to the front layer
-     * on Back/Side.
-     */
-    return null;
+    return [];
   }
 }
 
@@ -1080,12 +1246,11 @@ export async function renderCharacter(
       continue;
     }
 
-    let cosmeticImage:
-      HTMLImageElement | null;
+    let cosmeticImages: HTMLImageElement[];
 
     try {
-      cosmeticImage =
-        await loadCosmeticImage(
+      cosmeticImages =
+        await loadCosmeticImages(
           cosmetic,
           baseFrameIndex,
           base.frames,
@@ -1099,60 +1264,62 @@ export async function renderCharacter(
       continue;
     }
 
-    if (!cosmeticImage) {
+    if (cosmeticImages.length === 0) {
       continue;
     }
-
-    const layerCanvas =
-      createCanvas(
-        width,
-        height
-      );
-
-    const layerContext =
-      layerCanvas.getContext(
-        "2d"
-      );
-
-    if (!layerContext) {
-      continue;
-    }
-
-    layerContext.imageSmoothingEnabled =
-      false;
-
-    drawImage(
-      layerContext,
-      cosmeticImage,
-      width,
-      height
-    );
-
-    removeChromaKey(
-      layerContext,
-      width,
-      height
-    );
 
     const tint =
       tints[
         slot as keyof CosmeticTints
       ];
 
-    if (tint) {
-      applyTint(
+    for (const cosmeticImage of cosmeticImages) {
+      const layerCanvas =
+        createCanvas(
+          width,
+          height
+        );
+
+      const layerContext =
+        layerCanvas.getContext(
+          "2d"
+        );
+
+      if (!layerContext) {
+        continue;
+      }
+
+      layerContext.imageSmoothingEnabled =
+        false;
+
+      drawImage(
+        layerContext,
+        cosmeticImage,
+        width,
+        height
+      );
+
+      removeChromaKey(
         layerContext,
         width,
-        height,
-        tint
+        height
+      );
+
+      if (tint) {
+        applyTint(
+          layerContext,
+          width,
+          height,
+          tint
+        );
+      }
+
+      nativeContext.drawImage(
+        layerCanvas,
+        0,
+        0
       );
     }
-
-    nativeContext.drawImage(
-      layerCanvas,
-      0,
-      0
-    );
   }
 
   const safeScale =
