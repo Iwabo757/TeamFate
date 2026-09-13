@@ -245,11 +245,10 @@ async function buildApiSlots(
   return selected;
 }
 
-function buildApiUrl(scene: RendererView, skin: number, slots: Record<number, number>): string {
-  const safeSkin = Math.max(1, Math.min(5, Math.round(skin)));
-
-  // This is the exact ordering used by PokeMMO Hub's getCosmeticSetupImage:
-  // back, bicycle, eyes, face, gloves, hair, hat, legs, shoes, top.
+function buildApiUrl(scene: RendererView, slots: Record<number, number>): string {
+  // This must match PokeMMO Hub exactly. The API path is: scene / 2 / 1 /
+  // back / bicycle / eyes / face / gloves / hair / hat / legs / shoes / top.
+  // There is NO Team Fate skin number in this API path.
   const ordered = [
     slots[6],
     slots[12],
@@ -263,7 +262,7 @@ function buildApiUrl(scene: RendererView, skin: number, slots: Record<number, nu
     slots[7],
   ];
 
-  return `${API_BASE}/${API_SCENE[scene]}/${API_VERSION}/${API_GENDER}/${safeSkin}/${ordered.join("/")}.png`;
+  return `${API_BASE}/${API_SCENE[scene]}/${API_VERSION}/${API_GENDER}/${ordered.join("/")}.png`;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
@@ -316,12 +315,11 @@ function removeChromaKey(
 async function renderApiView(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>,
-  skin: number,
   scene: RendererView,
   scale: number
 ): Promise<HTMLCanvasElement> {
   const slots = await buildApiSlots(manifest, cosmetics);
-  const url = buildApiUrl(scene, skin, slots);
+  const url = buildApiUrl(scene, slots);
   const image = await loadImage(url);
 
   const width = image.naturalWidth || image.width;
@@ -352,7 +350,6 @@ async function renderApiView(
 export async function renderCharacter(options: RenderOptions): Promise<HTMLCanvasElement> {
   const {
     manifest,
-    skin = 1,
     frame = 0,
     cosmetics = {},
     tints: _tints = {},
@@ -364,7 +361,7 @@ export async function renderCharacter(options: RenderOptions): Promise<HTMLCanva
   const scene: RendererView =
     frame === 0 ? "front" : frame === 1 ? "back" : frame === 2 ? "side" : "front";
 
-  return renderApiView(manifest, cosmetics, skin, scene, scale);
+  return renderApiView(manifest, cosmetics, scene, scale);
 }
 
 export async function renderCharacterToDataUrl(options: RenderOptions): Promise<string> {
