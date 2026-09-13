@@ -346,24 +346,21 @@ async function resolveCosmeticDirections(
   const promise = (async () => {
     const base = getBaseData(manifest, 1);
 
-    // The actual extracted base sequence is:
-    //   0 = Front
-    //   1 = Side
-    //   2 = Back
-    // Keep cosmetic direction resolution tied to these real base frames.
-    const backPath = base.frames[2];
+    // The extracted base sequence is: 0 = Front, 1 = Side, 2 = Back.
+    // Keep these names aligned with the actual view they represent.
     const sidePath = base.frames[1];
+    const backPath = base.frames[2];
     if (!backPath && !sidePath) return { back: null, side: null };
 
     const region = DIRECTION_REGIONS[cosmetic.slot];
-    const [backImage, sideImage, ...candidateImages] = await Promise.all([
-      backPath ? loadImage(joinUrl(baseUrl, backPath)).catch(() => null) : Promise.resolve(null),
+    const [sideImage, backImage, ...candidateImages] = await Promise.all([
       sidePath ? loadImage(joinUrl(baseUrl, sidePath)).catch(() => null) : Promise.resolve(null),
+      backPath ? loadImage(joinUrl(baseUrl, backPath)).catch(() => null) : Promise.resolve(null),
       ...frames.map((path) => loadImage(joinUrl(baseUrl, path)).catch(() => null)),
     ]);
 
-    const backStats = backImage ? makeAlphaStats(backImage, region) : null;
     const sideStats = sideImage ? makeAlphaStats(sideImage, region) : null;
+    const backStats = backImage ? makeAlphaStats(backImage, region) : null;
 
     let bestBack = -1;
     let bestSide = -1;
@@ -446,7 +443,10 @@ async function getGenericLayers(
   }
 
   const directions = await resolveCosmeticDirections(cosmetic, baseUrl, manifest);
-  const index = baseFrame === 1 ? directions.back : directions.side;
+
+  // Base frame 1 is Side; base frame 2 is Back.
+  // Do not swap these: the cosmetic detector returns the same direction names.
+  const index = baseFrame === 1 ? directions.side : directions.back;
 
   if (index === null || index < 0 || index >= frames.length) return [];
   return loadLayer(frames[index], baseUrl, true);
