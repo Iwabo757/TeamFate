@@ -122,9 +122,9 @@ type ApiItem = {
 };
 
 type ApiCatalog = {
-  byName: Map<string, number>;
-  byKey: Map<string, number>;
-  bySlug: Map<string, number>;
+  byName: Map<string, number[]>;
+  byKey: Map<string, number[]>;
+  bySlug: Map<string, number[]>;
 };
 
 let manifestPromise: Promise<RendererManifest> | null = null;
@@ -195,30 +195,41 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
         }
 
         const items = (await response.json()) as ApiItem[];
-        const byName = new Map<string, number>();
-        const byKey = new Map<string, number>();
-        const bySlug = new Map<string, number>();
+        const byName = new Map<string, number[]>();
+        const byKey = new Map<string, number[]>();
+        const bySlug = new Map<string, number[]>();
+
+        const addIds = (
+          map: Map<string, number[]>,
+          key: string | undefined,
+          ids: number[]
+        ): void => {
+          if (!key) return;
+          const existing = map.get(key) ?? [];
+          for (const id of ids) {
+            if (!existing.includes(id)) existing.push(id);
+          }
+          if (existing.length) map.set(key, existing);
+        };
 
         for (const item of items) {
           if (item.category !== 6 || !Number.isFinite(item.id)) continue;
 
-          // IMPORTANT:
-          // Newer PokeMMO cosmetics have an internal item `id` that is
-          // different from the cosmetic/Dex ID used by the Fiereu Clothes API.
-          // Older cosmetics generally do not have `dex`, so fall back to `id`.
-          const apiId =
-            Number.isFinite(item.dex) && Number(item.dex) > 0
-              ? Number(item.dex)
-              : Number(item.id);
+          // Keep both namespaces. Try the internal item id first and the
+          // cosmetic/Dex id second instead of assuming one namespace globally.
+          const ids = [Number(item.id)];
+          if (Number.isFinite(item.dex) && Number(item.dex) > 0) {
+            ids.push(Number(item.dex));
+          }
 
           if (item.en_name) {
-            addLookup(byName, normalizeName(item.en_name), apiId);
-            addLookup(bySlug, slug(item.en_name), apiId);
+            addIds(byName, normalizeName(item.en_name), ids);
+            addIds(bySlug, slug(item.en_name), ids);
           }
 
           if (item.key) {
-            addLookup(byKey, normalizeName(item.key), apiId);
-            addLookup(bySlug, slug(item.key), apiId);
+            addIds(byKey, normalizeName(item.key), ids);
+            addIds(bySlug, slug(item.key), ids);
           }
         }
 
@@ -235,24 +246,24 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 // A small set of cosmetics that are present in the current PokeMMO game
 // catalog but are missing from the older PokeMMO Hub item.json mirror.
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
-const KNOWN_FIEREU_IDS: Record<string, number> = {
-  // Older/current cosmetics with stable Fiereu/Dex IDs.
-  "afro": 1185,
-  sideswept: 1183,
-  "reverse scene": 2535,
+const KNOWN_FIEREU_IDS: Record<string, number[]> = {
+  // Older/newer cosmetics where we know both namespaces.
+  afro: [1185, 2513],
+  sideswept: [1183, 2517],
+  "reverse scene": [1181, 2535],
+  scene: [1181, 2535],
 
-  // Current cosmetics whose IDs are newer than the old catalog mirror.
-  "mermaid hair": 2560,
-  "mermaid hair alt": 2561,
-  "idol hairstyle": 2558,
-  "origin hairstyle": 2565,
-  "colorful unicorn hair": 2566,
-  "golden cuffed ponytail": 2559,
-  "elven ponytail": 2562,
-  "elegant ponytail": 2563,
+  "golden cuffed ponytail": [2235, 2559],
+  "mermaid hair": [2257, 2560],
+  "elven ponytail": [2292, 2562],
+  "elegant ponytail": [2317, 2563],
+  "origin hairstyle": [2318, 2565],
+  "colorful unicorn hair": [2319, 2566],
 
-  // Team Fate's old manifest name for Reverse Scene.
-  scene: 2535,
+  // Present in the current cosmetic catalog but missing from the older
+  // PokeMMO Hub item.json mirror.
+  "idol hairstyle": [2558],
+  "mermaid hair alt": [2561],
 };
 
 const NAME_ALIASES: Record<string, string[]> = {
@@ -282,21 +293,20 @@ const NAME_ALIASES: Record<string, string[]> = {
   scene: ["reverse scene"],
 };
 
-async function resolveApiItemId(
+async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
-): Promise<number> {
+): Promise<number[]> {
   const explicit = cosmetic.api_id ?? cosmetic.apiId;
-  if (Number.isFinite(explicit)) return Number(explicit);
+  if (Number.isFinite(explicit)) return [Number(explicit)];
 
-  // These are the API's empty/default values, not equipped cosmetic items.
   const normalized = normalizeName(cosmeticName);
-  const knownId = KNOWN_FIEREU_IDS[normalized];
-  if (knownId !== undefined) return knownId;
+  const knownIds = KNOWN_FIEREU_IDS[normalized];
+  if (knownIds?.length) return [...knownIds];
 
-  if (normalized === "default hair") return 0;
-  if (normalized === "brown" || normalized === "brown eyes") return 1438;
-  if (normalized === "angry" || normalized === "angry eyes") return 1444;
+  if (normalized === "default hair") return [0];
+  if (normalized === "brown" || normalized === "brown eyes") return [1438];
+  if (normalized === "angry" || normalized === "angry eyes") return [1444];
 
   const catalog = await loadApiCatalog();
   const candidates = [
@@ -306,20 +316,20 @@ async function resolveApiItemId(
 
   for (const candidate of candidates) {
     const key = normalizeName(candidate);
+
     const byName = catalog.byName.get(key);
-    if (byName !== undefined) return byName;
+    if (byName?.length) return [...byName];
 
     const bySlug = catalog.bySlug.get(slug(candidate));
-    if (bySlug !== undefined) return bySlug;
+    if (bySlug?.length) return [...bySlug];
 
     const byKey = catalog.byKey.get(key);
-    if (byKey !== undefined) return byKey;
+    if (byKey?.length) return [...byKey];
   }
 
-  // Last-resort compact comparison handles things like Rock Star/Rockstar.
   const target = compact(cosmeticName);
-  for (const [key, id] of catalog.byName) {
-    if (compact(key) === target) return id;
+  for (const [key, ids] of catalog.byName) {
+    if (compact(key) === target) return [...ids];
   }
 
   throw new Error(
@@ -328,16 +338,21 @@ async function resolveApiItemId(
   );
 }
 
+type ApiSlotSelection = {
+  slots: Record<number, number>;
+  hairAlternates: number[];
+};
+
 async function buildApiSlots(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>
-): Promise<Record<number, number>> {
-  // Start with every supported slot empty. This prevents PokeMMO Hub defaults
-  // from leaking into Team Fate when the builder starts with no clothes.
+): Promise<ApiSlotSelection> {
   const selected: Record<number, number> = {};
   for (const slot of ALL_API_SLOTS) {
     selected[API_SLOT[slot]] = 0;
   }
+
+  let hairAlternates: number[] = [];
 
   for (const slot of ALL_API_SLOTS) {
     const name = cosmetics[slot];
@@ -354,10 +369,15 @@ async function buildApiSlots(
       );
     }
 
-    selected[API_SLOT[slot]] = await resolveApiItemId(name, cosmetic);
+    const ids = await resolveApiItemIds(name, cosmetic);
+    selected[API_SLOT[slot]] = ids[0];
+
+    if (slot === "hair") {
+      hairAlternates = ids.slice(1);
+    }
   }
 
-  return selected;
+  return { slots: selected, hairAlternates };
 }
 
 function buildApiUrl(
@@ -431,9 +451,39 @@ async function renderApiView(
   scene: RendererView,
   scale: number
 ): Promise<HTMLCanvasElement> {
-  const slots = await buildApiSlots(manifest, cosmetics);
-  const url = buildApiUrl(scene, slots);
-  const image = await loadImage(url);
+  const selection = await buildApiSlots(manifest, cosmetics);
+  const candidateHairIds = [
+    selection.slots[API_SLOT.hair],
+    ...selection.hairAlternates,
+  ].filter(
+    (id, index, ids) =>
+      Number.isFinite(id) && ids.indexOf(id) === index
+  );
+
+  let image: HTMLImageElement | null = null;
+  let lastUrl = "";
+
+  // Hair has existed in two PokeMMO id namespaces. Try the primary id and
+  // then the known alternate namespace/id if the API rejects the first one.
+  for (const hairId of candidateHairIds) {
+    const slots = {
+      ...selection.slots,
+      [API_SLOT.hair]: hairId,
+    };
+    const url = buildApiUrl(scene, slots);
+    lastUrl = url;
+
+    try {
+      image = await loadImage(url);
+      break;
+    } catch {
+      // Try the next known id.
+    }
+  }
+
+  if (!image) {
+    throw new Error(`Failed to load image: ${lastUrl}`);
+  }
 
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
