@@ -890,6 +890,14 @@ async function loadCosmeticImages(
     const paths: string[] = [];
 
     if (baseFrame === 0) {
+      // Front is a three-piece composite. frame_7 supplies the
+      // missing right-side/front hair, while frame_5 and frame_6
+      // provide the remaining hair/crown pieces.
+      const missingHair = findFramePath(
+        mermaidHairFrames,
+        7,
+        "mermaid_hair__31461__frame_7"
+      );
       const base = findFramePath(
         mermaidHairFrames,
         5,
@@ -901,6 +909,7 @@ async function loadCosmeticImages(
         "mermaid_hair__31461__frame_6"
       );
 
+      if (missingHair) paths.push(missingHair);
       if (base) paths.push(base);
       if (overlay) paths.push(overlay);
     } else if (baseFrame === 2) {
@@ -935,10 +944,10 @@ async function loadCosmeticImages(
       try {
         images.push({
           image: await loadImage(joinUrl(baseUrl, path)),
-          // frame_5/frame_3 are the recolorable hair pieces.
+          // frame_7 and frame_5/frame_3 are recolorable hair pieces.
           // frame_6/frame_4 are the crown pieces and must keep
           // their original color when the hair color changes.
-          tint: i === 0,
+          tint: baseFrame === 0 ? i < 2 : i === 0,
         });
       } catch {
         // Keep rendering any other layer that loaded successfully.
