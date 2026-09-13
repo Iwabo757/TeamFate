@@ -292,11 +292,6 @@ function buildAlphaMask(
   return { width, height, data, minX, minY, maxX, maxY };
 }
 
-function maskBounds(mask: AlphaMask): number {
-  if (mask.maxX < mask.minX || mask.maxY < mask.minY) return 0;
-  return (mask.maxX - mask.minX + 1) * (mask.maxY - mask.minY + 1);
-}
-
 function dilateMask(mask: AlphaMask, radius = 1): Uint8Array {
   const out = new Uint8Array(mask.data.length);
   for (let y = 0; y < mask.height; y++) {
