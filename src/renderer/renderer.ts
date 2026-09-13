@@ -825,12 +825,23 @@ async function loadCosmeticImages(
   if (isMermaidHairCrown(cosmetic)) {
     const paths: string[] = [];
 
+    /* The supplied hair assets are reversed relative to the builder's
+     * view labels. Swap Front and Back here; Side stays unchanged.
+     *
+     * Builder/base views:
+     *   0 = Front
+     *   2 = Side
+     *   1 = Back
+     */
     if (baseFrame === 0) {
-      const base = findFramePath(frames, 5);
-      const overlay = findFramePath(frames, 1);
+      // Builder Front -> use the asset that was previously being used for Back.
+      const front = findFramePath(
+        frames,
+        3,
+        "mermaid_hair_crown__31599__frame_3"
+      );
 
-      if (base) paths.push(base);
-      if (overlay) paths.push(overlay);
+      if (front) paths.push(front);
     } else if (baseFrame === 2) {
       const base = findFramePath(frames, 3);
       const overlay = findFramePath(frames, 4);
@@ -838,13 +849,12 @@ async function loadCosmeticImages(
       if (base) paths.push(base);
       if (overlay) paths.push(overlay);
     } else if (baseFrame === 1) {
-      const back = findFramePath(
-        frames,
-        3,
-        "mermaid_hair_crown__31599__frame_3"
-      );
+      // Builder Back -> use the asset that was previously being used for Front.
+      const base = findFramePath(frames, 5);
+      const overlay = findFramePath(frames, 1);
 
-      if (back) paths.push(back);
+      if (base) paths.push(base);
+      if (overlay) paths.push(overlay);
     }
 
     const images: HTMLImageElement[] = [];
@@ -879,8 +889,22 @@ async function loadCosmeticImages(
     let sourceCosmetic = cosmetic;
     let path: string | null = null;
 
+    /* Front/Back are reversed for these Mermaid assets. */
     if (baseFrame === 0) {
-      path = findFramePath(frames, 2);
+      // Builder Front -> old Back asset.
+      sourceCosmetic =
+        manifest.cosmetics?.[
+          "Mermaid Hair Crown"
+        ] ?? cosmetic;
+
+      const sourceFrames =
+        sourceCosmetic.frames ?? [];
+
+      path = findFramePath(
+        sourceFrames,
+        3,
+        "mermaid_hair_crown__31599__frame_3"
+      );
     } else {
       sourceCosmetic =
         manifest.cosmetics?.[
@@ -897,11 +921,8 @@ async function loadCosmeticImages(
           "mermaid_hair_crown__31599__frame_2"
         );
       } else if (baseFrame === 1) {
-        path = findFramePath(
-          sourceFrames,
-          3,
-          "mermaid_hair_crown__31599__frame_3"
-        );
+        // Builder Back -> old Front asset.
+        path = findFramePath(frames, 2);
       }
     }
 
