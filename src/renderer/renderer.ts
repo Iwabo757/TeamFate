@@ -1,4 +1,4 @@
-```ts
+
 // src/renderer/renderer.ts
 //
 // Team Fate cosmetic renderer
