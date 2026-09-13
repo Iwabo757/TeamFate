@@ -88,6 +88,11 @@ type Direction = "back" | "side";
 
 type DirectionalFrames = Partial<Record<Direction, number>>;
 
+type CosmeticRenderLayer = {
+  image: HTMLImageElement;
+  tint: boolean;
+};
+
 type SpriteSignature = {
   pixels: number;
   minX: number;
@@ -806,7 +811,7 @@ async function loadCosmeticImages(
   baseFrames: string[],
   baseUrl: string,
   manifest: RendererManifest
-): Promise<HTMLImageElement[]> {
+): Promise<CosmeticRenderLayer[]> {
   if (!cosmetic.layer) {
     throw new Error(
       `Cosmetic has no layer: ${cosmetic.name ?? "Unknown"}`
@@ -854,7 +859,10 @@ async function loadCosmeticImages(
 
     try {
       return [
-        await loadImage(joinUrl(baseUrl, path)),
+        {
+          image: await loadImage(joinUrl(baseUrl, path)),
+          tint: true,
+        },
       ];
     } catch {
       return [];
@@ -919,13 +927,19 @@ async function loadCosmeticImages(
       if (back) paths.push(back);
     }
 
-    const images: HTMLImageElement[] = [];
+    const images: CosmeticRenderLayer[] = [];
 
-    for (const path of paths) {
+    for (let i = 0; i < paths.length; i += 1) {
+      const path = paths[i];
+
       try {
-        images.push(
-          await loadImage(joinUrl(baseUrl, path))
-        );
+        images.push({
+          image: await loadImage(joinUrl(baseUrl, path)),
+          // frame_5/frame_3 are the recolorable hair pieces.
+          // frame_6/frame_4 are the crown pieces and must keep
+          // their original color when the hair color changes.
+          tint: i === 0,
+        });
       } catch {
         // Keep rendering any other layer that loaded successfully.
       }
@@ -949,9 +963,12 @@ async function loadCosmeticImages(
     if (baseFrame === 0) {
       try {
         return [
-          await loadImage(
-            joinUrl(baseUrl, cosmetic.layer)
-          ),
+          {
+            image: await loadImage(
+              joinUrl(baseUrl, cosmetic.layer)
+            ),
+            tint: true,
+          },
         ];
       } catch {
         return [];
@@ -969,9 +986,12 @@ async function loadCosmeticImages(
 
   try {
     return [
-      await loadImage(
-        joinUrl(baseUrl, framePath)
-      ),
+      {
+        image: await loadImage(
+          joinUrl(baseUrl, framePath)
+        ),
+        tint: true,
+      },
     ];
   } catch {
     return [];
@@ -1281,7 +1301,7 @@ export async function renderCharacter(
       continue;
     }
 
-    let cosmeticImages: HTMLImageElement[];
+    let cosmeticImages: CosmeticRenderLayer[];
 
     try {
       cosmeticImages =
@@ -1309,7 +1329,8 @@ export async function renderCharacter(
         slot as keyof CosmeticTints
       ];
 
-    for (const cosmeticImage of cosmeticImages) {
+    for (const cosmeticLayer of cosmeticImages) {
+      const cosmeticImage = cosmeticLayer.image;
       const layerCanvas =
         createCanvas(
           width,
@@ -1341,7 +1362,7 @@ export async function renderCharacter(
         height
       );
 
-      if (tint) {
+      if (tint && cosmeticLayer.tint) {
         applyTint(
           layerContext,
           width,
