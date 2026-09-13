@@ -250,6 +250,9 @@ const NAME_ALIASES: Record<string, string[]> = {
     "yellow christmas stocking",
     "yellow xmas stocking",
   ],
+  // The Team Fate pak calls this cosmetic "Mermaid Hair Crown",
+  // but the current PokeMMO cosmetic catalog calls it "Mermaid Hair (Alt)".
+  "mermaid hair crown": ["mermaid hair (alt)"],
 };
 
 async function resolveApiItemId(
