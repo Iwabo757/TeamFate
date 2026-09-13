@@ -221,12 +221,18 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 }
 
 // Names present in the Team Fate pak that intentionally differ from the
-// English cosmetic name used by PokeMMO's item catalog.
+// current English cosmetic names used by PokeMMO's item catalog.
 // A small set of cosmetics that are present in the current PokeMMO game
 // catalog but are missing from the older PokeMMO Hub item.json mirror.
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
 const KNOWN_FIEREU_IDS: Record<string, number> = {
   "elegant ponytail": 2563,
+
+  // Current PokeMMO / Fiereu cosmetic IDs.
+  // These cover cosmetics missing from the older PokeMMO Hub catalog mirror.
+  "mermaid hair alt": 2561,
+  "idol hairstyle": 2558,
+  "scene": 2535,
 };
 
 const NAME_ALIASES: Record<string, string[]> = {
@@ -250,9 +256,10 @@ const NAME_ALIASES: Record<string, string[]> = {
     "yellow christmas stocking",
     "yellow xmas stocking",
   ],
-  // The Team Fate pak calls this cosmetic "Mermaid Hair Crown",
-  // but the current PokeMMO cosmetic catalog calls it "Mermaid Hair (Alt)".
+
+  // Compatibility with older Team Fate manifest names.
   "mermaid hair crown": ["mermaid hair (alt)"],
+  "scene": ["reverse scene"],
 };
 
 async function resolveApiItemId(
