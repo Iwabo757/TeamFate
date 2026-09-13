@@ -222,6 +222,13 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 
 // Names present in the Team Fate pak that intentionally differ from the
 // English cosmetic name used by PokeMMO's item catalog.
+// A small set of cosmetics that are present in the current PokeMMO game
+// catalog but are missing from the older PokeMMO Hub item.json mirror.
+// These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
+const KNOWN_FIEREU_IDS: Record<string, number> = {
+  "elegant ponytail": 2563,
+};
+
 const NAME_ALIASES: Record<string, string[]> = {
   "default hair": ["default hair"],
   brown: ["brown eyes"],
@@ -254,6 +261,9 @@ async function resolveApiItemId(
 
   // These are the API's empty/default values, not equipped cosmetic items.
   const normalized = normalizeName(cosmeticName);
+  const knownId = KNOWN_FIEREU_IDS[normalized];
+  if (knownId !== undefined) return knownId;
+
   if (normalized === "default hair") return 0;
   if (normalized === "brown" || normalized === "brown eyes") return 1438;
   if (normalized === "angry" || normalized === "angry eyes") return 1444;
