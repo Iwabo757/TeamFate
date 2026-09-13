@@ -804,7 +804,8 @@ async function loadCosmeticImages(
   cosmetic: Cosmetic,
   baseFrame: number,
   baseFrames: string[],
-  baseUrl: string
+  baseUrl: string,
+  manifest: RendererManifest
 ): Promise<HTMLImageElement[]> {
   if (!cosmetic.layer) {
     throw new Error(
@@ -870,22 +871,38 @@ async function loadCosmeticImages(
    * Back  = mermaid_hair_crown__31599__frame_3
    */
   if (isNormalMermaidHair(cosmetic)) {
+    /*
+     * Normal Mermaid Hair uses its own frame_2 for Front.
+     * Its Side and Back artwork comes from the separate
+     * Mermaid Hair Crown cosmetic.
+     */
+    let sourceCosmetic = cosmetic;
     let path: string | null = null;
 
     if (baseFrame === 0) {
       path = findFramePath(frames, 2);
-    } else if (baseFrame === 2) {
-      path = findFramePath(
-        frames,
-        2,
-        "mermaid_hair_crown__31599__frame_2"
-      );
-    } else if (baseFrame === 1) {
-      path = findFramePath(
-        frames,
-        3,
-        "mermaid_hair_crown__31599__frame_3"
-      );
+    } else {
+      sourceCosmetic =
+        manifest.cosmetics?.[
+          "Mermaid Hair Crown"
+        ] ?? cosmetic;
+
+      const sourceFrames =
+        sourceCosmetic.frames ?? [];
+
+      if (baseFrame === 2) {
+        path = findFramePath(
+          sourceFrames,
+          2,
+          "mermaid_hair_crown__31599__frame_2"
+        );
+      } else if (baseFrame === 1) {
+        path = findFramePath(
+          sourceFrames,
+          3,
+          "mermaid_hair_crown__31599__frame_3"
+        );
+      }
     }
 
     if (!path) return [];
@@ -1254,7 +1271,8 @@ export async function renderCharacter(
           cosmetic,
           baseFrameIndex,
           base.frames,
-          baseUrl
+          baseUrl,
+          manifest
         );
     } catch (error) {
       console.warn(
