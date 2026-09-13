@@ -206,12 +206,13 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
         for (const item of items) {
           if (item.category !== 6 || !Number.isFinite(item.id)) continue;
 
-          // Keep both namespaces. Try the internal item id first and the
-          // cosmetic/Dex id second instead of assuming one namespace globally.
-          const ids = [Number(item.id)];
+          // Fiereu expects the cosmetic/vanity (dex) namespace for cosmetics
+          // when one exists. Keep the internal PokeMMO item id as a fallback.
+          const ids: number[] = [];
           if (Number.isFinite(item.dex) && Number(item.dex) > 0) {
             ids.push(Number(item.dex));
           }
+          ids.push(Number(item.id));
 
           if (item.en_name) {
             addIds(byName, normalizeName(item.en_name), ids);
@@ -239,17 +240,17 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
 const KNOWN_FIEREU_IDS: Record<string, number[]> = {
   // Older/newer cosmetics where we know both namespaces.
-  afro: [1185, 2513],
-  sideswept: [1183, 2517],
-  "reverse scene": [1181, 2535],
-  scene: [1181, 2535],
+  afro: [2513, 1185],
+  sideswept: [2517, 1183],
+  "reverse scene": [2535, 1181],
+  scene: [2535, 1181],
 
-  "golden cuffed ponytail": [2235, 2559],
-  "mermaid hair": [2257, 2560],
-  "elven ponytail": [2292, 2562],
-  "elegant ponytail": [2317, 2563],
-  "origin hairstyle": [2318, 2565],
-  "colorful unicorn hair": [2319, 2566],
+  "golden cuffed ponytail": [2559, 2235],
+  "mermaid hair": [2560, 2257],
+  "elven ponytail": [2562, 2292],
+  "elegant ponytail": [2563, 2317],
+  "origin hairstyle": [2565, 2318],
+  "colorful unicorn hair": [2566, 2319],
 
   // Present in the current cosmetic catalog but missing from the older
   // PokeMMO Hub item.json mirror.

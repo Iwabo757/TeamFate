@@ -70,19 +70,26 @@ const SLOT_IDS: CosmeticSlot[] = [
 ];
 
 /* =========================================================
+   DEFAULT OUTFIT
+   ========================================================= */
+
+const DEFAULT_COSMETICS: Partial<
+  Record<CosmeticSlot, string>
+> = {
+  eyes: "Brown",
+  hair: "Default Hair",
+  top: "T-Shirt",
+  pants: "Pants",
+  shoes: "Shoes",
+};
+
+/* =========================================================
    CHARACTER VIEWS
    =========================================================
 
-   These are the actual idle directional frames from the local base
-   character sequence:
-
-   0 = Front
-   2 = Side
-   1 = Back
-
-   Cosmetic directional resources are indexed against these same frame
-   numbers, so the renderer must receive the real base frame instead of
-   converting it into artificial 13/26/39 direction groups.
+   Frame 0 = Front
+   Frame 1 = Back
+   Frame 2 = Side
 */
 
 const VIEW_DEFINITIONS = [
@@ -99,6 +106,7 @@ const VIEW_DEFINITIONS = [
     frame: 1,
   },
 ];
+
 /* =========================================================
    COLORS
    ========================================================= */
@@ -193,8 +201,12 @@ export default function CosmeticBuilder() {
 
   const [equipped, setEquipped] =
     useState<
-      Partial<Record<CosmeticSlot, string>>
-    >({});
+      Partial<
+        Record<CosmeticSlot, string>
+      >
+    >({
+      ...DEFAULT_COSMETICS,
+    });
 
   const [colors, setColors] =
     useState<
@@ -486,7 +498,17 @@ export default function CosmeticBuilder() {
           ...current,
         };
 
-        delete next[slot];
+        const defaultItem =
+          DEFAULT_COSMETICS[
+            slot
+          ];
+
+        if (defaultItem) {
+          next[slot] =
+            defaultItem;
+        } else {
+          delete next[slot];
+        }
 
         return next;
       }
@@ -522,7 +544,9 @@ export default function CosmeticBuilder() {
 
     setQuery("");
 
-    setEquipped({});
+    setEquipped({
+      ...DEFAULT_COSMETICS,
+    });
 
     setColors({
       hair: DEFAULT_COLOR,
@@ -542,7 +566,9 @@ export default function CosmeticBuilder() {
 
     const next: Partial<
       Record<CosmeticSlot, string>
-    > = {};
+    > = {
+      ...DEFAULT_COSMETICS,
+    };
 
     for (
       const slot of SLOT_IDS
@@ -793,13 +819,11 @@ export default function CosmeticBuilder() {
 
                         <div className="cosmetic-item-icon">
 
-{item.icon && (
-  <img
-    src={`${ASSET_ROOT}/${item.icon}`}
-    alt=""
-    loading="lazy"
-  />
-)}
+                          <img
+                            src={`${ASSET_ROOT}/${item.icon}`}
+                            alt=""
+                            loading="lazy"
+                          />
 
                           <span>
                             {
