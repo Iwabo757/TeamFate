@@ -203,45 +203,44 @@ async function getMermaidLayers(
   return [];
 }
 
-type PixelStats = {
-  count: number;
+type AlphaMask = {
+  width: number;
+  height: number;
+  data: Uint8Array;
   minX: number;
   minY: number;
   maxX: number;
   maxY: number;
-  centerX: number;
-  centerY: number;
-  width: number;
-  height: number;
 };
 
 type DirectionTarget = "back" | "side";
+type DirectionResult = Record<DirectionTarget, number | null>;
 
-/*
- * These regions are NOT frame mappings. They only tell the detector which
- * part of the character is useful evidence for a given slot.
- *
- * A cosmetic can put Back at frame 10, Side at frame 26, frame 1/2, or any
- * other positions. The detector scans the complete frame list.
- */
+const directionCache = new Map<string, Promise<DirectionResult>>();
+const baseDirectionCache = new Map<string, Promise<{
+  back: HTMLImageElement | null;
+  side: HTMLImageElement | null;
+  all: Array<HTMLImageElement | null>;
+}>>();
+
 const DIRECTION_REGIONS: Record<CosmeticSlot, [number, number, number, number]> = {
-  back:  [0, 8, 56, 50],
-  pants: [6, 30, 50, 55],
-  shoes: [3, 42, 53, 56],
-  top:   [4, 15, 53, 45],
-  eyes:  [9, 8, 48, 29],
-  face:  [6, 7, 50, 36],
-  hair:  [2, 0, 54, 31],
-  held:  [0, 12, 56, 52],
-  hat:   [0, 0, 56, 25],
-  tool:  [0, 0, 56, 56],
-  mount: [0, 0, 56, 56],
+  back:  [0, 4, 57, 54],
+  pants: [4, 25, 53, 56],
+  shoes: [2, 38, 55, 56],
+  top:   [2, 12, 55, 48],
+  eyes:  [7, 7, 50, 29],
+  face:  [4, 5, 53, 39],
+  hair:  [0, 0, 57, 34],
+  held:  [0, 10, 57, 55],
+  hat:   [0, 0, 57, 28],
+  tool:  [0, 0, 57, 56],
+  mount: [0, 0, 57, 56],
 };
 
-function makeAlphaStats(
+function buildAlphaMask(
   image: HTMLImageElement,
   region: [number, number, number, number]
-): PixelStats {
+): AlphaMask {
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
   const canvas = document.createElement("canvas");
@@ -249,43 +248,40 @@ function makeAlphaStats(
   canvas.height = height;
   const ctx = canvas.getContext("2d", { willReadFrequently: true });
 
+  const data = new Uint8Array(width * height);
   if (!ctx) {
     return {
-      count: 0, minX: width, minY: height, maxX: -1, maxY: -1,
-      centerX: width / 2, centerY: height / 2, width: 0, height: 0,
+      width, height, data,
+      minX: width, minY: height, maxX: -1, maxY: -1,
     };
   }
 
+  ctx.clearRect(0, 0, width, height);
   ctx.drawImage(image, 0, 0, width, height);
-  const data = ctx.getImageData(0, 0, width, height).data;
+  const rgba = ctx.getImageData(0, 0, width, height).data;
   const [x0, y0, x1, y1] = region;
-  const rx0 = Math.max(0, Math.min(width, x0));
-  const ry0 = Math.max(0, Math.min(height, y0));
-  const rx1 = Math.max(rx0, Math.min(width, x1));
-  const ry1 = Math.max(ry0, Math.min(height, y1));
 
-  let count = 0;
-  let sumX = 0;
-  let sumY = 0;
   let minX = width;
   let minY = height;
   let maxX = -1;
   let maxY = -1;
 
+  const rx0 = Math.max(0, Math.floor(x0));
+  const ry0 = Math.max(0, Math.floor(y0));
+  const rx1 = Math.min(width, Math.ceil(x1));
+  const ry1 = Math.min(height, Math.ceil(y1));
+
   for (let y = ry0; y < ry1; y++) {
     for (let x = rx0; x < rx1; x++) {
       const i = (y * width + x) * 4;
-      const alpha = data[i + 3];
-      if (!alpha) continue;
+      if (!rgba[i + 3]) continue;
       if (
-        Math.abs(data[i] - CHROMA.r) <= CHROMA.tolerance &&
-        Math.abs(data[i + 1] - CHROMA.g) <= CHROMA.tolerance &&
-        Math.abs(data[i + 2] - CHROMA.b) <= CHROMA.tolerance
+        Math.abs(rgba[i] - CHROMA.r) <= CHROMA.tolerance &&
+        Math.abs(rgba[i + 1] - CHROMA.g) <= CHROMA.tolerance &&
+        Math.abs(rgba[i + 2] - CHROMA.b) <= CHROMA.tolerance
       ) continue;
 
-      count++;
-      sumX += x;
-      sumY += y;
+      data[y * width + x] = 1;
       minX = Math.min(minX, x);
       minY = Math.min(minY, y);
       maxX = Math.max(maxX, x);
@@ -293,49 +289,132 @@ function makeAlphaStats(
     }
   }
 
-  return {
-    count,
-    minX,
-    minY,
-    maxX,
-    maxY,
-    centerX: count ? sumX / count : width / 2,
-    centerY: count ? sumY / count : height / 2,
-    width: count ? maxX - minX + 1 : 0,
-    height: count ? maxY - minY + 1 : 0,
-  };
+  return { width, height, data, minX, minY, maxX, maxY };
 }
 
-function compareStats(a: PixelStats, b: PixelStats): number {
-  if (!a.count || !b.count) return 0;
+function maskBounds(mask: AlphaMask): number {
+  if (mask.maxX < mask.minX || mask.maxY < mask.minY) return 0;
+  return (mask.maxX - mask.minX + 1) * (mask.maxY - mask.minY + 1);
+}
 
-  const areaA = a.width * a.height;
-  const areaB = b.width * b.height;
-  const areaScore = 1 - Math.min(1, Math.abs(areaA - areaB) / Math.max(areaA, areaB));
-  const countScore = 1 - Math.min(1, Math.abs(a.count - b.count) / Math.max(a.count, b.count));
+function dilateMask(mask: AlphaMask, radius = 1): Uint8Array {
+  const out = new Uint8Array(mask.data.length);
+  for (let y = 0; y < mask.height; y++) {
+    for (let x = 0; x < mask.width; x++) {
+      if (!mask.data[y * mask.width + x]) continue;
+      for (let dy = -radius; dy <= radius; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= mask.height) continue;
+        for (let dx = -radius; dx <= radius; dx++) {
+          const xx = x + dx;
+          if (xx < 0 || xx >= mask.width) continue;
+          out[yy * mask.width + xx] = 1;
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function overlapScore(a: AlphaMask, b: AlphaMask): number {
+  let aCount = 0;
+  let bCount = 0;
+  let intersection = 0;
+
+  const length = Math.min(a.data.length, b.data.length);
+  for (let i = 0; i < length; i++) {
+    if (a.data[i]) aCount++;
+    if (b.data[i]) bCount++;
+    if (a.data[i] && b.data[i]) intersection++;
+  }
+
+  if (!aCount || !bCount) return 0;
+  return intersection / Math.min(aCount, bCount);
+}
+
+function directionalBaseScore(a: AlphaMask, b: AlphaMask): number {
+  const overlap = overlapScore(a, b);
+  const aw = Math.max(1, a.maxX - a.minX + 1);
+  const ah = Math.max(1, a.maxY - a.minY + 1);
+  const bw = Math.max(1, b.maxX - b.minX + 1);
+  const bh = Math.max(1, b.maxY - b.minY + 1);
+
+  const widthScore = 1 - Math.min(1, Math.abs(aw - bw) / Math.max(aw, bw));
+  const heightScore = 1 - Math.min(1, Math.abs(ah - bh) / Math.max(ah, bh));
+  const centerAx = (a.minX + a.maxX) / 2;
+  const centerAy = (a.minY + a.maxY) / 2;
+  const centerBx = (b.minX + b.maxX) / 2;
+  const centerBy = (b.minY + b.maxY) / 2;
   const centerScore = 1 - Math.min(
     1,
-    Math.hypot(a.centerX - b.centerX, a.centerY - b.centerY) / 40
+    Math.hypot(centerAx - centerBx, centerAy - centerBy) / 12
   );
-  const widthScore = 1 - Math.min(1, Math.abs(a.width - b.width) / Math.max(a.width, b.width));
-  const heightScore = 1 - Math.min(1, Math.abs(a.height - b.height) / Math.max(a.height, b.height));
 
-  return (
-    areaScore * 0.20 +
-    countScore * 0.25 +
-    centerScore * 0.20 +
-    widthScore * 0.175 +
-    heightScore * 0.175
-  );
+  return overlap * 0.60 + widthScore * 0.15 + heightScore * 0.15 + centerScore * 0.10;
 }
 
-const directionCache = new Map<string, Promise<Record<DirectionTarget, number | null>>>();
+function candidateDirectionScore(
+  candidate: AlphaMask,
+  reference: AlphaMask,
+  other: AlphaMask
+): number {
+  const referenceDilated = dilateMask(reference, 2);
+  const otherDilated = dilateMask(other, 2);
+
+  let count = 0;
+  let onReference = 0;
+  let onOther = 0;
+
+  for (let i = 0; i < candidate.data.length; i++) {
+    if (!candidate.data[i]) continue;
+    count++;
+    if (referenceDilated[i]) onReference++;
+    if (otherDilated[i]) onOther++;
+  }
+
+  if (!count) return -Infinity;
+
+  // A correct directional frame should sit on the same body silhouette.
+  // Reward target overlap and penalize overlap with the opposite direction.
+  const support = onReference / count;
+  const opposite = onOther / count;
+  return support * 0.80 - opposite * 0.20;
+}
+
+async function getDirectionalBaseFrames(
+  baseUrl: string,
+  manifest: RendererManifest
+): Promise<{
+  back: HTMLImageElement | null;
+  side: HTMLImageElement | null;
+  all: Array<HTMLImageElement | null>;
+}> {
+  const base = getBaseData(manifest, 1);
+  const key = `${baseUrl}|${base.frames.join("|")}`;
+  const cached = baseDirectionCache.get(key);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const all = await Promise.all(
+      base.frames.map((path) => loadImage(joinUrl(baseUrl, path)).catch(() => null))
+    );
+
+    return {
+      back: all[1] ?? null,
+      side: all[2] ?? null,
+      all,
+    };
+  })();
+
+  baseDirectionCache.set(key, promise);
+  return promise;
+}
 
 async function resolveCosmeticDirections(
   cosmetic: Cosmetic,
   baseUrl: string,
   manifest: RendererManifest
-): Promise<Record<DirectionTarget, number | null>> {
+): Promise<DirectionResult> {
   const frames = cosmetic.frames ?? [];
   if (!frames.length) return { back: null, side: null };
 
@@ -344,77 +423,89 @@ async function resolveCosmeticDirections(
   if (cached) return cached;
 
   const promise = (async () => {
-    const base = getBaseData(manifest, 1);
-
-    // The extracted base sequence is: 0 = Front, 1 = Back, 2 = Side.
-    // Keep these names aligned with the actual view they represent.
-    const backPath = base.frames[1];
-    const sidePath = base.frames[2];
-    if (!backPath && !sidePath) return { back: null, side: null };
+    const base = await getDirectionalBaseFrames(baseUrl, manifest);
+    if (!base.back || !base.side) return { back: null, side: null };
 
     const region = DIRECTION_REGIONS[cosmetic.slot];
     const [backImage, sideImage, ...candidateImages] = await Promise.all([
-      backPath ? loadImage(joinUrl(baseUrl, backPath)).catch(() => null) : Promise.resolve(null),
-      sidePath ? loadImage(joinUrl(baseUrl, sidePath)).catch(() => null) : Promise.resolve(null),
+      Promise.resolve(base.back),
+      Promise.resolve(base.side),
       ...frames.map((path) => loadImage(joinUrl(baseUrl, path)).catch(() => null)),
     ]);
 
-    const backStats = backImage ? makeAlphaStats(backImage, region) : null;
-    const sideStats = sideImage ? makeAlphaStats(sideImage, region) : null;
+    if (!backImage || !sideImage) return { back: null, side: null };
 
-    let bestBack = -1;
-    let bestSide = -1;
-    let bestBackScore = -Infinity;
-    let bestSideScore = -Infinity;
+    const backAnchor = buildAlphaMask(backImage, region);
+    const sideAnchor = buildAlphaMask(sideImage, region);
 
-    candidateImages.forEach((image, index) => {
-      if (!image) return;
-      const stats = makeAlphaStats(image, region);
+    // Build masks for every base frame. Each animation frame is classified as
+    // Back or Side by comparing its silhouette to the known direction anchors.
+    // This is important because cosmetic frame numbers do NOT line up with
+    // base frame numbers; e.g. one cosmetic can put Back at frame 10 and Side
+    // at frame 26 while another uses completely different numbers.
+    const backReferences: AlphaMask[] = [backAnchor];
+    const sideReferences: AlphaMask[] = [sideAnchor];
 
-      if (backStats) {
-        const score = compareStats(stats, backStats);
-        if (score > bestBackScore) {
-          bestBackScore = score;
-          bestBack = index;
-        }
-      }
+    for (let i = 0; i < base.all.length; i++) {
+      const image = base.all[i];
+      if (!image || image === backImage || image === sideImage) continue;
 
-      if (sideStats) {
-        const score = compareStats(stats, sideStats);
-        if (score > bestSideScore) {
-          bestSideScore = score;
-          bestSide = index;
-        }
-      }
-    });
+      const mask = buildAlphaMask(image, region);
+      const backScore = directionalBaseScore(mask, backAnchor);
+      const sideScore = directionalBaseScore(mask, sideAnchor);
 
-    // Never use the same candidate for both directions when there are other
-    // candidates. This matters for cosmetics whose frames are near-identical.
-    if (bestBack === bestSide && frames.length > 1) {
-      const alternatives = candidateImages
-        .map((image, index) => {
-          if (!image || index === bestBack) return null;
-          const stats = makeAlphaStats(image, region);
-          return {
-            index,
-            back: backStats ? compareStats(stats, backStats) : -Infinity,
-            side: sideStats ? compareStats(stats, sideStats) : -Infinity,
-          };
-        })
-        .filter((v): v is { index: number; back: number; side: number } => !!v);
-
-      const bestAlternativeForSide = alternatives.sort((a, b) =>
-        (b.side - b.back) - (a.side - a.back)
-      )[0];
-
-      if (bestAlternativeForSide) {
-        bestSide = bestAlternativeForSide.index;
+      if (backScore >= sideScore) {
+        backReferences.push(mask);
+      } else {
+        sideReferences.push(mask);
       }
     }
 
+    const ranked = candidateImages.map((image, index) => {
+      if (!image) return null;
+      const mask = buildAlphaMask(image, region);
+
+      let bestBack = -Infinity;
+      let bestSide = -Infinity;
+
+      for (const reference of backReferences) {
+        bestBack = Math.max(
+          bestBack,
+          candidateDirectionScore(mask, reference, sideAnchor)
+        );
+      }
+
+      for (const reference of sideReferences) {
+        bestSide = Math.max(
+          bestSide,
+          candidateDirectionScore(mask, reference, backAnchor)
+        );
+      }
+
+      return { index, back: bestBack, side: bestSide, mask };
+    }).filter((x): x is {
+      index: number;
+      back: number;
+      side: number;
+      mask: AlphaMask;
+    } => !!x);
+
+    if (!ranked.length) return { back: null, side: null };
+
+    // Pick independent winners, then make sure one frame is not assigned to
+    // both directions when the cosmetic has multiple distinct frames.
+    const bestBack = [...ranked].sort((a, b) => b.back - a.back)[0];
+    let bestSide = [...ranked].sort((a, b) => b.side - a.side)[0];
+
+    if (bestSide.index === bestBack.index && ranked.length > 1) {
+      bestSide = [...ranked]
+        .filter((x) => x.index !== bestBack.index)
+        .sort((a, b) => b.side - a.side)[0] ?? bestSide;
+    }
+
     return {
-      back: bestBack >= 0 ? bestBack : null,
-      side: bestSide >= 0 ? bestSide : null,
+      back: bestBack.index,
+      side: bestSide.index,
     };
   })();
 
@@ -428,7 +519,6 @@ async function getGenericLayers(
   baseUrl: string,
   manifest: RendererManifest
 ): Promise<RenderLayer[]> {
-  // Front always uses the cosmetic's primary layer.
   if (baseFrame === 0) {
     return loadLayer(cosmetic.layer, baseUrl, true);
   }
@@ -436,16 +526,12 @@ async function getGenericLayers(
   const frames = cosmetic.frames ?? [];
   if (!frames.length) return [];
 
-  // Eyes are normally only visible from the front/side. If a cosmetic has
-  // directional frames, the detector still decides which one is Side.
-  if (cosmetic.slot === "eyes" && baseFrame === 2) {
+  // Eyes are not drawn on the Back view.
+  if (cosmetic.slot === "eyes" && baseFrame === 1) {
     return [];
   }
 
   const directions = await resolveCosmeticDirections(cosmetic, baseUrl, manifest);
-
-  // Base frame 1 is Back; base frame 2 is Side.
-  // The detector returns direction names, so keep them aligned with the base.
   const index = baseFrame === 1 ? directions.back : directions.side;
 
   if (index === null || index < 0 || index >= frames.length) return [];
