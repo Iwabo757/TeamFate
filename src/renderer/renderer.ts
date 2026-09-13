@@ -173,8 +173,8 @@ async function getMermaidLayers(
   if (isNormalMermaidHair(cosmetic)) {
     const path =
       baseFrame === 0 ? findFrame(crownFrames, 3) :
-      baseFrame === 2 ? findFrame(crownFrames, 2) :
-      baseFrame === 1 ? findFrame(crownFrames, 1) : null;
+      baseFrame === 1 ? findFrame(crownFrames, 2) :
+      baseFrame === 2 ? findFrame(crownFrames, 1) : null;
 
     return loadLayer(path, baseUrl, true);
   }
@@ -186,10 +186,10 @@ async function getMermaidLayers(
       pieces.push([findFrame(hairFrames, 5), true]);
       pieces.push([findFrame(hairFrames, 6), false]);
       pieces.push([findFrame(hairFrames, 7), true]);
-    } else if (baseFrame === 2) {
+    } else if (baseFrame === 1) {
       pieces.push([findFrame(hairFrames, 3), true]);
       pieces.push([findFrame(hairFrames, 4), true]);
-    } else if (baseFrame === 1) {
+    } else if (baseFrame === 2) {
       pieces.push([findFrame(hairFrames, 2), true]);
     }
 
@@ -345,8 +345,14 @@ async function resolveCosmeticDirections(
 
   const promise = (async () => {
     const base = getBaseData(manifest, 1);
-    const backPath = base.frames[1];
-    const sidePath = base.frames[2];
+
+    // The actual extracted base sequence is:
+    //   0 = Front
+    //   1 = Side
+    //   2 = Back
+    // Keep cosmetic direction resolution tied to these real base frames.
+    const backPath = base.frames[2];
+    const sidePath = base.frames[1];
     if (!backPath && !sidePath) return { back: null, side: null };
 
     const region = DIRECTION_REGIONS[cosmetic.slot];
@@ -435,7 +441,7 @@ async function getGenericLayers(
 
   // Eyes are normally only visible from the front/side. If a cosmetic has
   // directional frames, the detector still decides which one is Side.
-  if (cosmetic.slot === "eyes" && baseFrame === 1) {
+  if (cosmetic.slot === "eyes" && baseFrame === 2) {
     return [];
   }
 

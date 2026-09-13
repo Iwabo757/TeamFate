@@ -77,8 +77,8 @@ const SLOT_IDS: CosmeticSlot[] = [
    character sequence:
 
    0 = Front
-   2 = Side
-   1 = Back
+   1 = Side
+   2 = Back
 
    Cosmetic directional resources are indexed against these same frame
    numbers, so the renderer must receive the real base frame instead of
@@ -92,11 +92,11 @@ const VIEW_DEFINITIONS = [
   },
   {
     label: "Side",
-    frame: 2,
+    frame: 1,
   },
   {
     label: "Back",
-    frame: 1,
+    frame: 2,
   },
 ];
 /* =========================================================
