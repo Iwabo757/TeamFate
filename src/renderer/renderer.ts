@@ -173,8 +173,8 @@ async function getMermaidLayers(
   if (isNormalMermaidHair(cosmetic)) {
     const path =
       baseFrame === 0 ? findFrame(crownFrames, 3) :
-      baseFrame === 1 ? findFrame(crownFrames, 2) :
-      baseFrame === 2 ? findFrame(crownFrames, 1) : null;
+      baseFrame === 1 ? findFrame(crownFrames, 1) :
+      baseFrame === 2 ? findFrame(crownFrames, 2) : null;
 
     return loadLayer(path, baseUrl, true);
   }
@@ -186,10 +186,10 @@ async function getMermaidLayers(
       pieces.push([findFrame(hairFrames, 5), true]);
       pieces.push([findFrame(hairFrames, 6), false]);
       pieces.push([findFrame(hairFrames, 7), true]);
-    } else if (baseFrame === 1) {
+    } else if (baseFrame === 2) {
       pieces.push([findFrame(hairFrames, 3), true]);
       pieces.push([findFrame(hairFrames, 4), true]);
-    } else if (baseFrame === 2) {
+    } else if (baseFrame === 1) {
       pieces.push([findFrame(hairFrames, 2), true]);
     }
 
@@ -346,21 +346,21 @@ async function resolveCosmeticDirections(
   const promise = (async () => {
     const base = getBaseData(manifest, 1);
 
-    // The extracted base sequence is: 0 = Front, 1 = Side, 2 = Back.
+    // The extracted base sequence is: 0 = Front, 1 = Back, 2 = Side.
     // Keep these names aligned with the actual view they represent.
-    const sidePath = base.frames[1];
-    const backPath = base.frames[2];
+    const backPath = base.frames[1];
+    const sidePath = base.frames[2];
     if (!backPath && !sidePath) return { back: null, side: null };
 
     const region = DIRECTION_REGIONS[cosmetic.slot];
-    const [sideImage, backImage, ...candidateImages] = await Promise.all([
-      sidePath ? loadImage(joinUrl(baseUrl, sidePath)).catch(() => null) : Promise.resolve(null),
+    const [backImage, sideImage, ...candidateImages] = await Promise.all([
       backPath ? loadImage(joinUrl(baseUrl, backPath)).catch(() => null) : Promise.resolve(null),
+      sidePath ? loadImage(joinUrl(baseUrl, sidePath)).catch(() => null) : Promise.resolve(null),
       ...frames.map((path) => loadImage(joinUrl(baseUrl, path)).catch(() => null)),
     ]);
 
-    const sideStats = sideImage ? makeAlphaStats(sideImage, region) : null;
     const backStats = backImage ? makeAlphaStats(backImage, region) : null;
+    const sideStats = sideImage ? makeAlphaStats(sideImage, region) : null;
 
     let bestBack = -1;
     let bestSide = -1;
@@ -444,9 +444,9 @@ async function getGenericLayers(
 
   const directions = await resolveCosmeticDirections(cosmetic, baseUrl, manifest);
 
-  // Base frame 1 is Side; base frame 2 is Back.
-  // Do not swap these: the cosmetic detector returns the same direction names.
-  const index = baseFrame === 1 ? directions.side : directions.back;
+  // Base frame 1 is Back; base frame 2 is Side.
+  // The detector returns direction names, so keep them aligned with the base.
+  const index = baseFrame === 1 ? directions.back : directions.side;
 
   if (index === null || index < 0 || index >= frames.length) return [];
   return loadLayer(frames[index], baseUrl, true);
