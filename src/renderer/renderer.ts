@@ -141,10 +141,23 @@ function isNormalMermaidHair(cosmetic: Cosmetic): boolean {
   return isMermaidHair(cosmetic) && !isMermaidCrown(cosmetic);
 }
 
+async function loadLayer(
+  path: string | null | undefined,
+  baseUrl: string,
+  tint: boolean
+): Promise<RenderLayer[]> {
+  if (!path) return [];
+  try {
+    return [{ image: await loadImage(joinUrl(baseUrl, path)), tint }];
+  } catch {
+    return [];
+  }
+}
+
 /*
- * The Mermaid resources are composite resources. These mappings are
- * intentionally explicit because they are based on the actual resource
- * pieces, not on the generic frame-number convention.
+ * Composite Mermaid resources.
+ * These are genuine multi-piece resources, so they cannot be treated as one
+ * ordinary cosmetic frame.
  */
 async function getMermaidLayers(
   cosmetic: Cosmetic,
@@ -159,49 +172,30 @@ async function getMermaidLayers(
 
   if (isNormalMermaidHair(cosmetic)) {
     const path =
-      baseFrame === 0
-        ? findFrame(crownFrames, 3)
-        : baseFrame === 2
-          ? findFrame(crownFrames, 2)
-          : baseFrame === 1
-            ? findFrame(crownFrames, 1)
-            : null;
+      baseFrame === 0 ? findFrame(crownFrames, 3) :
+      baseFrame === 2 ? findFrame(crownFrames, 2) :
+      baseFrame === 1 ? findFrame(crownFrames, 1) : null;
 
-    if (!path) return [];
-
-    try {
-      return [{ image: await loadImage(joinUrl(baseUrl, path)), tint: true }];
-    } catch {
-      return [];
-    }
+    return loadLayer(path, baseUrl, true);
   }
 
   if (isMermaidCrown(cosmetic)) {
-    const paths: Array<{ path: string | null; tint: boolean }> = [];
+    const pieces: Array<[string | null, boolean]> = [];
 
     if (baseFrame === 0) {
-      // Main hair, crown, then final hair piece covering the ears.
-      paths.push({ path: findFrame(hairFrames, 5), tint: true });
-      paths.push({ path: findFrame(hairFrames, 6), tint: false });
-      paths.push({ path: findFrame(hairFrames, 7), tint: true });
+      pieces.push([findFrame(hairFrames, 5), true]);
+      pieces.push([findFrame(hairFrames, 6), false]);
+      pieces.push([findFrame(hairFrames, 7), true]);
     } else if (baseFrame === 2) {
-      paths.push({ path: findFrame(hairFrames, 3), tint: true });
-      paths.push({ path: findFrame(hairFrames, 4), tint: true });
+      pieces.push([findFrame(hairFrames, 3), true]);
+      pieces.push([findFrame(hairFrames, 4), true]);
     } else if (baseFrame === 1) {
-      paths.push({ path: findFrame(hairFrames, 2), tint: true });
+      pieces.push([findFrame(hairFrames, 2), true]);
     }
 
     const result: RenderLayer[] = [];
-    for (const item of paths) {
-      if (!item.path) continue;
-      try {
-        result.push({
-          image: await loadImage(joinUrl(baseUrl, item.path)),
-          tint: item.tint,
-        });
-      } catch {
-        // Keep any other successfully loaded piece.
-      }
+    for (const [path, tint] of pieces) {
+      result.push(...await loadLayer(path, baseUrl, tint));
     }
     return result;
   }
@@ -209,72 +203,247 @@ async function getMermaidLayers(
   return [];
 }
 
+type PixelStats = {
+  count: number;
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  centerX: number;
+  centerY: number;
+  width: number;
+  height: number;
+};
+
+type DirectionTarget = "back" | "side";
+
 /*
- * Generic cosmetics:
- * Front uses the cosmetic's base layer.
- * Back prefers frame_1.
- * Side prefers frame_2.
+ * These regions are NOT frame mappings. They only tell the detector which
+ * part of the character is useful evidence for a given slot.
  *
- * This intentionally does not override the explicit Mermaid mappings.
+ * A cosmetic can put Back at frame 10, Side at frame 26, frame 1/2, or any
+ * other positions. The detector scans the complete frame list.
  */
+const DIRECTION_REGIONS: Record<CosmeticSlot, [number, number, number, number]> = {
+  back:  [0, 8, 56, 50],
+  pants: [6, 30, 50, 55],
+  shoes: [3, 42, 53, 56],
+  top:   [4, 15, 53, 45],
+  eyes:  [9, 8, 48, 29],
+  face:  [6, 7, 50, 36],
+  hair:  [2, 0, 54, 31],
+  held:  [0, 12, 56, 52],
+  hat:   [0, 0, 56, 25],
+  tool:  [0, 0, 56, 56],
+  mount: [0, 0, 56, 56],
+};
+
+function makeAlphaStats(
+  image: HTMLImageElement,
+  region: [number, number, number, number]
+): PixelStats {
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  if (!ctx) {
+    return {
+      count: 0, minX: width, minY: height, maxX: -1, maxY: -1,
+      centerX: width / 2, centerY: height / 2, width: 0, height: 0,
+    };
+  }
+
+  ctx.drawImage(image, 0, 0, width, height);
+  const data = ctx.getImageData(0, 0, width, height).data;
+  const [x0, y0, x1, y1] = region;
+  const rx0 = Math.max(0, Math.min(width, x0));
+  const ry0 = Math.max(0, Math.min(height, y0));
+  const rx1 = Math.max(rx0, Math.min(width, x1));
+  const ry1 = Math.max(ry0, Math.min(height, y1));
+
+  let count = 0;
+  let sumX = 0;
+  let sumY = 0;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = ry0; y < ry1; y++) {
+    for (let x = rx0; x < rx1; x++) {
+      const i = (y * width + x) * 4;
+      const alpha = data[i + 3];
+      if (!alpha) continue;
+      if (
+        Math.abs(data[i] - CHROMA.r) <= CHROMA.tolerance &&
+        Math.abs(data[i + 1] - CHROMA.g) <= CHROMA.tolerance &&
+        Math.abs(data[i + 2] - CHROMA.b) <= CHROMA.tolerance
+      ) continue;
+
+      count++;
+      sumX += x;
+      sumY += y;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  return {
+    count,
+    minX,
+    minY,
+    maxX,
+    maxY,
+    centerX: count ? sumX / count : width / 2,
+    centerY: count ? sumY / count : height / 2,
+    width: count ? maxX - minX + 1 : 0,
+    height: count ? maxY - minY + 1 : 0,
+  };
+}
+
+function compareStats(a: PixelStats, b: PixelStats): number {
+  if (!a.count || !b.count) return 0;
+
+  const areaA = a.width * a.height;
+  const areaB = b.width * b.height;
+  const areaScore = 1 - Math.min(1, Math.abs(areaA - areaB) / Math.max(areaA, areaB));
+  const countScore = 1 - Math.min(1, Math.abs(a.count - b.count) / Math.max(a.count, b.count));
+  const centerScore = 1 - Math.min(
+    1,
+    Math.hypot(a.centerX - b.centerX, a.centerY - b.centerY) / 40
+  );
+  const widthScore = 1 - Math.min(1, Math.abs(a.width - b.width) / Math.max(a.width, b.width));
+  const heightScore = 1 - Math.min(1, Math.abs(a.height - b.height) / Math.max(a.height, b.height));
+
+  return (
+    areaScore * 0.20 +
+    countScore * 0.25 +
+    centerScore * 0.20 +
+    widthScore * 0.175 +
+    heightScore * 0.175
+  );
+}
+
+const directionCache = new Map<string, Promise<Record<DirectionTarget, number | null>>>();
+
+async function resolveCosmeticDirections(
+  cosmetic: Cosmetic,
+  baseUrl: string,
+  manifest: RendererManifest
+): Promise<Record<DirectionTarget, number | null>> {
+  const frames = cosmetic.frames ?? [];
+  if (!frames.length) return { back: null, side: null };
+
+  const cacheKey = `${baseUrl}|${cosmetic.id ?? cosmetic.name ?? cosmetic.layer}|${frames.join("|")}`;
+  const cached = directionCache.get(cacheKey);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const base = getBaseData(manifest, 1);
+    const backPath = base.frames[1];
+    const sidePath = base.frames[2];
+    if (!backPath && !sidePath) return { back: null, side: null };
+
+    const region = DIRECTION_REGIONS[cosmetic.slot];
+    const [backImage, sideImage, ...candidateImages] = await Promise.all([
+      backPath ? loadImage(joinUrl(baseUrl, backPath)).catch(() => null) : Promise.resolve(null),
+      sidePath ? loadImage(joinUrl(baseUrl, sidePath)).catch(() => null) : Promise.resolve(null),
+      ...frames.map((path) => loadImage(joinUrl(baseUrl, path)).catch(() => null)),
+    ]);
+
+    const backStats = backImage ? makeAlphaStats(backImage, region) : null;
+    const sideStats = sideImage ? makeAlphaStats(sideImage, region) : null;
+
+    let bestBack = -1;
+    let bestSide = -1;
+    let bestBackScore = -Infinity;
+    let bestSideScore = -Infinity;
+
+    candidateImages.forEach((image, index) => {
+      if (!image) return;
+      const stats = makeAlphaStats(image, region);
+
+      if (backStats) {
+        const score = compareStats(stats, backStats);
+        if (score > bestBackScore) {
+          bestBackScore = score;
+          bestBack = index;
+        }
+      }
+
+      if (sideStats) {
+        const score = compareStats(stats, sideStats);
+        if (score > bestSideScore) {
+          bestSideScore = score;
+          bestSide = index;
+        }
+      }
+    });
+
+    // Never use the same candidate for both directions when there are other
+    // candidates. This matters for cosmetics whose frames are near-identical.
+    if (bestBack === bestSide && frames.length > 1) {
+      const alternatives = candidateImages
+        .map((image, index) => {
+          if (!image || index === bestBack) return null;
+          const stats = makeAlphaStats(image, region);
+          return {
+            index,
+            back: backStats ? compareStats(stats, backStats) : -Infinity,
+            side: sideStats ? compareStats(stats, sideStats) : -Infinity,
+          };
+        })
+        .filter((v): v is { index: number; back: number; side: number } => !!v);
+
+      const bestAlternativeForSide = alternatives.sort((a, b) =>
+        (b.side - b.back) - (a.side - a.back)
+      )[0];
+
+      if (bestAlternativeForSide) {
+        bestSide = bestAlternativeForSide.index;
+      }
+    }
+
+    return {
+      back: bestBack >= 0 ? bestBack : null,
+      side: bestSide >= 0 ? bestSide : null,
+    };
+  })();
+
+  directionCache.set(cacheKey, promise);
+  return promise;
+}
+
 async function getGenericLayers(
   cosmetic: Cosmetic,
   baseFrame: number,
-  baseUrl: string
+  baseUrl: string,
+  manifest: RendererManifest
 ): Promise<RenderLayer[]> {
+  // Front always uses the cosmetic's primary layer.
   if (baseFrame === 0) {
-    try {
-      return [{
-        image: await loadImage(joinUrl(baseUrl, cosmetic.layer)),
-        tint: true,
-      }];
-    } catch {
-      return [];
-    }
+    return loadLayer(cosmetic.layer, baseUrl, true);
   }
 
   const frames = cosmetic.frames ?? [];
   if (!frames.length) return [];
 
-  // Eyes are hidden from Back and use frame_1 on Side.
-  if (cosmetic.slot === "eyes") {
-    if (baseFrame === 1) return [];
-    const side = findFrame(frames, 1);
-    if (baseFrame === 2 && side) {
-      try {
-        return [{ image: await loadImage(joinUrl(baseUrl, side)), tint: true }];
-      } catch {
-        return [];
-      }
-    }
+  // Eyes are normally only visible from the front/side. If a cosmetic has
+  // directional frames, the detector still decides which one is Side.
+  if (cosmetic.slot === "eyes" && baseFrame === 1) {
     return [];
   }
 
-  // Shoes are too small for silhouette detection.
-  if (cosmetic.slot === "shoes") {
-    const path = baseFrame === 1 ? frames[0] : baseFrame === 2 ? frames[1] : null;
-    if (!path) return [];
-    try {
-      return [{ image: await loadImage(joinUrl(baseUrl, path)), tint: true }];
-    } catch {
-      return [];
-    }
-  }
+  const directions = await resolveCosmeticDirections(cosmetic, baseUrl, manifest);
+  const index = baseFrame === 1 ? directions.back : directions.side;
 
-  const path =
-    baseFrame === 1
-      ? findFrame(frames, 1)
-      : baseFrame === 2
-        ? findFrame(frames, 2)
-        : null;
-
-  if (!path) return [];
-
-  try {
-    return [{ image: await loadImage(joinUrl(baseUrl, path)), tint: true }];
-  } catch {
-    return [];
-  }
+  if (index === null || index < 0 || index >= frames.length) return [];
+  return loadLayer(frames[index], baseUrl, true);
 }
 
 async function getCosmeticLayers(
@@ -286,7 +455,8 @@ async function getCosmeticLayers(
   if (isMermaidHair(cosmetic)) {
     return getMermaidLayers(cosmetic, baseFrame, baseUrl, manifest);
   }
-  return getGenericLayers(cosmetic, baseFrame, baseUrl);
+
+  return getGenericLayers(cosmetic, baseFrame, baseUrl, manifest);
 }
 
 function hexToRgb(
