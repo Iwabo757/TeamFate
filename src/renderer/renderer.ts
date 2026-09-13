@@ -332,19 +332,20 @@ async function resolveApiItemIds(
 
 type ApiSlotSelection = {
   slots: Record<number, number>;
-  hairAlternates: number[];
+  candidates: Record<number, number[]>;
 };
 
 async function buildApiSlots(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>
 ): Promise<ApiSlotSelection> {
-  const selected: Record<number, number> = {};
-  for (const slot of ALL_API_SLOTS) {
-    selected[API_SLOT[slot]] = 0;
-  }
+  const slots: Record<number, number> = {};
+  const candidates: Record<number, number[]> = {};
 
-  let hairAlternates: number[] = [];
+  for (const slot of ALL_API_SLOTS) {
+    slots[API_SLOT[slot]] = 0;
+    candidates[API_SLOT[slot]] = [0];
+  }
 
   for (const slot of ALL_API_SLOTS) {
     const name = cosmetics[slot];
@@ -362,14 +363,90 @@ async function buildApiSlots(
     }
 
     const ids = await resolveApiItemIds(name, cosmetic);
-    selected[API_SLOT[slot]] = ids[0];
+    const uniqueIds = ids.filter(
+      (id, index, all) => Number.isFinite(id) && all.indexOf(id) === index
+    );
 
-    if (slot === "hair") {
-      hairAlternates = ids.slice(1);
+    if (!uniqueIds.length) {
+      throw new Error(`No usable API item ID found for "${name}".`);
     }
+
+    slots[API_SLOT[slot]] = uniqueIds[0];
+    candidates[API_SLOT[slot]] = uniqueIds;
   }
 
-  return { slots: selected, hairAlternates };
+  return { slots, candidates };
+}
+
+function buildCandidateSlotSets(
+  selection: ApiSlotSelection
+): Record<number, number>[] {
+  const slotNumbers = ALL_API_SLOTS.map((slot) => API_SLOT[slot]).filter(
+    (slotNumber) => (selection.candidates[slotNumber]?.length ?? 0) > 1
+  );
+
+  const results: Record<number, number>[] = [];
+  const seen = new Set<string>();
+
+  const add = (slots: Record<number, number>) => {
+    const key = ALL_API_SLOTS.map((slot) => slots[API_SLOT[slot]] ?? 0).join(",");
+    if (seen.has(key)) return;
+    seen.add(key);
+    results.push({ ...slots });
+  };
+
+  // Primary namespace/candidate set.
+  add(selection.slots);
+
+  // Try changing one slot at a time. This catches a single stale/wrong
+  // namespace without making hundreds of API requests.
+  for (const slotNumber of slotNumbers) {
+    const ids = selection.candidates[slotNumber];
+    if (!ids?.[1]) continue;
+    const next = { ...selection.slots, [slotNumber]: ids[1] };
+    add(next);
+  }
+
+  // If the API uses the alternate namespace consistently, try all alternate
+  // IDs together. This is the important fallback for mixed old/new catalogs.
+  if (slotNumbers.length) {
+    const allAlternate = { ...selection.slots };
+    for (const slotNumber of slotNumbers) {
+      const ids = selection.candidates[slotNumber];
+      if (ids?.[1]) allAlternate[slotNumber] = ids[1];
+    }
+    add(allAlternate);
+  }
+
+  // Finally try small mixed combinations. Limit this to three alternate
+  // positions so a bad catalog entry cannot cause an excessive request storm.
+  const maxCombinationSize = Math.min(3, slotNumbers.length);
+  for (let size = 2; size <= maxCombinationSize; size += 1) {
+    const indexes: number[] = [];
+
+    const visit = (start: number, remaining: number) => {
+      if (remaining === 0) {
+        const next = { ...selection.slots };
+        for (const index of indexes) {
+          const slotNumber = slotNumbers[index];
+          const ids = selection.candidates[slotNumber];
+          if (ids?.[1]) next[slotNumber] = ids[1];
+        }
+        add(next);
+        return;
+      }
+
+      for (let i = start; i <= slotNumbers.length - remaining; i += 1) {
+        indexes.push(i);
+        visit(i + 1, remaining - 1);
+        indexes.pop();
+      }
+    };
+
+    visit(0, size);
+  }
+
+  return results;
 }
 
 function buildApiUrl(
@@ -444,24 +521,12 @@ async function renderApiView(
   scale: number
 ): Promise<HTMLCanvasElement> {
   const selection = await buildApiSlots(manifest, cosmetics);
-  const candidateHairIds = [
-    selection.slots[API_SLOT.hair],
-    ...selection.hairAlternates,
-  ].filter(
-    (id, index, ids) =>
-      Number.isFinite(id) && ids.indexOf(id) === index
-  );
+  const candidates = buildCandidateSlotSets(selection);
 
   let image: HTMLImageElement | null = null;
   let lastUrl = "";
 
-  // Hair has existed in two PokeMMO id namespaces. Try the primary id and
-  // then the known alternate namespace/id if the API rejects the first one.
-  for (const hairId of candidateHairIds) {
-    const slots = {
-      ...selection.slots,
-      [API_SLOT.hair]: hairId,
-    };
+  for (const slots of candidates) {
     const url = buildApiUrl(scene, slots);
     lastUrl = url;
 
@@ -469,7 +534,7 @@ async function renderApiView(
       image = await loadImage(url);
       break;
     } catch {
-      // Try the next known id.
+      // Try the next namespace/slot combination.
     }
   }
 
