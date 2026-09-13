@@ -35,14 +35,6 @@ export type RenderOptions = {
 
 const DEFAULT_BASE_URL = "/team-fate-renderer";
 
-const DEFAULT_COSMETICS: Partial<Record<CosmeticSlot, string>> = {
-  hair: "Default Hair",
-  eyes: "Brown",
-  top: "T-Shirt",
-  pants: "Pants",
-  shoes: "Shoes",
-};
-
 const LAYER_ORDER: CosmeticSlot[] = [
   "back", "pants", "shoes", "top", "face", "hair",
   "eyes", "held", "hat", "tool", "mount",
@@ -218,52 +210,10 @@ async function getMermaidLayers(
 }
 
 /*
- * Direction mapping for the extracted clothing animations.
- *
- * IMPORTANT: cosmetic frame numbers are NOT the same as the base preview
- * frame numbers. The clothing resources contain animation frames grouped
- * by view. For the standard clothing resources used by the builder:
- *
- *   Tops:  Back = frame_1,  Side = frame_14
- *   Pants: Back = frame_1,  Side = frame_11
- *   Shoes: Back = frame_1,  Side = frame_5
- *
- * The static `layer` remains the Front view.
- */
-const CLOTHING_DIRECTION_FRAMES: Partial<
-  Record<CosmeticSlot, { back: number; side: number }>
-> = {
-  top: { back: 1, side: 14 },
-  pants: { back: 1, side: 11 },
-  shoes: { back: 1, side: 5 },
-};
-
-function getDirectionalClothingFrame(
-  cosmetic: Cosmetic,
-  baseFrame: number
-): string | null {
-  const frames = cosmetic.frames ?? [];
-  if (!frames.length) return null;
-
-  const mapping = CLOTHING_DIRECTION_FRAMES[cosmetic.slot];
-  if (!mapping) return null;
-
-  const frameNumber =
-    baseFrame === 1
-      ? mapping.back
-      : baseFrame === 2
-        ? mapping.side
-        : -1;
-
-  if (frameNumber < 0) return null;
-  return findFrame(frames, frameNumber);
-}
-
-/*
  * Generic cosmetics:
  * Front uses the cosmetic's base layer.
- * Clothing uses explicit directional frame mappings above.
- * Other cosmetics retain the simple frame_1/frame_2 fallback.
+ * Back prefers frame_1.
+ * Side prefers frame_2.
  *
  * This intentionally does not override the explicit Mermaid mappings.
  */
@@ -300,13 +250,9 @@ async function getGenericLayers(
     return [];
   }
 
-  // Tops, pants, and shoes use the known clothing direction groups.
-  if (
-    cosmetic.slot === "top" ||
-    cosmetic.slot === "pants" ||
-    cosmetic.slot === "shoes"
-  ) {
-    const path = getDirectionalClothingFrame(cosmetic, baseFrame);
+  // Shoes are too small for silhouette detection.
+  if (cosmetic.slot === "shoes") {
+    const path = baseFrame === 1 ? frames[0] : baseFrame === 2 ? frames[1] : null;
     if (!path) return [];
     try {
       return [{ image: await loadImage(joinUrl(baseUrl, path)), tint: true }];
@@ -414,10 +360,7 @@ export async function renderCharacter(
     scale = 1,
   } = options;
 
-  const selected: Partial<Record<CosmeticSlot, string>> = {
-    ...DEFAULT_COSMETICS,
-    ...cosmetics,
-  };
+  const selected: Partial<Record<CosmeticSlot, string>> = cosmetics;
 
   const base = getBaseData(manifest, skin);
   if (!base.frames.length) {
