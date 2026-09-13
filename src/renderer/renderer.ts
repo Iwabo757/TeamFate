@@ -115,6 +115,7 @@ const CHROMA = {
 
 type ApiItem = {
   id: number;
+  dex?: number;
   en_name?: string;
   key?: string;
   category?: number;
@@ -201,14 +202,23 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
         for (const item of items) {
           if (item.category !== 6 || !Number.isFinite(item.id)) continue;
 
+          // IMPORTANT:
+          // Newer PokeMMO cosmetics have an internal item `id` that is
+          // different from the cosmetic/Dex ID used by the Fiereu Clothes API.
+          // Older cosmetics generally do not have `dex`, so fall back to `id`.
+          const apiId =
+            Number.isFinite(item.dex) && Number(item.dex) > 0
+              ? Number(item.dex)
+              : Number(item.id);
+
           if (item.en_name) {
-            addLookup(byName, normalizeName(item.en_name), item.id);
-            addLookup(bySlug, slug(item.en_name), item.id);
+            addLookup(byName, normalizeName(item.en_name), apiId);
+            addLookup(bySlug, slug(item.en_name), apiId);
           }
 
           if (item.key) {
-            addLookup(byKey, normalizeName(item.key), item.id);
-            addLookup(bySlug, slug(item.key), item.id);
+            addLookup(byKey, normalizeName(item.key), apiId);
+            addLookup(bySlug, slug(item.key), apiId);
           }
         }
 
@@ -226,13 +236,23 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 // catalog but are missing from the older PokeMMO Hub item.json mirror.
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
 const KNOWN_FIEREU_IDS: Record<string, number> = {
-  "elegant ponytail": 2563,
+  // Older/current cosmetics with stable Fiereu/Dex IDs.
+  "afro": 1185,
+  sideswept: 1183,
+  "reverse scene": 2535,
 
-  // Current PokeMMO / Fiereu cosmetic IDs.
-  // These cover cosmetics missing from the older PokeMMO Hub catalog mirror.
+  // Current cosmetics whose IDs are newer than the old catalog mirror.
+  "mermaid hair": 2560,
   "mermaid hair alt": 2561,
   "idol hairstyle": 2558,
-  "scene": 2535,
+  "origin hairstyle": 2565,
+  "colorful unicorn hair": 2566,
+  "golden cuffed ponytail": 2559,
+  "elven ponytail": 2562,
+  "elegant ponytail": 2563,
+
+  // Team Fate's old manifest name for Reverse Scene.
+  scene: 2535,
 };
 
 const NAME_ALIASES: Record<string, string[]> = {
@@ -259,7 +279,7 @@ const NAME_ALIASES: Record<string, string[]> = {
 
   // Compatibility with older Team Fate manifest names.
   "mermaid hair crown": ["mermaid hair (alt)"],
-  "scene": ["reverse scene"],
+  scene: ["reverse scene"],
 };
 
 async function resolveApiItemId(
