@@ -1,8 +1,13 @@
 // src/renderer/renderer.ts
 //
-// Team Fate cosmetic renderer backed by the PokeMMO Clothes API.
-// The API owns cosmetic composition and direction selection. This file does
-// NOT inspect cosmetic frames or try to guess Front/Side/Back.
+// Team Fate cosmetic renderer backed by the same Fiereu/PokeMMO Clothes API
+// used by PokeMMO Hub. The API is responsible for composing every cosmetic
+// and choosing the correct artwork for Front / Back / Side.
+//
+// IMPORTANT:
+// - Do not use local cosmetic frame numbers to decide direction.
+// - Do not use the local manifest layer_index as an API item id.
+// - The Team Fate skin number is NOT part of the Fiereu API URL.
 
 export type CosmeticSlot =
   | "back"
@@ -53,7 +58,7 @@ export type RendererView = "front" | "side" | "back";
 
 const DEFAULT_BASE_URL = "/team-fate-renderer";
 
-// PokeMMO Hub's scene IDs:
+// Fiereu / PokeMMO Clothes scene ids, matching PokeMMO Hub:
 // 1 = Back, 2 = Front, 3 = Side.
 const API_SCENE: Record<RendererView, number> = {
   back: 1,
@@ -65,9 +70,9 @@ const API_BASE = "https://apis.fiereu.de/pokemmoclothes/v1";
 const API_VERSION = 2;
 const API_GENDER = 1;
 
-// The PokeMMO API uses the same slot numbering as the local manifest:
-// 2 hat, 3 hair, 4 eyes, 5 face, 6 back, 7 top, 8 gloves/held,
-// 9 shoes, 10 legs/pants, 11 rod/tool, 12 bicycle/mount.
+// Fiereu URL parameter slots. These are NOT the Team Fate local layer indexes.
+// URL order is: back / bicycle / eyes / face / gloves / hair / hat / legs /
+// shoes / top.
 const API_SLOT: Record<CosmeticSlot, number> = {
   hat: 2,
   hair: 3,
@@ -95,6 +100,9 @@ const ALL_API_SLOTS: CosmeticSlot[] = [
   "top",
 ];
 
+// PokeMMO Hub's item catalog gives us the actual PokeMMO item ids used by the
+// Clothes API. We deliberately do not treat the local manifest layer_index as
+// an API id: those values are different namespaces.
 const ITEM_DATA_URL =
   "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/master/src/data/pokemmo/item.json";
 
@@ -112,8 +120,14 @@ type ApiItem = {
   category?: number;
 };
 
+type ApiCatalog = {
+  byName: Map<string, number>;
+  byKey: Map<string, number>;
+  bySlug: Map<string, number>;
+};
+
 let manifestPromise: Promise<RendererManifest> | null = null;
-let itemLookupPromise: Promise<Map<string, number>> | null = null;
+let apiCatalogPromise: Promise<ApiCatalog> | null = null;
 
 function joinUrl(baseUrl: string, path: string): string {
   if (!path) return "";
@@ -140,9 +154,38 @@ export async function loadRendererManifest(
   return manifestPromise;
 }
 
-async function loadItemLookup(): Promise<Map<string, number>> {
-  if (!itemLookupPromise) {
-    itemLookupPromise = fetch(ITEM_DATA_URL, { cache: "force-cache" }).then(
+function normalizeName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s*\((?:m|f)\)\s*$/i, "")
+    .replace(/\bcolour\b/g, "color")
+    .replace(/\bxmas\b/g, "christmas")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function compact(value: string): string {
+  return normalizeName(value).replace(/\s+/g, "");
+}
+
+function slug(value: string): string {
+  return normalizeName(value).replace(/\s+/g, "-");
+}
+
+function addLookup(
+  map: Map<string, number>,
+  key: string | undefined,
+  id: number
+): void {
+  if (!key) return;
+  if (!map.has(key)) map.set(key, id);
+}
+
+async function loadApiCatalog(): Promise<ApiCatalog> {
+  if (!apiCatalogPromise) {
+    apiCatalogPromise = fetch(ITEM_DATA_URL, { cache: "force-cache" }).then(
       async (response) => {
         if (!response.ok) {
           throw new Error(
@@ -151,29 +194,56 @@ async function loadItemLookup(): Promise<Map<string, number>> {
         }
 
         const items = (await response.json()) as ApiItem[];
-        const lookup = new Map<string, number>();
+        const byName = new Map<string, number>();
+        const byKey = new Map<string, number>();
+        const bySlug = new Map<string, number>();
 
         for (const item of items) {
-          if (item.category !== 6 || !item.en_name) continue;
-          const key = normalizeName(item.en_name);
-          if (!lookup.has(key)) lookup.set(key, item.id);
+          if (item.category !== 6 || !Number.isFinite(item.id)) continue;
+
+          if (item.en_name) {
+            addLookup(byName, normalizeName(item.en_name), item.id);
+            addLookup(bySlug, slug(item.en_name), item.id);
+          }
+
+          if (item.key) {
+            addLookup(byKey, normalizeName(item.key), item.id);
+            addLookup(bySlug, slug(item.key), item.id);
+          }
         }
 
-        return lookup;
+        return { byName, byKey, bySlug };
       }
     );
   }
 
-  return itemLookupPromise;
+  return apiCatalogPromise;
 }
 
-function normalizeName(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\s*\((?:m|f)\)\s*$/i, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
+// Names present in the Team Fate pak that intentionally differ from the
+// English cosmetic name used by PokeMMO's item catalog.
+const NAME_ALIASES: Record<string, string[]> = {
+  "default hair": ["default hair"],
+  brown: ["brown eyes"],
+  "brown eyes": ["brown eyes"],
+  angry: ["angry eyes"],
+  "angry eyes": ["angry eyes"],
+  "rock star": ["rockstar", "rock star"],
+  "desu's lab coat (colour)": [
+    "desu's lab coat (colour)",
+    "desu's lab coat (color)",
+  ],
+  "red christmas stocking": ["red christmas stocking", "red xmas stocking"],
+  "green christmas stocking": [
+    "green christmas stocking",
+    "green xmas stocking",
+  ],
+  "blue christmas stocking": ["blue christmas stocking", "blue xmas stocking"],
+  "yellow christmas stocking": [
+    "yellow christmas stocking",
+    "yellow xmas stocking",
+  ],
+};
 
 async function resolveApiItemId(
   cosmeticName: string,
@@ -182,34 +252,39 @@ async function resolveApiItemId(
   const explicit = cosmetic.api_id ?? cosmetic.apiId;
   if (Number.isFinite(explicit)) return Number(explicit);
 
+  // These are the API's empty/default values, not equipped cosmetic items.
   const normalized = normalizeName(cosmeticName);
+  if (normalized === "default hair") return 0;
+  if (normalized === "brown" || normalized === "brown eyes") return 1438;
+  if (normalized === "angry" || normalized === "angry eyes") return 1444;
 
-  // Team Fate intentionally uses friendly names for a few base cosmetics.
-  // These are API "empty/default" values rather than actual equipped items.
-  const aliases: Record<string, number> = {
-    "default hair": 0,
-    brown: 1438,
-    "brown eyes": 1438,
-    angry: 1444,
-    "angry eyes": 1444,
-  };
-  if (aliases[normalized] !== undefined) return aliases[normalized];
+  const catalog = await loadApiCatalog();
+  const candidates = [
+    cosmeticName,
+    ...(NAME_ALIASES[normalized] ?? []),
+  ];
 
-  const lookup = await loadItemLookup();
+  for (const candidate of candidates) {
+    const key = normalizeName(candidate);
+    const byName = catalog.byName.get(key);
+    if (byName !== undefined) return byName;
 
-  const direct = lookup.get(normalized);
-  if (direct !== undefined) return direct;
+    const bySlug = catalog.bySlug.get(slug(candidate));
+    if (bySlug !== undefined) return bySlug;
 
-  // Some extracted names are shorthand versions of the game's male/female
-  // item names. The lookup above strips the gender suffix, so this fallback
-  // is only reached for naming differences, not direction detection.
-  const compact = normalized.replace(/\s+/g, "");
-  for (const [key, id] of lookup) {
-    if (key.replace(/\s+/g, "") === compact) return id;
+    const byKey = catalog.byKey.get(key);
+    if (byKey !== undefined) return byKey;
+  }
+
+  // Last-resort compact comparison handles things like Rock Star/Rockstar.
+  const target = compact(cosmeticName);
+  for (const [key, id] of catalog.byName) {
+    if (compact(key) === target) return id;
   }
 
   throw new Error(
-    `No PokeMMO API item ID found for cosmetic "${cosmeticName}".`
+    `No PokeMMO Clothes API item ID found for "${cosmeticName}". ` +
+      `The manifest entry exists, but its name is not present in the PokeMMO cosmetic item catalog.`
   );
 }
 
@@ -217,8 +292,8 @@ async function buildApiSlots(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>
 ): Promise<Record<number, number>> {
-  // Zero explicitly clears the Hub's own default outfit. This is important:
-  // the Team Fate builder intentionally starts with no default clothes.
+  // Start with every supported slot empty. This prevents PokeMMO Hub defaults
+  // from leaking into Team Fate when the builder starts with no clothes.
   const selected: Record<number, number> = {};
   for (const slot of ALL_API_SLOTS) {
     selected[API_SLOT[slot]] = 0;
@@ -245,10 +320,13 @@ async function buildApiSlots(
   return selected;
 }
 
-function buildApiUrl(scene: RendererView, slots: Record<number, number>): string {
-  // This must match PokeMMO Hub exactly. The API path is: scene / 2 / 1 /
-  // back / bicycle / eyes / face / gloves / hair / hat / legs / shoes / top.
-  // There is NO Team Fate skin number in this API path.
+function buildApiUrl(
+  scene: RendererView,
+  slots: Record<number, number>
+): string {
+  // Exact PokeMMO Hub / Fiereu Clothes API layout:
+  // scene / 2 / 1 / back / bicycle / eyes / face / gloves / hair / hat /
+  // legs / shoes / top
   const ordered = [
     slots[6],
     slots[12],
@@ -282,15 +360,6 @@ function makeCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 
-function drawFullSize(
-  context: CanvasRenderingContext2D,
-  image: CanvasImageSource,
-  width: number,
-  height: number
-): void {
-  context.drawImage(image, 0, 0, width, height);
-}
-
 function removeChromaKey(
   context: CanvasRenderingContext2D,
   width: number,
@@ -304,7 +373,11 @@ function removeChromaKey(
     const dg = Math.abs(data[i + 1] - CHROMA.g);
     const db = Math.abs(data[i + 2] - CHROMA.b);
 
-    if (dr <= CHROMA.tolerance && dg <= CHROMA.tolerance && db <= CHROMA.tolerance) {
+    if (
+      dr <= CHROMA.tolerance &&
+      dg <= CHROMA.tolerance &&
+      db <= CHROMA.tolerance
+    ) {
       data[i + 3] = 0;
     }
   }
@@ -324,13 +397,15 @@ async function renderApiView(
 
   const width = image.naturalWidth || image.width;
   const height = image.naturalHeight || image.height;
-  if (!width || !height) throw new Error(`API returned an invalid image for ${scene}.`);
+  if (!width || !height) {
+    throw new Error(`API returned an invalid image for ${scene}.`);
+  }
 
   const canvas = makeCanvas(width, height);
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Unable to create renderer canvas.");
   context.imageSmoothingEnabled = false;
-  drawFullSize(context, image, width, height);
+  context.drawImage(image, 0, 0, width, height);
   removeChromaKey(context, width, height);
 
   const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
@@ -347,7 +422,9 @@ async function renderApiView(
   return output;
 }
 
-export async function renderCharacter(options: RenderOptions): Promise<HTMLCanvasElement> {
+export async function renderCharacter(
+  options: RenderOptions
+): Promise<HTMLCanvasElement> {
   const {
     manifest,
     frame = 0,
@@ -356,20 +433,31 @@ export async function renderCharacter(options: RenderOptions): Promise<HTMLCanva
     scale = 1,
   } = options;
 
-  // The Builder passes the actual local base frame IDs. We only need those
-  // IDs to select the API scene; cosmetic direction is never inferred.
+  // The Builder's base frames are used only as a view selector:
+  // 0 = Front, 1 = Back, 2 = Side.
+  // Cosmetic frame selection is entirely delegated to Fiereu.
   const scene: RendererView =
-    frame === 0 ? "front" : frame === 1 ? "back" : frame === 2 ? "side" : "front";
+    frame === 0
+      ? "front"
+      : frame === 1
+        ? "back"
+        : frame === 2
+          ? "side"
+          : "front";
 
   return renderApiView(manifest, cosmetics, scene, scale);
 }
 
-export async function renderCharacterToDataUrl(options: RenderOptions): Promise<string> {
+export async function renderCharacterToDataUrl(
+  options: RenderOptions
+): Promise<string> {
   const canvas = await renderCharacter(options);
   return canvas.toDataURL("image/png");
 }
 
-export async function renderCharacterToImage(options: RenderOptions): Promise<HTMLImageElement> {
+export async function renderCharacterToImage(
+  options: RenderOptions
+): Promise<HTMLImageElement> {
   const dataUrl = await renderCharacterToDataUrl(options);
   return loadImage(dataUrl);
 }
