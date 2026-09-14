@@ -67,7 +67,7 @@ const API_SCENE: Record<RendererView, number> = {
   side: 3,
 };
 
-const API_BASE = "https://apis.fiereu.de/pokemmoclothes/v1";
+
 const API_VERSION = 2;
 const API_GENDER = 1;
 
