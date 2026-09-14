@@ -8,6 +8,11 @@ type ClientItem = {
   icon_id?: number;
 };
 
+type ApiItem = {
+  apiID?: number;
+  id?: number;
+};
+
 type RendererMapping = {
   internal_id: number;
   slot: number;
@@ -264,10 +269,33 @@ export default async function handler(req: any, res: any) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const [clientItems, rendererMap] = await Promise.all([
-      loadLocalItems(),
-      loadRendererMap(),
-    ]);
+    const [clientItems, rendererMap, apiItemsResponse] =
+      await Promise.all([
+        loadLocalItems(),
+        loadRendererMap(),
+        fetch(
+          "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/main/src/data/apiItems.json"
+        ),
+      ]);
+
+    let apiItems: ApiItem[] = [];
+    if (apiItemsResponse.ok) {
+      try {
+        const parsed = await apiItemsResponse.json();
+        if (Array.isArray(parsed)) apiItems = parsed;
+      } catch {
+        console.warn("Unable to parse apiItems.json");
+      }
+    }
+
+    const internalToApi = new Map<number, number>();
+    for (const item of apiItems) {
+      const internalId = Number(item.id);
+      const apiId = Number(item.apiID);
+      if (Number.isFinite(internalId) && Number.isFinite(apiId)) {
+        internalToApi.set(internalId, apiId);
+      }
+    }
 
     const currentCosmetics = clientItems.filter(
       (item) =>
@@ -279,8 +307,10 @@ export default async function handler(req: any, res: any) {
     const cosmetics: CosmeticResult[] = [];
 
     for (const clientItem of currentCosmetics) {
-      const itemId = Number(clientItem.id);
-      if (!Number.isFinite(itemId)) continue;
+      const internalId = Number(clientItem.id);
+      if (!Number.isFinite(internalId)) continue;
+
+      const itemId = internalToApi.get(internalId) ?? internalId;
 
       const name = cleanName(
         typeof clientItem.name === "string" && clientItem.name.trim()
@@ -288,17 +318,18 @@ export default async function handler(req: any, res: any) {
           : `Item ${itemId}`
       );
 
-      const mapping = rendererMap[String(itemId)];
+      const mapping = rendererMap[String(internalId)];
       const slot = mapping?.slot || inferSlot(name);
 
       if (!SLOT_NAMES[slot]) continue;
 
       cosmetics.push({
         item_id: itemId,
-        ...(mapping?.internal_id
-          ? { internal_id: mapping.internal_id }
+        internal_id: internalId,
+        ...(mapping?.internal_id && mapping.internal_id !== internalId
+          ? { renderer_internal_id: mapping.internal_id }
           : {}),
-        renderer_supported: Boolean(mapping?.internal_id),
+        renderer_supported: Boolean(mapping?.internal_id || internalId),
         name,
         icon_id: Number(clientItem.icon_id) || itemId,
         slot,
