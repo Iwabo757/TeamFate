@@ -289,14 +289,21 @@ async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
 ): Promise<number[]> {
-  const explicit = cosmetic.api_ids ?? [];
   const single = cosmetic.api_id ?? cosmetic.apiId;
-  if (explicit.length || Number.isFinite(single)) {
+  if (Number.isFinite(single)) {
+    const explicit = cosmetic.api_ids ?? [];
     return Array.from(
       new Set([
+        Number(single),
         ...explicit,
-        ...(Number.isFinite(single) ? [Number(single)] : []),
       ].filter((id): id is number => Number.isFinite(id) && id >= 0))
+    );
+  }
+
+  const explicit = cosmetic.api_ids ?? [];
+  if (explicit.length) {
+    return Array.from(
+      new Set(explicit.filter((id): id is number => Number.isFinite(id) && id >= 0))
     );
   }
 

@@ -406,6 +406,32 @@ export default function CosmeticBuilder() {
         });
       }
 
+      // Keep the older Team Fate hair entries visible as well. These are
+      // character hair variants rather than entries in the 794-item vanity
+      // catalog, so they are sourced from the local manifest only.
+      const catalogNames = new Set(
+        merged.map((item) => item.name.trim().toLowerCase())
+      );
+
+      for (const [name, item] of Object.entries(manifest.cosmetics)) {
+        if (item.slot !== "hair") continue;
+        const key = name.trim().toLowerCase();
+        if (catalogNames.has(key)) continue;
+
+        merged.push({
+          name,
+          slot: "hair",
+          icon: item.icon,
+          layer: item.layer,
+          item_id: Number(item.api_id ?? item.apiId ?? item.id ?? 0),
+          internal_id: undefined,
+          icon_id: undefined,
+          api_ids: item.api_ids,
+          year: undefined,
+          hasLocalAsset: true,
+        });
+      }
+
       return merged;
     }, [manifest, catalog]);
 
@@ -435,8 +461,8 @@ export default function CosmeticBuilder() {
       // Try the PokeMMO internal ID first. Older Fiereu cosmetics use that
       // namespace; the API/vanity ID is kept as a fallback.
       const ids = [
-        item.internal_id,
         item.item_id,
+        item.internal_id,
         ...(existing?.api_ids ?? []),
       ].filter(
         (id): id is number =>
