@@ -10,14 +10,31 @@ import type {
   RendererManifest,
 } from "../renderer/renderer";
 
+type CatalogCosmetic = {
+  item_id: number;
+  internal_id?: number;
+  name: string;
+  icon_id: number;
+  slot: number;
+  attribute?: number;
+  festival?: number;
+  limitation?: number;
+  month?: number;
+  year?: number;
+};
+
 type LocalCosmetic = {
   name: string;
   slot: CosmeticSlot;
   icon?: string;
-  layer: string;
+  layer?: string;
   icon_index?: number;
   layer_index?: number;
   slot_code?: number;
+  item_id?: number;
+  internal_id?: number;
+  icon_id?: number;
+  hasLocalAsset: boolean;
 };
 
 type ViewPreview = {
@@ -69,27 +86,43 @@ const SLOT_IDS: CosmeticSlot[] = [
   "mount",
 ];
 
+const API_SLOT_TO_COSMETIC_SLOT: Record<number, CosmeticSlot> = {
+  2: "hat",
+  3: "hair",
+  4: "eyes",
+  5: "face",
+  6: "back",
+  7: "top",
+  8: "held",
+  9: "shoes",
+  10: "pants",
+  11: "tool",
+  12: "mount",
+};
+
+const COSMETIC_ICON_BASE =
+  "https://www.pikammo.fr/Pokemmo/assets/img/vanity";
+
 /* =========================================================
    DEFAULT OUTFIT
    ========================================================= */
 
-const DEFAULT_COSMETICS: Partial<
-  Record<CosmeticSlot, string>
-> = {
-  eyes: "Brown",
-  hair: "Default Hair",
-  top: "T-Shirt",
-  pants: "Pants",
-  shoes: "Shoes",
-};
+// No cosmetic defaults. The API receives zero for every unselected slot.
 
 /* =========================================================
    CHARACTER VIEWS
    =========================================================
 
-   Frame 0 = Front
-   Frame 1 = Back
-   Frame 2 = Side
+   These are the actual idle directional frames from the local base
+   character sequence:
+
+   0 = Front
+   2 = Side
+   1 = Back
+
+   Cosmetic directional resources are indexed against these same frame
+   numbers, so the renderer must receive the real base frame instead of
+   converting it into artificial 13/26/39 direction groups.
 */
 
 const VIEW_DEFINITIONS = [
@@ -106,7 +139,6 @@ const VIEW_DEFINITIONS = [
     frame: 1,
   },
 ];
-
 /* =========================================================
    COLORS
    ========================================================= */
@@ -184,7 +216,13 @@ export default function CosmeticBuilder() {
       null
     );
 
+  const [catalog, setCatalog] =
+    useState<CatalogCosmetic[]>([]);
+
   const [loading, setLoading] =
+    useState(true);
+
+  const [catalogLoading, setCatalogLoading] =
     useState(true);
 
   const [loadError, setLoadError] =
@@ -204,9 +242,7 @@ export default function CosmeticBuilder() {
       Partial<
         Record<CosmeticSlot, string>
       >
-    >({
-      ...DEFAULT_COSMETICS,
-    });
+    >({});
 
   const [colors, setColors] =
     useState<
@@ -224,46 +260,61 @@ export default function CosmeticBuilder() {
     useState("");
 
   /* =======================================================
-     LOAD MANIFEST
+     LOAD MANIFEST + CURRENT POKEMMO CATALOG
      ======================================================= */
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadManifest() {
+    async function loadData() {
       try {
         setLoading(true);
+        setCatalogLoading(true);
         setLoadError("");
 
-        const response =
-          await fetch(
-            `${ASSET_ROOT}/manifest.json`
-          );
+        const [manifestResponse, catalogResponse] =
+          await Promise.all([
+            fetch(`${ASSET_ROOT}/manifest.json`),
+            fetch("/api/cosmetics"),
+          ]);
 
-        if (!response.ok) {
+        if (!manifestResponse.ok) {
           throw new Error(
-            `Manifest returned ${response.status}`
+            `Manifest returned ${manifestResponse.status}`
           );
         }
 
-        const data =
-          (await response.json()) as RendererManifest;
+        if (!catalogResponse.ok) {
+          throw new Error(
+            `Cosmetic catalog returned ${catalogResponse.status}`
+          );
+        }
 
-        if (
-          !data.base ||
-          !data.cosmetics
-        ) {
+        const manifestData =
+          (await manifestResponse.json()) as RendererManifest;
+
+        const catalogData =
+          (await catalogResponse.json()) as CatalogCosmetic[];
+
+        if (!manifestData.base || !manifestData.cosmetics) {
           throw new Error(
             "Invalid local renderer manifest."
           );
         }
 
+        if (!Array.isArray(catalogData)) {
+          throw new Error(
+            "Cosmetic catalog returned invalid data."
+          );
+        }
+
         if (!cancelled) {
-          setManifest(data);
+          setManifest(manifestData);
+          setCatalog(catalogData);
         }
       } catch (error) {
         console.error(
-          "Failed to load local renderer:",
+          "Failed to load cosmetic builder data:",
           error
         );
 
@@ -271,17 +322,18 @@ export default function CosmeticBuilder() {
           setLoadError(
             error instanceof Error
               ? error.message
-              : "Failed to load local renderer."
+              : "Failed to load cosmetic catalog."
           );
         }
       } finally {
         if (!cancelled) {
           setLoading(false);
+          setCatalogLoading(false);
         }
       }
     }
 
-    loadManifest();
+    loadData();
 
     return () => {
       cancelled = true;
@@ -290,26 +342,54 @@ export default function CosmeticBuilder() {
 
   /* =======================================================
      COSMETIC ARRAY
+
+     The current /api/cosmetics catalog is authoritative for
+     the item list. The local manifest is only used to attach
+     Team Fate assets/icons when they exist.
      ======================================================= */
 
   const cosmetics =
-    useMemo<LocalCosmetic[]>(
-      () => {
-        if (!manifest) {
-          return [];
-        }
+    useMemo<LocalCosmetic[]>(() => {
+      if (!manifest || !catalog.length) {
+        return [];
+      }
 
-        return Object.entries(
-          manifest.cosmetics
-        ).map(
-          ([name, item]) => ({
-            ...item,
-            name,
-          })
+      const localByName = new Map<string, LocalCosmetic>();
+
+      for (const [name, item] of Object.entries(manifest.cosmetics)) {
+        localByName.set(name.trim().toLowerCase(), {
+          ...item,
+          name,
+          hasLocalAsset: true,
+        });
+      }
+
+      return catalog
+        .map((item) => {
+          const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+
+          // Slot 1 (Forehead) is not a supported Fiereu URL slot.
+          if (!slot) {
+            return null;
+          }
+
+          const local =
+            localByName.get(item.name.trim().toLowerCase());
+
+          return {
+            ...(local ?? {}),
+            name: item.name,
+            slot,
+            item_id: item.item_id,
+            internal_id: item.internal_id,
+            icon_id: item.icon_id,
+            hasLocalAsset: Boolean(local),
+          };
+        })
+        .filter(
+          (item): item is LocalCosmetic => item !== null
         );
-      },
-      [manifest]
-    );
+    }, [manifest, catalog]);
 
   /* =======================================================
      FILTERED COSMETICS
@@ -336,12 +416,11 @@ export default function CosmeticBuilder() {
           }
 
           return (
-            item.name
-              .toLowerCase()
-              .includes(search) ||
-            String(
-              item.layer_index
-            ).includes(search)
+            item.name.toLowerCase().includes(search) ||
+            String(item.item_id ?? "").includes(search) ||
+            String(item.internal_id ?? "").includes(search) ||
+            String(item.year ?? "").includes(search) ||
+            String(item.layer_index ?? "").includes(search)
           );
         }
       );
@@ -498,17 +577,7 @@ export default function CosmeticBuilder() {
           ...current,
         };
 
-        const defaultItem =
-          DEFAULT_COSMETICS[
-            slot
-          ];
-
-        if (defaultItem) {
-          next[slot] =
-            defaultItem;
-        } else {
-          delete next[slot];
-        }
+        delete next[slot];
 
         return next;
       }
@@ -544,9 +613,7 @@ export default function CosmeticBuilder() {
 
     setQuery("");
 
-    setEquipped({
-      ...DEFAULT_COSMETICS,
-    });
+    setEquipped({});
 
     setColors({
       hair: DEFAULT_COLOR,
@@ -560,15 +627,13 @@ export default function CosmeticBuilder() {
      ======================================================= */
 
   function randomize() {
-    if (!cosmetics.length) {
+    if (!cosmetics.length || catalogLoading) {
       return;
     }
 
     const next: Partial<
       Record<CosmeticSlot, string>
-    > = {
-      ...DEFAULT_COSMETICS,
-    };
+    > = {};
 
     for (
       const slot of SLOT_IDS
@@ -632,11 +697,13 @@ export default function CosmeticBuilder() {
             return result;
           }
 
-          if (
-            !manifest.cosmetics[
-              name
-            ]
-          ) {
+          const exists = cosmetics.some(
+            (item) =>
+              item.name === name &&
+              item.slot === slot
+          );
+
+          if (!exists) {
             return result;
           }
 
@@ -651,6 +718,7 @@ export default function CosmeticBuilder() {
       );
     }, [
       manifest,
+      cosmetics,
       equipped,
     ]);
 
@@ -675,8 +743,7 @@ export default function CosmeticBuilder() {
           <p>
             Build your PokeMMO
             character using the
-            local Team Fate
-            renderer.
+            PokeMMO cosmetic renderer.
           </p>
         </div>
 
@@ -722,7 +789,7 @@ export default function CosmeticBuilder() {
               </h2>
 
               <span>
-                {loading
+                {catalogLoading
                   ? "Loading..."
                   : `${filtered.length} available`}
               </span>
@@ -786,9 +853,9 @@ export default function CosmeticBuilder() {
               <div className="cosmetic-empty">
                 {loadError}
               </div>
-            ) : loading ? (
+            ) : catalogLoading ? (
               <div className="cosmetic-empty">
-                Loading local
+                Loading PokeMMO
                 cosmetics...
               </div>
             ) : (
@@ -819,16 +886,22 @@ export default function CosmeticBuilder() {
 
                         <div className="cosmetic-item-icon">
 
-                          <img
-                            src={`${ASSET_ROOT}/${item.icon}`}
-                            alt=""
-                            loading="lazy"
-                          />
+{item.icon ? (
+  <img
+    src={`${ASSET_ROOT}/${item.icon}`}
+    alt=""
+    loading="lazy"
+  />
+) : item.icon_id ? (
+  <img
+    src={`${COSMETIC_ICON_BASE}/${item.icon_id}.png`}
+    alt=""
+    loading="lazy"
+  />
+) : null}
 
                           <span>
-                            {
-                              item.layer_index
-                            }
+                            {item.item_id ?? item.layer_index ?? ""}
                           </span>
 
                         </div>
@@ -1336,9 +1409,9 @@ export default function CosmeticBuilder() {
       {/* STATUS */}
 
       <div className="cosmetic-builder-note">
-        {manifest
-          ? `Local cosmetic catalog: ${cosmetics.length} records loaded.`
-          : "Loading local renderer..."}
+        {catalogLoading
+          ? "Loading current PokeMMO cosmetic catalog..."
+          : `${cosmetics.length} PokeMMO cosmetics available in the builder.`}
       </div>
 
     </div>
