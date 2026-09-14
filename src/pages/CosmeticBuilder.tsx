@@ -455,6 +455,59 @@ export default function CosmeticBuilder() {
     DEFAULT_COLOR;
 
   /* =======================================================
+     RENDER MANIFEST
+
+     The Team Fate manifest is an asset manifest, not the complete
+     PokeMMO cosmetic catalog. Catalog-only cosmetics must still be
+     renderable, so create lightweight manifest entries for them.
+
+     The Fiereu renderer only needs the cosmetic name, slot, and the
+     real PokeMMO/renderer item ID. No local artwork is composed here.
+     ======================================================= */
+
+  const renderManifest = useMemo<RendererManifest | null>(() => {
+    if (!manifest) {
+      return null;
+    }
+
+    const cosmeticsMap: RendererManifest["cosmetics"] = {
+      ...manifest.cosmetics,
+    };
+
+    for (const item of catalog) {
+      const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+      if (!slot) {
+        continue;
+      }
+
+      const name = item.name.trim();
+      if (!name) {
+        continue;
+      }
+
+      const existing = cosmeticsMap[name];
+      const rendererId =
+        item.internal_id ?? item.item_id;
+
+      cosmeticsMap[name] = {
+        ...(existing ?? {
+          slot,
+          layer: "",
+        }),
+        slot,
+        // Explicit catalog ID lets the renderer handle cosmetics that
+        // do not have a Team Fate local manifest entry.
+        api_id: existing?.api_id ?? existing?.apiId ?? rendererId,
+      };
+    }
+
+    return {
+      ...manifest,
+      cosmetics: cosmeticsMap,
+    };
+  }, [manifest, catalog]);
+
+  /* =======================================================
      RENDER THREE VIEWS
      ======================================================= */
 
@@ -466,12 +519,12 @@ export default function CosmeticBuilder() {
      * This makes TypeScript understand that the value passed
      * into the async rendering function cannot be null.
      */
-    if (!manifest) {
+    if (!renderManifest) {
       return;
     }
 
     const rendererManifest =
-      manifest;
+      renderManifest;
 
     let cancelled = false;
 
@@ -556,7 +609,7 @@ export default function CosmeticBuilder() {
       cancelled = true;
     };
   }, [
-    manifest,
+    renderManifest,
     skin,
     equipped,
     colors,
