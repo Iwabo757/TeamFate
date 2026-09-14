@@ -591,7 +591,16 @@ async function renderApiView(
   // Fiereu supplies the complete composition. To retain the old Team Fate
   // color controls without locally composing cosmetics, isolate each selected
   // colorable slot by comparing the API render with that slot removed.
-  for (const slot of ["hair", "top", "pants", "shoes", "back", "hat"] as CosmeticSlot[]) {
+  const colorableSlots: Array<keyof CosmeticTints> = [
+    "hair",
+    "top",
+    "pants",
+    "shoes",
+    "back",
+    "hat",
+  ];
+
+  for (const slot of colorableSlots) {
     const tint = tints[slot];
     if (!tint || !cosmetics[slot]) continue;
 

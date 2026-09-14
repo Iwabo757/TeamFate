@@ -438,7 +438,7 @@ export default function CosmeticBuilder() {
         ...(existing?.api_ids ?? []),
       ].filter(
         (id): id is number =>
-          Number.isFinite(id) && id > 0
+          typeof id === "number" && Number.isFinite(id) && id > 0
       );
 
       mergedCosmetics[item.name] = {
