@@ -84,7 +84,80 @@ function cleanName(value: string): string {
     .trim();
 }
 
+const EXPLICIT_SLOT_BY_NAME: Record<string, number> = {
+  "the electric storm": 3,
+  "sleeigh bell ribbons": 2,
+  "sleigh bell ribbons": 2,
+  "black cat ears": 2,
+  "sweatband": 2,
+  "wyrm worm": 2,
+  "horse head": 2,
+  "red dragon head": 2,
+  "xmas lights": 2,
+  "xmas wreath": 6,
+  "blue xmas stocking": 6,
+  "yellow xmas stocking": 6,
+  "retro games handheld": 11,
+  "bronze team trophy": 11,
+  "silver team trophy": 11,
+  "gold team trophy": 11,
+  "giant turtle shell": 6,
+  "bronze cup of the year trophy": 11,
+  "silver cup of the year trophy": 11,
+  "gold cup of the year trophy": 11,
+  "shovel": 11,
+  "yellow wasp abdomen": 6,
+  "shiny wasp abdomen": 6,
+  "ancient coin": 11,
+  "strange tentacles": 6,
+  "origin ring": 11,
+  "sleeveless top": 7,
+  "long sleeve top": 7,
+  "lederhosen": 10,
+  "xmas sweater": 7,
+  "changshan": 7,
+  "candy corn sweater": 7,
+  "zodiac tangzhuang": 7,
+  "halloween treat bucket": 11,
+  "leek": 11,
+  "turban": 2,
+  "baby bonnet & pacifier": 2,
+  "koban": 11,
+  "trick kitty (alt)": 2,
+  "pumpcat (alt)": 2,
+  "flaming demon skull": 2,
+  "flaming demon skull (alt)": 2,
+  "blue flaming demon skull": 2,
+  "blue flaming demon skull (alt)": 2,
+  "ghostly candle": 11,
+  "snow leopard ears": 2,
+  "elegant antennae": 2,
+  "springy mushroom": 2,
+  "green slime": 2,
+  "deer skull": 2,
+  "froggy": 2,
+  "melty the snowman": 2,
+  "pudgy penguin": 2,
+  "christmas camo": 7,
+  "christmas camo (alt)": 7,
+  "horse plush": 11,
+  "lucky red dragon": 2,
+  "lucky gold dragon": 2,
+  "purple christmas sleigh": 12,
+  "xuanwu": 12,
+  "rudolph": 12,
+  "noble steed": 12,
+  "noble steed (alt)": 12,
+};
+
+function explicitSlot(name: string): number {
+  return EXPLICIT_SLOT_BY_NAME[normalizeName(name)] ?? 0;
+}
+
 function inferSlot(name: string): number {
+  const explicit = explicitSlot(name);
+  if (explicit) return explicit;
+
   const value = normalizeName(name);
 
   // Bicycle
@@ -641,6 +714,10 @@ export default async function handler(
     const metadataById =
       new Map<number, CosmeticMetadata>();
 
+    // items-cosmetic.json has historically used the Clothes API/vanity
+    // namespace for some records and the internal item namespace for others.
+    // Index every ID plus its mapped counterpart so slot metadata is never
+    // lost just because the namespace differs.
     for (const cosmetic of cosmeticData) {
       const ids = Array.isArray(
         cosmetic.item_id
@@ -655,10 +732,17 @@ export default async function handler(
           continue;
         }
 
-        metadataById.set(
-          numericId,
-          cosmetic
-        );
+        metadataById.set(numericId, cosmetic);
+
+        const mappedInternal = apiToInternal.get(numericId);
+        if (mappedInternal !== undefined) {
+          metadataById.set(mappedInternal, cosmetic);
+        }
+
+        const mappedApi = internalToApi.get(numericId);
+        if (mappedApi !== undefined) {
+          metadataById.set(mappedApi, cosmetic);
+        }
       }
     }
 
@@ -712,9 +796,10 @@ export default async function handler(
        */
 
       const catalogEntry =
-        mappedApiId !== undefined
+        (mappedApiId !== undefined
           ? catalog.get(mappedApiId)
-          : undefined;
+          : undefined) ??
+        catalog.get(internalId);
 
       if (
         catalogEntry?.name &&
@@ -736,7 +821,10 @@ export default async function handler(
        */
 
       const metadata =
-        metadataById.get(internalId);
+        metadataById.get(internalId) ??
+        (mappedApiId !== undefined
+          ? metadataById.get(mappedApiId)
+          : undefined);
 
       const metadataSlot =
         Number(metadata?.slot ?? 0);

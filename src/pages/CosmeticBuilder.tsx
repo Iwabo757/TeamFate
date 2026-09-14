@@ -13,6 +13,8 @@ import type {
 type CatalogCosmetic = {
   item_id: number;
   internal_id?: number;
+  api_ids?: number[];
+  renderer_supported?: boolean;
   name: string;
   icon_id: number;
   slot: number;
@@ -379,6 +381,7 @@ export default function CosmeticBuilder() {
           frames: item.frames,
           api_id: item.api_id,
           apiId: item.apiId,
+          api_ids: item.api_ids,
         });
       }
 
@@ -465,6 +468,9 @@ export default function CosmeticBuilder() {
       // for cosmetics where internal and vanity IDs differ.
       const ids = [
         ...(existing?.api_ids ?? []),
+        existing?.api_id,
+        existing?.apiId,
+        ...(item.api_ids ?? []),
         item.item_id,
         item.internal_id,
       ].filter(

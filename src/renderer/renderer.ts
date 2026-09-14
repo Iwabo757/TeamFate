@@ -451,13 +451,25 @@ function buildApiUrl(
     slots[7],
   ];
 
-  return `${API_BASE}/${API_SCENE[scene]}/${API_VERSION}/${API_GENDER}/${ordered.join("/")}.png`;
+  const params = new URLSearchParams({
+    scene: String(API_SCENE[scene]),
+    version: String(API_VERSION),
+    gender: String(API_GENDER),
+  });
+
+  ordered.forEach((value, index) => {
+    params.set(`s${index + 1}`, String(value ?? 0));
+  });
+
+  // Route the Fiereu image through our same-origin proxy. This preserves the
+  // exact Fiereu composition while avoiding browser CORS failures when the
+  // image is drawn to a canvas for Team Fate color controls.
+  return `/api/pokemmo-clothes?${params.toString()}`;
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
     image.src = url;
