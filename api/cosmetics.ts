@@ -443,11 +443,14 @@ export default async function handler(
      * renderer/internal ID.
      */
 
+    // These remote sources are enrichment only. The local client dump is
+    // authoritative, so one unavailable remote source must never turn the
+    // entire API route into HTTP 500.
     const [
-      cosmeticDataResponse,
-      apiItemsResponse,
-      catalogResponse,
-    ] = await Promise.all([
+      cosmeticDataResult,
+      apiItemsResult,
+      catalogResult,
+    ] = await Promise.allSettled([
       fetch(
         "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items-cosmetic.json"
       ),
@@ -461,6 +464,21 @@ export default async function handler(
       ),
     ]);
 
+    const cosmeticDataResponse =
+      cosmeticDataResult.status === "fulfilled"
+        ? cosmeticDataResult.value
+        : null;
+
+    const apiItemsResponse =
+      apiItemsResult.status === "fulfilled"
+        ? apiItemsResult.value
+        : null;
+
+    const catalogResponse =
+      catalogResult.status === "fulfilled"
+        ? catalogResult.value
+        : null;
+
     /*
      * ---------------------------------------------------------
      * PARSE OPTIONAL EXTERNAL SOURCES
@@ -471,7 +489,7 @@ export default async function handler(
     let apiItems: ApiItem[] = [];
     let catalogHtml = "";
 
-    if (cosmeticDataResponse.ok) {
+    if (cosmeticDataResponse?.ok) {
       try {
         const data =
           await cosmeticDataResponse.json();
@@ -486,7 +504,7 @@ export default async function handler(
       }
     }
 
-    if (apiItemsResponse.ok) {
+    if (apiItemsResponse?.ok) {
       try {
         const data =
           await apiItemsResponse.json();
@@ -501,7 +519,7 @@ export default async function handler(
       }
     }
 
-    if (catalogResponse.ok) {
+    if (catalogResponse?.ok) {
       try {
         catalogHtml =
           await catalogResponse.text();
