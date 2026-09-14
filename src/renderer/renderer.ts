@@ -289,27 +289,26 @@ async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
 ): Promise<number[]> {
-  const single = cosmetic.api_id ?? cosmetic.apiId;
-  if (Number.isFinite(single)) {
-    const explicit = cosmetic.api_ids ?? [];
-    return Array.from(
-      new Set([
-        Number(single),
-        ...explicit,
-      ].filter((id): id is number => Number.isFinite(id) && id >= 0))
-    );
-  }
-
-  const explicit = cosmetic.api_ids ?? [];
-  if (explicit.length) {
-    return Array.from(
-      new Set(explicit.filter((id): id is number => Number.isFinite(id) && id >= 0))
-    );
-  }
-
+  // IMPORTANT: name-specific Fiereu mappings must win over catalog IDs.
+  // The PokeMMO catalog exposes multiple ID namespaces (internal item IDs
+  // and vanity/Dex IDs), while older Fiereu entries can require the internal
+  // namespace. If we accept api_id first, Reverse Scene, Sideswept, Afro,
+  // etc. can be sent the vanity ID and the API returns no image.
   const normalized = normalizeName(cosmeticName);
   const knownIds = KNOWN_FIEREU_IDS[normalized];
   if (knownIds?.length) return [...knownIds];
+
+  const explicit = [
+    cosmetic.api_id,
+    cosmetic.apiId,
+    ...(cosmetic.api_ids ?? []),
+  ].filter(
+    (id): id is number => Number.isFinite(id) && id >= 0
+  );
+
+  if (explicit.length) {
+    return Array.from(new Set(explicit.map(Number)));
+  }
 
   if (normalized === "default hair") return [0];
   if (normalized === "brown" || normalized === "brown eyes") return [1438];

@@ -460,10 +460,13 @@ export default function CosmeticBuilder() {
       const existing = mergedCosmetics[item.name];
       // Try the PokeMMO internal ID first. Older Fiereu cosmetics use that
       // namespace; the API/vanity ID is kept as a fallback.
+      // Keep both namespaces, but do not declare the vanity ID as the
+      // authoritative renderer ID. The renderer has explicit Fiereu mappings
+      // for cosmetics where internal and vanity IDs differ.
       const ids = [
+        ...(existing?.api_ids ?? []),
         item.item_id,
         item.internal_id,
-        ...(existing?.api_ids ?? []),
       ].filter(
         (id): id is number =>
           typeof id === "number" && Number.isFinite(id) && id > 0
@@ -477,7 +480,7 @@ export default function CosmeticBuilder() {
         }),
         name: item.name,
         slot,
-        api_id: ids[0],
+        api_id: undefined,
         api_ids: Array.from(new Set(ids)),
       };
     }
