@@ -23,6 +23,17 @@ type CatalogCosmetic = {
   year?: number;
 };
 
+type LocalManifestCosmetic = {
+  name: string;
+  slot: CosmeticSlot;
+  id?: string;
+  icon?: string;
+  layer?: string;
+  frames?: string[];
+  api_id?: number;
+  apiId?: number;
+};
+
 type LocalCosmetic = {
   name: string;
   slot: CosmeticSlot;
@@ -31,9 +42,10 @@ type LocalCosmetic = {
   icon_index?: number;
   layer_index?: number;
   slot_code?: number;
-  item_id?: number;
+  item_id: number;
   internal_id?: number;
   icon_id?: number;
+  year?: number;
   hasLocalAsset: boolean;
 };
 
@@ -219,9 +231,6 @@ export default function CosmeticBuilder() {
   const [catalog, setCatalog] =
     useState<CatalogCosmetic[]>([]);
 
-  const [loading, setLoading] =
-    useState(true);
-
   const [catalogLoading, setCatalogLoading] =
     useState(true);
 
@@ -268,7 +277,6 @@ export default function CosmeticBuilder() {
 
     async function loadData() {
       try {
-        setLoading(true);
         setCatalogLoading(true);
         setLoadError("");
 
@@ -327,7 +335,6 @@ export default function CosmeticBuilder() {
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
           setCatalogLoading(false);
         }
       }
@@ -354,41 +361,50 @@ export default function CosmeticBuilder() {
         return [];
       }
 
-      const localByName = new Map<string, LocalCosmetic>();
+      const localByName = new Map<string, LocalManifestCosmetic>();
 
       for (const [name, item] of Object.entries(manifest.cosmetics)) {
+        if (!item) {
+          continue;
+        }
+
         localByName.set(name.trim().toLowerCase(), {
-          ...item,
           name,
-          hasLocalAsset: true,
+          slot: item.slot,
+          id: item.id,
+          icon: item.icon,
+          layer: item.layer,
+          frames: item.frames,
+          api_id: item.api_id,
+          apiId: item.apiId,
         });
       }
 
-      return catalog
-        .map((item) => {
-          const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+      const merged: LocalCosmetic[] = [];
 
-          // Slot 1 (Forehead) is not a supported Fiereu URL slot.
-          if (!slot) {
-            return null;
-          }
+      for (const item of catalog) {
+        const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
 
-          const local =
-            localByName.get(item.name.trim().toLowerCase());
+        // Slot 1 (Forehead) is not a supported Fiereu URL slot.
+        if (!slot) {
+          continue;
+        }
 
-          return {
-            ...(local ?? {}),
-            name: item.name,
-            slot,
-            item_id: item.item_id,
-            internal_id: item.internal_id,
-            icon_id: item.icon_id,
-            hasLocalAsset: Boolean(local),
-          };
-        })
-        .filter(
-          (item): item is LocalCosmetic => item !== null
-        );
+        const local =
+          localByName.get(item.name.trim().toLowerCase());
+
+        merged.push({
+          ...(local ?? {}),
+          name: item.name,
+          slot,
+          item_id: item.item_id,
+          internal_id: item.internal_id,
+          icon_id: item.icon_id,
+          hasLocalAsset: Boolean(local),
+        });
+      }
+
+      return merged;
     }, [manifest, catalog]);
 
   /* =======================================================
