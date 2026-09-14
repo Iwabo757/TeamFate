@@ -303,7 +303,7 @@ async function resolveApiItemIds(
     cosmetic.apiId,
     ...(cosmetic.api_ids ?? []),
   ].filter(
-    (id): id is number => Number.isFinite(id) && id >= 0
+    (id): id is number => typeof id === "number" && Number.isFinite(id) && id >= 0
   );
 
   if (explicit.length) {
