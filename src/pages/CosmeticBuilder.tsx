@@ -18,6 +18,7 @@ type CatalogCosmetic = {
   name: string;
   icon_id: number;
   slot: number;
+  colorable?: boolean;
   attribute?: number;
   festival?: number;
   limitation?: number;
@@ -35,6 +36,7 @@ type LocalManifestCosmetic = {
   api_id?: number;
   apiId?: number;
   api_ids?: number[];
+  colorable?: boolean;
 };
 
 type LocalCosmetic = {
@@ -51,6 +53,7 @@ type LocalCosmetic = {
   api_ids?: number[];
   year?: number;
   hasLocalAsset: boolean;
+  colorable: boolean;
 };
 
 type ViewPreview = {
@@ -406,6 +409,7 @@ export default function CosmeticBuilder() {
           internal_id: item.internal_id,
           icon_id: item.icon_id,
           hasLocalAsset: Boolean(local),
+          colorable: item.colorable === true,
         });
       }
 
@@ -471,6 +475,7 @@ export default function CosmeticBuilder() {
         slot,
         api_id: undefined,
         api_ids: Array.from(new Set(ids)),
+        colorable: item.colorable === true,
       };
     }
 
@@ -522,6 +527,17 @@ export default function CosmeticBuilder() {
   /* =======================================================
      CURRENT COLOR
      ======================================================= */
+
+  const selectedCatalogItem = useMemo(() => {
+    const name = equipped[selectedSlot];
+    if (!name) return null;
+    return cosmetics.find(
+      (item) => item.name === name && item.slot === selectedSlot
+    ) ?? null;
+  }, [cosmetics, equipped, selectedSlot]);
+
+  const selectedItemCanBeColored =
+    !selectedCatalogItem || selectedCatalogItem.colorable === true;
 
   const selectedColor =
     colors[selectedSlot] ??
@@ -1325,9 +1341,7 @@ export default function CosmeticBuilder() {
                   </strong>
                 </div>
 
-                {isColorableSlot(
-                  selectedSlot
-                ) ? (
+                {isColorableSlot(selectedSlot) && selectedItemCanBeColored ? (
                   <>
 
                     {/* PRESET COLORS */}

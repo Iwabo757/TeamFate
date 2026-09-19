@@ -48,6 +48,7 @@ type CosmeticResult = {
   limitation: number;
   month: number;
   year: number;
+  colorable: boolean;
 };
 
 const POKEHUB_ITEMS_URL =
@@ -951,6 +952,11 @@ export default async function handler(
           Number(
             metadata?.year ?? 0
           ),
+
+        // PokeMMO cosmetic attribute bit 0x08 marks dyeable/colorable
+        // cosmetics in items-cosmetic.json. Do not infer colorability from
+        // the slot: many hats/hair items are intentionally fixed-color.
+        colorable: (Number(metadata?.attribute ?? 0) & 8) !== 0,
       });
     }
 
@@ -960,22 +966,19 @@ export default async function handler(
      * ---------------------------------------------------------
      */
 
-    const unique =
-      new Map<number, CosmeticResult>();
+    // Every client cosmetic is a distinct catalog entry. API/dex IDs can
+    // collide with other namespaces, so never dedupe the catalog by item_id.
+    // Dedupe only repeated internal client IDs.
+    const unique = new Map<number, CosmeticResult>();
 
     for (const cosmetic of cosmetics) {
-      if (
-        !unique.has(cosmetic.item_id)
-      ) {
-        unique.set(
-          cosmetic.item_id,
-          cosmetic
-        );
+      const key = Number(cosmetic.internal_id ?? cosmetic.item_id);
+      if (!unique.has(key)) {
+        unique.set(key, cosmetic);
       }
     }
 
-    const result =
-      Array.from(unique.values());
+    const result = Array.from(unique.values());
 
     /*
      * ---------------------------------------------------------

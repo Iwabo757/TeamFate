@@ -32,6 +32,7 @@ export type Cosmetic = {
   api_id?: number;
   apiId?: number;
   api_ids?: number[];
+  colorable?: boolean;
 };
 
 export type RendererManifest = {
@@ -249,6 +250,8 @@ const KNOWN_FIEREU_IDS: Record<string, number[]> = {
   // Keep the working internal id first; the vanity/Dex id is only a fallback.
   afro: [1185, 2513],
   sideswept: [1183, 2517],
+  "disco afro": [1186, 2521],
+  "faux hawk": [1182, 2526],
   "reverse scene": [1181, 2535],
   scene: [1181, 2535],
 
@@ -305,8 +308,7 @@ async function resolveApiItemIds(
   // namespace. If we accept api_id first, Reverse Scene, Sideswept, Afro,
   // etc. can be sent the vanity ID and the API returns no image.
   const normalized = normalizeName(cosmeticName);
-  const knownIds = KNOWN_FIEREU_IDS[normalized];
-  if (knownIds?.length) return [...knownIds];
+  const knownIds = KNOWN_FIEREU_IDS[normalized] ?? [];
 
   const explicit = [
     cosmetic.api_id,
@@ -316,8 +318,10 @@ async function resolveApiItemIds(
     (id): id is number => typeof id === "number" && Number.isFinite(id) && id >= 0
   );
 
-  if (explicit.length) {
-    return Array.from(new Set(explicit.map(Number)));
+  if (explicit.length || knownIds.length) {
+    // Try every known namespace. Different generations of the Fiereu API
+    // contain cosmetics under different PokeMMO item-ID namespaces.
+    return Array.from(new Set([...explicit, ...knownIds].map(Number)));
   }
 
   if (normalized === "default hair") return [0];
@@ -685,7 +689,7 @@ async function renderLocalView(
     // intentionally different from the Fiereu difference-mask tinting: it
     // prevents fixed-color accessories attached to hair/hats from changing.
     const tint = tints[slot as keyof CosmeticTints];
-    if (tint) {
+    if (tint && cosmetic.colorable !== false) {
       tintKeyedLayer(layerContext, width, height, tint);
     }
 
@@ -761,6 +765,9 @@ async function renderApiView(
     const tint = tints[slot];
     if (!tint || !cosmetics[slot]) continue;
 
+    const cosmetic = manifest.cosmetics?.[cosmetics[slot]!];
+    if (cosmetic?.colorable === false) continue;
+
     const withoutSlots = { ...chosenSlots, [API_SLOT[slot]]: 0 };
     let withoutImage: HTMLImageElement;
     try {
@@ -831,11 +838,16 @@ export async function renderCharacter(
   // predate/escape the public Fiereu Clothes API. Everything else must use the
   // Fiereu API first. A successful API response containing only the base
   // character is not a reason to silently switch to local assets.
-  if (shouldUseLocalRenderer(manifest, cosmetics)) {
-    return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
+  try {
+    return await renderApiView(manifest, cosmetics, scene, scale, _tints);
+  } catch (apiError) {
+    // If Fiereu does not have a particular cosmetic, use the extracted pak
+    // frames when they exist. API remains the primary renderer for everything.
+    if (shouldUseLocalRenderer(manifest, cosmetics)) {
+      return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
+    }
+    throw apiError;
   }
-
-  return renderApiView(manifest, cosmetics, scene, scale, _tints);
 }
 
 export async function renderCharacterToDataUrl(
