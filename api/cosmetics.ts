@@ -805,24 +805,23 @@ export default async function handler(
       currentById.set(Number(item.id), item);
     }
 
-    const sourceItems = catalog.size
-      ? Array.from(catalog.entries()).map(([apiId, entry]) => {
-          const current = currentById.get(apiId);
-          const mappedInternal = apiToInternal.get(apiId);
-          const internalId = mappedInternal ?? current?.id ?? apiId;
-          return {
-            id: apiId,
-            internalId: Number(internalId),
-            name: cleanName(entry.name || current?.name || `Item ${apiId}`),
-            iconId: Number(current?.icon_id || apiId),
-          };
-        })
-      : currentCosmetics.map((item) => ({
-          id: Number(item.id),
-          internalId: Number(item.id),
-          name: cleanName(item.name || `Item ${item.id}`),
-          iconId: Number(item.icon_id || item.id),
-        }));
+    // The local client dump is the authoritative discovery list. The PikaMMO
+    // HTML table is enrichment only; using it as the source list silently
+    // dropped newer cosmetics and produced the 632-item catalog seen in the
+    // builder.
+    const sourceItems = currentCosmetics.map((item) => {
+      const internalId = Number(item.id);
+      const mappedApiId = internalToApi.get(internalId);
+      const catalogEntry =
+        catalog.get(mappedApiId ?? -1) ?? catalog.get(internalId);
+
+      return {
+        id: mappedApiId ?? internalId,
+        internalId,
+        name: cleanName(catalogEntry?.name || item.name || `Item ${internalId}`),
+        iconId: Number(item.icon_id || mappedApiId || internalId),
+      };
+    });
 
     for (const sourceItem of sourceItems) {
       const internalId = sourceItem.internalId;

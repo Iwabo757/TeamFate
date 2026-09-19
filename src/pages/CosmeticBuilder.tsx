@@ -409,31 +409,9 @@ export default function CosmeticBuilder() {
         });
       }
 
-      // Keep the older Team Fate hair entries visible as well. These are
-      // character hair variants rather than entries in the 794-item vanity
-      // catalog, so they are sourced from the local manifest only.
-      const catalogNames = new Set(
-        merged.map((item) => item.name.trim().toLowerCase())
-      );
-
-      for (const [name, item] of Object.entries(manifest.cosmetics)) {
-        if (item.slot !== "hair") continue;
-        const key = name.trim().toLowerCase();
-        if (catalogNames.has(key)) continue;
-
-        merged.push({
-          name,
-          slot: "hair",
-          icon: item.icon,
-          layer: item.layer,
-          item_id: Number(item.api_id ?? item.apiId ?? item.id ?? 0),
-          internal_id: undefined,
-          icon_id: undefined,
-          api_ids: item.api_ids,
-          year: undefined,
-          hasLocalAsset: true,
-        });
-      }
+      // Do not append local-only manifest entries to the PokeMMO catalog.
+      // The catalog above is the complete cosmetic list; local assets are only
+      // attached to matching catalog names.
 
       return merged.sort((a, b) =>
         a.name.localeCompare(b.name, undefined, {
@@ -472,12 +450,12 @@ export default function CosmeticBuilder() {
       // authoritative renderer ID. The renderer has explicit Fiereu mappings
       // for cosmetics where internal and vanity IDs differ.
       const ids = [
+        item.internal_id,
         ...(existing?.api_ids ?? []),
         existing?.api_id,
         existing?.apiId,
         ...(item.api_ids ?? []),
         item.item_id,
-        item.internal_id,
       ].filter(
         (id): id is number =>
           typeof id === "number" && Number.isFinite(id) && id > 0
@@ -1028,11 +1006,10 @@ export default function CosmeticBuilder() {
                           </strong>
 
                           <small>
-                            Local asset ·
-                            Resource{" "}
-                            {
-                              item.layer_index
-                            }
+                            PokeMMO cosmetic
+                            {item.item_id && item.item_id > 0
+                              ? ` · ${item.item_id}`
+                              : ""}
                           </small>
 
                         </div>

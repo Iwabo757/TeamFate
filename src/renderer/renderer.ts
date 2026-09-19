@@ -120,6 +120,7 @@ type ApiItem = {
   en_name?: string;
   key?: string;
   category?: number;
+  description?: { en?: string };
 };
 
 type ApiCatalog = {
@@ -205,7 +206,11 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
         };
 
         for (const item of items) {
-          if (item.category !== 6 || !Number.isFinite(item.id)) continue;
+          const description = item.description?.en ?? "";
+          const isCosmetic =
+            item.category === 6 ||
+            /cosmetic item which can be used to modify your appearance/i.test(description);
+          if (!isCosmetic || !Number.isFinite(item.id)) continue;
 
           // Keep both namespaces. Try the internal item id first and the
           // cosmetic/Dex id second instead of assuming one namespace globally.
@@ -240,17 +245,19 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
 const KNOWN_FIEREU_IDS: Record<string, number[]> = {
   // Older/newer cosmetics where we know both namespaces.
-  afro: [2513, 1185],
-  sideswept: [2517, 1183],
-  "reverse scene": [2535, 1181],
-  scene: [2535, 1181],
+  // Fiereu expects the internal PokeMMO item id for these older entries.
+  // Keep the working internal id first; the vanity/Dex id is only a fallback.
+  afro: [1185, 2513],
+  sideswept: [1183, 2517],
+  "reverse scene": [1181, 2535],
+  scene: [1181, 2535],
 
-  "golden cuffed ponytail": [2559, 2235],
-  "mermaid hair": [2560, 2257],
-  "elven ponytail": [2562, 2292],
-  "elegant ponytail": [2563, 2317],
-  "origin hairstyle": [2565, 2318],
-  "colorful unicorn hair": [2566, 2319],
+  "golden cuffed ponytail": [2235, 2559],
+  "mermaid hair": [2257, 2560],
+  "elven ponytail": [2292, 2562],
+  "elegant ponytail": [2317, 2563],
+  "origin hairstyle": [2318, 2565],
+  "colorful unicorn hair": [2319, 2566],
 
   "idol hairstyle": [2558],
   "mermaid hair alt": [2561],
@@ -282,6 +289,11 @@ const NAME_ALIASES: Record<string, string[]> = {
   "mermaid hair crown": ["mermaid hair (alt)"],
   scene: ["reverse scene"],
 };
+
+const LOCAL_ONLY_RENDER_NAMES = new Set([
+  "idol hairstyle",
+  "mermaid hair alt",
+]);
 
 async function resolveApiItemIds(
   cosmeticName: string,
@@ -779,6 +791,18 @@ async function renderApiView(
   return output;
 }
 
+function shouldUseLocalRenderer(
+  manifest: RendererManifest,
+  cosmetics: Partial<Record<CosmeticSlot, string>>
+): boolean {
+  const selectedNames = Object.values(cosmetics).filter(Boolean) as string[];
+  return selectedNames.some((name) => {
+    const normalized = normalizeName(name);
+    const item = manifest.cosmetics?.[name];
+    return LOCAL_ONLY_RENDER_NAMES.has(normalized) && Boolean(item?.frames?.length);
+  });
+}
+
 export async function renderCharacter(
   options: RenderOptions
 ): Promise<HTMLCanvasElement> {
@@ -803,25 +827,15 @@ export async function renderCharacter(
           ? "side"
           : "front";
 
-  try {
-    return await renderApiView(manifest, cosmetics, scene, scale, _tints);
-  } catch (apiError) {
-    // Newly released cosmetics can exist in the extracted Team Fate pak before
-    // the public Fiereu/PokeMMO Clothes API has received their IDs. If every
-    // equipped cosmetic has local frames, use the exact extracted front/side/
-    // back layers as a renderer fallback instead of showing a broken image.
-    const selectedNames = Object.values(cosmetics).filter(Boolean) as string[];
-    const canRenderLocally = selectedNames.every((name) => {
-      const item = manifest.cosmetics?.[name];
-      return Boolean(item?.frames?.length);
-    });
-
-    if (canRenderLocally) {
-      return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
-    }
-
-    throw apiError;
+  // Only use the extracted local compositor for cosmetics that are known to
+  // predate/escape the public Fiereu Clothes API. Everything else must use the
+  // Fiereu API first. A successful API response containing only the base
+  // character is not a reason to silently switch to local assets.
+  if (shouldUseLocalRenderer(manifest, cosmetics)) {
+    return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
   }
+
+  return renderApiView(manifest, cosmetics, scene, scale, _tints);
 }
 
 export async function renderCharacterToDataUrl(
