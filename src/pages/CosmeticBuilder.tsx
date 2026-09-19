@@ -1021,11 +1021,8 @@ export default function CosmeticBuilder() {
                           </strong>
 
                           <small>
-                            Local asset ·
-                            Resource{" "}
-                            {
-                              item.layer_index
-                            }
+                            PokeMMO cosmetic · {item.item_id}
+                            {item.year ? ` · ${item.year}` : ""}
                           </small>
 
                         </div>
