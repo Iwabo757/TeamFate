@@ -796,20 +796,27 @@ export default async function handler(
 
     const cosmetics: CosmeticResult[] = [];
 
-    // PokeMMOHub is the authoritative cosmetic list for this builder. Its
-    // item.json uses the internal item id plus the Clothes/vanity dex id.
-    // This keeps Team Fate aligned with exactly what Hub can list/render.
-    const pokeHubCosmetics = pokeHubItems.filter(
-      (item) => Number(item.category) === 6 && Number.isFinite(Number(item.id))
-    );
+    // PikaMMO's live catalog currently exposes the complete 794-item cosmetic
+    // list. PokeMMOHub's mirrored item.json is useful for ID enrichment, but it
+    // is not current enough to be the discovery source for newly released
+    // cosmetics (for example Idol Hairstyle).
+    const currentById = new Map<number, ClientItem>();
+    for (const item of currentCosmetics) {
+      currentById.set(Number(item.id), item);
+    }
 
-    const sourceItems = pokeHubCosmetics.length
-      ? pokeHubCosmetics.map((item) => ({
-          id: Number(item.dex ?? item.id),
-          internalId: Number(item.id),
-          name: cleanName(item.en_name || item.key || `Item ${item.id}`),
-          iconId: Number(item.dex ?? item.id),
-        }))
+    const sourceItems = catalog.size
+      ? Array.from(catalog.entries()).map(([apiId, entry]) => {
+          const current = currentById.get(apiId);
+          const mappedInternal = apiToInternal.get(apiId);
+          const internalId = mappedInternal ?? current?.id ?? apiId;
+          return {
+            id: apiId,
+            internalId: Number(internalId),
+            name: cleanName(entry.name || current?.name || `Item ${apiId}`),
+            iconId: Number(current?.icon_id || apiId),
+          };
+        })
       : currentCosmetics.map((item) => ({
           id: Number(item.id),
           internalId: Number(item.id),

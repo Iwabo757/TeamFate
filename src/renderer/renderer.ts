@@ -576,6 +576,122 @@ function getDifferenceMask(
   return mask;
 }
 
+
+const LOCAL_DRAW_ORDER: CosmeticSlot[] = [
+  "back",
+  "pants",
+  "shoes",
+  "top",
+  "eyes",
+  "face",
+  "hair",
+  "held",
+  "hat",
+  "tool",
+  "mount",
+];
+
+function tintKeyedLayer(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  color: string
+): void {
+  const rgb = hexToRgb(color);
+  if (!rgb) return;
+
+  const imageData = context.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const alpha = data[i + 3];
+    if (!alpha) continue;
+
+    const dr = Math.abs(data[i] - CHROMA.r);
+    const dg = Math.abs(data[i + 1] - CHROMA.g);
+    const db = Math.abs(data[i + 2] - CHROMA.b);
+
+    if (dr > CHROMA.tolerance || dg > CHROMA.tolerance || db > CHROMA.tolerance) {
+      continue;
+    }
+
+    // The extracted renderer marks colorable pixels with the same magenta key
+    // used by the old Team Fate compositor. Recolor only those pixels; all
+    // accessory/detail pixels remain untouched.
+    data[i] = rgb.r;
+    data[i + 1] = rgb.g;
+    data[i + 2] = rgb.b;
+  }
+
+  context.putImageData(imageData, 0, 0);
+}
+
+async function renderLocalView(
+  manifest: RendererManifest,
+  cosmetics: Partial<Record<CosmeticSlot, string>>,
+  scene: RendererView,
+  skin: number,
+  scale: number,
+  tints: CosmeticTints
+): Promise<HTMLCanvasElement> {
+  const frame = scene === "front" ? 0 : scene === "back" ? 1 : 2;
+  const skinKey = `skin_${Math.min(5, Math.max(1, Math.trunc(skin || 1)))}`;
+  const base = manifest.base?.[skinKey];
+  if (!base?.frames?.[frame]) {
+    throw new Error(`Local renderer base frame is missing for ${skinKey}.`);
+  }
+
+  const baseImage = await loadImage(joinUrl(DEFAULT_BASE_URL, base.frames[frame]));
+  const width = baseImage.naturalWidth || baseImage.width;
+  const height = baseImage.naturalHeight || baseImage.height;
+  if (!width || !height) throw new Error(`Invalid local base image for ${scene}.`);
+
+  const canvas = makeCanvas(width, height);
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("Unable to create local renderer canvas.");
+  context.imageSmoothingEnabled = false;
+  context.drawImage(baseImage, 0, 0, width, height);
+
+  for (const slot of LOCAL_DRAW_ORDER) {
+    const name = cosmetics[slot];
+    if (!name) continue;
+
+    const cosmetic = manifest.cosmetics?.[name];
+    if (!cosmetic || cosmetic.slot !== slot) continue;
+
+    const framePath = cosmetic.frames?.[frame] ?? cosmetic.layer;
+    if (!framePath) continue;
+
+    const layerImage = await loadImage(joinUrl(DEFAULT_BASE_URL, framePath));
+    const layerCanvas = makeCanvas(width, height);
+    const layerContext = layerCanvas.getContext("2d");
+    if (!layerContext) continue;
+    layerContext.imageSmoothingEnabled = false;
+    layerContext.drawImage(layerImage, 0, 0, width, height);
+
+    // Magenta is a true color mask in the extracted local assets. This is
+    // intentionally different from the Fiereu difference-mask tinting: it
+    // prevents fixed-color accessories attached to hair/hats from changing.
+    const tint = tints[slot as keyof CosmeticTints];
+    if (tint) {
+      tintKeyedLayer(layerContext, width, height, tint);
+    }
+
+    removeChromaKey(layerContext, width, height);
+    context.drawImage(layerCanvas, 0, 0, width, height);
+  }
+
+  const safeScale = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  if (safeScale === 1) return canvas;
+
+  const output = makeCanvas(Math.round(width * safeScale), Math.round(height * safeScale));
+  const outputContext = output.getContext("2d");
+  if (!outputContext) throw new Error("Unable to create scaled local renderer canvas.");
+  outputContext.imageSmoothingEnabled = false;
+  outputContext.drawImage(canvas, 0, 0, output.width, output.height);
+  return output;
+}
+
 async function renderApiView(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>,
@@ -672,6 +788,7 @@ export async function renderCharacter(
     cosmetics = {},
     tints: _tints = {},
     scale = 1,
+    skin = 1,
   } = options;
 
   // The Builder's base frames are used only as a view selector:
@@ -686,7 +803,25 @@ export async function renderCharacter(
           ? "side"
           : "front";
 
-  return renderApiView(manifest, cosmetics, scene, scale, _tints);
+  try {
+    return await renderApiView(manifest, cosmetics, scene, scale, _tints);
+  } catch (apiError) {
+    // Newly released cosmetics can exist in the extracted Team Fate pak before
+    // the public Fiereu/PokeMMO Clothes API has received their IDs. If every
+    // equipped cosmetic has local frames, use the exact extracted front/side/
+    // back layers as a renderer fallback instead of showing a broken image.
+    const selectedNames = Object.values(cosmetics).filter(Boolean) as string[];
+    const canRenderLocally = selectedNames.every((name) => {
+      const item = manifest.cosmetics?.[name];
+      return Boolean(item?.frames?.length);
+    });
+
+    if (canRenderLocally) {
+      return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
+    }
+
+    throw apiError;
+  }
 }
 
 export async function renderCharacterToDataUrl(

@@ -435,7 +435,12 @@ export default function CosmeticBuilder() {
         });
       }
 
-      return merged;
+      return merged.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, {
+          sensitivity: "base",
+          numeric: true,
+        })
+      );
     }, [manifest, catalog]);
 
   /* =======================================================
@@ -1007,7 +1012,9 @@ export default function CosmeticBuilder() {
 ) : null}
 
                           <span>
-                            {item.item_id ?? item.layer_index ?? ""}
+                            {item.item_id && item.item_id > 0
+                              ? item.item_id
+                              : ""}
                           </span>
 
                         </div>
@@ -1021,8 +1028,11 @@ export default function CosmeticBuilder() {
                           </strong>
 
                           <small>
-                            PokeMMO cosmetic · {item.item_id}
-                            {item.year ? ` · ${item.year}` : ""}
+                            Local asset ·
+                            Resource{" "}
+                            {
+                              item.layer_index
+                            }
                           </small>
 
                         </div>
