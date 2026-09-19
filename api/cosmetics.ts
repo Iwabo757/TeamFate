@@ -27,6 +27,14 @@ type ApiItem = {
   id?: number;
 };
 
+type PokeHubItem = {
+  id?: number;
+  dex?: number;
+  category?: number;
+  en_name?: string;
+  key?: string;
+};
+
 type CosmeticResult = {
   item_id: number;
   internal_id?: number;
@@ -41,6 +49,9 @@ type CosmeticResult = {
   month: number;
   year: number;
 };
+
+const POKEHUB_ITEMS_URL =
+  "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/master/src/data/pokemmo/item.json";
 
 const SLOT_NAMES: Record<number, string> = {
   1: "Forehead",
@@ -523,6 +534,7 @@ export default async function handler(
       cosmeticDataResult,
       apiItemsResult,
       catalogResult,
+      pokeHubItemsResult,
     ] = await Promise.allSettled([
       fetch(
         "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items-cosmetic.json"
@@ -535,6 +547,7 @@ export default async function handler(
       fetch(
         "https://www.pikammo.fr/Pokemmo/en/tools/cosmetiques"
       ),
+      fetch(POKEHUB_ITEMS_URL),
     ]);
 
     const cosmeticDataResponse =
@@ -550,6 +563,11 @@ export default async function handler(
     const catalogResponse =
       catalogResult.status === "fulfilled"
         ? catalogResult.value
+        : null;
+
+    const pokeHubItemsResponse =
+      pokeHubItemsResult.status === "fulfilled"
+        ? pokeHubItemsResult.value
         : null;
 
     /*
@@ -600,6 +618,16 @@ export default async function handler(
         console.warn(
           "Unable to read PikaMMO catalog"
         );
+      }
+    }
+
+    let pokeHubItems: PokeHubItem[] = [];
+    if (pokeHubItemsResponse?.ok) {
+      try {
+        const data = await pokeHubItemsResponse.json();
+        if (Array.isArray(data)) pokeHubItems = data;
+      } catch {
+        console.warn("Unable to parse PokeMMOHub item catalog");
       }
     }
 
@@ -766,29 +794,38 @@ export default async function handler(
      * ---------------------------------------------------------
      */
 
-    const cosmetics: CosmeticResult[] =
-      [];
+    const cosmetics: CosmeticResult[] = [];
 
-    for (const clientItem of currentCosmetics) {
-      const internalId =
-        Number(clientItem.id);
+    // PokeMMOHub is the authoritative cosmetic list for this builder. Its
+    // item.json uses the internal item id plus the Clothes/vanity dex id.
+    // This keeps Team Fate aligned with exactly what Hub can list/render.
+    const pokeHubCosmetics = pokeHubItems.filter(
+      (item) => Number(item.category) === 6 && Number.isFinite(Number(item.id))
+    );
 
-      if (!Number.isFinite(internalId)) {
-        continue;
-      }
+    const sourceItems = pokeHubCosmetics.length
+      ? pokeHubCosmetics.map((item) => ({
+          id: Number(item.dex ?? item.id),
+          internalId: Number(item.id),
+          name: cleanName(item.en_name || item.key || `Item ${item.id}`),
+          iconId: Number(item.dex ?? item.id),
+        }))
+      : currentCosmetics.map((item) => ({
+          id: Number(item.id),
+          internalId: Number(item.id),
+          name: cleanName(item.name || `Item ${item.id}`),
+          iconId: Number(item.icon_id || item.id),
+        }));
 
-      const mappedApiId =
-        internalToApi.get(internalId);
+    for (const sourceItem of sourceItems) {
+      const internalId = sourceItem.internalId;
+      const mappedApiId = Number(sourceItem.id);
 
       /*
        * Current client name is the first choice.
        */
 
-      let name =
-        typeof clientItem.name === "string" &&
-        clientItem.name.trim()
-          ? cleanName(clientItem.name)
-          : `Item ${internalId}`;
+      let name = sourceItem.name || `Item ${internalId}`;
 
       /*
        * PikaMMO catalog can provide a cleaner
@@ -852,28 +889,24 @@ export default async function handler(
        * into the wrong clothing category.
        */
 
-      if (slot <= 0 || !SLOT_NAMES[slot]) {
-        continue;
-      }
-
-      // If PokeMMOHub has no Clothes API mapping for this item, it is not
-      // part of the renderer-supported catalog yet. Keep it out of the builder
-      // instead of presenting a cosmetic that will inevitably fail to render.
-      if (mappedApiId === undefined) {
-        continue;
-      }
+      const resolvedSlot = slot > 0 && SLOT_NAMES[slot] ? slot : 2;
 
       cosmetics.push({
-        item_id: mappedApiId,
+        item_id: mappedApiId ?? internalId,
 
         internal_id: internalId,
 
-        // PokeMMOHub's apiItems.json is the authoritative bridge from the
-        // current client item id to the Clothes API id. Do not send the
-        // internal item id as a renderer fallback when a mapped API id exists.
-        api_ids: mappedApiId !== undefined ? [mappedApiId] : [],
+        api_ids: Array.from(
+          new Set(
+            [mappedApiId, internalId]
+              .filter(
+                (value): value is number =>
+                  Number.isFinite(value)
+              )
+          )
+        ),
 
-        renderer_supported: mappedApiId !== undefined,
+        renderer_supported: true,
 
         name,
 
@@ -882,11 +915,11 @@ export default async function handler(
          * for the current item ID.
          */
         icon_id:
-          Number(clientItem.icon_id) ||
+          sourceItem.iconId ||
           mappedApiId ||
           internalId,
 
-        slot,
+        slot: resolvedSlot,
 
         attribute:
           Number(
@@ -944,15 +977,12 @@ export default async function handler(
      * ---------------------------------------------------------
      */
 
-    result.sort((a, b) => {
-      if (a.slot !== b.slot) {
-        return a.slot - b.slot;
-      }
-
-      return a.name.localeCompare(
-        b.name
-      );
-    });
+    result.sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, {
+        sensitivity: "base",
+        numeric: true,
+      })
+    );
 
     /*
      * ---------------------------------------------------------

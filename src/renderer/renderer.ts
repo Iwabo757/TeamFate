@@ -240,20 +240,18 @@ async function loadApiCatalog(): Promise<ApiCatalog> {
 // These are Fiereu/PokeMMO cosmetic item IDs, not Team Fate layer indexes.
 const KNOWN_FIEREU_IDS: Record<string, number[]> = {
   // Older/newer cosmetics where we know both namespaces.
-  afro: [1185, 2513],
-  sideswept: [1183, 2517],
-  "reverse scene": [1181, 2535],
-  scene: [1181, 2535],
+  afro: [2513, 1185],
+  sideswept: [2517, 1183],
+  "reverse scene": [2535, 1181],
+  scene: [2535, 1181],
 
-  "golden cuffed ponytail": [2235, 2559],
-  "mermaid hair": [2257, 2560],
-  "elven ponytail": [2292, 2562],
-  "elegant ponytail": [2317, 2563],
-  "origin hairstyle": [2318, 2565],
-  "colorful unicorn hair": [2319, 2566],
+  "golden cuffed ponytail": [2559, 2235],
+  "mermaid hair": [2560, 2257],
+  "elven ponytail": [2562, 2292],
+  "elegant ponytail": [2563, 2317],
+  "origin hairstyle": [2565, 2318],
+  "colorful unicorn hair": [2566, 2319],
 
-  // Present in the current cosmetic catalog but missing from the older
-  // PokeMMO Hub item.json mirror.
   "idol hairstyle": [2558],
   "mermaid hair alt": [2561],
 };
@@ -289,9 +287,15 @@ async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
 ): Promise<number[]> {
-  // The catalog/API mapping is authoritative. PokeMMOHub's apiItems.json
-  // maps the in-game/internal item id to the Clothes API id. Use an explicit
-  // catalog-provided api id before any legacy name mapping.
+  // IMPORTANT: name-specific Fiereu mappings must win over catalog IDs.
+  // The PokeMMO catalog exposes multiple ID namespaces (internal item IDs
+  // and vanity/Dex IDs), while older Fiereu entries can require the internal
+  // namespace. If we accept api_id first, Reverse Scene, Sideswept, Afro,
+  // etc. can be sent the vanity ID and the API returns no image.
+  const normalized = normalizeName(cosmeticName);
+  const knownIds = KNOWN_FIEREU_IDS[normalized];
+  if (knownIds?.length) return [...knownIds];
+
   const explicit = [
     cosmetic.api_id,
     cosmetic.apiId,
@@ -303,12 +307,6 @@ async function resolveApiItemIds(
   if (explicit.length) {
     return Array.from(new Set(explicit.map(Number)));
   }
-
-  // Legacy/local entries that are not present in the current PokeMMOHub
-  // catalog can still use the known Fiereu mapping. This is a fallback only.
-  const normalized = normalizeName(cosmeticName);
-  const knownIds = KNOWN_FIEREU_IDS[normalized];
-  if (knownIds?.length) return [...knownIds];
 
   if (normalized === "default hair") return [0];
   if (normalized === "brown" || normalized === "brown eyes") return [1438];
@@ -408,6 +406,19 @@ function buildCandidateSlotSets(
     for (const alternate of selection.candidates[position].slice(1)) {
       const next = { ...selection.slots, [position]: alternate };
       add(next);
+      if (result.length >= 32) return result;
+    }
+  }
+
+  // If an item has incomplete slot metadata, try the same item in every
+  // otherwise-empty Clothes API slot. This mirrors the Hub behavior without
+  // requiring a hand-maintained slot list for every new cosmetic.
+  for (const position of ALL_API_SLOTS.map((slot) => API_SLOT[slot])) {
+    const value = selection.slots[position];
+    if (!value) continue;
+    for (const target of ALL_API_SLOTS.map((slot) => API_SLOT[slot])) {
+      if (target === position || selection.slots[target] !== 0) continue;
+      add({ ...selection.slots, [position]: 0, [target]: value });
       if (result.length >= 32) return result;
     }
   }
