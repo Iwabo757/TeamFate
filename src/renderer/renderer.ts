@@ -289,11 +289,9 @@ async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
 ): Promise<number[]> {
-  // PokeMMOHub's item catalog is now authoritative. If the catalog supplied
-  // an ID, send that exact ID to the Clothes API. The old hand-maintained
-  // mappings below are fallback compatibility only.
-  const normalized = normalizeName(cosmeticName);
-
+  // The catalog/API mapping is authoritative. PokeMMOHub's apiItems.json
+  // maps the in-game/internal item id to the Clothes API id. Use an explicit
+  // catalog-provided api id before any legacy name mapping.
   const explicit = [
     cosmetic.api_id,
     cosmetic.apiId,
@@ -306,6 +304,9 @@ async function resolveApiItemIds(
     return Array.from(new Set(explicit.map(Number)));
   }
 
+  // Legacy/local entries that are not present in the current PokeMMOHub
+  // catalog can still use the known Fiereu mapping. This is a fallback only.
+  const normalized = normalizeName(cosmeticName);
   const knownIds = KNOWN_FIEREU_IDS[normalized];
   if (knownIds?.length) return [...knownIds];
 

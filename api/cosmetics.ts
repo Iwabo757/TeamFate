@@ -22,11 +22,9 @@ type CosmeticMetadata = {
   year?: number;
 };
 
-type PokeHubItem = {
+type ApiItem = {
+  apiID?: number;
   id?: number;
-  category?: number;
-  en_name?: string;
-  key?: string;
 };
 
 type CosmeticResult = {
@@ -523,13 +521,19 @@ export default async function handler(
     // entire API route into HTTP 500.
     const [
       cosmeticDataResult,
-      pokeHubItemsResult,
+      apiItemsResult,
+      catalogResult,
     ] = await Promise.allSettled([
       fetch(
         "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-data/main/data/items-cosmetic.json"
       ),
+
       fetch(
-        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/master/src/data/pokemmo/item.json"
+        "https://raw.githubusercontent.com/PokeMMO-Tools/pokemmo-hub/main/src/data/apiItems.json"
+      ),
+
+      fetch(
+        "https://www.pikammo.fr/Pokemmo/en/tools/cosmetiques"
       ),
     ]);
 
@@ -538,9 +542,14 @@ export default async function handler(
         ? cosmeticDataResult.value
         : null;
 
-    const pokeHubItemsResponse =
-      pokeHubItemsResult.status === "fulfilled"
-        ? pokeHubItemsResult.value
+    const apiItemsResponse =
+      apiItemsResult.status === "fulfilled"
+        ? apiItemsResult.value
+        : null;
+
+    const catalogResponse =
+      catalogResult.status === "fulfilled"
+        ? catalogResult.value
         : null;
 
     /*
@@ -550,62 +559,206 @@ export default async function handler(
      */
 
     let cosmeticData: CosmeticMetadata[] = [];
-    let pokeHubItems: PokeHubItem[] = [];
+    let apiItems: ApiItem[] = [];
+    let catalogHtml = "";
 
     if (cosmeticDataResponse?.ok) {
       try {
-        const data = await cosmeticDataResponse.json();
-        if (Array.isArray(data)) cosmeticData = data;
+        const data =
+          await cosmeticDataResponse.json();
+
+        if (Array.isArray(data)) {
+          cosmeticData = data;
+        }
       } catch {
-        console.warn("Unable to parse cosmetic metadata");
+        console.warn(
+          "Unable to parse cosmetic metadata"
+        );
       }
     }
 
-    if (pokeHubItemsResponse?.ok) {
+    if (apiItemsResponse?.ok) {
       try {
-        const data = await pokeHubItemsResponse.json();
-        if (Array.isArray(data)) pokeHubItems = data;
+        const data =
+          await apiItemsResponse.json();
+
+        if (Array.isArray(data)) {
+          apiItems = data;
+        }
       } catch {
-        console.warn("Unable to parse PokeMMOHub item catalog");
+        console.warn(
+          "Unable to parse apiItems.json"
+        );
+      }
+    }
+
+    if (catalogResponse?.ok) {
+      try {
+        catalogHtml =
+          await catalogResponse.text();
+      } catch {
+        console.warn(
+          "Unable to read PikaMMO catalog"
+        );
       }
     }
 
     /*
      * ---------------------------------------------------------
-     * POKEMMOHUB ITEM CATALOG
+     * API ID -> INTERNAL RENDERER ID
      * ---------------------------------------------------------
-     *
-     * PokeMMOHub's own item.json is the renderer source of truth.
-     * Category 6 is the cosmetic/vanity category used by its
-     * Cosmetics Helper. We intentionally do not invent a second
-     * renderer-ID mapping here.
      */
 
-    const hubById = new Map<number, PokeHubItem>();
-    const hubByName = new Map<string, PokeHubItem>();
+    const apiToInternal =
+      new Map<number, number>();
 
-    for (const item of pokeHubItems) {
-      const id = Number(item.id);
-      if (!Number.isFinite(id) || id <= 0 || Number(item.category) !== 6) continue;
-      hubById.set(id, item);
-      if (typeof item.en_name === "string" && item.en_name.trim()) {
-        hubByName.set(normalizeName(item.en_name), item);
+    for (const item of apiItems) {
+      const apiId = Number(item.apiID);
+      const internalId = Number(item.id);
+
+      if (
+        Number.isFinite(apiId) &&
+        Number.isFinite(internalId) &&
+        internalId > 0
+      ) {
+        apiToInternal.set(
+          apiId,
+          internalId
+        );
       }
     }
 
-    const metadataById = new Map<number, CosmeticMetadata>();
-    const metadataByName = new Map<string, CosmeticMetadata>();
+    /*
+     * The current client dump uses internal PokeMMO item IDs.
+     * Fiereu/PokeMMO Hub also exposes a separate API/vanity ID.
+     * Keep both namespaces instead of treating one as the other.
+     */
+    const internalToApi =
+      new Map<number, number>();
+
+    for (const item of apiItems) {
+      const apiId = Number(item.apiID);
+      const internalId = Number(item.id);
+
+      if (
+        Number.isFinite(apiId) &&
+        Number.isFinite(internalId) &&
+        internalId > 0
+      ) {
+        internalToApi.set(
+          internalId,
+          apiId
+        );
+      }
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * NAME -> INTERNAL RENDERER ID
+     * ---------------------------------------------------------
+     *
+     * This gives older cosmetics another chance to resolve.
+     */
+
+    const internalByName =
+      new Map<string, number>();
 
     for (const cosmetic of cosmeticData) {
-      const ids = Array.isArray(cosmetic.item_id) ? cosmetic.item_id : [cosmetic.item_id];
-      if (typeof cosmetic.name === "string" && cosmetic.name.trim()) {
-        metadataByName.set(normalizeName(cosmetic.name), cosmetic);
+      const ids = Array.isArray(
+        cosmetic.item_id
+      )
+        ? cosmetic.item_id
+        : [cosmetic.item_id];
+
+      if (
+        typeof cosmetic.name !== "string" ||
+        !cosmetic.name.trim()
+      ) {
+        continue;
       }
+
+      const normalized =
+        normalizeName(cosmetic.name);
+
+      if (!normalized) {
+        continue;
+      }
+
       for (const id of ids) {
-        const numericId = Number(id);
-        if (Number.isFinite(numericId) && numericId > 0) metadataById.set(numericId, cosmetic);
+        const internalId = Number(id);
+
+        if (
+          !Number.isFinite(internalId) ||
+          internalId <= 0
+        ) {
+          continue;
+        }
+
+        if (
+          !internalByName.has(normalized)
+        ) {
+          internalByName.set(
+            normalized,
+            internalId
+          );
+        }
       }
     }
+
+    /*
+     * ---------------------------------------------------------
+     * OLD METADATA BY ID
+     * ---------------------------------------------------------
+     */
+
+    const metadataById =
+      new Map<number, CosmeticMetadata>();
+
+    // items-cosmetic.json has historically used the Clothes API/vanity
+    // namespace for some records and the internal item namespace for others.
+    // Index every ID plus its mapped counterpart so slot metadata is never
+    // lost just because the namespace differs.
+    for (const cosmetic of cosmeticData) {
+      const ids = Array.isArray(
+        cosmetic.item_id
+      )
+        ? cosmetic.item_id
+        : [cosmetic.item_id];
+
+      for (const id of ids) {
+        const numericId = Number(id);
+
+        if (!Number.isFinite(numericId)) {
+          continue;
+        }
+
+        metadataById.set(numericId, cosmetic);
+
+        const mappedInternal = apiToInternal.get(numericId);
+        if (mappedInternal !== undefined) {
+          metadataById.set(mappedInternal, cosmetic);
+        }
+
+        const mappedApi = internalToApi.get(numericId);
+        if (mappedApi !== undefined) {
+          metadataById.set(mappedApi, cosmetic);
+        }
+      }
+    }
+
+    /*
+     * ---------------------------------------------------------
+     * CURRENT PIKAMMO CATALOG
+     * ---------------------------------------------------------
+     */
+
+    const catalog =
+      catalogHtml
+        ? parseCatalog(catalogHtml)
+        : new Map<
+            number,
+            { name: string; slot: number }
+          >();
 
     /*
      * ---------------------------------------------------------
@@ -613,41 +766,152 @@ export default async function handler(
      * ---------------------------------------------------------
      */
 
-    const cosmetics: CosmeticResult[] = [];
+    const cosmetics: CosmeticResult[] =
+      [];
 
-    for (const hubItem of pokeHubItems) {
-      const hubId = Number(hubItem.id);
-      if (!Number.isFinite(hubId) || hubId <= 0 || Number(hubItem.category) !== 6) continue;
+    for (const clientItem of currentCosmetics) {
+      const internalId =
+        Number(clientItem.id);
+
+      if (!Number.isFinite(internalId)) {
+        continue;
+      }
+
+      const mappedApiId =
+        internalToApi.get(internalId);
+
+      /*
+       * Current client name is the first choice.
+       */
+
+      let name =
+        typeof clientItem.name === "string" &&
+        clientItem.name.trim()
+          ? cleanName(clientItem.name)
+          : `Item ${internalId}`;
+
+      /*
+       * PikaMMO catalog can provide a cleaner
+       * current display name.
+       */
+
+      const catalogEntry =
+        (mappedApiId !== undefined
+          ? catalog.get(mappedApiId)
+          : undefined) ??
+        catalog.get(internalId);
+
+      if (
+        catalogEntry?.name &&
+        catalogEntry.name.trim()
+      ) {
+        name = catalogEntry.name;
+      }
+
+      /*
+       * The client item ID is already the internal PokeMMO item ID.
+       * Keep it as the renderer fallback even when apiItems.json has
+       * no mapping for a newly released cosmetic.
+       */
+
+      /*
+       * -------------------------------------------------------
+       * METADATA
+       * -------------------------------------------------------
+       */
 
       const metadata =
-        metadataById.get(hubId) ??
-        (typeof hubItem.en_name === "string" ? metadataByName.get(normalizeName(hubItem.en_name)) : undefined);
+        metadataById.get(internalId) ??
+        (mappedApiId !== undefined
+          ? metadataById.get(mappedApiId)
+          : undefined);
 
-      // If Hub knows the item but our cosmetic metadata mirror does not,
-      // still expose it using Hub's own item name. Slot is the only field
-      // that must come from the cosmetic metadata mirror.
-      const name = cleanName(
-        typeof hubItem.en_name === "string" && hubItem.en_name.trim()
-          ? hubItem.en_name
-          : metadata?.name ?? `Item ${hubId}`
-      );
+      const metadataSlot =
+        Number(metadata?.slot ?? 0);
 
-      const slot = Number(metadata?.slot ?? inferSlot(name));
-      if (slot <= 0 || !SLOT_NAMES[slot]) continue;
+      /*
+       * PikaMMO slot is preferred over inference.
+       */
+
+      const catalogSlot =
+        Number(
+          catalogEntry?.slot ?? 0
+        );
+
+      const slot =
+        metadataSlot > 0
+          ? metadataSlot
+          : catalogSlot > 0
+          ? catalogSlot
+          : inferSlot(name);
+
+      /*
+       * Ignore anything we cannot classify.
+       *
+       * This prevents random items from being put
+       * into the wrong clothing category.
+       */
+
+      if (slot <= 0 || !SLOT_NAMES[slot]) {
+        continue;
+      }
+
+      // If PokeMMOHub has no Clothes API mapping for this item, it is not
+      // part of the renderer-supported catalog yet. Keep it out of the builder
+      // instead of presenting a cosmetic that will inevitably fail to render.
+      if (mappedApiId === undefined) {
+        continue;
+      }
 
       cosmetics.push({
-        item_id: hubId,
-        internal_id: hubId,
-        api_ids: [hubId],
-        renderer_supported: true,
+        item_id: mappedApiId,
+
+        internal_id: internalId,
+
+        // PokeMMOHub's apiItems.json is the authoritative bridge from the
+        // current client item id to the Clothes API id. Do not send the
+        // internal item id as a renderer fallback when a mapped API id exists.
+        api_ids: mappedApiId !== undefined ? [mappedApiId] : [],
+
+        renderer_supported: mappedApiId !== undefined,
+
         name,
-        icon_id: hubId,
+
+        /*
+         * The current client icon is the safest icon
+         * for the current item ID.
+         */
+        icon_id:
+          Number(clientItem.icon_id) ||
+          mappedApiId ||
+          internalId,
+
         slot,
-        attribute: Number(metadata?.attribute ?? 0),
-        festival: Number(metadata?.festival ?? 0),
-        limitation: Number(metadata?.limitation ?? 0),
-        month: Number(metadata?.month ?? 0),
-        year: Number(metadata?.year ?? 0),
+
+        attribute:
+          Number(
+            metadata?.attribute ?? 0
+          ),
+
+        festival:
+          Number(
+            metadata?.festival ?? 0
+          ),
+
+        limitation:
+          Number(
+            metadata?.limitation ?? 0
+          ),
+
+        month:
+          Number(
+            metadata?.month ?? 0
+          ),
+
+        year:
+          Number(
+            metadata?.year ?? 0
+          ),
       });
     }
 
