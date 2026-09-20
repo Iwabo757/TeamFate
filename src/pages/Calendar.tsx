@@ -125,6 +125,12 @@ function formatTime(value?: string) {
   return `${h}:${String(minute).padStart(2, "0")} ${suffix}`;
 }
 
+function localDateTimeToISO(date: string, time: string) {
+  // datetime-local/time inputs are intentionally interpreted in the browser
+  // timezone of the staff member entering the event.
+  return new Date(`${date}T${time}:00`).toISOString();
+}
+
 function fromPublicEvent(row: any): CalendarEvent {
   const start = row.start_time ? new Date(row.start_time) : new Date();
   const end = row.end_time ? new Date(row.end_time) : new Date(start.getTime() + 60 * 60 * 1000);
@@ -324,6 +330,94 @@ export default function Calendar() {
     setSaving(false);
   }
 
+  async function publishEvent(event: CalendarEvent) {
+    if (!event.planId) {
+      setMessage("This event is already published or is not a saved planning event.");
+      return;
+    }
+    if (!event.title.trim()) {
+      setMessage("Give the event a title before publishing.");
+      return;
+    }
+    if (!event.startTime) {
+      setMessage("A start time is required before publishing.");
+      return;
+    }
+    if (event.publicEventId) {
+      setMessage("This event is already published.");
+      return;
+    }
+    if (!window.confirm(`Publish \"${event.title}\" to Current Events?`)) return;
+
+    setSaving(true);
+    setMessage("");
+
+    const startISO = localDateTimeToISO(event.date, event.startTime);
+    const endISO = localDateTimeToISO(
+      event.date,
+      event.endTime || event.startTime,
+    );
+
+    const { data: publicEvent, error: eventError } = await supabase
+      .from("events")
+      .insert({
+        title: event.title.trim(),
+        description: event.description || "",
+        prize: event.prize || "",
+        start_time: startISO,
+        end_time: endISO,
+        banner_url: null,
+      })
+      .select()
+      .single();
+
+    if (eventError || !publicEvent) {
+      setMessage(`Could not publish: ${eventError?.message || "Event was not created."}`);
+      setSaving(false);
+      return;
+    }
+
+    if (event.description?.trim()) {
+      const { error: blockError } = await supabase
+        .from("event_content_blocks")
+        .insert({
+          event_id: publicEvent.id,
+          block_type: "text",
+          content: event.description.trim(),
+          display_order: 0,
+        });
+
+      if (blockError) {
+        await supabase.from("events").delete().eq("id", publicEvent.id);
+        setMessage(`Could not publish event content: ${blockError.message}`);
+        setSaving(false);
+        return;
+      }
+    }
+
+    const { error: planError } = await supabase
+      .from("event_plans")
+      .update({
+        public_event_id: publicEvent.id,
+        status: "scheduled",
+        "checklist": { ...event.checklist, website: true },
+      })
+      .eq("id", event.planId);
+
+    if (planError) {
+      // Keep the public event rather than deleting a successfully published event.
+      setMessage(`Published, but the planning record could not be updated: ${planError.message}`);
+      setSaving(false);
+      await loadCalendar();
+      return;
+    }
+
+    setMessage("Event published to Current Events.");
+    setSaving(false);
+    await loadCalendar();
+    setSelectedId(`plan-${event.planId}`);
+  }
+
   async function deleteEvent(event: CalendarEvent) {
     if (!event.planId) {
       setMessage("Published events are managed from the Events dashboard.");
@@ -462,10 +556,11 @@ export default function Calendar() {
 
               <div className="form-two">
                 <label>Date<input type="date" value={selected.date} onChange={(e) => updateEvent(selected.id, { date: e.target.value })} /></label>
-                <label>Start (CT)<input type="time" value={selected.startTime} onChange={(e) => updateEvent(selected.id, { startTime: e.target.value })} /></label>
+                <label>Start (Your Local Time)<input type="time" value={selected.startTime} onChange={(e) => updateEvent(selected.id, { startTime: e.target.value })} /></label>
               </div>
+              <div className="calendar-timezone-note">Times are entered using your device's local timezone: {Intl.DateTimeFormat().resolvedOptions().timeZone}.</div>
               <div className="form-two">
-                <label>End (CT)<input type="time" value={selected.endTime || ""} onChange={(e) => updateEvent(selected.id, { endTime: e.target.value })} /></label>
+                <label>End (Your Local Time)<input type="time" value={selected.endTime || ""} onChange={(e) => updateEvent(selected.id, { endTime: e.target.value })} /></label>
                 <label>Status<select value={selected.status} onChange={(e) => updateEvent(selected.id, { status: e.target.value as EventStatus })}><option value="planning">Planning</option><option value="ready">Ready</option><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
               </div>
               <div className="form-two">
@@ -499,6 +594,11 @@ export default function Calendar() {
 
               <div className="event-actions">
                 <button type="button" className="calendar-save" disabled={saving} onClick={() => void savePlanningEvent()}>{saving ? "Saving…" : "Save Planning Event"}</button>
+                {selected.planId && !selected.publicEventId && (
+                  <button type="button" className="calendar-publish" disabled={saving} onClick={() => void publishEvent(selected)}>
+                    {saving ? "Publishing…" : "Publish to Current Events"}
+                  </button>
+                )}
                 <button type="button" onClick={() => duplicateEvent(selected)}>Duplicate</button>
                 <button type="button" className="danger" onClick={() => void deleteEvent(selected)}>Delete</button>
               </div>
