@@ -432,10 +432,6 @@ export default function App() {
           path: "/admin/events",
         },
         {
-          label: "Event Calendar",
-          path: "/admin/event-calendar",
-        },
-        {
           label: "Recruitment Editor",
           path: "/admin/recruitment",
         },

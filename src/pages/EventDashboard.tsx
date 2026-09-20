@@ -26,6 +26,13 @@ export default function EventDashboard() {
         >
           Past Events
         </Link>
+
+        <Link
+          to="/admin/event-calendar"
+          className="admin-card"
+        >
+          Event Calendar
+        </Link>
       </div>
     </div>
   );
