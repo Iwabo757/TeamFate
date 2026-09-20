@@ -31,6 +31,7 @@ type CalendarEvent = {
   id: string;
   planId?: string;
   publicEventId?: string;
+  bannerUrl?: string;
   title: string;
   type: EventType;
   date: string;
@@ -168,6 +169,7 @@ export default function Calendar() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
 
   const days = useMemo(
     () => monthDays(cursor.getFullYear(), cursor.getMonth()),
@@ -212,6 +214,7 @@ export default function Calendar() {
       id: `plan-${row.id}`,
       planId: String(row.id),
       publicEventId: row.public_event_id ? String(row.public_event_id) : undefined,
+      bannerUrl: row.banner_url || undefined,
       title: row.title || "",
       type: normalizeType(row.event_type),
       date: row.event_date,
@@ -258,6 +261,7 @@ export default function Calendar() {
     const event = emptyEvent(date);
     setEvents((current) => [...current, event]);
     setSelectedId(event.id);
+    setBannerFile(null);
     setMessage("");
   }
 
@@ -273,6 +277,16 @@ export default function Calendar() {
     };
     setEvents((current) => [...current, copy]);
     setSelectedId(copy.id);
+    setBannerFile(null);
+  }
+
+  async function uploadImage(file: File) {
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+    const fileName = `planning-${Date.now()}-${safeName}`;
+    const { error } = await supabase.storage.from("event-images").upload(fileName, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from("event-images").getPublicUrl(fileName);
+    return data.publicUrl;
   }
 
   async function savePlanningEvent() {
@@ -289,6 +303,15 @@ export default function Calendar() {
     setSaving(true);
     setMessage("");
 
+    let bannerUrl = selected.bannerUrl || "";
+    try {
+      if (bannerFile) bannerUrl = await uploadImage(bannerFile);
+    } catch (error: any) {
+      setMessage(`Could not upload event picture: ${error?.message || "Upload failed."}`);
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       title: selected.title.trim(),
       event_type: selected.type,
@@ -304,6 +327,7 @@ export default function Calendar() {
       status: selected.status,
       internal_notes: selected.notes || "",
       description: selected.description || "",
+      banner_url: bannerUrl || null,
       checklist: selected.checklist,
     };
 
@@ -321,11 +345,12 @@ export default function Calendar() {
     setEvents((current) =>
       current.map((event) =>
         event.id === selected.id
-          ? { ...event, id: `plan-${savedId}`, planId: savedId }
+          ? { ...event, id: `plan-${savedId}`, planId: savedId, bannerUrl }
           : event,
       ),
     );
     setSelectedId(`plan-${savedId}`);
+    setBannerFile(null);
     setMessage("Event saved to the staff planning calendar.");
     setSaving(false);
   }
@@ -366,7 +391,7 @@ export default function Calendar() {
         prize: event.prize || "",
         start_time: startISO,
         end_time: endISO,
-        banner_url: null,
+        banner_url: event.bannerUrl || null,
       })
       .select()
       .single();
@@ -522,6 +547,7 @@ export default function Calendar() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedId(event.id);
+                          setBannerFile(null);
                         }}
                       >
                         <b>{formatTime(event.startTime)}</b> {event.title || event.type}
@@ -569,6 +595,20 @@ export default function Calendar() {
               </div>
               <label>Location<input value={selected.location || ""} placeholder="Chargestone Cave" onChange={(e) => updateEvent(selected.id, { location: e.target.value })} /></label>
               <label>Prize<input value={selected.prize || ""} placeholder="Prize details" onChange={(e) => updateEvent(selected.id, { prize: e.target.value })} /></label>
+              <label>Event Picture
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setBannerFile(e.target.files?.[0] || null)}
+                />
+              </label>
+              {bannerFile && <div className="calendar-upload-name">New picture: {bannerFile.name}</div>}
+              {selected.bannerUrl && !bannerFile && (
+                <div className="calendar-banner-preview">
+                  <img src={selected.bannerUrl} alt="Event banner preview" />
+                  <button type="button" onClick={() => updateEvent(selected.id, { bannerUrl: "" })}>Remove picture</button>
+                </div>
+              )}
               <label>Assigned Staff
                 <select value={selected.assignedStaffId || ""} onChange={(e) => selectStaff(e.target.value)}>
                   <option value="">Unassigned</option>
