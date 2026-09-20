@@ -592,9 +592,6 @@ export default function App() {
                     <Link to="/admin">
                       Admin Dashboard
                     </Link>
-                    <Link to="/admin/event-calendar">
-                      Event Calendar
-                    </Link>
 
                   </div>
                 )}
@@ -965,13 +962,13 @@ export default function App() {
             />
 
             <Route
-              path="/admin/event-calendar"
-              element={<Calendar />}
+              path="/admin/events"
+              element={<EventDashboard />}
             />
 
             <Route
-              path="/admin/events"
-              element={<EventDashboard />}
+              path="/admin/event-calendar"
+              element={<Calendar />}
             />
 
             <Route
