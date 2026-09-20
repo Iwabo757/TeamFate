@@ -450,13 +450,31 @@ export default function Calendar() {
     }
     if (!window.confirm("Delete this planning event?")) return;
 
-    const { error } = await supabase.from("event_plans").delete().eq("id", event.planId);
+    setSaving(true);
+
+    // Delete the planning record and return the deleted row so RLS/permission
+    // failures cannot look like a successful delete.
+    const { data: deletedRows, error } = await supabase
+      .from("event_plans")
+      .delete()
+      .eq("id", event.planId)
+      .select("id");
+
     if (error) {
-      setMessage(`Could not delete: ${error.message}`);
+      setSaving(false);
+      setMessage(`Could not delete planning event: ${error.message}`);
       return;
     }
+
+    if (!deletedRows || deletedRows.length === 0) {
+      setSaving(false);
+      setMessage("The event was not deleted. Your staff account does not have permission to delete this planning event.");
+      return;
+    }
+
     setEvents((current) => current.filter((item) => item.id !== event.id));
     setSelectedId(null);
+    setSaving(false);
     setMessage("Planning event deleted.");
   }
 
