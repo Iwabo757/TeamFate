@@ -139,12 +139,13 @@ function fromPublicEvent(row: any): CalendarEvent {
     id: `public-${row.id}`,
     publicEventId: String(row.id),
     title: row.title || "Untitled Event",
-    type: "Special Event",
+    type: normalizeType(row.event_type),
     date: dateKey(start.getFullYear(), start.getMonth(), start.getDate()),
     startTime: `${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`,
     endTime: `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`,
     prize: row.prize || "",
-    status: "scheduled",
+    bannerUrl: row.banner_url || undefined,
+    status: normalizeStatus(row.event_status),
     description: row.description || "",
     checklist: {
       pokemon: false,
@@ -152,7 +153,7 @@ function fromPublicEvent(row: any): CalendarEvent {
       time: true,
       prize: Boolean(row.prize),
       banner: Boolean(row.banner_url),
-      discordPost: false,
+      discordPost: true,
       website: true,
     },
   };
@@ -329,8 +330,11 @@ export default function Calendar() {
       description: selected.description || "",
       banner_url: bannerUrl || null,
       checklist: selected.checklist,
+      public_event_id: selected.publicEventId || null,
     };
 
+    // A published event can still be managed from the calendar. If it does not
+    // have an event_plans row yet, create one linked to the existing public event.
     const result = selected.planId
       ? await supabase.from("event_plans").update(payload).eq("id", selected.planId).select().single()
       : await supabase.from("event_plans").insert(payload).select().single();
@@ -339,6 +343,31 @@ export default function Calendar() {
       setMessage(`Could not save: ${result.error.message}`);
       setSaving(false);
       return;
+    }
+
+    // Keep the public event itself in sync with the calendar for fields that
+    // already belong to the public event record.
+    if (selected.publicEventId) {
+      const startISO = localDateTimeToISO(selected.date, selected.startTime);
+      const endISO = localDateTimeToISO(selected.date, selected.endTime || selected.startTime);
+      const { error: publicUpdateError } = await supabase
+        .from("events")
+        .update({
+          title: selected.title.trim(),
+          description: selected.description || "",
+          prize: selected.prize || "",
+          start_time: startISO,
+          end_time: endISO,
+          banner_url: bannerUrl || null,
+        })
+        .eq("id", selected.publicEventId);
+
+      if (publicUpdateError) {
+        setMessage(`Planning details saved, but the public event could not be updated: ${publicUpdateError.message}`);
+        setSaving(false);
+        await loadCalendar();
+        return;
+      }
     }
 
     const savedId = String(result.data.id);
@@ -351,8 +380,12 @@ export default function Calendar() {
     );
     setSelectedId(`plan-${savedId}`);
     setBannerFile(null);
-    setMessage("Event saved to the staff planning calendar.");
+    setMessage(selected.publicEventId
+      ? "Event type and status saved."
+      : "Event saved to the staff planning calendar.");
     setSaving(false);
+    await loadCalendar();
+    setSelectedId(`plan-${savedId}`);
   }
 
   async function publishEvent(event: CalendarEvent) {
