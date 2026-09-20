@@ -34,6 +34,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 
 import ManageMembers from "./pages/ManageMembers";
 import EventDashboard from "./pages/EventDashboard";
+import Calendar from "./pages/Calendar";
 
 import SubmitShiny from "./pages/SubmitShiny";
 import AdminShinyApprovals from "./pages/AdminShinyApprovals";
@@ -431,6 +432,10 @@ export default function App() {
           path: "/admin/events",
         },
         {
+          label: "Event Calendar",
+          path: "/admin/event-calendar",
+        },
+        {
           label: "Recruitment Editor",
           path: "/admin/recruitment",
         },
@@ -586,6 +591,9 @@ export default function App() {
 
                     <Link to="/admin">
                       Admin Dashboard
+                    </Link>
+                    <Link to="/admin/event-calendar">
+                      Event Calendar
                     </Link>
 
                   </div>
@@ -954,6 +962,11 @@ export default function App() {
             <Route
               path="/admin"
               element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/event-calendar"
+              element={<Calendar />}
             />
 
             <Route

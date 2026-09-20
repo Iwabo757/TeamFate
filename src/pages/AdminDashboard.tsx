@@ -36,6 +36,13 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          to="/admin/event-calendar"
+          className="admin-card"
+        >
+          🗓️ Event Calendar
+        </Link>
+
+        <Link
           to="/admin/bounty-dashboard"
           className="admin-card"
         >
