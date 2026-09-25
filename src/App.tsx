@@ -35,6 +35,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import ManageMembers from "./pages/ManageMembers";
 import EventDashboard from "./pages/EventDashboard";
 import Calendar from "./pages/Calendar";
+import SeasonControl from "./pages/SeasonControl";
 
 import SubmitShiny from "./pages/SubmitShiny";
 import AdminShinyApprovals from "./pages/AdminShinyApprovals";
@@ -414,6 +415,10 @@ export default function App() {
           label: "Admin Dashboard",
           path: "/admin",
           end: true,
+        },
+        {
+          label: "Season Control",
+          path: "/admin/season-control",
         },
         {
           label: "Shiny Dashboard",
@@ -955,6 +960,11 @@ export default function App() {
             <Route
               path="/admin"
               element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/season-control"
+              element={<SeasonControl />}
             />
 
             <Route

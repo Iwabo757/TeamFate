@@ -36,6 +36,13 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          to="/admin/season-control"
+          className="admin-card"
+        >
+          🌦️ Season Control
+        </Link>
+
+        <Link
           to="/admin/bounty-dashboard"
           className="admin-card"
         >

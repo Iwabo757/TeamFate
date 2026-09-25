@@ -65,42 +65,26 @@ function getPokeMMOTime(): GameTime {
 ========================================= */
 
 function getPokeMMOSeason(): SeasonInfo {
-  const month =
-    new Date().getMonth() + 1;
+  const month = new Date().getMonth() + 1;
 
   switch (month) {
     case 1:
     case 5:
     case 9:
-      return {
-        name: "Spring",
-        icon: "🌸",
-      };
-
+      return { name: "Spring", icon: "🌸" };
     case 2:
     case 6:
     case 10:
-      return {
-        name: "Summer",
-        icon: "☀️",
-      };
-
+      return { name: "Summer", icon: "☀️" };
     case 3:
     case 7:
     case 11:
-      return {
-        name: "Autumn",
-        icon: "🍁",
-      };
-
+      return { name: "Autumn", icon: "🍁" };
     case 4:
     case 8:
     case 12:
     default:
-      return {
-        name: "Winter",
-        icon: "❄️",
-      };
+      return { name: "Winter", icon: "❄️" };
   }
 }
 
@@ -128,10 +112,52 @@ export default function Home() {
       message: "",
     });
 
-  const [season] =
+  const [season, setSeason] =
     useState<SeasonInfo>(() =>
       getPokeMMOSeason()
     );
+
+  /* =========================================
+     SEASON CONTROL
+  ========================================= */
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSeasonOverride() {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "season_override")
+        .maybeSingle();
+
+      if (!active) return;
+
+      const override = typeof data?.value === "string"
+        ? data.value as Season
+        : null;
+
+      if (["Spring", "Summer", "Autumn", "Winter"].includes(override ?? "")) {
+        const icons: Record<Season, string> = {
+          Spring: "🌸",
+          Summer: "☀️",
+          Autumn: "🍁",
+          Winter: "❄️",
+        };
+        setSeason({ name: override as Season, icon: icons[override as Season] });
+      } else {
+        setSeason(getPokeMMOSeason());
+      }
+    }
+
+    loadSeasonOverride();
+    const timer = window.setInterval(loadSeasonOverride, 60000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   /* =========================================
      LIVE POKEMMO TIME
