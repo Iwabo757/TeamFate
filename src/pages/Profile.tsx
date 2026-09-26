@@ -11,6 +11,7 @@ export default function Profile() {
   const [points, setPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [eventWins, setEventWins] = useState(0);
+  const [bountyCaught, setBountyCaught] = useState(0);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [selectedPokemon, setSelectedPokemon] = useState<any>(null);
 
@@ -85,6 +86,14 @@ export default function Profile() {
 
     setEventWins(wins || 0);
 
+    const { count: bountyCount } = await supabase
+      .from("bounties")
+      .select("id", { count: "exact", head: true })
+      .eq("claimed", true)
+      .eq("claimed_by", user.id);
+
+    setBountyCaught(bountyCount || 0);
+
     const {
       data: achievementRows,
       error: achievementError,
@@ -98,6 +107,7 @@ export default function Profile() {
           eventCount: participation || 0,
           eventWins: wins || 0,
           dailyStreak: Number(daily?.streak || 0),
+          bountyCaught: bountyCount || 0,
           bountyCaught: bountyCaught || 0,
         })
       );

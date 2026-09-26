@@ -9,18 +9,13 @@ export type Achievement = {
   reward: number;
   requirement_type:
     | "shiny_count"
-    | "event_participation"
     | "event_wins"
     | "daily_streak"
-    | "bounty_caught";
+    | "bounty_caught"
+    | "event_participation";
   threshold: number;
   enabled: boolean;
 };
-
-/*
- * Achievements are now stored in Supabase instead of being hard-coded.
- * Staff can add/edit/disable them from /admin/achievements.
- */
 
 export async function getAchievements() {
   const { data, error } = await supabase
@@ -29,10 +24,7 @@ export async function getAchievements() {
     .eq("enabled", true)
     .order("threshold", { ascending: true });
 
-  return {
-    data: (data || []) as Achievement[],
-    error,
-  };
+  return { data: (data || []) as Achievement[], error };
 }
 
 export async function getAllAchievements() {
@@ -41,10 +33,7 @@ export async function getAllAchievements() {
     .select("*")
     .order("threshold", { ascending: true });
 
-  return {
-    data: (data || []) as Achievement[],
-    error,
-  };
+  return { data: (data || []) as Achievement[], error };
 }
 
 export async function awardPoints(
@@ -68,19 +57,19 @@ export async function awardPoints(
 }
 
 export function getUnlockedAchievements({
-  achievements,
+  achievements = [],
   shinyCount,
   eventCount,
   eventWins,
   dailyStreak,
-  bountyCaught,
+  bountyCaught = 0,
 }: {
-  achievements: Achievement[];
+  achievements?: Achievement[];
   shinyCount: number;
   eventCount: number;
   eventWins: number;
   dailyStreak: number;
-  bountyCaught: number;
+  bountyCaught?: number;
 }) {
   return achievements.map((achievement) => {
     let value = 0;
@@ -90,6 +79,7 @@ export function getUnlockedAchievements({
         value = shinyCount;
         break;
       case "event_participation":
+        // Legacy support for achievements that already exist in the database.
         value = eventCount;
         break;
       case "event_wins":
@@ -109,4 +99,53 @@ export function getUnlockedAchievements({
       unlocked: value >= achievement.threshold,
     };
   });
+}
+
+// Faté Daily is kept here because FateDaily.tsx imports it.
+export function getDailyChallenge(date = new Date()) {
+  const challenges = [
+    {
+      key: "catch_50",
+      title: "Catch 50 Pokémon",
+      description: "Catch 50 Pokémon today.",
+      reward: 100,
+    },
+    {
+      key: "participate_event",
+      title: "Join a Faté Event",
+      description: "Participate in any Faté event today.",
+      reward: 150,
+    },
+    {
+      key: "submit_shiny",
+      title: "Show Off a Shiny",
+      description: "Submit a shiny to the Faté Showcase.",
+      reward: 200,
+    },
+    {
+      key: "visit_site",
+      title: "Check In",
+      description: "Complete today's Faté Daily check-in.",
+      reward: 50,
+    },
+    {
+      key: "community",
+      title: "Community Day",
+      description: "Participate in a Faté community activity.",
+      reward: 100,
+    },
+  ];
+
+  const utcDay = Math.floor(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    ) / 86400000
+  );
+
+  return {
+    ...challenges[utcDay % challenges.length],
+    date: date.toISOString().slice(0, 10),
+  };
 }
