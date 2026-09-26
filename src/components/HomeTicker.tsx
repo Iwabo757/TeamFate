@@ -13,36 +13,26 @@ function getGifName(name: string) {
     .replace(/-/g, "");
 }
 
-type TickerItem =
-  | {
-      type: "shiny";
-      id: string;
-      pokemonId: number;
-      pokemonName: string;
-      trainer: string;
-      date: string;
-    }
-  | {
-      type: "event";
-      id: string;
-      title: string;
-      prize: string;
-      start: string;
-    };
+type ShinyItem = {
+  id: string;
+  pokemonId: number;
+  pokemonName: string;
+  trainer: string;
+  date: string;
+};
 
 export default function HomeTicker() {
-  const [items, setItems] = useState<TickerItem[]>([]);
+  const [items, setItems] = useState<ShinyItem[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
   const firstSetRef = useRef<HTMLDivElement>(null);
 
-  // Pixels per second. Lower = slower, higher = faster.
+  // Continuous scrolling speed.
   const SPEED = 45;
 
   useEffect(() => {
     loadTicker();
 
-    // Refresh the source data every 30 seconds without interrupting
-    // the scrolling animation.
+    // Look for newly caught shinies every 30 seconds.
     const refreshTimer = window.setInterval(loadTicker, 30000);
 
     return () => window.clearInterval(refreshTimer);
@@ -64,9 +54,6 @@ export default function HomeTicker() {
 
       offset += SPEED * delta;
 
-      // The second copy is identical to the first. Once the first set
-      // has completely moved off screen, jump back by exactly its width.
-      // Because the copies are identical, the reset is invisible.
       const loopWidth = firstSet.offsetWidth;
 
       if (loopWidth > 0 && offset >= loopWidth) {
@@ -85,19 +72,24 @@ export default function HomeTicker() {
 
   async function loadTicker() {
     try {
+      // Only show the 20 most recently caught shinies.
       const { data: catches, error: catchesError } = await supabase
         .from("shiny_catches")
         .select(`
-          *,
+          id,
+          pokemon_id,
+          method,
+          date_found,
           profiles(nickname)
         `)
         .order("date_found", {
           ascending: false,
         })
-        .limit(10);
+        .limit(20);
 
       if (catchesError) {
         console.error("Failed to load shiny ticker:", catchesError);
+        return;
       }
 
       const { data: pokemon, error: pokemonError } = await supabase
@@ -114,225 +106,73 @@ export default function HomeTicker() {
         pokemonMap[p.id] = p.name;
       });
 
-      const shinyItems: TickerItem[] =
+      const shinyItems: ShinyItem[] =
         catches?.map((c: any, index: number) => ({
-          type: "shiny",
-          id: `shiny-${c.id ?? `${c.pokemon_id}-${c.date_found}-${index}`}`,
+          id: String(
+            c.id ?? `${c.pokemon_id}-${c.date_found}-${index}`
+          ),
           pokemonId: c.pokemon_id,
           pokemonName:
             pokemonMap[c.pokemon_id] ??
-            c.pokemon?.name ??
             "Unknown Pokémon",
-          trainer: c.profiles?.nickname || "Unknown",
+          trainer:
+            c.profiles?.nickname ??
+            "Unknown Trainer",
           date: c.date_found,
-        })) || [];
+        })) ?? [];
 
-      const now = new Date().toISOString();
-
-      const { data: events, error: eventsError } = await supabase
-        .from("events")
-        .select("*")
-        .gte("start_time", now)
-        .order("start_time")
-        .limit(5);
-
-      if (eventsError) {
-        console.error("Failed to load event ticker:", eventsError);
-      }
-
-      const eventItems: TickerItem[] =
-        events?.map((e: any, index: number) => ({
-          type: "event",
-          id: `event-${e.id ?? `${e.title}-${e.start_time}-${index}`}`,
-          title: e.title,
-          prize: e.prize || "TBA",
-          start: e.start_time,
-        })) || [];
-
-      const merged: TickerItem[] = [];
-      const max = Math.max(
-        shinyItems.length,
-        eventItems.length
-      );
-
-      // Keep the existing behavior of mixing shinies and events instead
-      // of putting all shinies together followed by all events.
-      for (let i = 0; i < max; i++) {
-        if (shinyItems[i]) {
-          merged.push(shinyItems[i]);
-        }
-
-        if (eventItems[i]) {
-          merged.push(eventItems[i]);
-        }
-      }
-
-      setItems(merged);
+      setItems(shinyItems);
     } catch (error) {
-      console.error("Failed to load home ticker:", error);
+      console.error("Failed to load home shiny ticker:", error);
     }
   }
 
   if (!items.length) {
-    return (
-      <div
-        className="home-ticker"
-        style={{
-          overflow: "hidden",
-          width: "100%",
-        }}
-      >
-        Loading...
-      </div>
-    );
+    return null;
   }
 
-  /*
-   * We render two identical sets.
-   *
-   * Set 1: [A B C D E]
-   * Set 2: [A B C D E]
-   *
-   * The track continuously moves left. When Set 1 has completely
-   * passed, the transform resets to the beginning of Set 1.
-   * Since Set 2 is identical, the user sees one continuous loop.
-   */
-  const renderItem = (item: TickerItem, duplicate = false) => {
-    if (item.type === "shiny") {
-      return (
-        <div
-          key={`${duplicate ? "duplicate-" : ""}${item.id}`}
-          className="home-ticker-card"
-          style={{
-            flex: "0 0 auto",
-            minWidth: "320px",
-            maxWidth: "380px",
-            minHeight: "96px",
-            boxSizing: "border-box",
-            display: "flex",
-            alignItems: "center",
-            gap: "14px",
-            padding: "14px 20px",
-            marginRight: "14px",
-            borderRadius: "14px",
-            background:
-              "linear-gradient(135deg, rgba(30,30,40,.96), rgba(15,15,22,.96))",
-            border: "1px solid rgba(255,255,255,.10)",
-            boxShadow: "0 6px 20px rgba(0,0,0,.22)",
-          }}
-        >
-          <img
-            className="ticker-sprite"
-            src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-              item.pokemonName
-            )}.gif`}
-            onError={(e) => {
-              e.currentTarget.src =
-                `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`;
-            }}
-            alt={`Shiny ${item.pokemonName}`}
-            style={{
-              width: "64px",
-              height: "64px",
-              objectFit: "contain",
-              flex: "0 0 64px",
-            }}
-          />
-
-          <div
-            style={{
-              minWidth: 0,
-              overflow: "hidden",
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "17px",
-                lineHeight: 1.25,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              ✨ {item.trainer} caught Shiny {item.pokemonName}
-            </h2>
-
-            <p
-              style={{
-                margin: "7px 0 0",
-                opacity: 0.65,
-                fontSize: "13px",
-              }}
-            >
-              {new Date(item.date).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div
-        key={`${duplicate ? "duplicate-" : ""}${item.id}`}
-        className="home-ticker-card"
-        style={{
-          flex: "0 0 auto",
-          minWidth: "320px",
-          maxWidth: "380px",
-          minHeight: "96px",
-          boxSizing: "border-box",
-          display: "flex",
-          alignItems: "center",
-          padding: "14px 20px",
-          marginRight: "14px",
-          borderRadius: "14px",
-          background:
-            "linear-gradient(135deg, rgba(30,30,40,.96), rgba(15,15,22,.96))",
-          border: "1px solid rgba(255,255,255,.10)",
-          boxShadow: "0 6px 20px rgba(0,0,0,.22)",
+  const renderCard = (
+    item: ShinyItem,
+    duplicate = false
+  ) => (
+    <div
+      key={`${duplicate ? "duplicate-" : ""}${item.id}`}
+      className="card home-ticker-card"
+      style={{
+        flex: "0 0 auto",
+        minWidth: "300px",
+        marginRight: "16px",
+        boxSizing: "border-box",
+      }}
+    >
+      <img
+        className="ticker-sprite"
+        src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+          item.pokemonName
+        )}.gif`}
+        onError={(e) => {
+          e.currentTarget.src =
+            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`;
         }}
-      >
-        <div style={{ minWidth: 0 }}>
-          <h2
-            style={{
-              margin: 0,
-              fontSize: "17px",
-              lineHeight: 1.25,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            🎉 {item.title}
-          </h2>
+        alt={`Shiny ${item.pokemonName}`}
+        style={{
+          width: "64px",
+          height: "64px",
+          objectFit: "contain",
+        }}
+      />
 
-          <p
-            style={{
-              margin: "7px 0 0",
-              opacity: 0.75,
-              fontSize: "13px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            Prize: {item.prize || "TBA"}
-          </p>
+      <div>
+        <h2>
+          ✨ {item.trainer} caught Shiny {item.pokemonName}
+        </h2>
 
-          <p
-            style={{
-              margin: "4px 0 0",
-              opacity: 0.55,
-              fontSize: "12px",
-            }}
-          >
-            Starts: {new Date(item.start).toLocaleString()}
-          </p>
-        </div>
+        <p>
+          {new Date(item.date).toLocaleDateString()}
+        </p>
       </div>
-    );
-  };
+    </div>
+  );
 
   return (
     <div
@@ -341,6 +181,10 @@ export default function HomeTicker() {
         width: "100%",
         overflow: "hidden",
         position: "relative",
+        background: "transparent",
+        border: "none",
+        boxShadow: "none",
+        padding: 0,
       }}
     >
       <div
@@ -349,7 +193,6 @@ export default function HomeTicker() {
           display: "flex",
           width: "max-content",
           willChange: "transform",
-          transform: "translate3d(0, 0, 0)",
         }}
       >
         <div
@@ -359,9 +202,10 @@ export default function HomeTicker() {
             flex: "0 0 auto",
           }}
         >
-          {items.map((item) => renderItem(item))}
+          {items.map((item) => renderCard(item))}
         </div>
 
+        {/* Identical second set creates the seamless infinite loop. */}
         <div
           style={{
             display: "flex",
@@ -369,7 +213,7 @@ export default function HomeTicker() {
           }}
           aria-hidden="true"
         >
-          {items.map((item) => renderItem(item, true))}
+          {items.map((item) => renderCard(item, true))}
         </div>
       </div>
     </div>
