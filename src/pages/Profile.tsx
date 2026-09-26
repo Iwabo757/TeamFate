@@ -98,7 +98,7 @@ export default function Profile() {
     if (!achievementError) {
       setAchievements(
         getUnlockedAchievements({
-          achievements: achievementRows,
+          achievements: achievementRows || [],
           shinyCount: shinyRows.length,
           eventCount: participation || 0,
           eventWins: wins || 0,
