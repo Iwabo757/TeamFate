@@ -26,13 +26,11 @@ export default function HomeTicker() {
   const trackRef = useRef<HTMLDivElement>(null);
   const firstSetRef = useRef<HTMLDivElement>(null);
 
-  // Continuous scrolling speed.
   const SPEED = 45;
 
   useEffect(() => {
     loadTicker();
 
-    // Look for newly caught shinies every 30 seconds.
     const refreshTimer = window.setInterval(loadTicker, 30000);
 
     return () => window.clearInterval(refreshTimer);
@@ -72,8 +70,7 @@ export default function HomeTicker() {
 
   async function loadTicker() {
     try {
-      // Only show the 20 most recently caught shinies.
-      const { data: catches, error: catchesError } = await supabase
+      const { data: catches, error } = await supabase
         .from("shiny_catches")
         .select(`
           id,
@@ -87,18 +84,14 @@ export default function HomeTicker() {
         })
         .limit(20);
 
-      if (catchesError) {
-        console.error("Failed to load shiny ticker:", catchesError);
+      if (error) {
+        console.error("Failed to load shiny ticker:", error);
         return;
       }
 
-      const { data: pokemon, error: pokemonError } = await supabase
+      const { data: pokemon } = await supabase
         .from("pokemon")
         .select("id,name");
-
-      if (pokemonError) {
-        console.error("Failed to load Pokemon:", pokemonError);
-      }
 
       const pokemonMap: Record<number, string> = {};
 
@@ -106,22 +99,19 @@ export default function HomeTicker() {
         pokemonMap[p.id] = p.name;
       });
 
-      const shinyItems: ShinyItem[] =
+      setItems(
         catches?.map((c: any, index: number) => ({
           id: String(
             c.id ?? `${c.pokemon_id}-${c.date_found}-${index}`
           ),
           pokemonId: c.pokemon_id,
           pokemonName:
-            pokemonMap[c.pokemon_id] ??
-            "Unknown Pokémon",
+            pokemonMap[c.pokemon_id] ?? "Unknown Pokémon",
           trainer:
-            c.profiles?.nickname ??
-            "Unknown Trainer",
+            c.profiles?.nickname ?? "Unknown Trainer",
           date: c.date_found,
-        })) ?? [];
-
-      setItems(shinyItems);
+        })) ?? []
+      );
     } catch (error) {
       console.error("Failed to load home shiny ticker:", error);
     }
@@ -140,36 +130,89 @@ export default function HomeTicker() {
       className="card home-ticker-card"
       style={{
         flex: "0 0 auto",
-        minWidth: "300px",
+        width: "340px",
+        minHeight: "104px",
         marginRight: "16px",
+        padding: "12px 18px",
         boxSizing: "border-box",
+        display: "flex",
+        alignItems: "center",
+        gap: "18px",
       }}
     >
-      <img
-        className="ticker-sprite"
-        src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
-          item.pokemonName
-        )}.gif`}
-        onError={(e) => {
-          e.currentTarget.src =
-            `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`;
-        }}
-        alt={`Shiny ${item.pokemonName}`}
+      {/* SHINY SPRITE */}
+      <div
         style={{
-          width: "64px",
-          height: "64px",
-          objectFit: "contain",
+          width: "76px",
+          height: "76px",
+          flex: "0 0 76px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
+      >
+        <img
+          className="ticker-sprite"
+          src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(
+            item.pokemonName
+          )}.gif`}
+          onError={(e) => {
+            e.currentTarget.src =
+              `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${item.pokemonId}.png`;
+          }}
+          alt={`Shiny ${item.pokemonName}`}
+          style={{
+            width: "72px",
+            height: "72px",
+            objectFit: "contain",
+          }}
+        />
+      </div>
 
-      <div>
-        <h2>
-          ✨ {item.trainer} caught Shiny {item.pokemonName}
-        </h2>
+      {/* SHINY INFORMATION */}
+      <div
+        style={{
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          gap: "3px",
+          lineHeight: 1.2,
+        }}
+      >
+        <div
+          style={{
+            fontSize: "18px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          Shiny {item.pokemonName}
+        </div>
 
-        <p>
+        <div
+          style={{
+            fontSize: "15px",
+            opacity: 0.85,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {item.trainer}
+        </div>
+
+        <div
+          style={{
+            fontSize: "13px",
+            opacity: 0.6,
+            whiteSpace: "nowrap",
+          }}
+        >
           {new Date(item.date).toLocaleDateString()}
-        </p>
+        </div>
       </div>
     </div>
   );
@@ -195,6 +238,7 @@ export default function HomeTicker() {
           willChange: "transform",
         }}
       >
+        {/* FIRST SET */}
         <div
           ref={firstSetRef}
           style={{
@@ -205,7 +249,7 @@ export default function HomeTicker() {
           {items.map((item) => renderCard(item))}
         </div>
 
-        {/* Identical second set creates the seamless infinite loop. */}
+        {/* SECOND IDENTICAL SET FOR SEAMLESS LOOP */}
         <div
           style={{
             display: "flex",
