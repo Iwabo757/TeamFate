@@ -26,14 +26,12 @@ export default function HomeTicker() {
   const trackRef = useRef<HTMLDivElement>(null);
   const firstSetRef = useRef<HTMLDivElement>(null);
 
+  // Pixels per second.
   const SPEED = 45;
 
   useEffect(() => {
+    // Load the complete shiny history once.
     loadTicker();
-
-    const refreshTimer = window.setInterval(loadTicker, 30000);
-
-    return () => window.clearInterval(refreshTimer);
   }, []);
 
   useEffect(() => {
@@ -52,6 +50,12 @@ export default function HomeTicker() {
 
       offset += SPEED * delta;
 
+      /*
+       * The second set is an exact copy of the first set.
+       * When the first set has completely passed, reset by exactly
+       * its width. Because the second set is identical, the reset
+       * is invisible and the ticker continues forever.
+       */
       const loopWidth = firstSet.offsetWidth;
 
       if (loopWidth > 0 && offset >= loopWidth) {
@@ -70,7 +74,14 @@ export default function HomeTicker() {
 
   async function loadTicker() {
     try {
-      const { data: catches, error } = await supabase
+      /*
+       * Load ALL shinies once, newest first.
+       *
+       * There is intentionally NO .limit() and NO recurring
+       * database refresh. The returned data stays in memory while
+       * the ticker continuously loops through it.
+       */
+      const { data: catches, error: catchesError } = await supabase
         .from("shiny_catches")
         .select(`
           id,
@@ -81,17 +92,20 @@ export default function HomeTicker() {
         `)
         .order("date_found", {
           ascending: false,
-        })
-        .limit(20);
+        });
 
-      if (error) {
-        console.error("Failed to load shiny ticker:", error);
+      if (catchesError) {
+        console.error("Failed to load shiny ticker:", catchesError);
         return;
       }
 
-      const { data: pokemon } = await supabase
+      const { data: pokemon, error: pokemonError } = await supabase
         .from("pokemon")
         .select("id,name");
+
+      if (pokemonError) {
+        console.error("Failed to load Pokemon:", pokemonError);
+      }
 
       const pokemonMap: Record<number, string> = {};
 
@@ -99,7 +113,7 @@ export default function HomeTicker() {
         pokemonMap[p.id] = p.name;
       });
 
-      setItems(
+      const shinyItems: ShinyItem[] =
         catches?.map((c: any, index: number) => ({
           id: String(
             c.id ?? `${c.pokemon_id}-${c.date_found}-${index}`
@@ -110,8 +124,9 @@ export default function HomeTicker() {
           trainer:
             c.profiles?.nickname ?? "Unknown Trainer",
           date: c.date_found,
-        })) ?? []
-      );
+        })) ?? [];
+
+      setItems(shinyItems);
     } catch (error) {
       console.error("Failed to load home shiny ticker:", error);
     }
@@ -238,7 +253,7 @@ export default function HomeTicker() {
           willChange: "transform",
         }}
       >
-        {/* FIRST SET */}
+        {/* ORIGINAL FULL SHINY HISTORY */}
         <div
           ref={firstSetRef}
           style={{
@@ -249,7 +264,7 @@ export default function HomeTicker() {
           {items.map((item) => renderCard(item))}
         </div>
 
-        {/* SECOND IDENTICAL SET FOR SEAMLESS LOOP */}
+        {/* IDENTICAL COPY FOR SEAMLESS INFINITE LOOP */}
         <div
           style={{
             display: "flex",
