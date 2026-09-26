@@ -73,6 +73,8 @@ import ShuntMachine from "./pages/ShuntMachine";
 import AlteringCave from "./pages/AlteringCave";
 import CosmeticBuilder from "./pages/CosmeticBuilder";
 import Tools from "./pages/Tools";
+import FatePoints from "./pages/FatePoints";
+import FateDaily from "./pages/FateDaily";
 
 import ThemeSelector from "./components/ThemeSelector";
 
@@ -945,6 +947,16 @@ export default function App() {
             <Route
               path="/profile"
               element={<Profile />}
+            />
+
+            <Route
+              path="/fate-points"
+              element={<FatePoints />}
+            />
+
+            <Route
+              path="/fate-daily"
+              element={<FateDaily />}
             />
 
             <Route
