@@ -44,6 +44,13 @@ export default function AdminDashboard() {
         </Link>
 
         <Link
+          to="/admin/achievements"
+          className="admin-card"
+        >
+          🏆 Achievements
+        </Link>
+
+        <Link
           to="/admin/season-control"
           className="admin-card"
         >

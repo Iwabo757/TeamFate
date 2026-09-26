@@ -23,7 +23,11 @@ export async function getAchievements() {
     .select("*")
     .eq("enabled", true)
     .order("threshold", { ascending: true });
-  return { data: data as Achievement[] | null, error };
+
+  return {
+    data: (data || []) as Achievement[],
+    error,
+  };
 }
 
 export async function getAllAchievements() {
@@ -31,7 +35,11 @@ export async function getAllAchievements() {
     .from("fate_achievements")
     .select("*")
     .order("threshold", { ascending: true });
-  return { data: data as Achievement[] | null, error };
+
+  return {
+    data: (data || []) as Achievement[],
+    error,
+  };
 }
 
 export async function awardPoints(
@@ -62,42 +70,87 @@ export function getUnlockedAchievements({
   dailyStreak,
   bountyCaught,
 }: {
-  achievements: Achievement[];
+  achievements?: Achievement[];
   shinyCount: number;
   eventCount: number;
   eventWins: number;
   dailyStreak: number;
   bountyCaught?: number;
 }) {
-  return achievements.filter((achievement) => {
+  return achievements.map((achievement) => {
+    let value = 0;
+
     switch (achievement.requirement_type) {
       case "shiny_count":
-        return shinyCount >= achievement.threshold;
+        value = shinyCount;
+        break;
       case "event_participation":
-        return eventCount >= achievement.threshold;
+        value = eventCount;
+        break;
       case "event_wins":
-        return eventWins >= achievement.threshold;
+        value = eventWins;
+        break;
       case "daily_streak":
-        return dailyStreak >= achievement.threshold;
+        value = dailyStreak;
+        break;
       case "bounty_caught":
-        return (bountyCaught ?? 0) >= achievement.threshold;
-      default:
-        return false;
+        value = bountyCaught || 0;
+        break;
     }
+
+    return {
+      ...achievement,
+      currentValue: value,
+      unlocked: value >= achievement.threshold,
+    };
   });
 }
 
+/*
+ * Keep Faté Daily here because FateDaily.tsx imports it.
+ * This was accidentally removed when achievements were moved
+ * from hard-coded values to Supabase.
+ */
 export function getDailyChallenge(date = new Date()) {
   const challenges = [
-    { key: "catch_50", title: "Catch 50 Pokémon", description: "Catch 50 Pokémon today.", reward: 100 },
-    { key: "participate_event", title: "Join a Faté Event", description: "Participate in any Faté event today.", reward: 150 },
-    { key: "submit_shiny", title: "Show Off a Shiny", description: "Submit a shiny to the Faté Showcase.", reward: 200 },
-    { key: "visit_site", title: "Check In", description: "Complete today's Faté Daily check-in.", reward: 50 },
-    { key: "community", title: "Community Day", description: "Participate in a Faté community activity.", reward: 100 },
+    {
+      key: "catch_50",
+      title: "Catch 50 Pokémon",
+      description: "Catch 50 Pokémon today.",
+      reward: 100,
+    },
+    {
+      key: "participate_event",
+      title: "Join a Faté Event",
+      description: "Participate in any Faté event today.",
+      reward: 150,
+    },
+    {
+      key: "submit_shiny",
+      title: "Show Off a Shiny",
+      description: "Submit a shiny to the Faté Showcase.",
+      reward: 200,
+    },
+    {
+      key: "visit_site",
+      title: "Check In",
+      description: "Complete today's Faté Daily check-in.",
+      reward: 50,
+    },
+    {
+      key: "community",
+      title: "Community Day",
+      description: "Participate in a Faté community activity.",
+      reward: 100,
+    },
   ];
 
   const utcDay = Math.floor(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86400000
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    ) / 86400000
   );
 
   return {

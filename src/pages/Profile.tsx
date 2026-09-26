@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import {
-  getAchievements,
+  getAllAchievements,
   getUnlockedAchievements,
 } from "../lib/fateProgression";
 
@@ -64,8 +64,7 @@ export default function Profile() {
       .limit(1)
       .maybeSingle();
 
-    const dailyStreak = Number(daily?.streak || 0);
-    setStreak(dailyStreak);
+    setStreak(Number(daily?.streak || 0));
 
     const { count: participation } = await supabase
       .from("events")
@@ -81,11 +80,9 @@ export default function Profile() {
 
     setEventWins(wins || 0);
 
-    // A bounty is counted when staff marks it claimed by this member.
     const { count: claimedBounties } = await supabase
       .from("bounties")
       .select("id", { count: "exact", head: true })
-      .eq("claimed", true)
       .eq("claimed_by", user.id);
 
     setBountyCaught(claimedBounties || 0);
@@ -93,16 +90,16 @@ export default function Profile() {
     const {
       data: achievementRows,
       error: achievementError,
-    } = await getAchievements();
+    } = await getAllAchievements();
 
     if (!achievementError) {
       setAchievements(
         getUnlockedAchievements({
-          achievements: achievementRows || [],
+          achievements: achievementRows,
           shinyCount: shinyRows.length,
           eventCount: participation || 0,
           eventWins: wins || 0,
-          dailyStreak,
+          dailyStreak: Number(daily?.streak || 0),
           bountyCaught: claimedBounties || 0,
         })
       );
@@ -160,6 +157,26 @@ export default function Profile() {
         </div>
       </div>
 
+      <h2>My Shinies</h2>
+
+      <div className="dex-grid">
+        {shinies.map((entry) => (
+          <div
+            key={`${entry.pokemon_id}-${entry.date_found}`}
+            className="dex-card caught"
+            onClick={() =>
+              setSelectedPokemon(entry)
+            }
+          >
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
+              alt={entry.pokemon.name}
+            />
+            <span>{entry.pokemon.name}</span>
+          </div>
+        ))}
+      </div>
+
       <h2>🏆 Achievements</h2>
 
       <div className="event-grid">
@@ -195,26 +212,6 @@ export default function Profile() {
                 ? `✓ Unlocked · +${a.reward}`
                 : `Locked · +${a.reward}`}
             </strong>
-          </div>
-        ))}
-      </div>
-
-      <h2>My Shinies</h2>
-
-      <div className="dex-grid">
-        {shinies.map((entry) => (
-          <div
-            key={`${entry.pokemon_id}-${entry.date_found}`}
-            className="dex-card caught"
-            onClick={() =>
-              setSelectedPokemon(entry)
-            }
-          >
-            <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
-              alt={entry.pokemon.name}
-            />
-            <span>{entry.pokemon.name}</span>
           </div>
         ))}
       </div>
@@ -257,7 +254,8 @@ export default function Profile() {
               ).toLocaleDateString()}
             </p>
 
-            <p>
+       
+     <p>
               Owned by{" "}
               {profile.nickname ||
                 profile.username}
