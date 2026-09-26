@@ -31,6 +31,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminAchievements from "./pages/AdminAchievements";
 
 import ManageMembers from "./pages/ManageMembers";
 import EventDashboard from "./pages/EventDashboard";
@@ -972,6 +973,11 @@ export default function App() {
             <Route
               path="/admin"
               element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/achievements"
+              element={<AdminAchievements />}
             />
 
             <Route
