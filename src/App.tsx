@@ -73,8 +73,8 @@ import ShuntMachine from "./pages/ShuntMachine";
 import AlteringCave from "./pages/AlteringCave";
 import CosmeticBuilder from "./pages/CosmeticBuilder";
 import Tools from "./pages/Tools";
-import FatePoints from "./pages/FatePoints";
 import FateDaily from "./pages/FateDaily";
+import AdminFateDaily from "./pages/AdminFateDaily";
 
 import ThemeSelector from "./components/ThemeSelector";
 
@@ -263,7 +263,8 @@ export default function App() {
 
     if (
       path === "/" ||
-      path === "/recruitment"
+      path === "/recruitment" ||
+      path === "/fate-daily"
     ) {
       return [
         {
@@ -530,6 +531,10 @@ export default function App() {
 
                   <Link to="/">
                     Home
+                  </Link>
+
+                  <Link to="/fate-daily">
+                    Faté Daily
                   </Link>
 
                   <Link to="/recruitment">
@@ -954,11 +959,6 @@ export default function App() {
             />
 
             <Route
-              path="/fate-points"
-              element={<FatePoints />}
-            />
-
-            <Route
               path="/fate-daily"
               element={<FateDaily />}
             />
@@ -1106,6 +1106,14 @@ export default function App() {
             <Route
               path="/admin/shinywars/teams/:id"
               element={<ManageShinyWarTeams />}
+            />
+
+
+            {/* ADMIN FATÉ DAILY */}
+
+            <Route
+              path="/admin/fate-daily"
+              element={<AdminFateDaily />}
             />
 
 

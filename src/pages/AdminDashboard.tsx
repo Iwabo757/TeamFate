@@ -6,6 +6,7 @@ export default function AdminDashboard() {
       <h1>Admin Panel</h1>
 
       <div className="admin-grid">
+
         <Link
           to="/admin/homepage"
           className="admin-card"
@@ -17,7 +18,7 @@ export default function AdminDashboard() {
           to="/admin/recruitment"
           className="admin-card"
         >
-          Recruitment
+           Recruitment 
         </Link>
 
         <Link
@@ -27,11 +28,26 @@ export default function AdminDashboard() {
           📖 Shiny Dashboard
         </Link>
 
+
+        <Link
+          to="/admin/fate-daily"
+          className="admin-card"
+        >
+          🔥 Faté Daily Verification
+        </Link>
+
         <Link
           to="/admin/events"
           className="admin-card"
         >
           📅 Event Dashboard
+        </Link>
+
+        <Link
+          to="/admin/season-control"
+          className="admin-card"
+        >
+          🌦️ Season Control
         </Link>
 
         <Link
@@ -48,12 +64,7 @@ export default function AdminDashboard() {
           ⚔️ Wars Dashboard
         </Link>
 
-        <Link
-          to="/admin/achievements"
-          className="admin-card"
-        >
-          🏆 Achievement Manager
-        </Link>
+
 
         <Link
           to="/admin/members"

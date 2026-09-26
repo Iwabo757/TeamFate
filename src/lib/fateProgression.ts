@@ -23,11 +23,7 @@ export async function getAchievements() {
     .select("*")
     .eq("enabled", true)
     .order("threshold", { ascending: true });
-
-  return {
-    data: (data || []) as Achievement[],
-    error,
-  };
+  return { data: data as Achievement[] | null, error };
 }
 
 export async function getAllAchievements() {
@@ -35,11 +31,7 @@ export async function getAllAchievements() {
     .from("fate_achievements")
     .select("*")
     .order("threshold", { ascending: true });
-
-  return {
-    data: (data || []) as Achievement[],
-    error,
-  };
+  return { data: data as Achievement[] | null, error };
 }
 
 export async function awardPoints(
@@ -68,87 +60,44 @@ export function getUnlockedAchievements({
   eventCount,
   eventWins,
   dailyStreak,
-  bountyCaught = 0,
+  bountyCaught,
 }: {
-  achievements?: Achievement[];
+  achievements: Achievement[];
   shinyCount: number;
   eventCount: number;
   eventWins: number;
   dailyStreak: number;
   bountyCaught?: number;
 }) {
-  return achievements.map((achievement) => {
-    let value = 0;
-
+  return achievements.filter((achievement) => {
     switch (achievement.requirement_type) {
       case "shiny_count":
-        value = shinyCount;
-        break;
+        return shinyCount >= achievement.threshold;
       case "event_participation":
-        value = eventCount;
-        break;
+        return eventCount >= achievement.threshold;
       case "event_wins":
-        value = eventWins;
-        break;
+        return eventWins >= achievement.threshold;
       case "daily_streak":
-        value = dailyStreak;
-        break;
+        return dailyStreak >= achievement.threshold;
       case "bounty_caught":
-        value = bountyCaught;
-        break;
+        return (bountyCaught ?? 0) >= achievement.threshold;
+      default:
+        return false;
     }
-
-    return {
-      ...achievement,
-      currentValue: value,
-      unlocked: value >= achievement.threshold,
-    };
   });
 }
 
-/*
- * Keep Faté Daily here because FateDaily.tsx imports it.
- */
 export function getDailyChallenge(date = new Date()) {
   const challenges = [
-    {
-      key: "catch_50",
-      title: "Catch 50 Pokémon",
-      description: "Catch 50 Pokémon today.",
-      reward: 100,
-    },
-    {
-      key: "participate_event",
-      title: "Join a Faté Event",
-      description: "Participate in any Faté event today.",
-      reward: 150,
-    },
-    {
-      key: "submit_shiny",
-      title: "Show Off a Shiny",
-      description: "Submit a shiny to the Faté Showcase.",
-      reward: 200,
-    },
-    {
-      key: "visit_site",
-      title: "Check In",
-      description: "Complete today's Faté Daily check-in.",
-      reward: 50,
-    },
-    {
-      key: "community",
-      title: "Community Day",
-      description: "Participate in a Faté community activity.",
-      reward: 100,
-    },
+    { key: "catch_50", title: "Catch 50 Pokémon", description: "Catch 50 Pokémon today.", reward: 100 },
+    { key: "participate_event", title: "Join a Faté Event", description: "Participate in any Faté event today.", reward: 150 },
+    { key: "submit_shiny", title: "Show Off a Shiny", description: "Submit a shiny to the Faté Showcase.", reward: 200 },
+    { key: "visit_site", title: "Check In", description: "Complete today's Faté Daily check-in.", reward: 50 },
+    { key: "community", title: "Community Day", description: "Participate in a Faté community activity.", reward: 100 },
   ];
 
   const utcDay = Math.floor(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate()
-    ) / 86400000
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / 86400000
   );
 
   return {
