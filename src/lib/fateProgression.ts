@@ -16,11 +16,6 @@ export type Achievement = {
   enabled: boolean;
 };
 
-/*
- * Achievements are now stored in Supabase instead of being hard-coded.
- * Staff can add/edit/disable them from /admin/achievements.
- */
-
 export async function getAchievements() {
   const { data, error } = await supabase
     .from("fate_achievements")
@@ -67,13 +62,13 @@ export async function awardPoints(
 }
 
 export function getUnlockedAchievements({
-  achievements,
+  achievements = [],
   shinyCount,
   eventCount,
   eventWins,
   dailyStreak,
 }: {
-  achievements: Achievement[];
+  achievements?: Achievement[];
   shinyCount: number;
   eventCount: number;
   eventWins: number;
@@ -103,4 +98,57 @@ export function getUnlockedAchievements({
       unlocked: value >= achievement.threshold,
     };
   });
+}
+
+/*
+ * Keep Faté Daily here because FateDaily.tsx imports it.
+ * This was accidentally removed when achievements were moved
+ * from hard-coded values to Supabase.
+ */
+export function getDailyChallenge(date = new Date()) {
+  const challenges = [
+    {
+      key: "catch_50",
+      title: "Catch 50 Pokémon",
+      description: "Catch 50 Pokémon today.",
+      reward: 100,
+    },
+    {
+      key: "participate_event",
+      title: "Join a Faté Event",
+      description: "Participate in any Faté event today.",
+      reward: 150,
+    },
+    {
+      key: "submit_shiny",
+      title: "Show Off a Shiny",
+      description: "Submit a shiny to the Faté Showcase.",
+      reward: 200,
+    },
+    {
+      key: "visit_site",
+      title: "Check In",
+      description: "Complete today's Faté Daily check-in.",
+      reward: 50,
+    },
+    {
+      key: "community",
+      title: "Community Day",
+      description: "Participate in a Faté community activity.",
+      reward: 100,
+    },
+  ];
+
+  const utcDay = Math.floor(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate()
+    ) / 86400000
+  );
+
+  return {
+    ...challenges[utcDay % challenges.length],
+    date: date.toISOString().slice(0, 10),
+  };
 }
