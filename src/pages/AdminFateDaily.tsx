@@ -49,7 +49,11 @@ export default function AdminFateDaily() {
 
   async function loadPending() {
     setLoading(true);
-    const { data, error } = await supabase
+    // Do not embed profiles here. fate_daily_submissions has two
+    // relationships to profiles (profile_id and reviewed_by), so
+    // PostgREST cannot choose one automatically. Load submissions
+    // first, then fetch the member profiles explicitly.
+    const { data: submissions, error } = await supabase
       .from("fate_daily_submissions")
       .select(`
         id,
@@ -61,8 +65,7 @@ export default function AdminFateDaily() {
         note,
         status,
         rejection_reason,
-        submitted_at,
-        profiles (nickname, username)
+        submitted_at
       `)
       .eq("status", "pending")
       .order("submitted_at", { ascending: true });
@@ -70,9 +73,41 @@ export default function AdminFateDaily() {
     if (error) {
       alert(error.message);
       setItems([]);
-    } else {
-      setItems((data || []) as Submission[]);
+      setLoading(false);
+      return;
     }
+
+    const rows = (submissions || []) as Submission[];
+    const profileIds = [...new Set(rows.map((row) => row.profile_id))];
+
+    if (!profileIds.length) {
+      setItems(rows);
+      setLoading(false);
+      return;
+    }
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, nickname, username")
+      .in("id", profileIds);
+
+    if (profilesError) {
+      alert(profilesError.message);
+      setItems(rows);
+      setLoading(false);
+      return;
+    }
+
+    const profileMap = new Map(
+      (profiles || []).map((profile) => [profile.id, profile])
+    );
+
+    setItems(
+      rows.map((row) => ({
+        ...row,
+        profiles: profileMap.get(row.profile_id) || null,
+      }))
+    );
     setLoading(false);
   }
 
