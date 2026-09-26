@@ -9,10 +9,10 @@ export type Achievement = {
   reward: number;
   requirement_type:
     | "shiny_count"
+    | "event_participation"
     | "event_wins"
     | "daily_streak"
-    | "bounty_caught"
-    | "event_participation";
+    | "bounty_caught";
   threshold: number;
   enabled: boolean;
 };
@@ -24,7 +24,10 @@ export async function getAchievements() {
     .eq("enabled", true)
     .order("threshold", { ascending: true });
 
-  return { data: (data || []) as Achievement[], error };
+  return {
+    data: (data || []) as Achievement[],
+    error,
+  };
 }
 
 export async function getAllAchievements() {
@@ -33,7 +36,10 @@ export async function getAllAchievements() {
     .select("*")
     .order("threshold", { ascending: true });
 
-  return { data: (data || []) as Achievement[], error };
+  return {
+    data: (data || []) as Achievement[],
+    error,
+  };
 }
 
 export async function awardPoints(
@@ -79,7 +85,6 @@ export function getUnlockedAchievements({
         value = shinyCount;
         break;
       case "event_participation":
-        // Legacy support for achievements that already exist in the database.
         value = eventCount;
         break;
       case "event_wins":
@@ -101,7 +106,9 @@ export function getUnlockedAchievements({
   });
 }
 
-// Faté Daily is kept here because FateDaily.tsx imports it.
+/*
+ * Keep Faté Daily here because FateDaily.tsx imports it.
+ */
 export function getDailyChallenge(date = new Date()) {
   const challenges = [
     {

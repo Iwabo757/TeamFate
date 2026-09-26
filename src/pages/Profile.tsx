@@ -64,7 +64,8 @@ export default function Profile() {
       .limit(1)
       .maybeSingle();
 
-    setStreak(Number(daily?.streak || 0));
+    const dailyStreak = Number(daily?.streak || 0);
+    setStreak(dailyStreak);
 
     const { count: participation } = await supabase
       .from("events")
@@ -78,21 +79,16 @@ export default function Profile() {
       .select("id", { count: "exact", head: true })
       .eq("first_place", user.id);
 
-    const { count: bountyCaught } = await supabase
-      .from("bounties")
-      .select("id", { count: "exact", head: true })
-      .eq("claimed_by", user.id)
-      .eq("claimed", true);
-
     setEventWins(wins || 0);
 
-    const { count: bountyCount } = await supabase
+    // A bounty is counted when staff marks it claimed by this member.
+    const { count: claimedBounties } = await supabase
       .from("bounties")
       .select("id", { count: "exact", head: true })
       .eq("claimed", true)
       .eq("claimed_by", user.id);
 
-    setBountyCaught(bountyCount || 0);
+    setBountyCaught(claimedBounties || 0);
 
     const {
       data: achievementRows,
@@ -106,9 +102,8 @@ export default function Profile() {
           shinyCount: shinyRows.length,
           eventCount: participation || 0,
           eventWins: wins || 0,
-          dailyStreak: Number(daily?.streak || 0),
-          bountyCaught: bountyCount || 0,
-          bountyCaught: bountyCaught || 0,
+          dailyStreak,
+          bountyCaught: claimedBounties || 0,
         })
       );
     }
@@ -154,6 +149,13 @@ export default function Profile() {
           <h2>🏆 Event Wins</h2>
           <strong style={{ fontSize: 28 }}>
             {eventWins}
+          </strong>
+        </div>
+
+        <div className="card">
+          <h2>🎯 Bounties Caught</h2>
+          <strong style={{ fontSize: 28 }}>
+            {bountyCaught}
           </strong>
         </div>
       </div>
