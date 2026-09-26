@@ -10,7 +10,6 @@ export default function Profile() {
   const [shinies, setShinies] = useState<any[]>([]);
   const [points, setPoints] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [eventCount, setEventCount] = useState(0);
   const [eventWins, setEventWins] = useState(0);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [selectedPokemon, setSelectedPokemon] = useState<any>(null);
@@ -72,8 +71,6 @@ export default function Profile() {
       .or(
         `first_place.eq.${user.id},second_place.eq.${user.id},third_place.eq.${user.id},fourth_place.eq.${user.id}`
       );
-
-    setEventCount(participation || 0);
 
     const { count: wins } = await supabase
       .from("events")
