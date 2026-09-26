@@ -3,9 +3,9 @@ import { supabase } from "../lib/supabase";
 
 const REQUIREMENT_TYPES = [
   { value: "shiny_count", label: "Shiny Count" },
-  { value: "event_participation", label: "Event Participation" },
   { value: "event_wins", label: "Event Wins" },
   { value: "daily_streak", label: "Faté Daily Streak" },
+  { value: "bounty_caught", label: "Bounty Caught" },
 ];
 
 type Achievement = {
@@ -21,7 +21,6 @@ type Achievement = {
 };
 
 const emptyForm = {
-  key: "",
   name: "",
   description: "",
   icon: "🏆",
@@ -69,7 +68,6 @@ export default function AdminAchievements() {
   function edit(row: Achievement) {
     setEditingId(row.id);
     setForm({
-      key: row.key,
       name: row.name,
       description: row.description,
       icon: row.icon,
@@ -85,9 +83,16 @@ export default function AdminAchievements() {
     setSaving(true);
     setMessage("");
 
+    const name = form.name.trim();
+
+    if (!name || form.threshold < 1) {
+      setMessage("Name and a threshold of at least 1 are required.");
+      setSaving(false);
+      return;
+    }
+
     const payload = {
-      key: form.key.trim().toLowerCase().replace(/\s+/g, "_"),
-      name: form.name.trim(),
+      name,
       description: form.description.trim(),
       icon: form.icon.trim() || "🏆",
       reward: Number(form.reward),
@@ -96,10 +101,27 @@ export default function AdminAchievements() {
       enabled: form.enabled,
     };
 
-    if (!payload.key || !payload.name || payload.threshold < 1) {
-      setMessage("Key, name, and a threshold of at least 1 are required.");
-      setSaving(false);
-      return;
+    if (!editingId) {
+      const baseKey = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "") || "achievement";
+
+      const { data: existing } = await supabase
+        .from("fate_achievements")
+        .select("key")
+        .like("key", `${baseKey}%`);
+
+      const usedKeys = new Set((existing || []).map((row) => row.key));
+      let generatedKey = baseKey;
+      let suffix = 2;
+
+      while (usedKeys.has(generatedKey)) {
+        generatedKey = `${baseKey}_${suffix}`;
+        suffix += 1;
+      }
+
+      (payload as typeof payload & { key: string }).key = generatedKey;
     }
 
     const result = editingId
@@ -173,18 +195,6 @@ export default function AdminAchievements() {
         <h2>{editingId ? "Edit Achievement" : "Create Achievement"}</h2>
 
         <div className="event-grid">
-          <label>
-            Key
-            <input
-              value={form.key}
-              disabled={!!editingId}
-              onChange={(e) =>
-                setForm({ ...form, key: e.target.value })
-              }
-              placeholder="shiny_50"
-            />
-          </label>
-
           <label>
             Name
             <input

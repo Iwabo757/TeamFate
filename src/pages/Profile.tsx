@@ -77,6 +77,12 @@ export default function Profile() {
       .select("id", { count: "exact", head: true })
       .eq("first_place", user.id);
 
+    const { count: bountyCaught } = await supabase
+      .from("bounties")
+      .select("id", { count: "exact", head: true })
+      .eq("claimed_by", user.id)
+      .eq("claimed", true);
+
     setEventWins(wins || 0);
 
     const {
@@ -92,6 +98,7 @@ export default function Profile() {
           eventCount: participation || 0,
           eventWins: wins || 0,
           dailyStreak: Number(daily?.streak || 0),
+          bountyCaught: bountyCaught || 0,
         })
       );
     }
