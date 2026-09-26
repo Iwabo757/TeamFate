@@ -75,6 +75,7 @@ import CosmeticBuilder from "./pages/CosmeticBuilder";
 import Tools from "./pages/Tools";
 import FateDaily from "./pages/FateDaily";
 import AdminFateDaily from "./pages/AdminFateDaily";
+import AdminAchievements from "./pages/AdminAchievements";
 
 import ThemeSelector from "./components/ThemeSelector";
 
@@ -423,10 +424,7 @@ export default function App() {
           path: "/admin",
           end: true,
         },
-        {
-          label: "Season Control",
-          path: "/admin/season-control",
-        },
+
         {
           label: "Shiny Dashboard",
           path: "/admin/shiny-dashboard",
@@ -435,18 +433,12 @@ export default function App() {
           label: "Bounty Dashboard",
           path: "/admin/bounty-dashboard",
         },
-        {
-          label: "Shiny Wars",
-          path: "/admin/shinywars",
-        },
+
         {
           label: "Events",
           path: "/admin/events",
         },
-        {
-          label: "Recruitment Editor",
-          path: "/admin/recruitment",
-        },
+
         {
           label: "Members",
           path: "/admin/members",
@@ -976,6 +968,11 @@ export default function App() {
             <Route
               path="/admin"
               element={<AdminDashboard />}
+            />
+
+            <Route
+              path="/admin/achievements"
+              element={<AdminAchievements />}
             />
 
             <Route

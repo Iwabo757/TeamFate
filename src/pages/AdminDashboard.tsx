@@ -47,7 +47,7 @@ export default function AdminDashboard() {
           to="/admin/achievements"
           className="admin-card"
         >
-          🏆 Achievements
+          🏆 Achievement Manager
         </Link>
 
         <Link
