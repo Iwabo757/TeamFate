@@ -34,7 +34,16 @@ function localDate(offsetDays = 0) {
   const d = new Date();
   d.setHours(12, 0, 0, 0);
   d.setDate(d.getDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function notifyCalendar() {
+  window.dispatchEvent(new CustomEvent("fate-daily-schedule-updated"));
 }
 
 export default function AdminFateDaily() {
@@ -233,7 +242,8 @@ export default function AdminFateDaily() {
       return;
     }
 
-    setMessage(`Faté Daily assigned for ${assignDate}.`);
+    setMessage(`Faté Daily assigned for ${assignDate}. Calendar updated.`);
+    notifyCalendar();
     await load();
   }
 
@@ -250,6 +260,7 @@ export default function AdminFateDaily() {
       return;
     }
 
+    notifyCalendar();
     await load();
   }
 
@@ -273,7 +284,8 @@ export default function AdminFateDaily() {
       return;
     }
 
-    setMessage("Next 7 days scheduled.");
+    setMessage("Next 7 days scheduled. Calendar updated.");
+    notifyCalendar();
     await load();
   }
 

@@ -9,7 +9,8 @@ type EventType =
   | "Shiny Hunt"
   | "Hide & Seek"
   | "Special Event"
-  | "Announcement";
+  | "Announcement"
+  | "Faté Daily";
 
 type StaffMember = {
   id: string;
@@ -47,6 +48,8 @@ type CalendarEvent = {
   notes?: string;
   description?: string;
   checklist: Checklist;
+  source?: "plan" | "public" | "daily";
+  dailyChallengeId?: string;
 };
 
 const STAFF_ROLES = ["officer", "commander", "leader", "admin"];
@@ -113,6 +116,7 @@ function normalizeType(value: unknown): EventType {
     "Hide & Seek",
     "Special Event",
     "Announcement",
+    "Faté Daily",
   ];
   return types.includes(value as EventType) ? (value as EventType) : "Special Event";
 }
@@ -130,6 +134,35 @@ function localDateTimeToISO(date: string, time: string) {
   // datetime-local/time inputs are intentionally interpreted in the browser
   // timezone of the staff member entering the event.
   return new Date(`${date}T${time}:00`).toISOString();
+}
+
+function fromFateDailySchedule(row: any): CalendarEvent {
+  const challenge = Array.isArray(row.fate_daily_challenges)
+    ? row.fate_daily_challenges[0]
+    : row.fate_daily_challenges;
+
+  return {
+    id: `daily-${row.challenge_date}`,
+    title: challenge?.title || "Faté Daily",
+    type: "Faté Daily",
+    date: row.challenge_date,
+    startTime: "00:00",
+    endTime: "23:59",
+    prize: challenge?.reward ? `${challenge.reward} Faté Points` : "",
+    description: challenge?.description || "",
+    status: "scheduled",
+    source: "daily",
+    dailyChallengeId: row.challenge_id,
+    checklist: {
+      pokemon: false,
+      location: false,
+      time: true,
+      prize: Boolean(challenge?.reward),
+      banner: false,
+      discordPost: false,
+      website: true,
+    },
+  };
 }
 
 function fromPublicEvent(row: any): CalendarEvent {
@@ -189,16 +222,34 @@ export default function Calendar() {
     setLoading(true);
     setMessage("");
 
-    const [{ data: planRows, error: planError }, { data: eventRows, error: eventError }, { data: staffRows, error: staffError }] =
-      await Promise.all([
-        supabase.from("event_plans").select("*").order("event_date", { ascending: true }),
-        supabase.from("events").select("*").order("start_time", { ascending: true }),
-        supabase
-          .from("profiles")
-          .select("id, nickname, username, discord_name, role")
-          .in("role", STAFF_ROLES)
-          .order("nickname", { ascending: true }),
-      ]);
+    const [
+      { data: planRows, error: planError },
+      { data: eventRows, error: eventError },
+      { data: dailyRows, error: dailyError },
+      { data: staffRows, error: staffError },
+    ] = await Promise.all([
+      supabase.from("event_plans").select("*").order("event_date", { ascending: true }),
+      supabase.from("events").select("*").order("start_time", { ascending: true }),
+      supabase
+        .from("fate_daily_schedule")
+        .select(`
+          challenge_date,
+          challenge_id,
+          fate_daily_challenges (
+            id,
+            key,
+            title,
+            description,
+            reward
+          )
+        `)
+        .order("challenge_date", { ascending: true }),
+      supabase
+        .from("profiles")
+        .select("id, nickname, username, discord_name, role")
+        .in("role", STAFF_ROLES)
+        .order("nickname", { ascending: true }),
+    ]);
 
     if (planError && planError.code !== "42P01") {
       setMessage(planError.message);
@@ -238,18 +289,43 @@ export default function Calendar() {
       .filter((row: any) => !plannedPublicIds.has(String(row.id)))
       .map(fromPublicEvent);
 
-    setEvents([...plans, ...publicEvents]);
+    const dailyEvents = (dailyRows || [])
+      .filter((row: any) => row.challenge_date)
+      .map(fromFateDailySchedule);
+
+    // A scheduled Faté Daily is its own calendar item. It does not become
+    // an event_plans row and therefore cannot be accidentally published as
+    // a normal public event.
+    setEvents([...plans, ...publicEvents, ...dailyEvents]);
     setLoading(false);
 
     if (staffError) {
       setMessage(`Staff could not be loaded: ${staffError.message}`);
     } else if (eventError) {
       setMessage(`Public events could not be loaded: ${eventError.message}`);
+    } else if (dailyError) {
+      setMessage(`Faté Daily assignments could not be loaded: ${dailyError.message}`);
     }
   }
 
   useEffect(() => {
     void loadCalendar();
+
+    const handleDailyScheduleUpdated = () => {
+      void loadCalendar();
+    };
+
+    window.addEventListener(
+      "fate-daily-schedule-updated",
+      handleDailyScheduleUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "fate-daily-schedule-updated",
+        handleDailyScheduleUpdated,
+      );
+    };
   }, []);
 
   function updateEvent(id: string, patch: Partial<CalendarEvent>) {
@@ -565,6 +641,7 @@ export default function Calendar() {
             <option>Hide & Seek</option>
             <option>Special Event</option>
             <option>Announcement</option>
+            <option>Faté Daily</option>
           </select>
         </div>
       </div>
@@ -601,7 +678,7 @@ export default function Calendar() {
                           setBannerFile(null);
                         }}
                       >
-                        <b>{formatTime(event.startTime)}</b> {event.title || event.type}
+                        {event.type === "Faté Daily" ? "🔥" : <b>{formatTime(event.startTime)}</b>} {event.title || event.type}
                       </span>
                     ))}
                     {dayEvents.length > 3 && <span className="more-events">+{dayEvents.length - 3} more</span>}
@@ -615,6 +692,31 @@ export default function Calendar() {
 
         <aside className="calendar-sidebar">
           {selected ? (
+            selected.source === "daily" ? (
+              <div className="event-editor">
+                <div className="event-editor-header">
+                  <div>
+                    <span className="calendar-kicker">FATÉ DAILY</span>
+                    <h2>{selected.title}</h2>
+                  </div>
+                  <button type="button" onClick={() => setSelectedId(null)}>×</button>
+                </div>
+
+                <div className="card">
+                  <p><strong>Date:</strong> {new Date(`${selected.date}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
+                  <p><strong>Reward:</strong> {selected.prize || "—"}</p>
+                  <p>{selected.description || "No description provided."}</p>
+                  <p style={{ marginTop: 12 }}>
+                    <strong>Assigned Daily</strong><br />
+                    This Faté Daily is being pulled directly from the daily schedule. Changes to the assignment should be made in the Faté Daily manager.
+                  </p>
+                </div>
+
+                <div className="event-actions">
+                  <button type="button" onClick={() => setSelectedId(null)}>Close</button>
+                </div>
+              </div>
+            ) : (
             <>
               <div className="event-editor-header">
                 <div>
@@ -694,6 +796,7 @@ export default function Calendar() {
                 <button type="button" className="danger" onClick={() => void deleteEvent(selected)}>Delete</button>
               </div>
             </>
+            )
           ) : (
             <div className="calendar-empty">
               <span className="calendar-kicker">STAFF PLANNER</span>
