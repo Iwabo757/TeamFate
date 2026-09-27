@@ -28,6 +28,12 @@ export default function AdminDashboard() {
           📖 Shiny Dashboard
         </Link>
 
+<Link
+  to="/admin/fate-daily"
+  className="admin-card"
+>
+  🔥 Faté Daily Manager
+</Link>
 
         <Link
           to="/admin/fate-daily"

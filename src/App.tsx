@@ -75,6 +75,7 @@ import CosmeticBuilder from "./pages/CosmeticBuilder";
 import Tools from "./pages/Tools";
 import FateDaily from "./pages/FateDaily";
 import AdminFateDaily from "./pages/AdminFateDaily";
+import AdminFateDailyReviews from "./pages/AdminFateDailyReviews";
 import AdminAchievements from "./pages/AdminAchievements";
 
 import ThemeSelector from "./components/ThemeSelector";
@@ -443,6 +444,18 @@ export default function App() {
           label: "Members",
           path: "/admin/members",
         },
+        {
+          label: "Faté Daily",
+          path: "/admin/fate-daily",
+        },
+        {
+          label: "Daily Reviews",
+          path: "/admin/fate-daily/reviews",
+        },
+        {
+          label: "Achievements",
+          path: "/admin/achievements",
+        },
       ];
     }
 
@@ -595,6 +608,15 @@ export default function App() {
 
                     <Link to="/admin">
                       Admin Dashboard
+                    </Link>
+                    <Link to="/admin/fate-daily">
+                      Faté Daily
+                    </Link>
+                    <Link to="/admin/fate-daily/reviews">
+                      Daily Reviews
+                    </Link>
+                    <Link to="/admin/achievements">
+                      Achievements
                     </Link>
 
                   </div>
@@ -1111,6 +1133,11 @@ export default function App() {
             <Route
               path="/admin/fate-daily"
               element={<AdminFateDaily />}
+            />
+
+            <Route
+              path="/admin/fate-daily/reviews"
+              element={<AdminFateDailyReviews />}
             />
 
 

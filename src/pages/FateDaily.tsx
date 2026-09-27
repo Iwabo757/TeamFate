@@ -1,46 +1,104 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { getDailyChallenge } from "../lib/fateProgression";
 
-type SubmissionStatus = "pending" | "approved" | "rejected";
+type Challenge = {
+  id: string;
+  key: string;
+  title: string;
+  description: string;
+  reward: number;
+};
 
 type Submission = {
   id: string;
-  status: SubmissionStatus;
-  proof_url: string | null;
-  note: string | null;
+  status: "pending" | "approved" | "rejected";
 };
 
 export default function FateDaily() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [streak, setStreak] = useState(0);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [challengeDate, setChallengeDate] = useState("");
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const challenge = getDailyChallenge();
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    void load();
-
+    load();
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, []);
 
   async function load() {
+    setLoading(true);
+    setMessage("");
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     setUserId(user.id);
 
-    const { data: daily } = await supabase
+    // The schedule is the source of truth. There is no client-side rotation.
+    const now = new Date();
+    const today =
+      now.getFullYear() +
+      "-" +
+      String(now.getMonth() + 1).padStart(2, "0") +
+      "-" +
+      String(now.getDate()).padStart(2, "0");
+
+    const { data: schedule, error: scheduleError } = await supabase
+      .from("fate_daily_schedule")
+      .select(`
+        challenge_date,
+        challenge_id,
+        fate_daily_challenges (
+          id,
+          key,
+          title,
+          description,
+          reward
+        )
+      `)
+      .eq("challenge_date", today)
+      .maybeSingle();
+
+    if (scheduleError) {
+      setMessage(scheduleError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!schedule?.fate_daily_challenges) {
+      setMessage("Today's Faté Daily has not been scheduled yet.");
+      setLoading(false);
+      return;
+    }
+
+    setChallengeDate(schedule.challenge_date);
+    setChallenge(schedule.fate_daily_challenges as unknown as Challenge);
+
+    const { data: existing } = await supabase
+      .from("fate_daily_submissions")
+      .select("id, status")
+      .eq("profile_id", user.id)
+      .eq("challenge_date", today)
+      .maybeSingle();
+
+    setSubmission(existing || null);
+
+    const { data: latestCompletion } = await supabase
       .from("fate_daily_completions")
       .select("streak")
       .eq("profile_id", user.id)
@@ -48,325 +106,217 @@ export default function FateDaily() {
       .limit(1)
       .maybeSingle();
 
-    setStreak(Number(daily?.streak || 0));
-
-    const { data, error } = await supabase
-      .from("fate_daily_submissions")
-      .select("id, status, proof_url, note")
-      .eq("profile_id", user.id)
-      .eq("challenge_date", challenge.date)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Failed to load Faté Daily submission:", error);
-      return;
-    }
-
-    if (data) {
-      setSubmission(data as Submission);
-      setNote(data.note || "");
-    }
+    setStreak(Number(latestCompletion?.streak || 0));
+    setLoading(false);
   }
 
-  function chooseProof() {
-    fileInputRef.current?.click();
-  }
-
-  function handleProofChange(
-    event: React.ChangeEvent<HTMLInputElement>
-  ) {
-    const file = event.target.files?.[0];
-
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
-      event.target.value = "";
+      setMessage("Please choose an image file.");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert("Image must be 10 MB or smaller.");
-      event.target.value = "";
+    if (file.size > 8 * 1024 * 1024) {
+      setMessage("Screenshot must be 8 MB or smaller.");
       return;
     }
 
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    setProofFile(file);
+    setImageFile(file);
     setPreviewUrl(URL.createObjectURL(file));
-    event.target.value = "";
-  }
-
-  function removeProof() {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
-
-    setProofFile(null);
-    setPreviewUrl("");
+    setMessage("");
   }
 
   async function submitForVerification() {
-    if (!userId || submitting) return;
+    if (!userId || !challenge || !challengeDate) return;
 
-    if (!proofFile && !submission?.proof_url) {
-      alert("Please upload a screenshot showing your completed challenge.");
+    if (!imageFile) {
+      setMessage("Please upload a screenshot as proof.");
       return;
     }
 
     setSubmitting(true);
+    setMessage("");
 
     try {
-      let proofUrl = submission?.proof_url || null;
+      const extension =
+        imageFile.name.split(".").pop()?.toLowerCase() || "png";
 
-      if (proofFile) {
-        const safeName = proofFile.name.replace(
-          /[^a-zA-Z0-9._-]/g,
-          "-"
-        );
+      const path = `fate-daily/${userId}/${challengeDate}-${crypto.randomUUID()}.${extension}`;
 
-        const filePath =
-          `fate-daily/${userId}/${challenge.date}-${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("shiny-screenshots")
+        .upload(path, imageFile, {
+          cacheControl: "3600",
+          upsert: false,
+        });
 
-        const { error: uploadError } = await supabase.storage
-          .from("shiny-screenshots")
-          .upload(filePath, proofFile, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+      if (uploadError) throw uploadError;
 
-        if (uploadError) {
-          throw uploadError;
-        }
-
-        const { data } = supabase.storage
-          .from("shiny-screenshots")
-          .getPublicUrl(filePath);
-
-        proofUrl = data.publicUrl;
-      }
+      const { data: publicUrl } = supabase.storage
+        .from("shiny-screenshots")
+        .getPublicUrl(path);
 
       const { data, error } = await supabase
         .from("fate_daily_submissions")
-        .upsert(
-          {
-            profile_id: userId,
-            challenge_date: challenge.date,
-            challenge_key: challenge.key,
-            reward: challenge.reward,
-            proof_url: proofUrl,
-            note: note.trim() || null,
-            status: "pending",
-          },
-          {
-            onConflict: "profile_id,challenge_date",
-          }
-        )
-        .select("id, status, proof_url, note")
+        .insert({
+          profile_id: userId,
+          challenge_id: challenge.id,
+          challenge_date: challengeDate,
+          screenshot_url: publicUrl.publicUrl,
+          note: note.trim() || null,
+          status: "pending",
+        })
+        .select("id, status")
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      setSubmission(data as Submission);
-      setProofFile(null);
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
+      setSubmission(data);
+      setImageFile(null);
       setPreviewUrl("");
-
-      alert("Faté Daily submitted for staff verification!");
+      setNote("");
+      setMessage("Submitted! Staff must verify your proof before points are awarded.");
     } catch (error: any) {
-      console.error("Faté Daily submission error:", error);
-      alert(error?.message || "Unable to submit Faté Daily.");
+      setMessage(error?.message || "Unable to submit Faté Daily.");
     } finally {
       setSubmitting(false);
     }
   }
 
-  const approved = submission?.status === "approved";
-  const pending = submission?.status === "pending";
+  if (loading) {
+    return <div className="page"><div className="card">Loading Faté Daily...</div></div>;
+  }
+
+  if (!userId) {
+    return (
+      <div className="page">
+        <h1>🔥 Faté Daily</h1>
+        <div className="card">Please log in to participate in Faté Daily.</div>
+      </div>
+    );
+  }
+
+  if (!challenge) {
+    return (
+      <div className="page">
+        <h1>🔥 Faté Daily</h1>
+        <div className="card">
+          <h2>No Daily Scheduled</h2>
+          <p>{message || "Staff has not scheduled today's Faté Daily yet."}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const statusLabel =
+    submission?.status === "approved"
+      ? "✓ Approved"
+      : submission?.status === "rejected"
+        ? "✕ Rejected"
+        : submission?.status === "pending"
+          ? "⏳ Pending Verification"
+          : "";
 
   return (
     <div className="page">
       <h1>🔥 Faté Daily</h1>
 
-      <div className="card" style={{ maxWidth: 700 }}>
+      <div className="card" style={{ maxWidth: 900 }}>
         <h2>{challenge.title}</h2>
-
         <p>{challenge.description}</p>
 
         <p style={{ fontSize: 20 }}>
-          ⭐ Reward:{" "}
-          <strong>{challenge.reward} Faté Points</strong>
+          ⭐ Reward: <strong>{challenge.reward} Faté Points</strong>
         </p>
 
         <p>
           🔥 Current streak:{" "}
-          <strong>
-            {streak} day{streak === 1 ? "" : "s"}
-          </strong>
+          <strong>{streak} day{streak === 1 ? "" : "s"}</strong>
         </p>
 
-        {!userId ? (
-          <p>Log in to submit today's challenge.</p>
-        ) : approved ? (
-          <div className="card">
-            <strong>✓ Approved!</strong>
-            <p>Staff verified today's Faté Daily.</p>
-          </div>
-        ) : pending ? (
-          <div className="card">
-            <strong>⏳ Pending Verification</strong>
-            <p>
-              Your submission is waiting for a staff member to review it.
-            </p>
-
-            {submission.proof_url && (
-              <img
-                src={submission.proof_url}
-                alt="Submitted Faté Daily proof"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  maxHeight: 420,
-                  objectFit: "contain",
-                  borderRadius: 12,
-                  marginTop: 12,
-                }}
-              />
+        {submission ? (
+          <div className="card" style={{ marginTop: 18 }}>
+            <h3>{statusLabel}</h3>
+            {submission.status === "pending" && (
+              <p>Your proof is waiting for staff verification.</p>
+            )}
+            {submission.status === "approved" && (
+              <p>Your Faté Daily has been approved and your reward has been processed.</p>
+            )}
+            {submission.status === "rejected" && (
+              <p>Your proof was rejected. You can contact staff for clarification.</p>
             )}
           </div>
         ) : (
           <>
-            {submission?.status === "rejected" && (
-              <div
-                className="card"
-                style={{ marginBottom: 16 }}
-              >
-                <strong>❌ Submission Rejected</strong>
-                <p>
-                  Staff did not approve this submission. You can submit
-                  another proof below.
-                </p>
-              </div>
-            )}
+            <h3>Screenshot / Proof</h3>
 
             <label
+              className="edit-btn"
               style={{
-                display: "block",
-                fontWeight: 600,
-                marginBottom: 8,
+                display: "inline-block",
+                cursor: "pointer",
+                marginBottom: 16,
               }}
             >
-              Screenshot / Proof
+              📷 Choose Screenshot
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                style={{ display: "none" }}
+              />
             </label>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              onChange={handleProofChange}
-              style={{ display: "none" }}
-            />
-
-            {previewUrl ? (
+            {previewUrl && (
               <div style={{ marginBottom: 16 }}>
                 <img
                   src={previewUrl}
-                  alt="Proof preview"
+                  alt="Faté Daily proof preview"
                   style={{
-                    display: "block",
                     width: "100%",
-                    maxHeight: 420,
-                    objectFit: "contain",
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,.2)",
-                  }}
-                />
-
-                <button
-                  type="button"
-                  className="edit-btn"
-                  onClick={removeProof}
-                  style={{ marginTop: 10 }}
-                >
-                  Remove Photo
-                </button>
-              </div>
-            ) : submission?.proof_url ? (
-              <div style={{ marginBottom: 16 }}>
-                <img
-                  src={submission.proof_url}
-                  alt="Current proof"
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    maxHeight: 420,
+                    maxWidth: 700,
+                    maxHeight: 500,
                     objectFit: "contain",
                     borderRadius: 12,
                   }}
                 />
               </div>
-            ) : (
-              <button
-                type="button"
-                className="edit-btn"
-                onClick={chooseProof}
-              >
-                📷 Choose Screenshot
-              </button>
             )}
 
-            {proofFile && (
-              <p style={{ marginTop: 8, opacity: 0.8 }}>
-                Selected: <strong>{proofFile.name}</strong>
-              </p>
-            )}
-
-            <label
-              style={{
-                display: "block",
-                fontWeight: 600,
-                marginTop: 18,
-                marginBottom: 8,
-              }}
-            >
-              Note / details
+            <label>
+              <strong>Note / details</strong>
+              <textarea
+                rows={5}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Tell staff how you completed today's challenge."
+                style={{ width: "100%", marginTop: 8 }}
+              />
             </label>
 
-            <textarea
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              placeholder="Tell staff how you completed today's challenge."
-              rows={5}
-              style={{
-                width: "100%",
-                boxSizing: "border-box",
-                resize: "vertical",
-              }}
-            />
-
             <button
-              className="edit-btn"
+              className="submit-btn"
               disabled={submitting}
               onClick={submitForVerification}
               style={{ marginTop: 16 }}
             >
-              {submitting
-                ? "Uploading..."
-                : "Submit for Verification"}
+              {submitting ? "Uploading..." : "Submit for Verification"}
             </button>
 
-            <p style={{ fontSize: 13, opacity: 0.7, marginTop: 8 }}>
-              Upload a screenshot of your proof. Staff must verify it before
-              you receive Faté Points.
+            <p style={{ marginTop: 12 }}>
+              Upload a screenshot of your proof. Staff must verify it before you receive Faté Points.
             </p>
           </>
+        )}
+
+        {message && (
+          <p style={{ marginTop: 16 }}>
+            {message}
+          </p>
         )}
       </div>
     </div>
