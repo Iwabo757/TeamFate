@@ -6,6 +6,18 @@ import {
   getUnlockedAchievements,
 } from "../lib/fateProgression";
 
+function getGifName(name: string) {
+  return name
+    .toLowerCase()
+    .replace(/♀/g, "f")
+    .replace(/♂/g, "m")
+    .replace(/ /g, "")
+    .replace(/\./g, "")
+    .replace(/'/g, "")
+    .replace(/:/g, "")
+    .replace(/-/g, "");
+}
+
 export default function Profile() {
   const [searchParams] = useSearchParams();
   const memberId = searchParams.get("member");
@@ -162,8 +174,12 @@ export default function Profile() {
             }
           >
             <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
+              src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(entry.pokemon.name)}.gif`}
               alt={entry.pokemon.name}
+              onError={(e) => {
+                e.currentTarget.src =
+                  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`;
+              }}
             />
             <span>{entry.pokemon.name}</span>
           </div>
@@ -255,9 +271,13 @@ export default function Profile() {
             </p>
 
             <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`}
+              src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(selectedPokemon.pokemon.name)}.gif`}
               alt={selectedPokemon.pokemon.name}
               className="modal-sprite"
+              onError={(e) => {
+                e.currentTarget.src =
+                  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${selectedPokemon.pokemon_id}.png`;
+              }}
             />
           </div>
         </div>
