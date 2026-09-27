@@ -19,6 +19,25 @@ function getGifName(name: string) {
     .replace(/-/g, "");
 }
 
+const ACHIEVEMENT_GROUPS = [
+  { value: "shiny_count", label: "✨ Shiny Achievements" },
+  { value: "event_wins", label: "🏆 Event Achievements" },
+  { value: "daily_streak", label: "🔥 Faté Daily Achievements" },
+  { value: "bounty_caught", label: "🎯 Bounty Achievements" },
+  { value: "event_participation", label: "🎟️ Event Participation Achievements" },
+];
+
+function groupAchievements(achievementRows: any[]) {
+  return ACHIEVEMENT_GROUPS
+    .map((group) => ({
+      ...group,
+      achievements: achievementRows.filter(
+        (achievement) => achievement.requirement_type === group.value
+      ),
+    }))
+    .filter((group) => group.achievements.length > 0);
+}
+
 export default function Profile() {
   const [searchParams] = useSearchParams();
   const memberId = searchParams.get("member");
@@ -241,42 +260,55 @@ export default function Profile() {
 
       <h2>🏆 Achievements</h2>
 
-      <div className="event-grid">
-        {achievements.map((a) => (
-          <div
-            className="card"
-            key={a.id || a.key}
+      {groupAchievements(achievements).map((group) => (
+        <section key={group.value} style={{ marginBottom: 28 }}>
+          <h3
             style={{
-              opacity: a.unlocked ? 1 : 0.45,
+              margin: "18px 0 12px",
+              fontSize: 24,
             }}
           >
-            <div style={{ fontSize: 32 }}>
-              {a.icon}
-            </div>
+            {group.label}
+          </h3>
 
-            <h3>{a.name}</h3>
+          <div className="event-grid">
+            {group.achievements.map((a) => (
+              <div
+                className="card"
+                key={a.id || a.key}
+                style={{
+                  opacity: a.unlocked ? 1 : 0.45,
+                }}
+              >
+                <div style={{ fontSize: 32 }}>
+                  {a.icon}
+                </div>
 
-            <p>{a.description}</p>
+                <h3>{a.name}</h3>
 
-            <p>
-              Progress:{" "}
-              <strong>
-                {Math.min(
-                  a.currentValue,
-                  a.threshold
-                )}{" "}
-                / {a.threshold}
-              </strong>
-            </p>
+                <p>{a.description}</p>
 
-            <strong>
-              {a.unlocked
-                ? `✓ Unlocked · +${a.reward}`
-                : `Locked · +${a.reward}`}
-            </strong>
+                <p>
+                  Progress:{" "}
+                  <strong>
+                    {Math.min(
+                      a.currentValue,
+                      a.threshold
+                    )}{" "}
+                    / {a.threshold}
+                  </strong>
+                </p>
+
+                <strong>
+                  {a.unlocked
+                    ? `✓ Unlocked · +${a.reward}`
+                    : `Locked · +${a.reward}`}
+                </strong>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </section>
+      ))}
 
       {selectedPokemon && (
         <div

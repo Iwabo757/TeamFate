@@ -8,6 +8,25 @@ const REQUIREMENT_TYPES = [
   { value: "bounty_caught", label: "Bounty Caught" },
 ];
 
+const ACHIEVEMENT_GROUPS = [
+  { value: "shiny_count", label: "✨ Shiny Achievements" },
+  { value: "event_wins", label: "🏆 Event Achievements" },
+  { value: "daily_streak", label: "🔥 Faté Daily Achievements" },
+  { value: "bounty_caught", label: "🎯 Bounty Achievements" },
+  { value: "event_participation", label: "🎟️ Event Participation Achievements" },
+];
+
+function groupAchievements(achievementRows: Achievement[]) {
+  return ACHIEVEMENT_GROUPS
+    .map((group) => ({
+      ...group,
+      achievements: achievementRows.filter(
+        (achievement) => achievement.requirement_type === group.value
+      ),
+    }))
+    .filter((group) => group.achievements.length > 0);
+}
+
 type Achievement = {
   id: string;
   key: string;
@@ -321,62 +340,75 @@ export default function AdminAchievements() {
       {loading ? (
         <div className="card">Loading achievements...</div>
       ) : (
-        <div className="event-grid">
-          {rows.map((row) => (
-            <div
-              className="card"
-              key={row.id}
+        groupAchievements(rows).map((group) => (
+          <section key={group.value} style={{ marginBottom: 32 }}>
+            <h3
               style={{
-                opacity: row.enabled ? 1 : 0.55,
+                margin: "18px 0 12px",
+                fontSize: 24,
               }}
             >
-              <div style={{ fontSize: 36 }}>
-                {row.icon}
-              </div>
+              {group.label}
+            </h3>
 
-              <h3>{row.name}</h3>
+            <div className="event-grid">
+              {group.achievements.map((row) => (
+                <div
+                  className="card"
+                  key={row.id}
+                  style={{
+                    opacity: row.enabled ? 1 : 0.55,
+                  }}
+                >
+                  <div style={{ fontSize: 36 }}>
+                    {row.icon}
+                  </div>
 
-              <p>{row.description}</p>
+                  <h3>{row.name}</h3>
 
-              <p>
-                <strong>
-                  +{row.reward.toLocaleString()} Faté Points
-                </strong>
-              </p>
+                  <p>{row.description}</p>
 
-              <p>
-                Requirement:{" "}
-                <strong>
-                  {row.threshold.toLocaleString()}
-                </strong>{" "}
-                {REQUIREMENT_TYPES.find(
-                  (x) => x.value === row.requirement_type
-                )?.label || row.requirement_type}
-              </p>
+                  <p>
+                    <strong>
+                      +{row.reward.toLocaleString()} Faté Points
+                    </strong>
+                  </p>
 
-              <p>
-                Status:{" "}
-                <strong>
-                  {row.enabled ? "Enabled" : "Disabled"}
-                </strong>
-              </p>
+                  <p>
+                    Requirement:{" "}
+                    <strong>
+                      {row.threshold.toLocaleString()}
+                    </strong>{" "}
+                    {REQUIREMENT_TYPES.find(
+                      (x) => x.value === row.requirement_type
+                    )?.label || row.requirement_type}
+                  </p>
 
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <button onClick={() => edit(row)}>
-                  Edit
-                </button>
+                  <p>
+                    Status:{" "}
+                    <strong>
+                      {row.enabled ? "Enabled" : "Disabled"}
+                    </strong>
+                  </p>
 
-                <button onClick={() => toggle(row)}>
-                  {row.enabled ? "Disable" : "Enable"}
-                </button>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button onClick={() => edit(row)}>
+                      Edit
+                    </button>
 
-                <button onClick={() => remove(row)}>
-                  Delete
-                </button>
-              </div>
+                    <button onClick={() => toggle(row)}>
+                      {row.enabled ? "Disable" : "Enable"}
+                    </button>
+
+                    <button onClick={() => remove(row)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </section>
+        ))
       )}
     </div>
   );
