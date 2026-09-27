@@ -62,20 +62,32 @@ export async function awardPoints(
   return { error };
 }
 
+export async function getBountyCount(profileId: string) {
+  const { count, error } = await supabase
+    .from("bounties")
+    .select("id", { count: "exact", head: true })
+    .eq("claimed_by", profileId);
+
+  return {
+    count: count || 0,
+    error,
+  };
+}
+
 export function getUnlockedAchievements({
   achievements = [],
   shinyCount,
   eventCount,
   eventWins,
   dailyStreak,
-  bountyCaught,
+  bountyCount = 0,
 }: {
   achievements?: Achievement[];
   shinyCount: number;
   eventCount: number;
   eventWins: number;
   dailyStreak: number;
-  bountyCaught?: number;
+  bountyCount?: number;
 }) {
   return achievements.map((achievement) => {
     let value = 0;
@@ -94,7 +106,7 @@ export function getUnlockedAchievements({
         value = dailyStreak;
         break;
       case "bounty_caught":
-        value = bountyCaught || 0;
+        value = bountyCount;
         break;
     }
 
@@ -106,11 +118,6 @@ export function getUnlockedAchievements({
   });
 }
 
-/*
- * Keep Faté Daily here because FateDaily.tsx imports it.
- * This was accidentally removed when achievements were moved
- * from hard-coded values to Supabase.
- */
 export function getDailyChallenge(date = new Date()) {
   const challenges = [
     {

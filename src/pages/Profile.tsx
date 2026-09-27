@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
   getAchievements,
+  getBountyCount,
   getUnlockedAchievements,
 } from "../lib/fateProgression";
 
@@ -27,6 +28,7 @@ export default function Profile() {
   const [points, setPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [eventWins, setEventWins] = useState(0);
+  const [bountyCount, setBountyCount] = useState(0);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [selectedPokemon, setSelectedPokemon] = useState<any>(null);
 
@@ -98,6 +100,13 @@ export default function Profile() {
 
     setEventWins(wins || 0);
 
+    const { count: claimedBounties, error: bountyError } =
+      await getBountyCount(profileId);
+
+    if (!bountyError) {
+      setBountyCount(claimedBounties);
+    }
+
     const {
       data: achievementRows,
       error: achievementError,
@@ -111,6 +120,7 @@ export default function Profile() {
           eventCount: participation || 0,
           eventWins: wins || 0,
           dailyStreak: Number(daily?.streak || 0),
+          bountyCount: claimedBounties,
         })
       );
     }
@@ -159,6 +169,13 @@ export default function Profile() {
           <h2>🏆 Event Wins</h2>
           <strong style={{ fontSize: 28 }}>
             {eventWins}
+          </strong>
+        </div>
+
+        <div className="card">
+          <h2>🎯 Bounties Caught</h2>
+          <strong style={{ fontSize: 28 }}>
+            {bountyCount}
           </strong>
         </div>
       </div>
