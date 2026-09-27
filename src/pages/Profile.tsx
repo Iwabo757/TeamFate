@@ -172,16 +172,50 @@ export default function Profile() {
             onClick={() =>
               setSelectedPokemon(entry)
             }
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "flex-start",
+            }}
           >
-            <img
-              src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(entry.pokemon.name)}.gif`}
-              alt={entry.pokemon.name}
-              onError={(e) => {
-                e.currentTarget.src =
-                  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`;
+            <div
+              style={{
+                width: 110,
+                height: 110,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
               }}
-            />
-            <span>{entry.pokemon.name}</span>
+            >
+              <img
+                src={`https://play.pokemonshowdown.com/sprites/ani-shiny/${getGifName(entry.pokemon.name)}.gif`}
+                alt={entry.pokemon.name}
+                style={{
+                  width: 96,
+                  height: 96,
+                  objectFit: "contain",
+                  display: "block",
+                }}
+                onError={(e) => {
+                  e.currentTarget.src =
+                    `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`;
+                }}
+              />
+            </div>
+            <span
+              style={{
+                display: "block",
+                width: "100%",
+                minHeight: 24,
+                textAlign: "center",
+                lineHeight: "24px",
+                marginTop: 4,
+              }}
+            >
+              {entry.pokemon.name}
+            </span>
           </div>
         ))}
       </div>
