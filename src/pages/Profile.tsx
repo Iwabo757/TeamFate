@@ -56,7 +56,8 @@ export default function Profile() {
       .select(
         "pokemon_id, method, date_found, pokemon (id, name)"
       )
-      .eq("profile_id", profileId);
+      .eq("profile_id", profileId)
+      .order("date_found", { ascending: false });
 
     const shinyRows = catches || [];
     setShinies(shinyRows);
