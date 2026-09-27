@@ -105,6 +105,9 @@ export default function Profile() {
 
   if (!profile) return <div>Loading...</div>;
 
+  const displayName = profile.nickname || profile.username;
+  const isViewingOwnProfile = !memberId;
+
   return (
     <div className="profile-page">
       <img
@@ -147,6 +150,27 @@ export default function Profile() {
         </div>
       </div>
 
+      <h2>{isViewingOwnProfile ? "My Shinies" : `${displayName}'s Shinies`}</h2>
+
+      <div className="dex-grid">
+        {shinies.map((entry) => (
+          <div
+            key={`${entry.pokemon_id}-${entry.date_found}`}
+            className="dex-card caught"
+            onClick={() =>
+              setSelectedPokemon(entry)
+            }
+          >
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
+              alt={entry.pokemon.name}
+            />
+            <span>{entry.pokemon.name}</span>
+          </div>
+        ))}
+      </div>
+
+
       <h2>🏆 Achievements</h2>
 
       <div className="event-grid">
@@ -182,26 +206,6 @@ export default function Profile() {
                 ? `✓ Unlocked · +${a.reward}`
                 : `Locked · +${a.reward}`}
             </strong>
-          </div>
-        ))}
-      </div>
-
-      <h2>My Shinies</h2>
-
-      <div className="dex-grid">
-        {shinies.map((entry) => (
-          <div
-            key={`${entry.pokemon_id}-${entry.date_found}`}
-            className="dex-card caught"
-            onClick={() =>
-              setSelectedPokemon(entry)
-            }
-          >
-            <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
-              alt={entry.pokemon.name}
-            />
-            <span>{entry.pokemon.name}</span>
           </div>
         ))}
       </div>
