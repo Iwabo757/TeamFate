@@ -1,35 +1,40 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import {
-  getAllAchievements,
+  getAchievements,
   getUnlockedAchievements,
 } from "../lib/fateProgression";
 
 export default function Profile() {
+  const [searchParams] = useSearchParams();
+  const memberId = searchParams.get("member");
+
   const [profile, setProfile] = useState<any>(null);
   const [shinies, setShinies] = useState<any[]>([]);
   const [points, setPoints] = useState(0);
   const [streak, setStreak] = useState(0);
   const [eventWins, setEventWins] = useState(0);
-  const [bountyCaught, setBountyCaught] = useState(0);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [selectedPokemon, setSelectedPokemon] = useState<any>(null);
 
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [memberId]);
 
   async function loadProfile() {
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) return;
+    const profileId = memberId || user?.id;
+
+    if (!profileId) return;
 
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .eq("id", user.id)
+      .eq("id", profileId)
       .single();
 
     setProfile(data);
@@ -39,7 +44,7 @@ export default function Profile() {
       .select(
         "pokemon_id, method, date_found, pokemon (id, name)"
       )
-      .eq("profile_id", user.id);
+      .eq("profile_id", profileId);
 
     const shinyRows = catches || [];
     setShinies(shinyRows);
@@ -47,7 +52,7 @@ export default function Profile() {
     const { data: tx } = await supabase
       .from("fate_point_transactions")
       .select("amount")
-      .eq("profile_id", user.id);
+      .eq("profile_id", profileId);
 
     setPoints(
       (tx || []).reduce(
@@ -59,7 +64,7 @@ export default function Profile() {
     const { data: daily } = await supabase
       .from("fate_daily_completions")
       .select("streak")
-      .eq("profile_id", user.id)
+      .eq("profile_id", profileId)
       .order("challenge_date", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -70,27 +75,20 @@ export default function Profile() {
       .from("events")
       .select("id", { count: "exact", head: true })
       .or(
-        `first_place.eq.${user.id},second_place.eq.${user.id},third_place.eq.${user.id},fourth_place.eq.${user.id}`
+        `first_place.eq.${profileId},second_place.eq.${profileId},third_place.eq.${profileId},fourth_place.eq.${profileId}`
       );
 
     const { count: wins } = await supabase
       .from("events")
       .select("id", { count: "exact", head: true })
-      .eq("first_place", user.id);
+      .eq("first_place", profileId);
 
     setEventWins(wins || 0);
-
-    const { count: claimedBounties } = await supabase
-      .from("bounties")
-      .select("id", { count: "exact", head: true })
-      .eq("claimed_by", user.id);
-
-    setBountyCaught(claimedBounties || 0);
 
     const {
       data: achievementRows,
       error: achievementError,
-    } = await getAllAchievements();
+    } = await getAchievements();
 
     if (!achievementError) {
       setAchievements(
@@ -100,7 +98,6 @@ export default function Profile() {
           eventCount: participation || 0,
           eventWins: wins || 0,
           dailyStreak: Number(daily?.streak || 0),
-          bountyCaught: claimedBounties || 0,
         })
       );
     }
@@ -148,33 +145,6 @@ export default function Profile() {
             {eventWins}
           </strong>
         </div>
-
-        <div className="card">
-          <h2>🎯 Bounties Caught</h2>
-          <strong style={{ fontSize: 28 }}>
-            {bountyCaught}
-          </strong>
-        </div>
-      </div>
-
-      <h2>My Shinies</h2>
-
-      <div className="dex-grid">
-        {shinies.map((entry) => (
-          <div
-            key={`${entry.pokemon_id}-${entry.date_found}`}
-            className="dex-card caught"
-            onClick={() =>
-              setSelectedPokemon(entry)
-            }
-          >
-            <img
-              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
-              alt={entry.pokemon.name}
-            />
-            <span>{entry.pokemon.name}</span>
-          </div>
-        ))}
       </div>
 
       <h2>🏆 Achievements</h2>
@@ -212,6 +182,26 @@ export default function Profile() {
                 ? `✓ Unlocked · +${a.reward}`
                 : `Locked · +${a.reward}`}
             </strong>
+          </div>
+        ))}
+      </div>
+
+      <h2>My Shinies</h2>
+
+      <div className="dex-grid">
+        {shinies.map((entry) => (
+          <div
+            key={`${entry.pokemon_id}-${entry.date_found}`}
+            className="dex-card caught"
+            onClick={() =>
+              setSelectedPokemon(entry)
+            }
+          >
+            <img
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${entry.pokemon_id}.png`}
+              alt={entry.pokemon.name}
+            />
+            <span>{entry.pokemon.name}</span>
           </div>
         ))}
       </div>
@@ -254,8 +244,7 @@ export default function Profile() {
               ).toLocaleDateString()}
             </p>
 
-       
-     <p>
+            <p>
               Owned by{" "}
               {profile.nickname ||
                 profile.username}

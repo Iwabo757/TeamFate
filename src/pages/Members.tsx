@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 type Member = {
@@ -12,6 +13,7 @@ type Member = {
 };
 
 export default function Members() {
+  const navigate = useNavigate();
   const [members, setMembers] =
     useState<Member[]>([]);
 
@@ -156,6 +158,25 @@ export default function Members() {
               <div
                 key={member.id}
                 className="member-card"
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  navigate(`/profile?member=${member.id}`)
+                }
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "Enter" ||
+                    event.key === " "
+                  ) {
+                    event.preventDefault();
+                    navigate(
+                      `/profile?member=${member.id}`
+                    );
+                  }
+                }}
+                style={{
+                  cursor: "pointer",
+                }}
               >
                 <img
                   src={
@@ -223,6 +244,27 @@ export default function Members() {
                     key={
                       member.id
                     }
+                    role="button"
+                    tabIndex={0}
+                    onClick={() =>
+                      navigate(
+                        `/profile?member=${member.id}`
+                      )
+                    }
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                      ) {
+                        event.preventDefault();
+                        navigate(
+                          `/profile?member=${member.id}`
+                        );
+                      }
+                    }}
+                    style={{
+                      cursor: "pointer",
+                    }}
                   >
                     <td>
                       {member.nickname ||
