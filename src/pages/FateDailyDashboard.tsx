@@ -114,32 +114,39 @@ export default function FateDailyDashboard() {
 
       {message && <div className="card" style={{ marginBottom: 18 }}>{message}</div>}
 
-      <div className="admin-grid" style={{ marginBottom: 24 }}>
-        <div className="admin-card" style={{ cursor: "default" }}>
-          <div style={{ fontSize: 28 }}>🔥</div>
+      <div
+        className="admin-grid"
+        style={{
+          marginBottom: 24,
+          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+          gap: 14,
+        }}
+      >
+        <div className="admin-card" style={{ cursor: "default", padding: "18px 18px", minWidth: 0 }}>
+          <div style={{ fontSize: 24 }}>🔥</div>
           <div style={{ fontSize: 14, opacity: 0.75 }}>Today's Daily</div>
-          <strong style={{ fontSize: 21 }}>{today?.challenge?.title || "Not Scheduled"}</strong>
-          <div style={{ marginTop: 6 }}>{statusText}</div>
+          <strong style={{ fontSize: 18, lineHeight: 1.2, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{today?.challenge?.title || "Not Scheduled"}</strong>
+          <div style={{ marginTop: 6, fontSize: 14 }}>{statusText}</div>
         </div>
 
-        <div className="admin-card" style={{ cursor: "default" }}>
-          <div style={{ fontSize: 28 }}>📅</div>
+        <div className="admin-card" style={{ cursor: "default", padding: "18px 18px", minWidth: 0 }}>
+          <div style={{ fontSize: 24 }}>📅</div>
           <div style={{ fontSize: 14, opacity: 0.75 }}>Next 7 Days</div>
-          <strong style={{ fontSize: 28 }}>{daysScheduled}/7</strong>
+          <strong style={{ fontSize: 26 }}>{daysScheduled}/7</strong>
           <div>{remainingDays ? `${remainingDays} day${remainingDays === 1 ? "" : "s"} open` : "Fully scheduled"}</div>
         </div>
 
-        <div className="admin-card" style={{ cursor: "default" }}>
-          <div style={{ fontSize: 28 }}>📸</div>
+        <div className="admin-card" style={{ cursor: "default", padding: "18px 18px", minWidth: 0 }}>
+          <div style={{ fontSize: 24 }}>📸</div>
           <div style={{ fontSize: 14, opacity: 0.75 }}>Pending Verification</div>
-          <strong style={{ fontSize: 28 }}>{pendingCount}</strong>
+          <strong style={{ fontSize: 26 }}>{pendingCount}</strong>
           <div>{pendingCount === 1 ? "submission" : "submissions"} waiting</div>
         </div>
 
-        <div className="admin-card" style={{ cursor: "default" }}>
-          <div style={{ fontSize: 28 }}>🎯</div>
+        <div className="admin-card" style={{ cursor: "default", padding: "18px 18px", minWidth: 0 }}>
+          <div style={{ fontSize: 24 }}>🎯</div>
           <div style={{ fontSize: 14, opacity: 0.75 }}>Active Challenges</div>
-          <strong style={{ fontSize: 28 }}>{activeChallenges}</strong>
+          <strong style={{ fontSize: 26 }}>{activeChallenges}</strong>
           <div>available to schedule</div>
         </div>
       </div>

@@ -19,6 +19,9 @@ export default function AdminDashboard() {
         <Link to="/admin/fate-daily" className="admin-card">
           🔥 Faté Daily
         </Link>
+        <Link to="/admin/achievements" className="admin-card">
+          🏆 Achievements
+        </Link>
       </div>
     </div>
   );
