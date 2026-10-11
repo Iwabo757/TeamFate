@@ -169,6 +169,18 @@ async function updateNickname(
       return;
     }
 
+    const { error: shinyWarTeamsError } = await supabase
+      .from("shiny_war_teams")
+      .delete()
+      .eq("member_id", id);
+
+    if (shinyWarTeamsError) {
+      alert(
+        `Known related records were deleted, but this member's shiny war team records could not be deleted. The profile was not deleted.\\n\\n${shinyWarTeamsError.message}`
+      );
+      return;
+    }
+
     const { error: profileError } = await supabase
       .from("profiles")
       .delete()
