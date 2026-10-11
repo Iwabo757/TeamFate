@@ -126,23 +126,50 @@ async function updateNickname(
   ) {
     if (
       !window.confirm(
-        "Delete this member?"
+        "PERMANENTLY delete this member and their linked shiny submissions and shiny catches? This cannot be undone."
       )
     )
       return;
 
-    const { error } =
-      await supabase
-        .from("profiles")
-        .delete()
-        .eq("id", id);
+    // Delete dependent records first to satisfy profile foreign-key constraints.
+    // Stop immediately if a child-table deletion fails.
+    const { error: submissionsError } = await supabase
+      .from("shiny_submissions")
+      .delete()
+      .eq("profile_id", id);
 
-    if (error) {
-      alert(error.message);
+    if (submissionsError) {
+      alert(
+        `Could not delete this member's shiny submissions. The profile was not deleted.\\n\\n${submissionsError.message}`
+      );
       return;
     }
 
-    loadMembers();
+    const { error: catchesError } = await supabase
+      .from("shiny_catches")
+      .delete()
+      .eq("profile_id", id);
+
+    if (catchesError) {
+      alert(
+        `Shiny submissions were deleted, but shiny catches could not be deleted. The profile was not deleted.\\n\\n${catchesError.message}`
+      );
+      return;
+    }
+
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", id);
+
+    if (profileError) {
+      alert(
+        `Related shiny records were deleted, but the profile could not be deleted. Another table may still reference this profile.\\n\\n${profileError.message}`
+      );
+      return;
+    }
+
+    await loadMembers();
   }
 
 const roleMembers =
