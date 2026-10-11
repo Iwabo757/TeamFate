@@ -157,6 +157,18 @@ async function updateNickname(
       return;
     }
 
+    const { error: raidsError } = await supabase
+      .from("member_raids")
+      .delete()
+      .eq("profile_id", id);
+
+    if (raidsError) {
+      alert(
+        `Shiny records were deleted, but this member's raid records could not be deleted. The profile was not deleted.\\n\\n${raidsError.message}`
+      );
+      return;
+    }
+
     const { error: profileError } = await supabase
       .from("profiles")
       .delete()
