@@ -14,35 +14,29 @@ export default function ShinyDashboard() {
   const [pendingLoading, setPendingLoading] = useState(true);
 
   useEffect(() => {
-    let active = true;
+    let cancelled = false;
 
     async function loadPendingSubmissions() {
       const { data, error } = await supabase
         .from("shiny_submissions")
-        .select(`
-          id,
-          pokemon_id,
-          pokemon:pokemon_id(name),
-          profile:profile_id(nickname, username)
-        `)
+        .select("id, pokemon_id, pokemon:pokemon_id(name), profile:profile_id(nickname, username)")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Failed to load pending shiny submissions:", error);
-        if (active) setPendingLoading(false);
-        return;
+      } else if (!cancelled) {
+        setPendingSubmissions((data ?? []) as unknown as PendingSubmission[]);
       }
 
-      if (active) {
-        setPendingSubmissions((data ?? []) as unknown as PendingSubmission[]);
+      if (!cancelled) {
         setPendingLoading(false);
       }
     }
 
     void loadPendingSubmissions();
     return () => {
-      active = false;
+      cancelled = true;
     };
   }, []);
 
@@ -54,20 +48,14 @@ export default function ShinyDashboard() {
         <Link to="/admin/shinies/add" className="admin-card">
           <div>
             <h2>➕ Add Shiny</h2>
-            <p>
-              Add a shiny directly to the
-              Team Faté Shiny Dex.
-            </p>
+            <p>Add a shiny directly to the Team Faté Shiny Dex.</p>
           </div>
         </Link>
 
         <Link to="/admin/shinies" className="admin-card">
           <div>
             <h2>✨ Manage Shinies</h2>
-            <p>
-              Edit and remove shiny
-              records.
-            </p>
+            <p>Edit and remove shiny records.</p>
           </div>
         </Link>
 
@@ -75,18 +63,11 @@ export default function ShinyDashboard() {
           <Link to="/admin/shiny-approvals" className="admin-card">
             <div>
               <h2>📥 Submissions</h2>
-              <p>
-                Review member shiny
-                submissions and approve
-                them into the dex.
-              </p>
+              <p>Review member shiny submissions and approve them into the dex.</p>
             </div>
           </Link>
 
-          <section
-            aria-label="Pending shiny submissions overview"
-            style={{ marginTop: "12px" }}
-          >
+          <section aria-label="Pending shiny submissions overview" style={{ marginTop: "12px" }}>
             <p style={{ margin: "0 0 8px" }}>
               <strong>
                 {pendingLoading
@@ -94,3 +75,22 @@ export default function ShinyDashboard() {
                   : `${pendingSubmissions.length} pending ${pendingSubmissions.length === 1 ? "submission" : "submissions"}`}
               </strong>
             </p>
+
+            {!pendingLoading && pendingSubmissions.length === 0 && (
+              <p style={{ margin: 0 }}>There are no shiny submissions waiting for review.</p>
+            )}
+
+            {!pendingLoading && pendingSubmissions.length > 0 && (
+              <div>
+                <p style={{ margin: "0 0 8px" }}>Pokémon awaiting review:</p>
+                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "10px" }}>
+                  {pendingSubmissions.map((submission) => {
+                    const pokemonName = submission.pokemon?.name || "Unknown Pokémon";
+                    const trainerName = submission.profile?.nickname || submission.profile?.username || "Unknown trainer";
+
+                    return (
+                      <div key={submission.id} title={`${pokemonName} — ${trainerName}`} style={{ textAlign: "center", minWidth: "64px" }}>
+                        {submission.pokemon_id !== null && (
+                          <img
+                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${submission.pokemon_id}.png`}
+                            alt={`Shiny ${pokemonName}`}
