@@ -94,3 +94,21 @@ export default function ShinyDashboard() {
                           <img
                             src={"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/" + submission.pokemon_id + ".png"}
                             alt={"Shiny " + pokemonName}
+                            loading="lazy"
+                            style={{ width: "56px", height: "56px", objectFit: "contain", imageRendering: "pixelated" }}
+                          />
+                        )}
+                        <div style={{ fontSize: ".8rem", lineHeight: 1.25 }}>{pokemonName}</div>
+                        <div style={{ fontSize: ".72rem", opacity: 0.8, lineHeight: 1.25 }}>{trainerName}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
