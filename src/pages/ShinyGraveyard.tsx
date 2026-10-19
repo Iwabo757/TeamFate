@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import "./ShinyGraveyard.css";
 
