@@ -1,11 +1,16 @@
-import { Link } from "react-router-dom";
-
-export default function ShinyDashboard() {
-  return (
-    <div className="page">
-      <h1>✨ Shiny Dashboard</h1>
-
-      <div className="admin-grid">
+          to="/admin/shiny-approvals"
+          className="admin-card"
+        >
+          <div>
+            <h2>📥 Pending Submissions: {pendingSubmissions}</h2>
+            <p>
+              {pendingSubmissions === 0
+                ? "There are no shiny submissions waiting for review."
+                : `You have ${pendingSubmissions} shiny ${pendingSubmissions === 1 ? "submission" : "submissions"} waiting for review.`}
+              {" "}Open submissions to approve or reject them.
+            </p>
+          </div>
+        </Link>
 
         <Link
           to="/admin/shinies/add"
@@ -46,7 +51,6 @@ export default function ShinyDashboard() {
             </p>
           </div>
         </Link>
-
       </div>
     </div>
   );
