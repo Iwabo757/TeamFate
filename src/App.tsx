@@ -22,6 +22,7 @@ import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
 import ShinyGraveyard from "./pages/ShinyGraveyard";
+import SubmitShinyGraveyard from "./pages/SubmitShinyGraveyard";
 import AdminShinyGraveyard from "./pages/AdminShinyGraveyard";
 
 import AdminEvents from "./pages/AdminEvents";
@@ -294,7 +295,8 @@ export default function App() {
       path === "/shinydex" ||
       path === "/showcase" ||
       path === "/submit-shiny" ||
-      path === "/shiny-graveyard"
+      path === "/shiny-graveyard" ||
+      path === "/shiny-graveyard/submit"
     ) {
       return [
         {
@@ -862,6 +864,11 @@ export default function App() {
             <Route
               path="/shiny-graveyard"
               element={<ShinyGraveyard />}
+            />
+
+            <Route
+              path="/shiny-graveyard/submit"
+              element={<SubmitShinyGraveyard />}
             />
 
 
