@@ -106,7 +106,6 @@ export default function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const mobileNavRef = useRef<HTMLDivElement>(null);
-
   /* =========================================================
      AUTH / PROFILE
   ========================================================= */
