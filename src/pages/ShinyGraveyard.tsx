@@ -18,7 +18,7 @@ export default function ShinyGraveyard() {
   const [entries, setEntries] = useState<GraveyardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fogVisible, setFogVisible] = useState(true);
-  const [message, setMessage] = useState("");
+  const [, setMessage] = useState("");
 
   useEffect(() => {
     document.body.classList.add("shiny-graveyard-theme");
