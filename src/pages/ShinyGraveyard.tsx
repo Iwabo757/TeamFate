@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import "./ShinyGraveyard.css";
 
@@ -29,7 +29,7 @@ export default function ShinyGraveyard() {
 
   useEffect(() => {
     document.body.classList.add("shiny-graveyard-theme");
-    const fogTimer = window.setTimeout(() => setFogVisible(false), 8000);
+    const fogTimer = window.setTimeout(() => setFogVisible(false), 15000);
 
     void loadEntries();
     void loadCurrentUser();

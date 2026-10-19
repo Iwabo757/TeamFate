@@ -62,12 +62,12 @@ body.shiny-graveyard-theme .page-title {
   z-index: 10020;
   overflow: hidden;
   pointer-events: none;
-  animation: graveyard-fog-exit 8s ease-out forwards;
+  animation: graveyard-fog-exit 15s ease-out forwards;
 }
 .fog-layer {
   position: absolute;
-  left: -35%;
-  width: 170%;
+  left: -45%;
+  width: 190%;
   height: 48vh;
   min-height: 260px;
   border-radius: 50%;
@@ -79,30 +79,33 @@ body.shiny-graveyard-theme .page-title {
     radial-gradient(ellipse at 80% 60%, rgba(222, 214, 232, .18), transparent 40%);
   mix-blend-mode: screen;
 }
-.fog-layer-one { top: 8%; animation: fog-drift-one 8s ease-in-out forwards; }
-.fog-layer-two { top: 34%; animation: fog-drift-two 8s ease-in-out forwards; animation-delay: .15s; }
-.fog-layer-three { top: 61%; animation: fog-drift-three 8s ease-in-out forwards; animation-delay: .3s; }
+.fog-layer-one { top: 8%; animation: fog-drift-one 15s linear forwards; }
+.fog-layer-two { top: 34%; animation: fog-drift-two 15s linear forwards; animation-delay: .15s; }
+.fog-layer-three { top: 61%; animation: fog-drift-three 15s linear forwards; animation-delay: .3s; }
 
 @keyframes fog-drift-one {
-  0% { transform: translateX(-12%) translateY(12%); opacity: 0; }
-  15% { opacity: .9; }
-  65% { opacity: .78; }
-  100% { transform: translateX(22%) translateY(-8%); opacity: 0; }
+  0% { transform: translate3d(-38vw, 12%, 0); opacity: 0; }
+  12% { opacity: .82; }
+  48% { transform: translate3d(0, -3%, 0); opacity: .72; }
+  86% { opacity: .5; }
+  100% { transform: translate3d(38vw, -8%, 0); opacity: 0; }
 }
 @keyframes fog-drift-two {
-  0% { transform: translateX(16%) translateY(10%); opacity: 0; }
-  18% { opacity: .85; }
-  68% { opacity: .7; }
-  100% { transform: translateX(-18%) translateY(-5%); opacity: 0; }
+  0% { transform: translate3d(38vw, 10%, 0); opacity: 0; }
+  14% { opacity: .76; }
+  52% { transform: translate3d(0, -4%, 0); opacity: .68; }
+  88% { opacity: .46; }
+  100% { transform: translate3d(-38vw, -5%, 0); opacity: 0; }
 }
 @keyframes fog-drift-three {
-  0% { transform: translateX(-18%) translateY(0); opacity: 0; }
-  20% { opacity: .72; }
-  66% { opacity: .6; }
-  100% { transform: translateX(18%) translateY(-12%); opacity: 0; }
+  0% { transform: translate3d(-34vw, 0, 0); opacity: 0; }
+  18% { opacity: .68; }
+  55% { transform: translate3d(4vw, -7%, 0); opacity: .58; }
+  88% { opacity: .4; }
+  100% { transform: translate3d(34vw, -12%, 0); opacity: 0; }
 }
 @keyframes graveyard-fog-exit {
-  0%, 78% { visibility: visible; }
+  0%, 90% { visibility: visible; }
   100% { visibility: hidden; }
 }
 .graveyard-hero {
