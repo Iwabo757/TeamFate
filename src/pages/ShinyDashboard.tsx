@@ -89,8 +89,8 @@ export default function ShinyDashboard() {
                     const trainerName = submission.profile?.nickname || submission.profile?.username || "Unknown trainer";
 
                     return (
-                      <div key={submission.id} title={`${pokemonName} — ${trainerName}`} style={{ textAlign: "center", minWidth: "64px" }}>
+                      <div key={submission.id} title={pokemonName + " — " + trainerName} style={{ textAlign: "center", minWidth: "64px" }}>
                         {submission.pokemon_id !== null && (
                           <img
-                            src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${submission.pokemon_id}.png`}
-                            alt={`Shiny ${pokemonName}`}
+                            src={"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/" + submission.pokemon_id + ".png"}
+                            alt={"Shiny " + pokemonName}
