@@ -407,3 +407,30 @@ body.shiny-graveyard-theme .page-title {
 @media (prefers-reduced-motion: reduce) {
   .graveyard-fog, .fog-layer { animation: none !important; opacity: 0 !important; }
 }
+
+
+/* Separate memorial submission page */
+.graveyard-submit-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 18px; padding: 14px 24px; border-radius: 10px;
+  color: #f7edff; text-decoration: none; font-weight: 800;
+  border: 1px solid rgba(212,178,246,.5);
+  background: linear-gradient(135deg,#67428a,#39234f);
+  box-shadow: 0 8px 26px rgba(78,40,109,.3);
+}
+.graveyard-submit-link:hover { background: linear-gradient(135deg,#8054a7,#4b2d65); }
+.graveyard-member-display { display:flex; flex-direction:column; gap:5px; padding:15px 17px;
+  border:1px solid rgba(172,128,213,.25); border-radius:10px; background:rgba(95,65,120,.13); }
+.graveyard-member-display span,.graveyard-member-display small,.graveyard-selected { color:#b8a9c7; font-size:.85rem; }
+.graveyard-member-display strong { color:#f0e3ff; font-size:1.05rem; }
+.graveyard-autocomplete { display:flex; flex-direction:column; margin-top:4px; border:1px solid rgba(172,130,211,.4); border-radius:9px; overflow:hidden; background:#100c18; }
+.graveyard-autocomplete button { padding:10px 13px; text-align:left; color:#f4ebff; background:transparent; border:0; border-bottom:1px solid rgba(172,130,211,.16); cursor:pointer; font:inherit; }
+.graveyard-autocomplete button:hover { background:rgba(120,75,160,.3); }
+.graveyard-autocomplete button span { color:#a99ab8; }
+.graveyard-selected { display:block; margin-top:6px; color:#b9e6c6; }
+.graveyard-upload-preview { display:block; margin-top:12px; max-width:min(100%,480px); max-height:300px; object-fit:contain; border-radius:10px; border:1px solid rgba(172,130,211,.3); }
+.graveyard-back-link { text-align:center; margin:25px 0 50px; }
+.graveyard-back-link a { color:#d7b7f5; }
+.graveyard-submit-page .graveyard-form { max-width:900px; margin:0 auto 25px; }
+.graveyard-submit-page .graveyard-form input[type=file] { padding:10px; }
+@media(max-width:650px) { .graveyard-form { grid-template-columns:1fr; } .graveyard-form-wide { grid-column:auto; } }

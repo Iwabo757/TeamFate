@@ -1,4 +1,5 @@
-import { type FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./ShinyGraveyard.css";
 
@@ -16,15 +17,7 @@ type GraveyardEntry = {
 export default function ShinyGraveyard() {
   const [entries, setEntries] = useState<GraveyardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [fogVisible, setFogVisible] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [trainerName, setTrainerName] = useState("");
-  const [pokemonName, setPokemonName] = useState("");
-  const [encounterDate, setEncounterDate] = useState("");
-  const [causeOfLoss, setCauseOfLoss] = useState("Fainted");
-  const [story, setStory] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -32,29 +25,12 @@ export default function ShinyGraveyard() {
     const fogTimer = window.setTimeout(() => setFogVisible(false), 15000);
 
     void loadEntries();
-    void loadCurrentUser();
 
     return () => {
       document.body.classList.remove("shiny-graveyard-theme");
       window.clearTimeout(fogTimer);
     };
   }, []);
-
-  async function loadCurrentUser() {
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      setUserId(null);
-      return;
-    }
-
-    setUserId(data.user.id);
-    const metadataName =
-      data.user.user_metadata?.name ||
-      data.user.user_metadata?.username ||
-      data.user.email?.split("@")[0] ||
-      "";
-    setTrainerName(metadataName);
-  }
 
   async function loadEntries() {
     setLoading(true);
@@ -71,41 +47,6 @@ export default function ShinyGraveyard() {
       setEntries((data || []) as GraveyardEntry[]);
     }
     setLoading(false);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setMessage("");
-
-    if (!userId) {
-      setMessage("Please log in before submitting a lost shiny memorial.");
-      return;
-    }
-
-    setSubmitting(true);
-    const { error } = await supabase.from("shiny_graveyard_submissions").insert({
-      user_id: userId,
-      pokemon_name: pokemonName.trim(),
-      trainer_name: trainerName.trim(),
-      encounter_date: encounterDate || null,
-      cause_of_loss: causeOfLoss,
-      story: story.trim() || null,
-      image_url: imageUrl.trim() || null,
-      status: "pending",
-    });
-
-    if (error) {
-      console.error("Unable to submit Shiny Graveyard entry:", error.message);
-      setMessage("Your memorial could not be submitted. Please check the database setup and try again.");
-    } else {
-      setMessage("Your memorial has been submitted for review. May your shiny rest in peace.");
-      setPokemonName("");
-      setEncounterDate("");
-      setCauseOfLoss("Fainted");
-      setStory("");
-      setImageUrl("");
-    }
-    setSubmitting(false);
   }
 
   return (
@@ -149,86 +90,11 @@ export default function ShinyGraveyard() {
 
       <section className="graveyard-submission-panel">
         <div className="graveyard-section-heading">
-          <span className="graveyard-kicker">LEAVE A TRIBUTE</span>
-          <h2>Memorialize a Lost Shiny</h2>
-          <p>Submit your story. After staff approval, it will be added to the graveyard.</p>
+          <span className="graveyard-kicker">HONOR THE LOST</span>
+          <h2>Have a Shiny That Got Away?</h2>
+          <p>Give the encounter a place in Team Faté history. Every memorial is reviewed by staff before it appears here.</p>
+          <Link className="graveyard-submit-link" to="/shiny-graveyard/submit">🪦 Submit a Lost Shiny</Link>
         </div>
-
-        {!userId ? (
-          <div className="graveyard-login-note">
-            <p>You must be logged in to submit a memorial.</p>
-            <a href="/login">Log in to the site</a>
-          </div>
-        ) : (
-          <form className="graveyard-form" onSubmit={handleSubmit}>
-            <label>
-              Trainer name
-              <input
-                value={trainerName}
-                onChange={(event) => setTrainerName(event.target.value)}
-                maxLength={60}
-                required
-                placeholder="Your in-game name"
-              />
-            </label>
-            <label>
-              Shiny Pokémon
-              <input
-                value={pokemonName}
-                onChange={(event) => setPokemonName(event.target.value)}
-                maxLength={80}
-                required
-                placeholder="The shiny that got away"
-              />
-            </label>
-            <label>
-              Date of encounter <span>(optional)</span>
-              <input
-                type="date"
-                value={encounterDate}
-                onChange={(event) => setEncounterDate(event.target.value)}
-              />
-            </label>
-            <label>
-              Cause of loss
-              <select value={causeOfLoss} onChange={(event) => setCauseOfLoss(event.target.value)}>
-                <option>Fainted</option>
-                <option>Fled / ran away</option>
-                <option>Poké Balls ran out</option>
-                <option>Accidental escape</option>
-                <option>Disconnected</option>
-                <option>Other cruel fate</option>
-              </select>
-            </label>
-            <label className="graveyard-form-wide">
-              The story <span>(optional)</span>
-              <textarea
-                value={story}
-                onChange={(event) => setStory(event.target.value)}
-                maxLength={1500}
-                rows={4}
-                placeholder="Tell us how this shiny met its untimely end..."
-              />
-            </label>
-            <label className="graveyard-form-wide">
-              Screenshot URL <span>(optional)</span>
-              <input
-                type="url"
-                value={imageUrl}
-                onChange={(event) => setImageUrl(event.target.value)}
-                maxLength={1000}
-                placeholder="https://..."
-              />
-            </label>
-            <div className="graveyard-form-footer graveyard-form-wide">
-              <p>Submissions are held for staff review before appearing publicly.</p>
-              <button type="submit" disabled={submitting}>
-                {submitting ? "Placing memorial..." : "Lay This Shiny to Rest"}
-              </button>
-            </div>
-          </form>
-        )}
-        {message && <p className="graveyard-message" role="status">{message}</p>}
       </section>
 
       <section className="graveyard-gallery-section">
