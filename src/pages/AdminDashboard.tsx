@@ -9,6 +9,7 @@ export default function AdminDashboard() {
         <Link to="/admin/homepage" className="admin-card">📅 Edit Welcome Message</Link>
         <Link to="/admin/recruitment" className="admin-card">Recruitment</Link>
         <Link to="/admin/shiny-dashboard" className="admin-card">📖 Shiny Dashboard</Link>
+        <Link to="/admin/shiny-graveyard" className="admin-card">🪦 Shiny Graveyard Review</Link>
         <Link to="/admin/events" className="admin-card">📅 Event Dashboard</Link>
         <Link to="/admin/season-control" className="admin-card">🌦️ Season Control</Link>
         <Link to="/admin/bounty-dashboard" className="admin-card">🎯 Bounty Dashboard</Link>

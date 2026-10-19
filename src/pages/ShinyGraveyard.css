@@ -1,0 +1,406 @@
+
+/* Shiny Graveyard — page-scoped atmosphere */
+body.shiny-graveyard-theme {
+  --theme-bg: #08070d;
+  --theme-panel: rgba(19, 15, 27, 0.88);
+  --theme-primary: #9b75d6;
+  --theme-primary-hover: #c3a2f4;
+  --theme-secondary: #6c477f;
+  --theme-text: #eee7f7;
+  --theme-text-muted: #b5a9c3;
+  --theme-border: rgba(184, 146, 225, 0.24);
+  --theme-glow: rgba(148, 92, 194, 0.24);
+  background:
+    linear-gradient(180deg, rgba(5, 4, 10, 0.34), rgba(5, 4, 10, 0.82) 58%, #08070d),
+    url("/images/shiny-graveyard.jpg") center center / cover fixed no-repeat,
+    #08070d !important;
+  color: #eee7f7;
+}
+body.shiny-graveyard-theme::before {
+  background-image: radial-gradient(rgba(222, 202, 255, .62) 1px, transparent 1px);
+  opacity: .07;
+}
+body.shiny-graveyard-theme .content {
+  max-width: none;
+  padding: 30px clamp(16px, 4vw, 64px) 60px;
+}
+body.shiny-graveyard-theme .topbar,
+body.shiny-graveyard-theme .sub-nav {
+  background: rgba(9, 7, 15, .9);
+  border-color: rgba(177, 128, 220, .2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .32);
+}
+body.shiny-graveyard-theme .topbar a,
+body.shiny-graveyard-theme .sub-nav a {
+  color: #eee4fb;
+}
+body.shiny-graveyard-theme .logo-main,
+body.shiny-graveyard-theme .page-title {
+  color: #c7a2f5;
+  text-shadow: 0 0 12px rgba(159, 95, 214, .42);
+}
+
+.graveyard-page {
+  position: relative;
+  isolation: isolate;
+  max-width: 1500px;
+  margin: 0 auto;
+  color: #eee7f7;
+  min-height: 100vh;
+}
+.graveyard-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 8%, rgba(100, 65, 126, .14), transparent 54%);
+}
+.graveyard-fog {
+  position: fixed;
+  inset: -12vh -15vw;
+  z-index: 10020;
+  overflow: hidden;
+  pointer-events: none;
+  animation: graveyard-fog-exit 8s ease-out forwards;
+}
+.fog-layer {
+  position: absolute;
+  left: -35%;
+  width: 170%;
+  height: 48vh;
+  min-height: 260px;
+  border-radius: 50%;
+  filter: blur(34px);
+  opacity: 0;
+  background:
+    radial-gradient(ellipse at 20% 55%, rgba(218, 207, 231, .28), transparent 43%),
+    radial-gradient(ellipse at 55% 50%, rgba(165, 143, 187, .25), transparent 48%),
+    radial-gradient(ellipse at 80% 60%, rgba(222, 214, 232, .18), transparent 40%);
+  mix-blend-mode: screen;
+}
+.fog-layer-one { top: 8%; animation: fog-drift-one 8s ease-in-out forwards; }
+.fog-layer-two { top: 34%; animation: fog-drift-two 8s ease-in-out forwards; animation-delay: .15s; }
+.fog-layer-three { top: 61%; animation: fog-drift-three 8s ease-in-out forwards; animation-delay: .3s; }
+
+@keyframes fog-drift-one {
+  0% { transform: translateX(-12%) translateY(12%); opacity: 0; }
+  15% { opacity: .9; }
+  65% { opacity: .78; }
+  100% { transform: translateX(22%) translateY(-8%); opacity: 0; }
+}
+@keyframes fog-drift-two {
+  0% { transform: translateX(16%) translateY(10%); opacity: 0; }
+  18% { opacity: .85; }
+  68% { opacity: .7; }
+  100% { transform: translateX(-18%) translateY(-5%); opacity: 0; }
+}
+@keyframes fog-drift-three {
+  0% { transform: translateX(-18%) translateY(0); opacity: 0; }
+  20% { opacity: .72; }
+  66% { opacity: .6; }
+  100% { transform: translateX(18%) translateY(-12%); opacity: 0; }
+}
+@keyframes graveyard-fog-exit {
+  0%, 78% { visibility: visible; }
+  100% { visibility: hidden; }
+}
+.graveyard-hero {
+  max-width: 980px;
+  margin: 12px auto 28px;
+  padding: clamp(32px, 6vw, 78px) 20px 36px;
+  text-align: center;
+  position: relative;
+}
+.graveyard-eyebrow,
+.graveyard-kicker {
+  display: inline-block;
+  color: #c5a2eb;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.graveyard-hero h1 {
+  margin: 14px 0 14px;
+  color: #f1e6ff;
+  font-size: clamp(2.8rem, 7vw, 5.6rem);
+  line-height: .98;
+  letter-spacing: .035em;
+  text-shadow: 0 0 14px rgba(174, 117, 225, .42), 0 8px 32px #000;
+}
+.graveyard-subtitle {
+  color: #d6c4e7;
+  font-size: clamp(1.05rem, 2.5vw, 1.45rem);
+}
+.graveyard-divider {
+  margin: 25px auto 18px;
+  width: min(420px, 70%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #b994df;
+}
+.graveyard-divider::before,
+.graveyard-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(190, 151, 226, .7));
+}
+.graveyard-divider::after { transform: rotate(180deg); }
+.graveyard-intro {
+  max-width: 690px;
+  margin: 0 auto;
+  color: #c5bacf;
+  line-height: 1.8;
+  font-size: 1rem;
+}
+.graveyard-stats {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 auto 52px;
+}
+.graveyard-stat {
+  min-width: 160px;
+  padding: 17px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 11, 23, .75);
+  border: 1px solid rgba(178, 138, 215, .2);
+  border-radius: 12px 12px 5px 5px;
+  box-shadow: inset 0 1px rgba(255,255,255,.03), 0 12px 30px rgba(0,0,0,.18);
+  backdrop-filter: blur(8px);
+}
+.graveyard-stat-number,
+.graveyard-stat-icon {
+  color: #d1aff5;
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+.graveyard-stat-label {
+  color: #b8a9c7;
+  font-size: .82rem;
+  letter-spacing: .04em;
+}
+.graveyard-submission-panel,
+.graveyard-gallery-section {
+  margin: 0 auto 62px;
+  max-width: 1120px;
+}
+.graveyard-submission-panel {
+  padding: clamp(22px, 4vw, 42px);
+  background: linear-gradient(145deg, rgba(20, 14, 29, .94), rgba(9, 8, 14, .91));
+  border: 1px solid rgba(172, 128, 213, .26);
+  border-radius: 18px;
+  box-shadow: 0 22px 60px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.035);
+}
+.graveyard-section-heading {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.graveyard-section-heading h2 {
+  color: #ead9fb;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  margin: 8px 0 10px;
+  text-shadow: 0 0 18px rgba(158, 100, 207, .22);
+}
+.graveyard-section-heading p {
+  color: #bdb0ca;
+  line-height: 1.6;
+}
+.graveyard-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.graveyard-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #ded1eb;
+  font-size: .92rem;
+  font-weight: 700;
+}
+.graveyard-form label span { color: #a99ab8; font-weight: 400; }
+.graveyard-form input,
+.graveyard-form textarea,
+.graveyard-form select {
+  width: 100%;
+  min-width: 0;
+  color: #f4ebff;
+  background: rgba(7, 6, 12, .82);
+  border: 1px solid rgba(172, 130, 211, .3);
+  border-radius: 9px;
+  padding: 13px 14px;
+  font: inherit;
+}
+.graveyard-form input:focus,
+.graveyard-form textarea:focus,
+.graveyard-form select:focus {
+  outline: 2px solid rgba(186, 140, 231, .4);
+  border-color: #b38bdb;
+}
+.graveyard-form input::placeholder,
+.graveyard-form textarea::placeholder { color: #80758d; }
+.graveyard-form-wide { grid-column: 1 / -1; }
+.graveyard-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.graveyard-form-footer p { color: #a99bb7; font-size: .85rem; }
+.graveyard-form button,
+.graveyard-login-note a {
+  display: inline-block;
+  padding: 13px 20px;
+  color: #f7edff;
+  font-weight: 800;
+  border: 1px solid rgba(212, 178, 246, .45);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #67428a, #39234f);
+  box-shadow: 0 6px 22px rgba(78, 40, 109, .25);
+  cursor: pointer;
+  text-decoration: none;
+}
+.graveyard-form button:hover,
+.graveyard-login-note a:hover { background: linear-gradient(135deg, #8054a7, #4b2d65); }
+.graveyard-form button:disabled { opacity: .65; cursor: wait; }
+.graveyard-login-note { text-align: center; padding: 24px 10px; }
+.graveyard-login-note p { margin-bottom: 18px; color: #c7b9d5; }
+.graveyard-message {
+  margin-top: 20px;
+  padding: 13px 16px;
+  border-radius: 9px;
+  color: #e5d3f8;
+  background: rgba(115, 77, 148, .18);
+  border: 1px solid rgba(176, 135, 215, .25);
+}
+.graveyard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+.grave-marker {
+  position: relative;
+  min-height: 330px;
+  padding: 25px 20px 23px;
+  text-align: center;
+  overflow: hidden;
+  border: 1px solid rgba(178, 146, 200, .25);
+  border-radius: 100px 100px 12px 12px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(125, 87, 151, .16), transparent 60%),
+    linear-gradient(180deg, rgba(29, 23, 37, .94), rgba(11, 10, 16, .97));
+  box-shadow: 0 18px 35px rgba(0,0,0,.28), inset 0 0 25px rgba(0,0,0,.25);
+}
+.grave-marker::after {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(199, 166, 220, .08);
+  border-radius: 90px 90px 7px 7px;
+  pointer-events: none;
+}
+.grave-marker-top { color: #bda0d2; font-size: 1.1rem; margin-bottom: 7px; }
+.grave-marker-image {
+  display: block;
+  width: 94px;
+  height: 94px;
+  object-fit: contain;
+  margin: 0 auto 10px;
+  filter: grayscale(.65) brightness(.8) drop-shadow(0 0 12px rgba(155, 109, 188, .2));
+}
+.grave-marker-silhouette {
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: 8px auto 18px;
+  border-radius: 50%;
+  color: #9c86af;
+  font-size: 2rem;
+  background: radial-gradient(circle, rgba(137, 105, 159, .2), transparent 70%);
+}
+.grave-marker-label,
+.grave-marker-rest {
+  color: #9f8bac;
+  font-size: .63rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+}
+.grave-marker h3 {
+  color: #eadcf8;
+  font-size: 1.5rem;
+  margin: 7px 0;
+  text-transform: capitalize;
+}
+.grave-marker-trainer { color: #bcaec9; font-size: .86rem; }
+.grave-marker-rule {
+  height: 1px;
+  width: 60%;
+  margin: 16px auto;
+  background: linear-gradient(90deg, transparent, rgba(191, 158, 218, .45), transparent);
+}
+.grave-marker-cause {
+  color: #d1b9e5;
+  font-size: .86rem;
+  font-weight: 700;
+}
+.grave-marker-story {
+  color: #b8aabd;
+  font-size: .9rem;
+  line-height: 1.6;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.grave-marker-date { margin-top: 12px; color: #8e819b; font-size: .75rem; }
+.grave-marker-rest { margin-top: 20px; }
+.graveyard-empty {
+  padding: 42px 20px;
+  text-align: center;
+  color: #b8aabd;
+  background: rgba(12, 10, 17, .72);
+  border: 1px dashed rgba(172, 130, 211, .25);
+  border-radius: 14px;
+}
+.graveyard-empty-icon { display: block; font-size: 2.4rem; margin-bottom: 12px; }
+.graveyard-empty h3 { color: #dfcbed; margin-bottom: 8px; }
+.graveyard-empty p { line-height: 1.7; }
+.graveyard-footer {
+  text-align: center;
+  padding: 10px 20px 28px;
+}
+.graveyard-footer p {
+  color: #cdb5e1;
+  font-family: Georgia, serif;
+  font-size: clamp(1.1rem, 2.4vw, 1.55rem);
+  font-style: italic;
+  margin-bottom: 14px;
+}
+.graveyard-footer span { color: #82718f; font-size: .68rem; font-weight: 800; letter-spacing: .2em; }
+
+@media (max-width: 700px) {
+  body.shiny-graveyard-theme .content { padding: 18px 12px 40px; }
+  body.shiny-graveyard-theme { background-attachment: scroll; }
+  .graveyard-hero { padding: 35px 8px 28px; }
+  .graveyard-stats { margin-bottom: 36px; gap: 8px; }
+  .graveyard-stat { min-width: calc(50% - 8px); padding: 14px 10px; }
+  .graveyard-form { grid-template-columns: 1fr; }
+  .graveyard-form-wide { grid-column: auto; }
+  .graveyard-form-footer { align-items: stretch; flex-direction: column; }
+  .graveyard-form button { width: 100%; }
+  .graveyard-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 12px; }
+  .grave-marker { padding: 22px 13px 18px; min-height: 300px; }
+  .grave-marker h3 { font-size: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .graveyard-fog, .fog-layer { animation: none !important; opacity: 0 !important; }
+}

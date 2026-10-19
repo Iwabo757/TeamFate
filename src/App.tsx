@@ -21,6 +21,8 @@ import Home from "./pages/Home";
 import ShinyShowcase from "./pages/Showcase";
 import ShinyDex from "./pages/ShinyDex";
 import ShinyBoard from "./pages/Leaderboard";
+import ShinyGraveyard from "./pages/ShinyGraveyard";
+import AdminShinyGraveyard from "./pages/AdminShinyGraveyard";
 
 import AdminEvents from "./pages/AdminEvents";
 import AdminPastEvents from "./pages/AdminPastEvents";
@@ -291,7 +293,8 @@ export default function App() {
     if (
       path === "/shinydex" ||
       path === "/showcase" ||
-      path === "/submit-shiny"
+      path === "/submit-shiny" ||
+      path === "/shiny-graveyard"
     ) {
       return [
         {
@@ -305,6 +308,10 @@ export default function App() {
         {
           label: "Submit Shiny",
           path: "/submit-shiny",
+        },
+        {
+          label: "Shiny Graveyard",
+          path: "/shiny-graveyard",
         },
       ];
     }
@@ -432,6 +439,10 @@ export default function App() {
           path: "/admin/shiny-dashboard",
         },
         {
+          label: "Graveyard Review",
+          path: "/admin/shiny-graveyard",
+        },
+        {
           label: "Bounty Dashboard",
           path: "/admin/bounty-dashboard",
         },
@@ -543,6 +554,10 @@ export default function App() {
                     Submit Shiny
                   </Link>
 
+                  <Link to="/shiny-graveyard">
+                    Shiny Graveyard
+                  </Link>
+
                   <Link to="/showcase">
                     Shiny Showcase
                   </Link>
@@ -597,6 +612,9 @@ export default function App() {
 
                     <Link to="/admin">
                       Admin Dashboard
+                    </Link>
+                    <Link to="/admin/shiny-graveyard">
+                      Graveyard Review
                     </Link>
 
                   </div>
@@ -666,6 +684,10 @@ export default function App() {
 
             <NavLink to="/shinydex">
               Shiny
+            </NavLink>
+
+            <NavLink to="/shiny-graveyard">
+              Graveyard
             </NavLink>
 
             <NavLink to="/events">
@@ -835,6 +857,11 @@ export default function App() {
             <Route
               path="/submit-shiny"
               element={<SubmitShiny />}
+            />
+
+            <Route
+              path="/shiny-graveyard"
+              element={<ShinyGraveyard />}
             />
 
 
@@ -1033,6 +1060,11 @@ export default function App() {
             <Route
               path="/admin/shiny-dashboard"
               element={<ShinyDashboard />}
+            />
+
+            <Route
+              path="/admin/shiny-graveyard"
+              element={<AdminShinyGraveyard />}
             />
 
 

@@ -1,0 +1,58 @@
+.graveyard-admin {
+  max-width: 1350px;
+  min-height: 75vh;
+  margin: 0 auto;
+  padding: 24px 0 60px;
+  color: #eee7f7;
+}
+.graveyard-admin-header { text-align: center; margin: 0 auto 30px; max-width: 850px; }
+.graveyard-admin-kicker { color: #b99add; letter-spacing: .18em; font-size: .75rem; font-weight: 800; margin-bottom: 8px; }
+.graveyard-admin-header h1 { color: #e4d0ff; font-size: clamp(2.1rem, 5vw, 3.5rem); text-shadow: 0 0 22px rgba(157, 95, 214, .45); margin-bottom: 10px; }
+.graveyard-admin-header > p:last-child { color: #c2b5d0; line-height: 1.65; }
+.graveyard-admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 24px; }
+.graveyard-admin-summary > div { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 20px 12px; border: 1px solid rgba(184, 146, 225, .22); border-radius: 14px; background: rgba(16, 11, 25, .78); }
+.graveyard-admin-summary strong { font-size: 2rem; color: #d6b9ff; }
+.graveyard-admin-summary span { color: #b9a9c8; font-size: .9rem; }
+.graveyard-admin-toolbar { display: flex; justify-content: space-between; align-items: end; gap: 14px; margin: 20px 0; padding: 16px; border-radius: 14px; background: rgba(14, 10, 22, .8); border: 1px solid rgba(184, 146, 225, .18); }
+.graveyard-admin-toolbar label { display: flex; flex-direction: column; gap: 7px; color: #cbb8dc; font-size: .9rem; }
+.graveyard-admin-toolbar select { min-width: 220px; padding: 11px 12px; color: #f4eaff; background: #171020; border: 1px solid #6e4d8b; border-radius: 9px; }
+.graveyard-admin-refresh { padding: 11px 16px; color: #f2e8ff; background: #3b2750; border: 1px solid #79559a; border-radius: 9px; }
+.graveyard-admin-notice { margin: 16px 0; padding: 13px 16px; border-radius: 10px; background: rgba(58, 38, 75, .8); border: 1px solid rgba(184, 146, 225, .3); color: #eee2ff; overflow-wrap: anywhere; }
+.graveyard-review-list { display: flex; flex-direction: column; gap: 16px; }
+.graveyard-review-card { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 20px; padding: 20px; border: 1px solid rgba(184, 146, 225, .22); border-radius: 16px; background: rgba(12, 9, 19, .88); box-shadow: 0 12px 34px rgba(0, 0, 0, .18); }
+.graveyard-review-art { min-height: 150px; display: flex; justify-content: center; align-items: center; border-radius: 12px; background: radial-gradient(circle, rgba(128, 76, 163, .25), rgba(8, 6, 12, .8)); color: #a78ac3; font-size: 3.5rem; overflow: hidden; }
+.graveyard-review-art img { display: block; width: 150px; height: 150px; object-fit: cover; }
+.graveyard-review-content { min-width: 0; }
+.graveyard-review-title-row { display: flex; align-items: start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.graveyard-review-title-row h2 { color: #eadcff; font-size: 1.65rem; }
+.graveyard-status-pill { flex-shrink: 0; padding: 5px 10px; border-radius: 999px; text-transform: capitalize; font-size: .78rem; font-weight: 800; }
+.status-pending { color: #ffe5a1; background: rgba(150, 103, 24, .2); border: 1px solid rgba(238, 190, 87, .35); }
+.status-approved { color: #a8f0c1; background: rgba(33, 115, 67, .2); border: 1px solid rgba(89, 211, 132, .35); }
+.status-rejected { color: #ffb3bd; background: rgba(142, 39, 57, .2); border: 1px solid rgba(239, 96, 116, .35); }
+.graveyard-review-content > p { color: #c8bdd2; margin: 7px 0; overflow-wrap: anywhere; }
+.graveyard-review-content strong { color: #f0e6fa; }
+.graveyard-review-content blockquote { margin: 12px 0; padding: 10px 14px; border-left: 3px solid #8f67b0; background: rgba(132, 86, 165, .1); color: #d7c9e4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.graveyard-review-content .graveyard-review-submitted { font-size: .8rem; color: #9f91ac; }
+.graveyard-review-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+.graveyard-review-actions button { border-radius: 8px; padding: 10px 14px; font-weight: 750; }
+.graveyard-review-actions button:disabled, .graveyard-admin-refresh:disabled { opacity: .55; cursor: wait; }
+.graveyard-review-actions .approve { background: #225d3a; border: 1px solid #3d9962; color: #d6ffe3; }
+.graveyard-review-actions .reject { background: #6d2734; border: 1px solid #b94d60; color: #ffe1e5; }
+.graveyard-review-actions .remove { background: #241b2b; border: 1px solid #79566e; color: #e8cfe0; }
+.graveyard-admin-empty { padding: 45px 20px; text-align: center; border: 1px solid rgba(184, 146, 225, .2); border-radius: 16px; background: rgba(12, 9, 19, .8); color: #c4b6d0; }
+.graveyard-admin-empty span { font-size: 2.5rem; }
+.graveyard-admin-empty h2 { margin: 10px 0; color: #e4d0ff; }
+@media (max-width: 700px) {
+  .graveyard-admin { padding-top: 10px; }
+  .graveyard-admin-summary { gap: 8px; }
+  .graveyard-admin-summary > div { padding: 14px 6px; text-align: center; }
+  .graveyard-admin-summary strong { font-size: 1.6rem; }
+  .graveyard-admin-summary span { font-size: .75rem; }
+  .graveyard-admin-toolbar { align-items: stretch; flex-direction: column; }
+  .graveyard-admin-toolbar select { min-width: 0; width: 100%; }
+  .graveyard-review-card { grid-template-columns: 1fr; padding: 14px; }
+  .graveyard-review-art { min-height: 110px; }
+  .graveyard-review-art img { width: 100%; height: 190px; }
+  .graveyard-review-title-row h2 { font-size: 1.4rem; }
+  .graveyard-review-actions button { flex: 1 1 auto; }
+}
