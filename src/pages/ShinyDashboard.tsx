@@ -2,25 +2,48 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
+type PendingSubmission = {
+  id: string;
+  pokemon_id: number | null;
+  pokemon?: { name?: string | null } | null;
+  profile?: { nickname?: string | null; username?: string | null } | null;
+};
+
 export default function ShinyDashboard() {
-  const [pendingSubmissions, setPendingSubmissions] = useState(0);
+  const [pendingSubmissions, setPendingSubmissions] = useState<PendingSubmission[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     async function loadPendingSubmissions() {
-      const { count, error } = await supabase
+      const { data, error } = await supabase
         .from("shiny_submissions")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending");
+        .select(`
+          id,
+          pokemon_id,
+          pokemon:pokemon_id(name),
+          profile:profile_id(nickname, username)
+        `)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Failed to load pending shiny submissions:", error);
+        if (active) setPendingLoading(false);
         return;
       }
 
-      setPendingSubmissions(count ?? 0);
+      if (active) {
+        setPendingSubmissions((data ?? []) as unknown as PendingSubmission[]);
+        setPendingLoading(false);
+      }
     }
 
     void loadPendingSubmissions();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -28,18 +51,6 @@ export default function ShinyDashboard() {
       <h1>✨ Shiny Dashboard</h1>
 
       <div className="admin-grid">
-        <Link to="/admin/shiny-approvals" className="admin-card">
-          <div>
-            <h2>📥 Pending Submissions: {pendingSubmissions}</h2>
-            <p>
-              {pendingSubmissions === 0
-                ? "There are no shiny submissions waiting for review."
-                : `You have ${pendingSubmissions} pending ${pendingSubmissions === 1 ? "submission" : "submissions"}.`}
-              {" "}Open to review and approve or reject submissions.
-            </p>
-          </div>
-        </Link>
-
         <Link to="/admin/shinies/add" className="admin-card">
           <div>
             <h2>➕ Add Shiny</h2>
@@ -60,17 +71,26 @@ export default function ShinyDashboard() {
           </div>
         </Link>
 
-        <Link to="/admin/shiny-approvals" className="admin-card">
-          <div>
-            <h2>📥 Submissions</h2>
-            <p>
-              Review member shiny
-              submissions and approve
-              them into the dex.
+        <div>
+          <Link to="/admin/shiny-approvals" className="admin-card">
+            <div>
+              <h2>📥 Submissions</h2>
+              <p>
+                Review member shiny
+                submissions and approve
+                them into the dex.
+              </p>
+            </div>
+          </Link>
+
+          <section
+            aria-label="Pending shiny submissions overview"
+            style={{ marginTop: "12px" }}
+          >
+            <p style={{ margin: "0 0 8px" }}>
+              <strong>
+                {pendingLoading
+                  ? "Loading pending submissions…"
+                  : `${pendingSubmissions.length} pending ${pendingSubmissions.length === 1 ? "submission" : "submissions"}`}
+              </strong>
             </p>
-          </div>
-        </Link>
-      </div>
-    </div>
-  );
-}
