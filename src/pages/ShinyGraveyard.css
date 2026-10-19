@@ -516,3 +516,70 @@ body.shiny-graveyard-theme .page-title {
 @media (prefers-reduced-motion: reduce) {
   .graveyard-fog .fog-layer { animation: none !important; opacity: 0 !important; }
 }
+
+/* Revised smoke: distinct rolling banks without bleaching the background. */
+.graveyard-fog {
+  inset: 0;
+  z-index: 10020;
+  overflow: hidden;
+  isolation: isolate;
+  animation: graveyard-fog-exit 15s linear forwards;
+}
+.graveyard-fog .fog-layer {
+  left: -42%;
+  width: 184%;
+  height: 42vh;
+  min-height: 230px;
+  border-radius: 0;
+  filter: blur(20px);
+  mix-blend-mode: normal;
+  opacity: 0;
+  background:
+    radial-gradient(ellipse 12% 30% at 4% 76%, rgba(153, 145, 174, .44), transparent 78%),
+    radial-gradient(ellipse 17% 43% at 17% 64%, rgba(100, 94, 121, .58), transparent 76%),
+    radial-gradient(ellipse 12% 29% at 31% 77%, rgba(182, 172, 194, .38), transparent 78%),
+    radial-gradient(ellipse 18% 42% at 45% 60%, rgba(94, 86, 116, .58), transparent 78%),
+    radial-gradient(ellipse 13% 33% at 60% 75%, rgba(171, 161, 187, .4), transparent 78%),
+    radial-gradient(ellipse 18% 42% at 75% 62%, rgba(103, 94, 128, .56), transparent 78%),
+    radial-gradient(ellipse 14% 32% at 91% 73%, rgba(175, 166, 191, .38), transparent 78%);
+  will-change: transform, opacity;
+}
+.graveyard-fog .fog-layer::before,
+.graveyard-fog .fog-layer::after {
+  content: "";
+  position: absolute;
+  inset: 14% -5% -5%;
+  pointer-events: none;
+  border-radius: 0;
+  filter: blur(24px);
+  background:
+    radial-gradient(ellipse 14% 36% at 12% 75%, rgba(70, 65, 89, .62), transparent 78%),
+    radial-gradient(ellipse 18% 45% at 35% 64%, rgba(143, 133, 165, .34), transparent 78%),
+    radial-gradient(ellipse 15% 37% at 57% 77%, rgba(68, 63, 87, .60), transparent 78%),
+    radial-gradient(ellipse 20% 43% at 83% 65%, rgba(143, 133, 165, .32), transparent 78%);
+}
+.graveyard-fog .fog-layer::after {
+  inset: 34% -8% -12%;
+  transform: scaleX(1.12);
+  filter: blur(32px);
+  opacity: .72;
+}
+.graveyard-fog .fog-layer-one { top: 28%; animation: grounded-smoke-forward 15s ease-in-out forwards; }
+.graveyard-fog .fog-layer-two { top: 43%; animation: grounded-smoke-reverse 15s ease-in-out .15s forwards; }
+.graveyard-fog .fog-layer-three { top: 59%; animation: grounded-smoke-forward 15s ease-in-out .3s forwards; }
+@keyframes grounded-smoke-forward {
+  0% { transform: translate3d(-30vw, 8vh, 0) scale(1.05); opacity: 0; }
+  12% { opacity: .46; }
+  32% { transform: translate3d(-10vw, -2vh, 0) scale(1.12); opacity: .42; }
+  62% { transform: translate3d(16vw, 2vh, 0) scale(1.06); opacity: .36; }
+  84% { transform: translate3d(36vw, -3vh, 0) scale(1.13); opacity: .24; }
+  100% { transform: translate3d(52vw, -7vh, 0) scale(1.18); opacity: 0; }
+}
+@keyframes grounded-smoke-reverse {
+  0% { transform: translate3d(30vw, 3vh, 0) scale(1.12); opacity: 0; }
+  14% { opacity: .40; }
+  36% { transform: translate3d(10vw, -2vh, 0) scale(1.05); opacity: .38; }
+  66% { transform: translate3d(-16vw, 2vh, 0) scale(1.14); opacity: .32; }
+  86% { transform: translate3d(-36vw, -2vh, 0) scale(1.08); opacity: .20; }
+  100% { transform: translate3d(-52vw, -5vh, 0) scale(1.16); opacity: 0; }
+}
