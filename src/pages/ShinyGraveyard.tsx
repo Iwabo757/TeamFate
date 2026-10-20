@@ -33,7 +33,7 @@ export default function ShinyGraveyard() {
     // Try autoplay on page entry. Browsers may block audio until the visitor interacts.
     const audio = audioRef.current;
     if (audio) {
-      audio.volume = 0.2;
+      audio.volume = musicVolume * 0.2; // UI volume scales from 0–100% of the capped, comfortable maximum (20% browser volume).
       const playAttempt = audio.play();
       if (playAttempt) {
         playAttempt
@@ -59,7 +59,7 @@ export default function ShinyGraveyard() {
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = musicVolume;
+      audioRef.current.volume = musicVolume * 0.2;
       audioRef.current.muted = musicMuted;
     }
   }, [musicVolume, musicMuted]);
