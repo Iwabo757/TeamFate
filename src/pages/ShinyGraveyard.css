@@ -582,3 +582,53 @@ body.shiny-graveyard-theme .page-title {
   86% { transform: translate3d(-36vw, -2vh, 0) scale(1.08); opacity: .20; }
   100% { transform: translate3d(-52vw, -5vh, 0) scale(1.16); opacity: 0; }
 }
+
+
+/* Long memorial stories can expand without changing the tombstone design. */
+.grave-marker-story-wrap {
+  min-width: 0;
+}
+.grave-marker-story-wrap:not(.is-expanded) .grave-marker-story {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.grave-marker-toggle {
+  position: relative;
+  z-index: 1;
+  margin-top: 8px;
+  padding: 5px 9px;
+  color: #d7b7f5;
+  background: rgba(103, 66, 138, .22);
+  border: 1px solid rgba(190, 151, 226, .32);
+  border-radius: 7px;
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.grave-marker-toggle:hover {
+  background: rgba(128, 84, 167, .32);
+  border-color: rgba(212, 178, 246, .55);
+}
+.grave-marker-toggle:focus-visible {
+  outline: 2px solid #c7a2f5;
+  outline-offset: 3px;
+}
+
+
+/* Story length counter on the memorial submission form */
+.graveyard-story-count {
+  align-self: flex-end;
+  color: #a99bb7;
+  font-size: .82rem;
+  font-weight: 400;
+  text-align: right;
+}
+.graveyard-form textarea {
+  min-height: 180px;
+  resize: vertical;
+}

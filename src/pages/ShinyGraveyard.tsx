@@ -18,6 +18,7 @@ export default function ShinyGraveyard() {
   const [entries, setEntries] = useState<GraveyardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fogVisible, setFogVisible] = useState(true);
+  const [expandedStories, setExpandedStories] = useState<Set<string>>(() => new Set());
   const [, setMessage] = useState("");
 
   useEffect(() => {
@@ -127,7 +128,28 @@ export default function ShinyGraveyard() {
                 <p className="grave-marker-trainer">Lost by {entry.trainer_name}</p>
                 <div className="grave-marker-rule" />
                 <p className="grave-marker-cause">{entry.cause_of_loss}</p>
-                {entry.story && <p className="grave-marker-story">“{entry.story}”</p>}
+                {entry.story && (
+                  <div className={`grave-marker-story-wrap${expandedStories.has(entry.id) ? " is-expanded" : ""}`}>
+                    <p className="grave-marker-story">“{entry.story}”</p>
+                    {entry.story.length > 220 && (
+                      <button
+                        type="button"
+                        className="grave-marker-toggle"
+                        aria-expanded={expandedStories.has(entry.id)}
+                        onClick={() => {
+                          setExpandedStories((current) => {
+                            const next = new Set(current);
+                            if (next.has(entry.id)) next.delete(entry.id);
+                            else next.add(entry.id);
+                            return next;
+                          });
+                        }}
+                      >
+                        {expandedStories.has(entry.id) ? "Collapse story ↑" : "Read full story ↓"}
+                      </button>
+                    )}
+                  </div>
+                )}
                 {entry.encounter_date && (
                   <p className="grave-marker-date">
                     Encountered {new Date(`${entry.encounter_date}T12:00:00`).toLocaleDateString()}

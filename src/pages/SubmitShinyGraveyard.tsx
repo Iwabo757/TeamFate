@@ -6,6 +6,7 @@ import "./ShinyGraveyard.css";
 type PokemonOption = { id: number | string; name: string; region?: string | null };
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_STORY_LENGTH = 10000;
 const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp", "image/gif"];
 
 export default function SubmitShinyGraveyard() {
@@ -115,7 +116,10 @@ export default function SubmitShinyGraveyard() {
         </label>
         <label>Date of encounter <span>(optional)</span><input type="date" value={encounterDate} onChange={(e) => setEncounterDate(e.target.value)} /></label>
         <label>Cause of loss<select value={causeOfLoss} onChange={(e) => setCauseOfLoss(e.target.value)}><option>Fainted</option><option>Fled / ran away</option><option>Poké Balls ran out</option><option>Accidental escape</option><option>Disconnected</option><option>Other cruel fate</option></select></label>
-        <label className="graveyard-form-wide">The story <span>(optional)</span><textarea value={story} onChange={(e) => setStory(e.target.value)} maxLength={1500} rows={4} placeholder="Tell us how this shiny met its untimely end…" /></label>
+        <label className="graveyard-form-wide">The story <span>(optional)</span>
+          <textarea value={story} onChange={(e) => setStory(e.target.value)} maxLength={MAX_STORY_LENGTH} rows={8} placeholder="Tell us how this shiny met its untimely end…" />
+          <small className="graveyard-story-count">{story.length.toLocaleString()} / {MAX_STORY_LENGTH.toLocaleString()} characters</small>
+        </label>
         <label className="graveyard-form-wide">Screenshot <span>(optional · PNG, JPG, WEBP, or GIF · 8 MB max)</span><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={(e) => chooseImage(e.target.files?.[0])} />{previewUrl && <img className="graveyard-upload-preview" src={previewUrl} alt="Screenshot preview" />}</label>
         <div className="graveyard-form-footer graveyard-form-wide"><p>Submissions remain private until a staff member approves them.</p><button type="submit" disabled={submitting || !selectedPokemon}>{submitting ? "Placing memorial…" : "Submit Memorial for Review"}</button></div>
         {message && <p className="graveyard-message graveyard-form-wide" role="status">{message}</p>}
