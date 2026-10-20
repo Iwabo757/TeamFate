@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import AddShiny from "./AddShiny";
+import ManageShinies from "./ManageShinies";
+import AdminShinyApprovals from "./AdminShinyApprovals";
 
 type ShinySubmission = {
   id: string;
@@ -11,7 +13,6 @@ type ShinySubmission = {
 };
 
 export default function ShinyDashboard() {
-  const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<ShinySubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState("");
@@ -49,7 +50,6 @@ export default function ShinyDashboard() {
 
   function handleActionChange(value: string) {
     setAction(value);
-    if (value) navigate(value);
   }
 
   return (
@@ -83,11 +83,19 @@ export default function ShinyDashboard() {
           style={{ width: "100%", maxWidth: "420px", padding: "12px", borderRadius: "10px", font: "inherit" }}
         >
           <option value="">Select an action…</option>
-          <option value="/admin/shinies/add">➕ Add Shiny</option>
-          <option value="/admin/shinies">✨ Manage Shinies</option>
-          <option value="/admin/shiny-approvals">📥 Shiny Submissions</option>
+          <option value="add">➕ Add Shiny</option>
+          <option value="manage">✨ Manage Shinies</option>
+          <option value="submissions">📥 Shiny Submissions</option>
         </select>
       </div>
+
+      {action && (
+        <div style={{ marginTop: "20px" }}>
+          {action === "add" && <AddShiny />}
+          {action === "manage" && <ManageShinies />}
+          {action === "submissions" && <AdminShinyApprovals />}
+        </div>
+      )}
 
       <div className="admin-card" style={{ marginTop: "20px" }}>
         <h2 style={{ marginTop: 0 }}>Pending shiny submissions</h2>
