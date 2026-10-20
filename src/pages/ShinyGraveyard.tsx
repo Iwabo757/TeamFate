@@ -21,6 +21,8 @@ export default function ShinyGraveyard() {
   const [expandedStories, setExpandedStories] = useState<Set<string>>(() => new Set());
   const [musicPlaying, setMusicPlaying] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.2);
+  const [musicMuted, setMusicMuted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [, setMessage] = useState("");
 
@@ -31,6 +33,7 @@ export default function ShinyGraveyard() {
     // Try autoplay on page entry. Browsers may block audio until the visitor interacts.
     const audio = audioRef.current;
     if (audio) {
+      audio.volume = 0.2;
       const playAttempt = audio.play();
       if (playAttempt) {
         playAttempt
@@ -53,6 +56,13 @@ export default function ShinyGraveyard() {
       if (audioRef.current) audioRef.current.pause();
     };
   }, []);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = musicVolume;
+      audioRef.current.muted = musicMuted;
+    }
+  }, [musicVolume, musicMuted]);
 
   async function toggleMusic() {
     const audio = audioRef.current;
@@ -102,15 +112,38 @@ export default function ShinyGraveyard() {
         onPause={() => setMusicPlaying(false)}
       />
       <div className="graveyard-music-control-wrap">
-        <button
-          type="button"
-          className="graveyard-music-control"
-          onClick={() => void toggleMusic()}
-          aria-label={musicPlaying ? "Pause Shiny Graveyard music" : "Play Shiny Graveyard music"}
-        >
-          <span aria-hidden="true">{musicPlaying ? "Ⅱ" : "♫"}</span>
-          {musicPlaying ? "Pause music" : autoplayBlocked ? "Play graveyard music" : "Play music"}
-        </button>
+        <div className="graveyard-music-controls">
+          <button
+            type="button"
+            className="graveyard-music-control"
+            onClick={() => void toggleMusic()}
+            aria-label={musicPlaying ? "Pause Shiny Graveyard music" : "Play Shiny Graveyard music"}
+          >
+            <span aria-hidden="true">{musicPlaying ? "Ⅱ" : "♫"}</span>
+            {musicPlaying ? "Pause music" : autoplayBlocked ? "Play graveyard music" : "Play music"}
+          </button>
+          <button
+            type="button"
+            className="graveyard-music-control graveyard-mute-control"
+            onClick={() => setMusicMuted((muted) => !muted)}
+            aria-pressed={musicMuted}
+          >
+            {musicMuted ? "Unmute" : "Mute"}
+          </button>
+        </div>
+        <label className="graveyard-volume-control">
+          <span>Volume</span>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="5"
+            value={musicVolume * 100}
+            onChange={(event) => setMusicVolume(Number(event.target.value) / 100)}
+            aria-label="Graveyard music volume"
+          />
+          <span className="graveyard-volume-value">{Math.round(musicVolume * 100)}%</span>
+        </label>
         {autoplayBlocked && !musicPlaying && (
           <span className="graveyard-music-hint">Your browser blocked autoplay. Press play to start the music.</span>
         )}
