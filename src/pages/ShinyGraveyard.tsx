@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import "./ShinyGraveyard.css";
@@ -19,19 +19,60 @@ export default function ShinyGraveyard() {
   const [loading, setLoading] = useState(true);
   const [fogVisible, setFogVisible] = useState(true);
   const [expandedStories, setExpandedStories] = useState<Set<string>>(() => new Set());
+  const [musicPlaying, setMusicPlaying] = useState(false);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [, setMessage] = useState("");
 
   useEffect(() => {
     document.body.classList.add("shiny-graveyard-theme");
     const fogTimer = window.setTimeout(() => setFogVisible(false), 15000);
 
+    // Try autoplay on page entry. Browsers may block audio until the visitor interacts.
+    const audio = audioRef.current;
+    if (audio) {
+      const playAttempt = audio.play();
+      if (playAttempt) {
+        playAttempt
+          .then(() => {
+            setMusicPlaying(true);
+            setAutoplayBlocked(false);
+          })
+          .catch(() => {
+            setMusicPlaying(false);
+            setAutoplayBlocked(true);
+          });
+      }
+    }
+
     void loadEntries();
 
     return () => {
       document.body.classList.remove("shiny-graveyard-theme");
       window.clearTimeout(fogTimer);
+      if (audioRef.current) audioRef.current.pause();
     };
   }, []);
+
+  async function toggleMusic() {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (musicPlaying) {
+      audio.pause();
+      setMusicPlaying(false);
+      return;
+    }
+
+    try {
+      await audio.play();
+      setMusicPlaying(true);
+      setAutoplayBlocked(false);
+    } catch (error) {
+      console.error("Could not play Shiny Graveyard music:", error);
+      setAutoplayBlocked(true);
+    }
+  }
 
   async function loadEntries() {
     setLoading(true);
@@ -52,6 +93,28 @@ export default function ShinyGraveyard() {
 
   return (
     <div className="graveyard-page">
+      <audio
+        ref={audioRef}
+        src="/audio/in-the-arms-of-fate.mp3"
+        loop
+        preload="auto"
+        onPlay={() => setMusicPlaying(true)}
+        onPause={() => setMusicPlaying(false)}
+      />
+      <div className="graveyard-music-control-wrap">
+        <button
+          type="button"
+          className="graveyard-music-control"
+          onClick={() => void toggleMusic()}
+          aria-label={musicPlaying ? "Pause Shiny Graveyard music" : "Play Shiny Graveyard music"}
+        >
+          <span aria-hidden="true">{musicPlaying ? "Ⅱ" : "♫"}</span>
+          {musicPlaying ? "Pause music" : autoplayBlocked ? "Play graveyard music" : "Play music"}
+        </button>
+        {autoplayBlocked && !musicPlaying && (
+          <span className="graveyard-music-hint">Your browser blocked autoplay. Press play to start the music.</span>
+        )}
+      </div>
       {fogVisible && (
         <div className="graveyard-fog" aria-hidden="true">
           <span className="fog-layer fog-layer-one" />

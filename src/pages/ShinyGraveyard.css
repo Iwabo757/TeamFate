@@ -632,3 +632,48 @@ body.shiny-graveyard-theme .page-title {
   min-height: 180px;
   resize: vertical;
 }
+
+
+/* Graveyard soundtrack controls — styled to match the existing memorial theme. */
+.graveyard-music-control-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  margin: 0 0 10px;
+}
+.graveyard-music-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 10px 15px;
+  color: #f7edff;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 800;
+  border: 1px solid rgba(212, 178, 246, .45);
+  border-radius: 9px;
+  background: linear-gradient(135deg, #67428a, #39234f);
+  box-shadow: 0 6px 22px rgba(78, 40, 109, .25);
+  cursor: pointer;
+}
+.graveyard-music-control:hover {
+  background: linear-gradient(135deg, #8054a7, #4b2d65);
+}
+.graveyard-music-control:focus-visible {
+  outline: 2px solid #d7b7f5;
+  outline-offset: 3px;
+}
+.graveyard-music-hint {
+  max-width: 320px;
+  color: #c5bacf;
+  font-size: .78rem;
+  text-align: right;
+}
+@media (max-width: 700px) {
+  .graveyard-music-control-wrap { align-items: center; margin-bottom: 0; }
+  .graveyard-music-hint { text-align: center; }
+}
