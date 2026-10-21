@@ -620,95 +620,18 @@ body.shiny-graveyard-theme .page-title {
 }
 
 
-/* Story length counter on the memorial submission form */
-.graveyard-story-count {
-  align-self: flex-end;
-  color: #a99bb7;
-  font-size: .82rem;
-  font-weight: 400;
-  text-align: right;
-}
-.graveyard-form textarea {
-  min-height: 180px;
-  resize: vertical;
-}
-
-
-/* Graveyard soundtrack controls — styled to match the existing memorial theme. */
-.graveyard-music-control-wrap {
+/* Keep the expand control visible on stories that are clamped to five lines. */
+.grave-marker-story-wrap {
   position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 7px;
-  margin: 0 0 10px;
+  overflow: visible;
 }
-.graveyard-music-control {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  padding: 10px 15px;
-  color: #f7edff;
-  font: inherit;
-  font-size: .9rem;
-  font-weight: 800;
-  border: 1px solid rgba(212, 178, 246, .45);
-  border-radius: 9px;
-  background: linear-gradient(135deg, #67428a, #39234f);
-  box-shadow: 0 6px 22px rgba(78, 40, 109, .25);
-  cursor: pointer;
+.grave-marker-story-wrap.is-expanded .grave-marker-story {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
 }
-.graveyard-music-control:hover {
-  background: linear-gradient(135deg, #8054a7, #4b2d65);
-}
-.graveyard-music-control:focus-visible {
-  outline: 2px solid #d7b7f5;
-  outline-offset: 3px;
-}
-.graveyard-music-hint {
-  max-width: 320px;
-  color: #c5bacf;
-  font-size: .78rem;
-  text-align: right;
-}
-@media (max-width: 700px) {
-  .graveyard-music-control-wrap { align-items: center; margin-bottom: 0; }
-  .graveyard-music-hint { text-align: center; }
-}
-
-/* Compact volume and mute controls for the graveyard soundtrack. */
-.graveyard-music-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-.graveyard-mute-control {
-  padding-inline: 12px;
-}
-.graveyard-volume-control {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  color: #e6d7f5;
-  font-size: .82rem;
-}
-.graveyard-volume-control input[type="range"] {
-  width: 150px;
-  accent-color: #b58be7;
-  cursor: pointer;
-}
-.graveyard-volume-value {
-  min-width: 3.2em;
-  color: #d7b7f5;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-@media (max-width: 700px) {
-  .graveyard-music-controls, .graveyard-volume-control { justify-content: center; }
-  .graveyard-volume-control input[type="range"] { width: min(150px, 42vw); }
+.grave-marker-toggle {
+  display: inline-block;
+  pointer-events: auto;
 }
