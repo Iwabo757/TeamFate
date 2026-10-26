@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "./team-fate-awards.css";
 import { supabase } from "../lib/supabase"; // Change to your existing Supabase client path.
 
 type Category = { id: string; name: string; description: string | null; voting_open: boolean };
