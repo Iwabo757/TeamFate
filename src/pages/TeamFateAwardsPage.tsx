@@ -24,12 +24,6 @@ type AwardVote = {
   nominee_id: string;
 };
 
-type PublishedWinner = {
-  category_id: string;
-  nominee_id: string;
-  nominee: Nominee;
-};
-
 type AwardRole = "member" | "staff" | "admin";
 
 type Tab = "overview" | "voting" | "hall";
