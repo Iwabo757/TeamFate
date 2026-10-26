@@ -157,47 +157,87 @@ body.team-fate-awards-theme .awards-shade {
   display: none;
 }
 
+
 /* ---------------------------------------------------------
-   HERO
+   AWARDS HERO — COMPACT LAYOUT
 --------------------------------------------------------- */
 
+body.team-fate-awards-theme .fate-awards-page {
+  padding: 0 16px 32px;
+}
+
+body.team-fate-awards-theme .awards-shell {
+  width: min(1500px, 100%);
+  margin: 0 auto;
+}
+
 body.team-fate-awards-theme .awards-hero {
-  padding: clamp(260px, 35vw, 480px) 12px 42px;
+  min-height: 0;
+  padding: 28px 12px 18px;
   text-align: center;
 }
 
 body.team-fate-awards-theme .awards-eyebrow {
-  color: var(--awards-blue);
+  color: #e8c46e;
   font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.22em;
 }
 
 body.team-fate-awards-theme .awards-hero h1 {
-  margin: 14px 0;
-  color: #fff6df;
+  margin: 8px 0;
+  color: #fff0c2;
   font-family: "Barlow Condensed", Impact, sans-serif;
-  font-size: clamp(2.8rem, 8vw, 6rem);
+  font-size: clamp(2rem, 4.5vw, 3.8rem);
   font-weight: 800;
-  line-height: 0.95;
+  line-height: 1;
   letter-spacing: 0.04em;
-  text-shadow: 0 5px 25px rgba(0, 0, 0, 0.85);
+  text-shadow: 0 3px 18px #000;
 }
 
 body.team-fate-awards-theme .awards-hero h1 span {
-  display: block;
-  margin-top: 10px;
-  color: var(--awards-gold);
-  letter-spacing: 0.2em;
+  display: inline;
+  margin-left: 10px;
+  color: #e8bd5b;
+  letter-spacing: 0.12em;
 }
 
 body.team-fate-awards-theme .awards-hero p {
   max-width: 720px;
-  margin: 16px auto 0;
-  color: #e1e7ef;
-  font-size: clamp(1rem, 2vw, 1.2rem);
-  line-height: 1.7;
+  margin: 8px auto 0;
+  color: #e0e5ed;
+  font-size: clamp(0.9rem, 1.5vw, 1.05rem);
+  line-height: 1.5;
 }
+
+/* Keep the content panels close to the hero */
+body.team-fate-awards-theme .awards-panel {
+  margin: 12px 0;
+}
+
+/* The background image fills the page instead of creating a tall hero */
+body.team-fate-awards-theme .fate-awards-page::before {
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Mobile layout */
+@media (max-width: 620px) {
+  body.team-fate-awards-theme .fate-awards-page {
+    padding: 0 10px 24px;
+  }
+
+  body.team-fate-awards-theme .awards-hero {
+    padding: 22px 6px 14px;
+  }
+
+  body.team-fate-awards-theme .awards-hero h1 span {
+    display: block;
+    margin: 4px 0 0;
+  }
+}
+
 
 /* ---------------------------------------------------------
    PANELS AND SECTION HEADINGS
