@@ -50,31 +50,30 @@ type TeamFateAwardsPageProps = {
 
 const AWARD_YEAR = 2026;
 
-/*
- * Replace these placeholder dates with the dates approved by staff.
- * Use the visitor's intended timezone consistently across the backend
- * and frontend. These values are examples, not confirmed event dates.
- */
 const DEFAULT_DATES: AwardDate[] = [
   {
     label: "Nominations Open",
     date: "",
-    description: "The community can nominate deserving trainers.",
+    description:
+      "The community can nominate deserving trainers.",
   },
   {
     label: "Nominations Close",
     date: "",
-    description: "Final chance to submit a nomination.",
+    description:
+      "Final chance to submit a nomination.",
   },
   {
     label: "Voting Begins",
     date: "",
-    description: "Eligible members choose the award winners.",
+    description:
+      "Eligible members choose the award winners.",
   },
   {
     label: "Winner Reveal",
     date: "",
-    description: "The anniversary award winners are announced.",
+    description:
+      "The anniversary award winners are announced.",
   },
 ];
 
@@ -121,10 +120,7 @@ const AWARD_CATEGORIES: AwardCategory[] = [
   },
 ];
 
-/*
- * Add official winners here after they have been confirmed.
- * Leaving this array empty avoids displaying invented winners.
- */
+// Add only confirmed winners here.
 const HALL_OF_FAME: AwardWinner[] = [];
 
 function formatDate(dateString: string): string {
@@ -166,12 +162,18 @@ function getTimeRemaining(dateString: string) {
 
   return {
     expired: false,
-    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    days: Math.floor(
+      difference / (1000 * 60 * 60 * 24)
+    ),
     hours: Math.floor(
       (difference / (1000 * 60 * 60)) % 24
     ),
-    minutes: Math.floor((difference / (1000 * 60)) % 60),
-    seconds: Math.floor((difference / 1000) % 60),
+    minutes: Math.floor(
+      (difference / (1000 * 60)) % 60
+    ),
+    seconds: Math.floor(
+      (difference / 1000) % 60
+    ),
   };
 }
 
@@ -197,19 +199,30 @@ export default function TeamFateAwardsPage({
     Record<string, string>
   >({});
 
-  const [countdown, setCountdown] = useState<ReturnType<
-    typeof getTimeRemaining
-  >>(null);
+  const [countdown, setCountdown] = useState<
+    ReturnType<typeof getTimeRemaining>
+  >(null);
 
   const [notice, setNotice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [staffNotes, setStaffNotes] = useState("");
-  const [reviewedNomination, setReviewedNomination] = useState("");
+  const [reviewedNomination, setReviewedNomination] =
+    useState("");
 
   const nominationDeadline = nominationDates.find((item) =>
     item.label.toLowerCase().includes("nominations close")
   );
+
+  // Enable awards-specific CSS while this page is mounted.
+  // Clean up when the user navigates away.
+  useEffect(() => {
+    document.body.classList.add("team-fate-awards-theme");
+
+    return () => {
+      document.body.classList.remove("team-fate-awards-theme");
+    };
+  }, []);
 
   useEffect(() => {
     const updateCountdown = () => {
@@ -220,14 +233,20 @@ export default function TeamFateAwardsPage({
 
     updateCountdown();
 
-    const intervalId = window.setInterval(updateCountdown, 1000);
+    const intervalId = window.setInterval(
+      updateCountdown,
+      1000
+    );
 
     return () => window.clearInterval(intervalId);
   }, [nominationDeadline?.date]);
 
   const countdownLabel = useMemo(() => {
     if (!countdown) return "Dates coming soon";
-    if (countdown.expired) return "The deadline has passed";
+
+    if (countdown.expired) {
+      return "The deadline has passed";
+    }
 
     return `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
   }, [countdown]);
@@ -239,12 +258,19 @@ export default function TeamFateAwardsPage({
     setNotice("");
 
     if (!currentUser.trim()) {
-      setNotice("Sign in with your Team FATÉ account to nominate a trainer.");
+      setNotice(
+        "Sign in with your Team FATÉ account to nominate a trainer."
+      );
       return;
     }
 
-    if (!nomineeName.trim() || !nominationReason.trim()) {
-      setNotice("Enter a trainer name and explain why they deserve the award.");
+    if (
+      !nomineeName.trim() ||
+      !nominationReason.trim()
+    ) {
+      setNotice(
+        "Enter a trainer name and explain why they deserve the award."
+      );
       return;
     }
 
@@ -266,7 +292,9 @@ export default function TeamFateAwardsPage({
 
       setNomineeName("");
       setNominationReason("");
-      setNotice("Your nomination was submitted successfully.");
+      setNotice(
+        "Your nomination was submitted successfully."
+      );
     } catch (error) {
       setNotice(
         error instanceof Error
@@ -285,7 +313,9 @@ export default function TeamFateAwardsPage({
     setNotice("");
 
     if (!currentUser.trim()) {
-      setNotice("Sign in with your Team FATÉ account to vote.");
+      setNotice(
+        "Sign in with your Team FATÉ account to vote."
+      );
       return;
     }
 
@@ -296,12 +326,14 @@ export default function TeamFateAwardsPage({
       return;
     }
 
-    const completedVotes = Object.entries(selectedVotes).filter(
-      ([, trainer]) => trainer.trim()
-    );
+    const completedVotes = Object.entries(
+      selectedVotes
+    ).filter(([, trainer]) => trainer.trim());
 
     if (completedVotes.length === 0) {
-      setNotice("Choose at least one nominee before submitting your ballot.");
+      setNotice(
+        "Choose at least one nominee before submitting your ballot."
+      );
       return;
     }
 
@@ -311,7 +343,7 @@ export default function TeamFateAwardsPage({
       for (const [categoryId, trainer] of completedVotes) {
         await onSubmitVote({
           categoryId,
-          nomineeName: trainer,
+          nomineeName: trainer.trim(),
         });
       }
 
@@ -326,6 +358,13 @@ export default function TeamFateAwardsPage({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function changeTab(
+    tab: "overview" | "nominate" | "vote" | "hall-of-fame"
+  ) {
+    setActiveTab(tab);
+    setNotice("");
   }
 
   function renderNotice() {
@@ -345,7 +384,6 @@ export default function TeamFateAwardsPage({
   return (
     <main className="fate-awards-page">
       <div className="awards-shell">
-        {/* HERO */}
         <section className="awards-hero">
           <div className="awards-eyebrow">
             ✦ ONE YEAR. ONE TEAM. COUNTLESS MEMORIES. ✦
@@ -371,10 +409,7 @@ export default function TeamFateAwardsPage({
             <button
               type="button"
               className="gold-button"
-              onClick={() => {
-                setActiveTab("nominate");
-                setNotice("");
-              }}
+              onClick={() => changeTab("nominate")}
             >
               Nominate a Trainer
             </button>
@@ -382,17 +417,13 @@ export default function TeamFateAwardsPage({
             <button
               type="button"
               className="outline-gold-button"
-              onClick={() => {
-                setActiveTab("vote");
-                setNotice("");
-              }}
+              onClick={() => changeTab("vote")}
             >
               Cast Your Vote
             </button>
           </div>
         </section>
 
-        {/* NAVIGATION */}
         <nav
           className="awards-tabs"
           aria-label="Anniversary awards sections"
@@ -400,10 +431,7 @@ export default function TeamFateAwardsPage({
           <button
             type="button"
             className={activeTab === "overview" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("overview");
-              setNotice("");
-            }}
+            onClick={() => changeTab("overview")}
           >
             Overview
           </button>
@@ -411,10 +439,7 @@ export default function TeamFateAwardsPage({
           <button
             type="button"
             className={activeTab === "nominate" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("nominate");
-              setNotice("");
-            }}
+            onClick={() => changeTab("nominate")}
           >
             Nominations
           </button>
@@ -422,21 +447,17 @@ export default function TeamFateAwardsPage({
           <button
             type="button"
             className={activeTab === "vote" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("vote");
-              setNotice("");
-            }}
+            onClick={() => changeTab("vote")}
           >
             Voting
           </button>
 
           <button
             type="button"
-            className={activeTab === "hall-of-fame" ? "active" : ""}
-            onClick={() => {
-              setActiveTab("hall-of-fame");
-              setNotice("");
-            }}
+            className={
+              activeTab === "hall-of-fame" ? "active" : ""
+            }
+            onClick={() => changeTab("hall-of-fame")}
           >
             Hall of Fame
           </button>
@@ -444,13 +465,14 @@ export default function TeamFateAwardsPage({
 
         {renderNotice()}
 
-        {/* OVERVIEW */}
         {activeTab === "overview" && (
           <>
             <section className="awards-panel important-dates">
               <div className="section-head">
                 <div>
-                  <span className="section-kicker">THE ROAD TO THE REVEAL</span>
+                  <span className="section-kicker">
+                    THE ROAD TO THE REVEAL
+                  </span>
                   <h2>Important Dates</h2>
                 </div>
 
@@ -459,8 +481,13 @@ export default function TeamFateAwardsPage({
 
               <div className="date-grid">
                 {nominationDates.map((item) => (
-                  <article className="date-card" key={item.label}>
-                    <span className="date-card-label">{item.label}</span>
+                  <article
+                    className="date-card"
+                    key={item.label}
+                  >
+                    <span className="date-card-label">
+                      {item.label}
+                    </span>
                     <strong>{formatDate(item.date)}</strong>
                     <p>{item.description}</p>
                   </article>
@@ -474,6 +501,7 @@ export default function TeamFateAwardsPage({
                   </span>
                   <strong>{countdownLabel}</strong>
                 </div>
+
                 <span className="countdown-icon">⏳</span>
               </div>
             </section>
@@ -481,7 +509,9 @@ export default function TeamFateAwardsPage({
             <section className="awards-panel">
               <div className="section-head">
                 <div>
-                  <span className="section-kicker">FOUR WAYS TO BE LEGENDARY</span>
+                  <span className="section-kicker">
+                    FOUR WAYS TO BE LEGENDARY
+                  </span>
                   <h2>The Anniversary Awards</h2>
                 </div>
               </div>
@@ -492,7 +522,10 @@ export default function TeamFateAwardsPage({
                     className="award-category-card"
                     key={category.id}
                   >
-                    <div className="award-card-art" aria-hidden="true">
+                    <div
+                      className="award-card-art"
+                      aria-hidden="true"
+                    >
                       <span>{category.icon}</span>
                     </div>
 
@@ -500,11 +533,14 @@ export default function TeamFateAwardsPage({
                       <span className="award-subtitle">
                         {category.subtitle}
                       </span>
+
                       <h3>{category.title}</h3>
                       <p>{category.description}</p>
 
                       <details className="award-criteria">
-                        <summary>What this award recognizes</summary>
+                        <summary>
+                          What this award recognizes
+                        </summary>
                         <p>{category.criteria}</p>
                       </details>
 
@@ -512,9 +548,10 @@ export default function TeamFateAwardsPage({
                         type="button"
                         className="outline-gold-button"
                         onClick={() => {
-                          setSelectedNominationCategory(category.id);
-                          setActiveTab("nominate");
-                          setNotice("");
+                          setSelectedNominationCategory(
+                            category.id
+                          );
+                          changeTab("nominate");
                         }}
                       >
                         Nominate
@@ -528,7 +565,9 @@ export default function TeamFateAwardsPage({
             <section className="awards-panel awards-steps">
               <div className="section-head">
                 <div>
-                  <span className="section-kicker">HOW IT WORKS</span>
+                  <span className="section-kicker">
+                    HOW IT WORKS
+                  </span>
                   <h2>From Nomination to Legend</h2>
                 </div>
               </div>
@@ -538,8 +577,8 @@ export default function TeamFateAwardsPage({
                   <span className="step-number">01</span>
                   <h3>Nominate</h3>
                   <p>
-                    Recognize a teammate and explain why they deserve
-                    the award.
+                    Recognize a teammate and explain why they
+                    deserve the award.
                   </p>
                 </article>
 
@@ -547,8 +586,8 @@ export default function TeamFateAwardsPage({
                   <span className="step-number">02</span>
                   <h3>Review</h3>
                   <p>
-                    Staff review submissions and prepare the official
-                    ballot.
+                    Staff review submissions and prepare the
+                    official ballot.
                   </p>
                 </article>
 
@@ -556,8 +595,8 @@ export default function TeamFateAwardsPage({
                   <span className="step-number">03</span>
                   <h3>Vote</h3>
                   <p>
-                    Eligible members vote for their choices in each
-                    category.
+                    Eligible members vote for their choices in
+                    each category.
                   </p>
                 </article>
 
@@ -575,14 +614,16 @@ export default function TeamFateAwardsPage({
             <section className="awards-panel winner-reveal-section">
               <div className="section-head">
                 <div>
-                  <span className="section-kicker">THE LEGENDS WILL BE REMEMBERED</span>
+                  <span className="section-kicker">
+                    THE LEGENDS WILL BE REMEMBERED
+                  </span>
                   <h2>Winner Reveal</h2>
                 </div>
               </div>
 
               <p className="section-description">
-                The official winners will appear here once results
-                have been verified and released.
+                The official winners will appear here once
+                results have been verified and released.
               </p>
 
               <div className="winner-grid">
@@ -591,18 +632,27 @@ export default function TeamFateAwardsPage({
                     className="winner-card winner-pending"
                     key={category.id}
                   >
-                    <div className="winner-medal">{category.icon}</div>
+                    <div className="winner-medal">
+                      {category.icon}
+                    </div>
+
                     <span className="winner-award-label">
                       {category.subtitle}
                     </span>
+
                     <h3>{category.title}</h3>
+
                     <div className="winner-placeholder">
                       <span>?</span>
                     </div>
-                    <p className="winner-name">Winner to be revealed</p>
+
+                    <p className="winner-name">
+                      Winner to be revealed
+                    </p>
+
                     <p className="winner-message">
-                      The next name in Team FATÉ history has yet to be
-                      announced.
+                      The next name in Team FATÉ history has yet
+                      to be announced.
                     </p>
                   </article>
                 ))}
@@ -612,42 +662,46 @@ export default function TeamFateAwardsPage({
             <section className="awards-panel hall-of-fame-preview">
               <div className="section-head">
                 <div>
-                  <span className="section-kicker">A LEGACY THAT LASTS</span>
+                  <span className="section-kicker">
+                    A LEGACY THAT LASTS
+                  </span>
                   <h2>Hall of Fame</h2>
                 </div>
 
                 <button
                   type="button"
                   className="outline-gold-button"
-                  onClick={() => setActiveTab("hall-of-fame")}
+                  onClick={() => changeTab("hall-of-fame")}
                 >
                   View Hall of Fame
                 </button>
               </div>
 
               <p className="section-description">
-                Every anniversary adds another chapter to the history
-                of Team FATÉ. Award winners will remain here for future
-                members to remember.
+                Every anniversary adds another chapter to the
+                history of Team FATÉ. Award winners will remain
+                here for future members to remember.
               </p>
             </section>
           </>
         )}
 
-        {/* NOMINATIONS */}
         {activeTab === "nominate" && (
           <section className="awards-panel nomination-panel">
             <div className="section-head">
               <div>
-                <span className="section-kicker">GIVE A TEAMMATE THEIR MOMENT</span>
+                <span className="section-kicker">
+                  GIVE A TEAMMATE THEIR MOMENT
+                </span>
                 <h2>Submit a Nomination</h2>
               </div>
+
               <span className="section-icon">✍️</span>
             </div>
 
             <p className="section-description">
-              Choose an award, enter the trainer's name, and tell us
-              what makes them deserving of recognition.
+              Choose an award, enter the trainer's name, and
+              tell us what makes them deserving of recognition.
             </p>
 
             <form
@@ -662,12 +716,17 @@ export default function TeamFateAwardsPage({
                 id="nomination-category"
                 value={selectedNominationCategory}
                 onChange={(event) =>
-                  setSelectedNominationCategory(event.target.value)
+                  setSelectedNominationCategory(
+                    event.target.value
+                  )
                 }
                 required
               >
                 {AWARD_CATEGORIES.map((category) => (
-                  <option value={category.id} key={category.id}>
+                  <option
+                    value={category.id}
+                    key={category.id}
+                  >
                     {category.title}
                   </option>
                 ))}
@@ -681,7 +740,9 @@ export default function TeamFateAwardsPage({
                 id="nominee-name"
                 type="text"
                 value={nomineeName}
-                onChange={(event) => setNomineeName(event.target.value)}
+                onChange={(event) =>
+                  setNomineeName(event.target.value)
+                }
                 placeholder="Enter their in-game trainer name"
                 maxLength={80}
                 required
@@ -704,8 +765,9 @@ export default function TeamFateAwardsPage({
               />
 
               <p className="form-help">
-                Keep nominations respectful and specific. Staff may
-                review nominations before they appear on the ballot.
+                Keep nominations respectful and specific. Staff
+                may review nominations before they appear on
+                the ballot.
               </p>
 
               <button
@@ -713,40 +775,52 @@ export default function TeamFateAwardsPage({
                 className="gold-button"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Submit Nomination"}
+                {isSubmitting
+                  ? "Submitting..."
+                  : "Submit Nomination"}
               </button>
             </form>
           </section>
         )}
 
-        {/* VOTING */}
         {activeTab === "vote" && (
           <section className="awards-panel voting-panel">
             <div className="section-head">
               <div>
-                <span className="section-kicker">YOUR VOICE. YOUR TEAM.</span>
+                <span className="section-kicker">
+                  YOUR VOICE. YOUR TEAM.
+                </span>
                 <h2>Cast Your Ballot</h2>
               </div>
+
               <span className="section-icon">🗳️</span>
             </div>
 
             <p className="section-description">
-              Select your choice in each award category. You can leave
-              a category blank if you do not wish to vote in it.
+              Select your choice in each award category. You
+              can leave a category blank if you do not wish
+              to vote in it.
             </p>
 
             <div className="staff-note">
               <strong>Fair voting matters.</strong>
               <p>
-                The official system should enforce one ballot per
-                eligible member per category. Individual votes and
-                live vote totals should not be shown publicly.
+                The official system should enforce one ballot
+                per eligible member per category. Individual
+                votes and live vote totals should not be shown
+                publicly.
               </p>
             </div>
 
-            <form className="awards-form" onSubmit={handleVoteSubmit}>
+            <form
+              className="awards-form"
+              onSubmit={handleVoteSubmit}
+            >
               {AWARD_CATEGORIES.map((category) => (
-                <div className="vote-category" key={category.id}>
+                <div
+                  className="vote-category"
+                  key={category.id}
+                >
                   <label htmlFor={`vote-${category.id}`}>
                     <span>{category.icon}</span>
                     {category.title}
@@ -769,9 +843,9 @@ export default function TeamFateAwardsPage({
               ))}
 
               <p className="form-help">
-                This form expects the backend to validate each nominee
-                against the official ballot. It does not load verified
-                nominees by itself.
+                This form expects the backend to validate each
+                nominee against the official ballot. It does
+                not load verified nominees by itself.
               </p>
 
               <button
@@ -779,20 +853,24 @@ export default function TeamFateAwardsPage({
                 className="gold-button"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Submitting..." : "Submit Ballot"}
+                {isSubmitting
+                  ? "Submitting..."
+                  : "Submit Ballot"}
               </button>
             </form>
           </section>
         )}
 
-        {/* HALL OF FAME */}
         {activeTab === "hall-of-fame" && (
           <section className="awards-panel">
             <div className="section-head">
               <div>
-                <span className="section-kicker">TEAM FATÉ HISTORY</span>
+                <span className="section-kicker">
+                  TEAM FATÉ HISTORY
+                </span>
                 <h2>Hall of Fame</h2>
               </div>
+
               <span className="section-icon">🏆</span>
             </div>
 
@@ -804,15 +882,20 @@ export default function TeamFateAwardsPage({
             {HALL_OF_FAME.length === 0 ? (
               <div className="awards-empty-state">
                 <span className="empty-state-icon">🏆</span>
-                <h3>The Hall of Fame awaits its first legends</h3>
+
+                <h3>
+                  The Hall of Fame awaits its first legends
+                </h3>
+
                 <p>
-                  Official winners will be added here after the
-                  anniversary awards are completed.
+                  Official winners will be added here after
+                  the anniversary awards are completed.
                 </p>
+
                 <button
                   type="button"
                   className="outline-gold-button"
-                  onClick={() => setActiveTab("overview")}
+                  onClick={() => changeTab("overview")}
                 >
                   Back to Awards
                 </button>
@@ -842,8 +925,14 @@ export default function TeamFateAwardsPage({
                     )}
 
                     <h3>{winner.trainerName}</h3>
-                    <p className="winner-name">{winner.categoryTitle}</p>
-                    <p className="winner-message">{winner.message}</p>
+
+                    <p className="winner-name">
+                      {winner.categoryTitle}
+                    </p>
+
+                    <p className="winner-message">
+                      {winner.message}
+                    </p>
                   </article>
                 ))}
               </div>
@@ -851,31 +940,40 @@ export default function TeamFateAwardsPage({
           </section>
         )}
 
-        {/* STAFF REVIEW */}
         {isStaff && (
           <section className="awards-panel review-block">
             <div className="section-head">
               <div>
-                <span className="section-kicker">STAFF ACCESS</span>
+                <span className="section-kicker">
+                  STAFF ACCESS
+                </span>
                 <h2>Awards Review</h2>
               </div>
+
               <span className="section-icon">🛡️</span>
             </div>
 
             <p className="section-description">
-              Staff tools belong behind role checks and authenticated
-              backend endpoints. This section is a starting point for
-              the review workflow.
+              Staff tools must be protected by role checks and
+              authenticated backend endpoints. This section is
+              a starting point for the review workflow.
             </p>
 
             <div className="staff-note">
               <strong>Recommended review workflow</strong>
+
               <ul>
                 <li>Review incoming nominations.</li>
-                <li>Approve or reject nominations with a reason.</li>
+                <li>
+                  Approve or reject nominations with a reason.
+                </li>
                 <li>Publish the verified candidate list.</li>
-                <li>Close voting before verifying the final results.</li>
-                <li>Publish winners and archive the completed year.</li>
+                <li>
+                  Close voting before verifying the final results.
+                </li>
+                <li>
+                  Publish winners and archive the completed year.
+                </li>
               </ul>
             </div>
 
@@ -886,7 +984,9 @@ export default function TeamFateAwardsPage({
             <textarea
               id="staff-review-notes"
               value={staffNotes}
-              onChange={(event) => setStaffNotes(event.target.value)}
+              onChange={(event) =>
+                setStaffNotes(event.target.value)
+              }
               rows={4}
               placeholder="Record internal review notes..."
             />
@@ -906,18 +1006,21 @@ export default function TeamFateAwardsPage({
             />
 
             <p className="form-help">
-              These fields do not save or approve nominations. Connect
-              them to staff-authorized backend actions before use.
+              These fields do not save or approve nominations.
+              Connect them to staff-authorized backend actions
+              before use.
             </p>
 
             {isAdmin && (
               <div className="staff-note">
                 <strong>Administrator controls</strong>
+
                 <p>
-                  Reserve ballot audits, voter identity access, date
-                  configuration, and final result publishing for
-                  authorized administrators. Never expose ballot
-                  identities or private totals to ordinary members.
+                  Reserve ballot audits, voter identity access,
+                  date configuration, and final result publishing
+                  for authorized administrators. Never expose
+                  ballot identities or private totals to ordinary
+                  members.
                 </p>
               </div>
             )}
