@@ -29,6 +29,7 @@ import AdminEvents from "./pages/AdminEvents";
 import AdminPastEvents from "./pages/AdminPastEvents";
 import AdminCurrentEvents from "./pages/AdminCurrentEvents";
 import Events from "./pages/Events";
+import TeamFateAwardsPage from "./pages/TeamFateAwardsPage";
 
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -317,6 +318,18 @@ export default function App() {
       ];
     }
 
+    /* AWARDS */
+
+    if (path.startsWith("/awards")) {
+      return [
+        {
+          label: "Team Faté Awards",
+          path: "/awards",
+          end: true,
+        },
+      ];
+    }
+
     /* EVENTS */
 
     if (
@@ -567,6 +580,10 @@ export default function App() {
                     Events
                   </Link>
 
+                  <Link to="/awards">
+                    Team Faté Awards
+                  </Link>
+
                   <Link to="/bounties">
                     Bounties
                   </Link>
@@ -693,6 +710,10 @@ export default function App() {
 
             <NavLink to="/events">
               Events
+            </NavLink>
+
+            <NavLink to="/awards">
+              Awards
             </NavLink>
 
             <NavLink to="/board">
@@ -892,6 +913,11 @@ export default function App() {
             <Route
               path="/events"
               element={<Events />}
+            />
+
+            <Route
+              path="/awards"
+              element={<TeamFateAwardsPage />}
             />
 
             <Route
