@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
 import "./team-fate-awards.css";
 import { supabase } from "../lib/supabase";
 
@@ -31,11 +30,23 @@ const AWARD_ARTWORK = [
   "/images/awards/teammate-award.png",
   "/images/awards/rising-star-award.png",
 ];
-const STAFF_ROLES = new Set(["admin", "leader", "commander", "officer"]);
+type HeaderSettings = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  year_label: string;
+};
+
+const DEFAULT_HEADER: HeaderSettings = {
+  eyebrow: "ONE YEAR. ONE TEAM. COUNTLESS MEMORIES.",
+  title: "TEAM FATÉ ANNIVERSARY AWARDS",
+  description: "Celebrating the trainers, teammates, and unforgettable moments that made our first year legendary.",
+  year_label: "2026 · FIRST ANNIVERSARY",
+};
 
 export default function TeamFateAwardsPage() {
   const [userId, setUserId] = useState<string | null>(null);
-  const [profileRole, setProfileRole] = useState("member");
+  const [headerSettings, setHeaderSettings] = useState<HeaderSettings>(DEFAULT_HEADER);
   const [categories, setCategories] = useState<Category[]>([]);
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [votes, setVotes] = useState<Record<string, string>>({});
@@ -48,8 +59,6 @@ export default function TeamFateAwardsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const isStaff = STAFF_ROLES.has(profileRole.toLowerCase());
-
   const loadAwards = useCallback(async () => {
     setLoading(true);
     setError("");
@@ -59,8 +68,15 @@ export default function TeamFateAwardsPage() {
       const user = authData.user;
       setUserId(user?.id ?? null);
 
+      const headerResult = await supabase
+        .from("award_page_settings")
+        .select("eyebrow,title,description,year_label")
+        .eq("id", 1)
+        .maybeSingle();
+      if (headerResult.error) throw headerResult.error;
+      setHeaderSettings({ ...DEFAULT_HEADER, ...(headerResult.data ?? {}) });
+
       if (!user) {
-        setProfileRole("member");
         setCategories([]);
         setNominees([]);
         setVotes({});
@@ -68,20 +84,17 @@ export default function TeamFateAwardsPage() {
         return;
       }
 
-      const [profileResult, categoryResult, nomineeResult, voteResult, winnerResult] = await Promise.all([
-        supabase.from("profiles").select("role").eq("id", user.id).maybeSingle(),
+      const [categoryResult, nomineeResult, voteResult, winnerResult] = await Promise.all([
         supabase.from("award_categories").select("id,name,description,display_order,voting_open").order("display_order"),
         supabase.from("award_nominees").select("id,category_id,trainer_name,description,image_url").eq("approved_for_voting", true).order("trainer_name"),
         supabase.rpc("get_my_award_votes"),
         supabase.from("award_winners").select("category_id,nominee_id,award_nominees(id,category_id,trainer_name,description,image_url)"),
       ]);
-      if (profileResult.error) throw profileResult.error;
       if (categoryResult.error) throw categoryResult.error;
       if (nomineeResult.error) throw nomineeResult.error;
       if (voteResult.error) throw voteResult.error;
       if (winnerResult.error) throw winnerResult.error;
 
-      setProfileRole(profileResult.data?.role ?? "member");
       setCategories(categoryResult.data ?? []);
       setNominees(nomineeResult.data ?? []);
       const voteMap: Record<string, string> = {};
@@ -143,14 +156,13 @@ export default function TeamFateAwardsPage() {
       <div className="awards-shade" />
       <div className="awards-shell">
         <header className="awards-hero">
-          <div className="awards-eyebrow">ONE YEAR. ONE TEAM. COUNTLESS MEMORIES.</div>
-          <h1>TEAM FATÉ <span>ANNIVERSARY AWARDS</span></h1>
-          <p>Celebrating the trainers, teammates, and unforgettable moments that made our first year legendary.</p>
-          <div className="awards-hero-year"><span className="awards-hero-year-line" /><span>2026 · FIRST ANNIVERSARY</span><span className="awards-hero-year-line" /></div>
-          <div className="awards-hero-actions">
-            <button className="gold-button" type="button" onClick={() => setActiveTab("vote")}>Cast Your Vote</button>
-            <button className="outline-gold-button" type="button" onClick={() => setActiveTab("hall")}>View Hall of Fame</button>
-            {isStaff && <Link className="outline-gold-button" to="/awards/manage">Manage Awards</Link>}
+          <div className="awards-eyebrow">{headerSettings.eyebrow}</div>
+          <h1>{headerSettings.title}</h1>
+          <p>{headerSettings.description}</p>
+          <div className="awards-hero-year">
+            <span className="awards-hero-year-line" />
+            <span>{headerSettings.year_label}</span>
+            <span className="awards-hero-year-line" />
           </div>
         </header>
 

@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, Navigate } from "react-router-dom";
 import "./team-fate-awards.css";
 import "./AdminAwards.css";
@@ -48,7 +48,21 @@ type WinnerRow = {
   award_nominees: Nominee | Nominee[] | null;
 };
 
-type Tab = "ballots" | "results" | "audit";
+type HeaderSettings = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  year_label: string;
+};
+
+type Tab = "ballots" | "results" | "audit" | "header";
+
+const DEFAULT_HEADER: HeaderSettings = {
+  eyebrow: "ONE YEAR. ONE TEAM. COUNTLESS MEMORIES.",
+  title: "TEAM FATÉ ANNIVERSARY AWARDS",
+  description: "Celebrating the trainers, teammates, and unforgettable moments that made our first year legendary.",
+  year_label: "2026 · FIRST ANNIVERSARY",
+};
 
 const STAFF_ROLES = new Set([
   "admin",
@@ -80,6 +94,8 @@ export default function AdminAwards() {
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [winners, setWinners] = useState<Record<string, Nominee>>({});
   const [audit, setAudit] = useState<AuditRow[]>([]);
+  const [headerSettings, setHeaderSettings] = useState<HeaderSettings>(DEFAULT_HEADER);
+  const [savingHeader, setSavingHeader] = useState(false);
 
   const [auditCategory, setAuditCategory] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("ballots");
@@ -127,6 +143,7 @@ export default function AdminAwards() {
         categoryResult,
         nomineeResult,
         winnerResult,
+        headerResult,
       ] = await Promise.all([
         supabase
           .from("profiles")
@@ -150,13 +167,20 @@ export default function AdminAwards() {
           .select(
             "category_id,nominee_id,award_nominees(id,category_id,trainer_name,description,image_url)",
           ),
+        supabase
+          .from("award_page_settings")
+          .select("eyebrow,title,description,year_label")
+          .eq("id", 1)
+          .maybeSingle(),
       ]);
 
       if (profileResult.error) throw profileResult.error;
       if (categoryResult.error) throw categoryResult.error;
       if (nomineeResult.error) throw nomineeResult.error;
       if (winnerResult.error) throw winnerResult.error;
+      if (headerResult.error) throw headerResult.error;
 
+      setHeaderSettings({ ...DEFAULT_HEADER, ...(headerResult.data ?? {}) });
       const profile = profileResult.data?.role?.trim() || "member";
       setProfileRole(profile);
 
@@ -375,6 +399,29 @@ export default function AdminAwards() {
     }
   }
 
+  async function saveHeaderSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!isAdmin) {
+      setError("Administrator access is required to edit the public header.");
+      return;
+    }
+
+    setSavingHeader(true);
+    setError("");
+    setNotice("");
+    try {
+      const { error: saveError } = await supabase
+        .from("award_page_settings")
+        .upsert({ id: 1, ...headerSettings, updated_at: new Date().toISOString() });
+      if (saveError) throw saveError;
+      setNotice("Public awards header saved.");
+    } catch (err) {
+      setError(getErrorMessage(err, "Header settings could not be saved."));
+    } finally {
+      setSavingHeader(false);
+    }
+  }
+
   if (!loading && (!userId || !isStaff)) {
     return <Navigate to="/awards" replace />;
   }
@@ -448,6 +495,15 @@ export default function AdminAwards() {
               onClick={() => setActiveTab("audit")}
             >
               Admin Audit
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              className={activeTab === "header" ? "active" : ""}
+              onClick={() => setActiveTab("header")}
+            >
+              Public Header
             </button>
           )}
         </nav>
@@ -736,6 +792,46 @@ export default function AdminAwards() {
                     );
                   })}
                 </div>
+              </section>
+            )}
+
+            {activeTab === "header" && isAdmin && (
+              <section className="awards-panel">
+                <div className="section-head">
+                  <div>
+                    <span className="section-kicker">PUBLIC PAGE CUSTOMIZATION</span>
+                    <h2>Edit Awards Header</h2>
+                  </div>
+                  <span className="section-icon">✍️</span>
+                </div>
+                <p className="section-description">
+                  Changes here appear on the public awards page. The duplicate top-row navigation buttons have been removed.
+                </p>
+                <form className="awards-form" onSubmit={(event) => void saveHeaderSettings(event)}>
+                  <div className="vote-category">
+                    <label htmlFor="header-eyebrow">Small heading</label>
+                    <input id="header-eyebrow" value={headerSettings.eyebrow} maxLength={120}
+                      onChange={(event) => setHeaderSettings((s) => ({ ...s, eyebrow: event.target.value }))} required />
+                  </div>
+                  <div className="vote-category">
+                    <label htmlFor="header-title">Main title</label>
+                    <input id="header-title" value={headerSettings.title} maxLength={160}
+                      onChange={(event) => setHeaderSettings((s) => ({ ...s, title: event.target.value }))} required />
+                  </div>
+                  <div className="vote-category">
+                    <label htmlFor="header-description">Description</label>
+                    <textarea id="header-description" value={headerSettings.description} maxLength={500} rows={3}
+                      onChange={(event) => setHeaderSettings((s) => ({ ...s, description: event.target.value }))} required />
+                  </div>
+                  <div className="vote-category">
+                    <label htmlFor="header-year">Anniversary label</label>
+                    <input id="header-year" value={headerSettings.year_label} maxLength={100}
+                      onChange={(event) => setHeaderSettings((s) => ({ ...s, year_label: event.target.value }))} required />
+                  </div>
+                  <button className="gold-button" type="submit" disabled={savingHeader}>
+                    {savingHeader ? "Saving…" : "Save Public Header"}
+                  </button>
+                </form>
               </section>
             )}
 
