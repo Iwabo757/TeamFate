@@ -44,6 +44,26 @@ const DEFAULT_HEADER: HeaderSettings = {
   year_label: "2026 · FIRST ANNIVERSARY",
 };
 
+
+function getCategoryDescription(name: string, fallback: string | null): string {
+  const normalized = name.toLowerCase();
+
+  if (normalized.includes("member of the year") || normalized.includes("mvp")) {
+    return "Recognizes the member who made the biggest overall impact on Team FATÉ through activity, dedication, leadership, and contributions to the team.";
+  }
+  if (normalized.includes("competitive") || normalized.includes("player of the year")) {
+    return "Recognizes the competitive player who stood out through skill, preparation, sportsmanship, and performance in team battles or tournaments.";
+  }
+  if (normalized.includes("teammate")) {
+    return "Recognizes the teammate who consistently supports others, helps build team spirit, and makes Team FATÉ a better community.";
+  }
+  if (normalized.includes("rising star")) {
+    return "Recognizes a newer or up-and-coming member who has shown impressive growth, potential, and enthusiasm for Team FATÉ.";
+  }
+
+  return fallback?.trim() || "Vote for the trainer whose contributions best represent this award.";
+}
+
 export default function TeamFateAwardsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [headerSettings, setHeaderSettings] = useState<HeaderSettings>(DEFAULT_HEADER);
@@ -218,32 +238,153 @@ export default function TeamFateAwardsPage() {
               </section>
             </>}
 
-            {activeTab === "vote" && <section className="awards-panel voting-panel">
-              <div className="section-head"><div><span className="section-kicker">YOUR VOICE. YOUR TEAM.</span><h2>Cast Your Ballot</h2></div><span className="section-icon">🗳️</span></div>
-              <p className="section-description">Choose one trainer for each open award. You may leave a category blank. Each member gets one vote per category.</p>
-              <div className="staff-note"><strong>Fair voting matters.</strong><p>Every vote is private. The database prevents duplicate votes in a category.</p></div>
-              <form className="awards-form" onSubmit={(event) => void submitBallot(event)}>
-                {categories.map((category, index) => {
-                  const categoryNominees = nominees.filter((nominee) => nominee.category_id === category.id);
-                  const alreadyVoted = Boolean(votes[category.id]);
-                  const term = (search[category.id] ?? "").trim().toLowerCase();
-                  const filtered = categoryNominees.filter((nominee) => nominee.trainer_name.toLowerCase().includes(term));
-                  return <div className="vote-category" key={category.id}>
-                    <label htmlFor={`award-search-${category.id}`}><span>{AWARD_ICONS[index % AWARD_ICONS.length]}</span> {category.name}</label>
-                    <p className="form-help">{alreadyVoted ? "Your vote has been submitted." : category.voting_open ? "Voting is open." : "Voting is closed."}</p>
-                    {alreadyVoted ? <div className="staff-note">Your vote in this category has already been recorded.</div> : <>
-                      <input id={`award-search-${category.id}`} type="search" placeholder="Search eligible trainers…" value={search[category.id] ?? ""} onChange={(event) => setSearch((prev) => ({ ...prev, [category.id]: event.target.value }))} disabled={!category.voting_open} />
-                      <select aria-label={`Choose a trainer for ${category.name}`} value={choices[category.id] ?? ""} onChange={(event) => setChoices((prev) => ({ ...prev, [category.id]: event.target.value }))} disabled={!category.voting_open}>
-                        <option value="">Select a trainer…</option>
-                        {filtered.map((nominee) => <option key={nominee.id} value={nominee.id}>{nominee.trainer_name}</option>)}
-                      </select>
-                      {category.voting_open && filtered.length === 0 && <p className="form-help">No eligible trainers match that search.</p>}
-                    </>}
-                  </div>;
-                })}
-                <button type="submit" className="gold-button" disabled={busy || !categories.some((c) => c.voting_open && !votes[c.id] && Boolean(choices[c.id]))}>{busy ? "Submitting…" : "Submit Ballot"}</button>
-              </form>
-            </section>}
+            {activeTab === "vote" && (
+              <section className="awards-panel voting-panel">
+                <div className="section-head">
+                  <div>
+                    <span className="section-kicker">YOUR VOICE. YOUR TEAM.</span>
+                    <h2>Cast Your Ballot</h2>
+                  </div>
+                  <span className="section-icon">🗳️</span>
+                </div>
+
+                <p className="section-description">
+                  Choose one trainer for each open award. Start typing a trainer's name
+                  and select them from the suggestions. You may leave a category blank.
+                  Each member gets one vote per category.
+                </p>
+
+                <div className="staff-note">
+                  <strong>Fair voting matters.</strong>
+                  <p>Every vote is private. The database prevents duplicate votes in a category.</p>
+                </div>
+
+                <form className="awards-form" onSubmit={(event) => void submitBallot(event)}>
+                  {categories.map((category, index) => {
+                    const categoryNominees = nominees.filter(
+                      (nominee) => nominee.category_id === category.id,
+                    );
+                    const alreadyVoted = Boolean(votes[category.id]);
+                    const query = (search[category.id] ?? "").trim().toLowerCase();
+                    const selectedNominee = categoryNominees.find(
+                      (nominee) => nominee.id === choices[category.id],
+                    );
+                    const filtered = categoryNominees
+                      .filter((nominee) => nominee.trainer_name.toLowerCase().includes(query))
+                      .slice(0, 8);
+                    const categoryDescription = getCategoryDescription(category.name, category.description);
+
+                    return (
+                      <div className="vote-category" key={category.id}>
+                        <label htmlFor={`award-search-${category.id}`}>
+                          <span>{AWARD_ICONS[index % AWARD_ICONS.length]}</span> {category.name}
+                        </label>
+                        <p className="award-vote-description">{categoryDescription}</p>
+                        <p className="form-help">
+                          {alreadyVoted
+                            ? "Your vote has been submitted."
+                            : category.voting_open
+                              ? "Voting is open."
+                              : "Voting is closed."}
+                        </p>
+
+                        {alreadyVoted ? (
+                          <div className="staff-note">
+                            Your vote in this category has already been recorded.
+                          </div>
+                        ) : !category.voting_open ? (
+                          <div className="staff-note">This ballot is currently closed.</div>
+                        ) : (
+                          <div className="trainer-autocomplete">
+                            <input
+                              id={`award-search-${category.id}`}
+                              type="search"
+                              autoComplete="off"
+                              placeholder="Start typing a trainer's name…"
+                              value={search[category.id] ?? ""}
+                              aria-label={`Search trainers for ${category.name}`}
+                              aria-autocomplete="list"
+                              aria-expanded={Boolean(query && !selectedNominee && filtered.length)}
+                              onChange={(event) => {
+                                const value = event.target.value;
+                                setSearch((prev) => ({ ...prev, [category.id]: value }));
+                                setChoices((prev) => ({ ...prev, [category.id]: "" }));
+                              }}
+                            />
+
+                            {selectedNominee && (
+                              <div className="trainer-selected">
+                                <span>Selected:</span>
+                                <strong>{selectedNominee.trainer_name}</strong>
+                                <button
+                                  type="button"
+                                  className="trainer-change-button"
+                                  onClick={() => {
+                                    setChoices((prev) => ({ ...prev, [category.id]: "" }));
+                                    setSearch((prev) => ({ ...prev, [category.id]: "" }));
+                                  }}
+                                >
+                                  Change
+                                </button>
+                              </div>
+                            )}
+
+                            {!selectedNominee && query && (
+                              <div className="trainer-suggestions" role="listbox" aria-label={`Trainer suggestions for ${category.name}`}>
+                                {filtered.length ? (
+                                  filtered.map((nominee) => (
+                                    <button
+                                      key={nominee.id}
+                                      type="button"
+                                      className="trainer-suggestion"
+                                      role="option"
+                                      aria-selected={false}
+                                      onClick={() => {
+                                        setChoices((prev) => ({ ...prev, [category.id]: nominee.id }));
+                                        setSearch((prev) => ({ ...prev, [category.id]: nominee.trainer_name }));
+                                      }}
+                                    >
+                                      {nominee.image_url ? (
+                                        <img src={nominee.image_url} alt="" loading="lazy" />
+                                      ) : (
+                                        <span className="trainer-suggestion-avatar" aria-hidden="true">
+                                          {nominee.trainer_name.slice(0, 1).toUpperCase()}
+                                        </span>
+                                      )}
+                                      <span className="trainer-suggestion-name">{nominee.trainer_name}</span>
+                                      <span className="trainer-suggestion-action">Select</span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <p className="trainer-no-results">No eligible trainers match that name.</p>
+                                )}
+                              </div>
+                            )}
+
+                            {!query && !selectedNominee && (
+                              <p className="form-help">Type at least part of a trainer's name to see suggestions.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  <button
+                    type="submit"
+                    className="gold-button"
+                    disabled={busy || !categories.some(
+                      (category) =>
+                        category.voting_open &&
+                        !votes[category.id] &&
+                        Boolean(choices[category.id]),
+                    )}
+                  >
+                    {busy ? "Submitting…" : "Submit Ballot"}
+                  </button>
+                </form>
+              </section>
+            )}
 
             {activeTab === "hall" && <section className="awards-panel"><div className="section-head"><div><span className="section-kicker">TEAM FATÉ HISTORY</span><h2>Hall of Fame</h2></div><span className="section-icon">🏆</span></div>
               {Object.keys(winners).length === 0 ? <div className="awards-empty-state"><span className="empty-state-icon">🏆</span><h3>The Hall of Fame awaits its first legends</h3><p>Official winners will appear here once staff approve the final results.</p></div> : <div className="winner-grid">{categories.filter((category) => winners[category.id]).map((category) => { const winner = winners[category.id]; return <article className="winner-card" key={category.id}><span className="winner-award-label">{category.name}</span>{winner.image_url ? <img className="winner-avatar" src={winner.image_url} alt={`${winner.trainer_name} avatar`} loading="lazy" /> : <div className="winner-placeholder"><span>🏆</span></div>}<h3>{winner.trainer_name}</h3><p className="winner-message">{winner.description ?? "An honored member of Team FATÉ."}</p></article>; })}</div>}
