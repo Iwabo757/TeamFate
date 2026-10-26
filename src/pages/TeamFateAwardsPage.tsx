@@ -94,6 +94,15 @@ export default function TeamFateAwardsPage() {
     }
   }, []);
 
+  // The awards stylesheet is scoped to this body class. Without it, the page
+  // falls back to the site's default styles instead of the anniversary design.
+  useEffect(() => {
+    document.body.classList.add("team-fate-awards-theme");
+    return () => {
+      document.body.classList.remove("team-fate-awards-theme");
+    };
+  }, []);
+
   useEffect(() => { void loadAwards(); }, [loadAwards]);
 
   async function submitBallot(event: FormEvent<HTMLFormElement>) {
