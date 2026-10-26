@@ -345,27 +345,33 @@ body.team-fate-awards-theme .award-category-card:hover {
 }
 
 body.team-fate-awards-theme .award-card-art {
-  display: grid;
-  min-height: 105px;
-  padding: 12px;
-  place-items: center;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  padding: 0;
   overflow: hidden;
+  background: #071326;
+  border-bottom: 1px solid rgba(217, 174, 82, 0.42);
+}
 
-  background:
-    radial-gradient(
-      ellipse at center,
-      rgba(217, 174, 82, 0.19),
-      transparent 68%
-    ),
-    rgba(0, 0, 0, 0.28);
+body.team-fate-awards-theme .award-card-art::after {
+  content: "";
+  position: absolute;
+  inset: 45% 0 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(3, 8, 17, 0.28));
 }
 
 body.team-fate-awards-theme .award-card-art img {
   display: block;
   width: 100%;
-  max-width: 145px;
-  max-height: 115px;
-  object-fit: contain;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
 }
 
 body.team-fate-awards-theme .award-card-icon {
@@ -1017,4 +1023,25 @@ body.team-fate-awards-theme .fate-awards-page button.outline-gold-button,
 body.team-fate-awards-theme .fate-awards-page a.outline-gold-button {
   font-family: Inter, Arial, sans-serif !important;
   font-weight: 700;
+}
+
+
+
+body.team-fate-awards-theme .winner-medal {
+  display: grid;
+  width: min(100%, 220px);
+  aspect-ratio: 16 / 9;
+  margin: 0 auto 12px;
+  overflow: hidden;
+  border: 1px solid rgba(217, 174, 82, 0.48);
+  border-radius: 8px;
+  background: #071326;
+}
+
+body.team-fate-awards-theme .winner-medal img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }

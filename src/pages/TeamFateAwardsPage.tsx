@@ -25,6 +25,12 @@ type WinnerRow = {
 type VoteRow = { category_id: string; nominee_id: string };
 
 const AWARD_ICONS = ["👑", "⚔️", "🤝", "🌟"];
+const AWARD_ARTWORK = [
+  "/images/awards/mvp-award.png",
+  "/images/awards/competitive-player-award.png",
+  "/images/awards/teammate-award.png",
+  "/images/awards/rising-star-award.png",
+];
 const STAFF_ROLES = new Set(["admin", "leader", "commander", "officer"]);
 
 export default function TeamFateAwardsPage() {
@@ -168,7 +174,13 @@ export default function TeamFateAwardsPage() {
                   {categories.map((category, index) => {
                     const winner = winners[category.id];
                     return <article className="award-category-card" key={category.id}>
-                      <div className="award-card-art" aria-hidden="true"><span>{AWARD_ICONS[index % AWARD_ICONS.length]}</span></div>
+                      <div className="award-card-art">
+                        <img
+                          src={AWARD_ARTWORK[index] ?? AWARD_ARTWORK[0]}
+                          alt={`${category.name} award artwork`}
+                          loading="lazy"
+                        />
+                      </div>
                       <div className="award-card-content"><span className="award-subtitle">{index === 0 ? "The MVP Award" : index === 1 ? "The Battle Ace" : index === 2 ? "The Heart of FATÉ" : "The Next Legend"}</span>
                         <h3>{category.name}</h3><p>{category.description ?? "Celebrating an outstanding Team FATÉ member."}</p>
                         <p className="form-help">{winner ? `Winner: ${winner.trainer_name}` : category.voting_open ? "Voting is open." : "Voting is currently closed."}</p>
@@ -180,7 +192,14 @@ export default function TeamFateAwardsPage() {
               </section>
               <section className="awards-panel winner-reveal-section"><div className="section-head"><div><span className="section-kicker">THE LEGENDS WILL BE REMEMBERED</span><h2>Winner Reveal</h2></div></div>
                 <div className="winner-grid">{categories.map((category, index) => { const winner = winners[category.id]; return <article className={`winner-card ${winner ? "" : "winner-pending"}`} key={category.id}>
-                  <div className="winner-medal">{AWARD_ICONS[index % AWARD_ICONS.length]}</div><span className="winner-award-label">{category.name}</span>
+                  <div className="winner-medal">
+                    <img
+                      src={AWARD_ARTWORK[index] ?? AWARD_ARTWORK[0]}
+                      alt=""
+                      aria-hidden="true"
+                      loading="lazy"
+                    />
+                  </div><span className="winner-award-label">{category.name}</span>
                   {winner?.image_url ? <img className="winner-avatar" src={winner.image_url} alt={`${winner.trainer_name} avatar`} loading="lazy" /> : <div className="winner-placeholder"><span>{winner ? "🏆" : "?"}</span></div>}
                   <p className="winner-name">{winner?.trainer_name ?? "Winner to be revealed"}</p><p className="winner-message">{winner?.description ?? "Official results will appear here once verified."}</p>
                 </article>; })}</div>
