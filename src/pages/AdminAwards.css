@@ -1,0 +1,374 @@
+/* TEAM FATÉ Awards management page. Base visual theme comes from team-fate-awards.css. */
+.admin-awards-page {
+  min-height: 100vh;
+  color: var(--award-white, #f5f7fb);
+}
+
+.admin-awards-shell {
+  width: min(1420px, 100%);
+}
+
+.admin-awards-hero {
+  padding-bottom: 28px;
+}
+
+.admin-awards-hero h1 span {
+  display: block;
+}
+
+.admin-awards-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 22px;
+  padding: 8px;
+  border: 1px solid var(--award-border, rgba(212, 175, 55, 0.25));
+  border-radius: 14px;
+  background: rgba(3, 10, 22, 0.88);
+}
+
+.admin-awards-tabs button {
+  flex: 1 1 180px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--award-text, #d9e0eb);
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.admin-awards-tabs button:hover,
+.admin-awards-tabs button.active {
+  border-color: var(--award-border, rgba(212, 175, 55, 0.45));
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--award-gold-light, #ffe39a);
+}
+
+.admin-award-list {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-award-row,
+.admin-result-card {
+  min-width: 0;
+  padding: clamp(16px, 2.5vw, 24px);
+  border: 1px solid var(--award-border, rgba(212, 175, 55, 0.25));
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(10, 23, 42, 0.96), rgba(5, 12, 24, 0.96));
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+
+.admin-award-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.admin-award-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-award-row h3,
+.admin-result-heading h3 {
+  margin: 10px 0 7px;
+  color: var(--award-white, #f5f7fb);
+}
+
+.admin-award-row p,
+.admin-result-heading p {
+  margin: 0 0 8px;
+  color: var(--award-text, #cbd5e1);
+  line-height: 1.55;
+}
+
+.admin-award-row small {
+  color: var(--award-gold-light, #ffe39a);
+}
+
+.admin-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid rgba(212, 175, 55, 0.24);
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.08);
+  color: var(--award-gold-light, #ffe39a);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-status-pill > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.admin-status-pill.is-open {
+  border-color: rgba(60, 210, 140, 0.3);
+  background: rgba(30, 160, 100, 0.12);
+  color: #83efb5;
+}
+
+.admin-status-pill.is-closed {
+  border-color: rgba(160, 175, 195, 0.22);
+  background: rgba(120, 135, 155, 0.1);
+  color: #c1cad8;
+}
+
+.admin-status-pill.is-winner {
+  border-color: rgba(212, 175, 55, 0.42);
+  color: #ffe39a;
+}
+
+.admin-result-card {
+  margin-top: 16px;
+}
+
+.admin-result-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.16);
+}
+
+.admin-published-winner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  border-radius: 12px;
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.admin-published-winner > span {
+  font-size: 1.8rem;
+}
+
+.admin-published-winner div {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-published-winner small {
+  color: var(--award-gold-light, #ffe39a);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.admin-published-winner strong {
+  font-size: 1.1rem;
+}
+
+.admin-warning {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 183, 77, 0.45);
+  border-radius: 10px;
+  background: rgba(255, 152, 0, 0.09);
+  color: #ffd18b;
+  line-height: 1.5;
+}
+
+.admin-ranking-table,
+.admin-audit-table {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.admin-ranking-head,
+.admin-ranking-row {
+  display: grid;
+  grid-template-columns: 54px minmax(120px, 1.2fr) 80px minmax(105px, 0.9fr) minmax(160px, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+}
+
+.admin-ranking-head {
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--award-gold-light, #ffe39a);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-ranking-row {
+  border-bottom: 1px solid rgba(190, 205, 225, 0.1);
+  color: var(--award-text, #d9e0eb);
+}
+
+.admin-ranking-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-rank,
+.admin-points {
+  color: var(--award-gold-light, #ffe39a);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-trainer-name {
+  overflow-wrap: anywhere;
+  color: var(--award-white, #f5f7fb);
+  font-weight: 750;
+}
+
+.review-status {
+  display: inline-block;
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: rgba(160, 175, 195, 0.12);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.review-status.status-approved {
+  background: rgba(30, 160, 100, 0.14);
+  color: #83efb5;
+}
+
+.review-status.status-denied {
+  background: rgba(220, 70, 70, 0.14);
+  color: #ffaaaa;
+}
+
+.review-status.status-pending {
+  background: rgba(212, 175, 55, 0.13);
+  color: #ffe39a;
+}
+
+.admin-denial-reason {
+  display: block;
+  max-width: 220px;
+  margin-top: 5px;
+  color: #ffaaaa;
+  overflow-wrap: anywhere;
+}
+
+.admin-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: center;
+}
+
+.admin-review-actions .gold-button,
+.admin-review-actions .outline-gold-button {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.admin-empty {
+  margin: 16px 0 0;
+  color: var(--award-text, #cbd5e1);
+  line-height: 1.6;
+}
+
+.admin-audit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.admin-audit-controls label {
+  flex-basis: 100%;
+  color: var(--award-gold-light, #ffe39a);
+  font-weight: 750;
+}
+
+.admin-audit-controls select {
+  flex: 1 1 260px;
+  min-height: 44px;
+}
+
+.admin-audit-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(140px, 1fr) 70px;
+  gap: 12px;
+  padding: 11px 10px;
+  border-bottom: 1px solid rgba(190, 205, 225, 0.1);
+  overflow-wrap: anywhere;
+}
+
+.admin-audit-header {
+  color: var(--award-gold-light, #ffe39a);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 850px) {
+  .admin-ranking-head {
+    display: none;
+  }
+
+  .admin-ranking-row {
+    grid-template-columns: 45px minmax(0, 1fr) 65px;
+    gap: 9px;
+    padding: 14px 4px;
+  }
+
+  .admin-ranking-row > span:nth-child(4),
+  .admin-ranking-row > span:nth-child(5) {
+    grid-column: 2 / -1;
+  }
+
+  .admin-review-actions {
+    align-items: flex-start;
+  }
+
+  .admin-audit-header {
+    display: none;
+  }
+
+  .admin-audit-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 7px 12px;
+    padding: 13px 4px;
+  }
+
+  .admin-audit-row span:nth-child(odd) {
+    color: var(--award-gold-light, #ffe39a);
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-award-row,
+  .admin-result-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-award-row > button {
+    width: 100%;
+  }
+
+  .admin-awards-tabs button {
+    flex-basis: 100%;
+  }
+}
