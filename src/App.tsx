@@ -631,9 +631,6 @@ export default function App() {
                     <Link to="/admin">
                       Admin Dashboard
                     </Link>
-                    <Link to="/admin/shiny-graveyard">
-                      Graveyard Review
-                    </Link>
 
                   </div>
                 )}
@@ -702,10 +699,6 @@ export default function App() {
 
             <NavLink to="/shinydex">
               Shiny
-            </NavLink>
-
-            <NavLink to="/shiny-graveyard">
-              Graveyard
             </NavLink>
 
             <NavLink to="/events">
