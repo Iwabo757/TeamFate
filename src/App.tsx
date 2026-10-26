@@ -1031,6 +1031,11 @@ export default function App() {
             />
 
             <Route
+              path="/admin/awards"
+              element={<AdminAwards />}
+            />
+
+            <Route
               path="/admin/season-control"
               element={<SeasonControl />}
             />
@@ -1134,10 +1139,8 @@ export default function App() {
               element={<BountyDashboard />}
             />
 
-            <Route
-              path="/admin/awards"
-              element={<BountyDashboard />}
-            />
+
+
             {/* ADMIN HOMEPAGE */}
 
             <Route
