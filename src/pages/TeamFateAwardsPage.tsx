@@ -211,14 +211,6 @@ export default function TeamFateAwardsPage({
     item.label.toLowerCase().includes("nominations close")
   );
 
-  const votingDate = nominationDates.find((item) =>
-    item.label.toLowerCase().includes("voting begins")
-  );
-
-  const revealDate = nominationDates.find((item) =>
-    item.label.toLowerCase().includes("winner reveal")
-  );
-
   useEffect(() => {
     const updateCountdown = () => {
       setCountdown(
