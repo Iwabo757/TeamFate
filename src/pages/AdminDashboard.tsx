@@ -16,7 +16,9 @@ export default function AdminDashboard() {
         <Link to="/admin/shinywars" className="admin-card">⚔️ Wars Dashboard</Link>
         <Link to="/admin/members" className="admin-card">👥 Manage Members</Link>
         <Link to="/admin-raids" className="admin-card">Raids and Guides Dashboard</Link>
-
+        <Link to="/admin/awards" className="admin-card">
+          🏆 Yearly Awards
+        </Link>
         <Link to="/admin/fate-daily" className="admin-card">
           🔥 Faté Daily
         </Link>

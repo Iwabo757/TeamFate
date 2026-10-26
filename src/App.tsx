@@ -30,6 +30,7 @@ import AdminPastEvents from "./pages/AdminPastEvents";
 import AdminCurrentEvents from "./pages/AdminCurrentEvents";
 import Events from "./pages/Events";
 import TeamFateAwardsPage from "./pages/TeamFateAwardsPage";
+import AdminAwards from "./pages/AdminAwards";
 
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -1133,7 +1134,10 @@ export default function App() {
               element={<BountyDashboard />}
             />
 
-
+            <Route
+              path="/admin/awards"
+              element={<BountyDashboard />}
+            />
             {/* ADMIN HOMEPAGE */}
 
             <Route
