@@ -1,517 +1,943 @@
 
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabase";
+import { useEffect, useMemo, useState } from "react";
 import "./team-fate-awards.css";
 
-type Category = {
+type AwardCategory = {
   id: string;
-  name: string;
-  description: string | null;
-  voting_open: boolean;
+  title: string;
+  subtitle: string;
+  description: string;
+  icon: string;
+  criteria: string;
 };
 
-type Nominee = {
-  id: string;
-  category_id: string;
-  trainer_name: string;
-  description: string | null;
-  image_url: string | null;
+type AwardDate = {
+  label: string;
+  date: string;
+  description: string;
 };
 
-type Role = "member" | "staff" | "admin";
+type NominationPayload = {
+  categoryId: string;
+  nomineeName: string;
+  reason: string;
+};
 
-export default function TeamFateAwardsPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [nominees, setNominees] = useState<Nominee[]>([]);
-  const [role, setRole] = useState<Role>("member");
-  const [votes, setVotes] = useState<Record<string, string>>({});
-  const [choices, setChoices] = useState<Record<string, string>>({});
-  const [rankings, setRankings] = useState<Record<string, any[]>>({});
-  const [winners, setWinners] = useState<Record<string, Nominee>>({});
-  const [audit, setAudit] = useState<any[]>([]);
-  const [auditCategory, setAuditCategory] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [busy, setBusy] = useState(false);
+type VotePayload = {
+  categoryId: string;
+  nomineeName: string;
+};
+
+type AwardWinner = {
+  year: number;
+  categoryId: string;
+  categoryTitle: string;
+  trainerName: string;
+  message: string;
+  spriteUrl?: string;
+};
+
+type TeamFateAwardsPageProps = {
+  currentUser?: string;
+  isStaff?: boolean;
+  isAdmin?: boolean;
+  nominationDates?: AwardDate[];
+  onSubmitNomination?: (
+    nomination: NominationPayload
+  ) => Promise<void>;
+  onSubmitVote?: (vote: VotePayload) => Promise<void>;
+};
+
+const AWARD_YEAR = 2026;
+
+/*
+ * Replace these placeholder dates with the dates approved by staff.
+ * Use the visitor's intended timezone consistently across the backend
+ * and frontend. These values are examples, not confirmed event dates.
+ */
+const DEFAULT_DATES: AwardDate[] = [
+  {
+    label: "Nominations Open",
+    date: "",
+    description: "The community can nominate deserving trainers.",
+  },
+  {
+    label: "Nominations Close",
+    date: "",
+    description: "Final chance to submit a nomination.",
+  },
+  {
+    label: "Voting Begins",
+    date: "",
+    description: "Eligible members choose the award winners.",
+  },
+  {
+    label: "Winner Reveal",
+    date: "",
+    description: "The anniversary award winners are announced.",
+  },
+];
+
+const AWARD_CATEGORIES: AwardCategory[] = [
+  {
+    id: "member-of-the-year",
+    title: "Member of the Year",
+    subtitle: "The MVP Award",
+    description:
+      "Recognizes the trainer who made the biggest overall impact on Team FATÉ.",
+    icon: "👑",
+    criteria:
+      "Overall contribution, participation, dedication, and positive impact on the team.",
+  },
+  {
+    id: "competitive-player",
+    title: "Competitive Player of the Year",
+    subtitle: "The Battle Ace",
+    description:
+      "Celebrates the member who stood out through competitive skill and performance.",
+    icon: "⚔️",
+    criteria:
+      "Competitive results, improvement, sportsmanship, and involvement in team battles.",
+  },
+  {
+    id: "teammate-of-the-year",
+    title: "Teammate of the Year",
+    subtitle: "The Heart of FATÉ",
+    description:
+      "Honors the trainer who consistently helps, supports, and brings members together.",
+    icon: "🤝",
+    criteria:
+      "Reliability, helpfulness, teamwork, encouragement, and community spirit.",
+  },
+  {
+    id: "rising-star",
+    title: "Rising Star",
+    subtitle: "The Next Legend",
+    description:
+      "Recognizes a newer or growing member who has made an impressive impact.",
+    icon: "🌟",
+    criteria:
+      "Growth, enthusiasm, engagement, and promising contributions to Team FATÉ.",
+  },
+];
+
+/*
+ * Add official winners here after they have been confirmed.
+ * Leaving this array empty avoids displaying invented winners.
+ */
+const HALL_OF_FAME: AwardWinner[] = [];
+
+function formatDate(dateString: string): string {
+  if (!dateString) return "To be announced";
+
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date to be confirmed";
+  }
+
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function getTimeRemaining(dateString: string) {
+  if (!dateString) return null;
+
+  const target = new Date(dateString).getTime();
+
+  if (Number.isNaN(target)) return null;
+
+  const difference = target - Date.now();
+
+  if (difference <= 0) {
+    return {
+      expired: true,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+    };
+  }
+
+  return {
+    expired: false,
+    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+    hours: Math.floor(
+      (difference / (1000 * 60 * 60)) % 24
+    ),
+    minutes: Math.floor((difference / (1000 * 60)) % 60),
+    seconds: Math.floor((difference / 1000) % 60),
+  };
+}
+
+export default function TeamFateAwardsPage({
+  currentUser = "",
+  isStaff = false,
+  isAdmin = false,
+  nominationDates = DEFAULT_DATES,
+  onSubmitNomination,
+  onSubmitVote,
+}: TeamFateAwardsPageProps) {
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "nominate" | "vote" | "hall-of-fame"
+  >("overview");
+
+  const [selectedNominationCategory, setSelectedNominationCategory] =
+    useState(AWARD_CATEGORIES[0].id);
+
+  const [nomineeName, setNomineeName] = useState("");
+  const [nominationReason, setNominationReason] = useState("");
+
+  const [selectedVotes, setSelectedVotes] = useState<
+    Record<string, string>
+  >({});
+
+  const [countdown, setCountdown] = useState<ReturnType<
+    typeof getTimeRemaining
+  >>(null);
+
   const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [staffNotes, setStaffNotes] = useState("");
+  const [reviewedNomination, setReviewedNomination] = useState("");
+
+  const nominationDeadline = nominationDates.find((item) =>
+    item.label.toLowerCase().includes("nominations close")
+  );
+
+  const votingDate = nominationDates.find((item) =>
+    item.label.toLowerCase().includes("voting begins")
+  );
+
+  const revealDate = nominationDates.find((item) =>
+    item.label.toLowerCase().includes("winner reveal")
+  );
 
   useEffect(() => {
-    document.body.classList.add("team-fate-awards-theme");
-
-    return () => {
-      document.body.classList.remove("team-fate-awards-theme");
+    const updateCountdown = () => {
+      setCountdown(
+        getTimeRemaining(nominationDeadline?.date ?? "")
+      );
     };
-  }, []);
 
-  async function load() {
-    setError("");
+    updateCountdown();
+
+    const intervalId = window.setInterval(updateCountdown, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [nominationDeadline?.date]);
+
+  const countdownLabel = useMemo(() => {
+    if (!countdown) return "Dates coming soon";
+    if (countdown.expired) return "The deadline has passed";
+
+    return `${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`;
+  }, [countdown]);
+
+  async function handleNominationSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+    setNotice("");
+
+    if (!currentUser.trim()) {
+      setNotice("Sign in with your Team FATÉ account to nominate a trainer.");
+      return;
+    }
+
+    if (!nomineeName.trim() || !nominationReason.trim()) {
+      setNotice("Enter a trainer name and explain why they deserve the award.");
+      return;
+    }
+
+    if (!onSubmitNomination) {
+      setNotice(
+        "Nominations are not connected to the backend yet. Connect the nomination API before accepting submissions."
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      const [c, n, r, v, w] = await Promise.all([
-        supabase
-          .from("award_categories")
-          .select("id,name,description,voting_open")
-          .order("display_order"),
-
-        supabase
-          .from("award_nominees")
-          .select(
-            "id,category_id,trainer_name,description,image_url"
-          )
-          .eq("approved_for_voting", true)
-          .order("trainer_name"),
-
-        supabase.rpc("get_my_award_role"),
-        supabase.rpc("get_my_award_votes"),
-
-        supabase
-          .from("award_winners")
-          .select(
-            "category_id,award_nominees(id,category_id,trainer_name,description,image_url)"
-          ),
-      ]);
-
-      if (c.error) throw c.error;
-      if (n.error) throw n.error;
-      if (r.error) throw r.error;
-      if (v.error) throw v.error;
-      if (w.error) throw w.error;
-
-      setCategories(c.data || []);
-      setNominees(n.data || []);
-      setRole(r.data || "member");
-
-      setCategoryId((old) => old || c.data?.[0]?.id || "");
-
-      const voteMap: Record<string, string> = {};
-      (v.data || []).forEach((x: any) => {
-        voteMap[x.category_id] = x.nominee_id;
+      await onSubmitNomination({
+        categoryId: selectedNominationCategory,
+        nomineeName: nomineeName.trim(),
+        reason: nominationReason.trim(),
       });
-      setVotes(voteMap);
 
-      const winnerMap: Record<string, Nominee> = {};
-      (w.data || []).forEach((x: any) => {
-        if (x.award_nominees) {
-          winnerMap[x.category_id] = x.award_nominees;
-        }
-      });
-      setWinners(winnerMap);
-
-      if (r.data === "staff" || r.data === "admin") {
-        const q = await supabase.rpc("get_award_review_rankings");
-        if (q.error) throw q.error;
-
-        const groups: Record<string, any[]> = {};
-        (q.data || []).forEach((x: any) => {
-          (groups[x.category_id] ??= []).push(x);
-        });
-
-        setRankings(groups);
-      }
-    } catch (e: any) {
-      setError(e.message || "Could not load awards.");
+      setNomineeName("");
+      setNominationReason("");
+      setNotice("Your nomination was submitted successfully.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Your nomination could not be submitted. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
-  useEffect(() => {
-    void load();
-  }, []);
-
-  async function castVote() {
-    if (!choices[categoryId]) {
-      setError("Choose a nominee first.");
-      return;
-    }
-
-    setBusy(true);
-    setError("");
-    setNotice("");
-
-    const { error: voteError } = await supabase.rpc(
-      "cast_award_vote",
-      {
-        p_category_id: categoryId,
-        p_nominee_id: choices[categoryId],
-      }
-    );
-
-    setBusy(false);
-
-    if (voteError) {
-      setError(voteError.message);
-      return;
-    }
-
-    setNotice("Your private vote has been recorded.");
-    await load();
-  }
-
-  async function review(
-    category: string,
-    nominee: string,
-    decision: "approve" | "deny"
+  async function handleVoteSubmit(
+    event: React.FormEvent<HTMLFormElement>
   ) {
-    let reason: string | null = null;
-
-    if (decision === "deny") {
-      reason =
-        window
-          .prompt("Reason for denying this candidate?")
-          ?.trim() || null;
-
-      if (!reason) return;
-    }
-
-    setBusy(true);
-    setError("");
+    event.preventDefault();
     setNotice("");
 
-    const { error: reviewError } = await supabase.rpc(
-      "review_award_candidate",
-      {
-        p_category_id: category,
-        p_nominee_id: nominee,
-        p_decision: decision,
-        p_reason: reason,
+    if (!currentUser.trim()) {
+      setNotice("Sign in with your Team FATÉ account to vote.");
+      return;
+    }
+
+    if (!onSubmitVote) {
+      setNotice(
+        "Voting is not connected to the backend yet. Connect the voting API before accepting ballots."
+      );
+      return;
+    }
+
+    const completedVotes = Object.entries(selectedVotes).filter(
+      ([, trainer]) => trainer.trim()
+    );
+
+    if (completedVotes.length === 0) {
+      setNotice("Choose at least one nominee before submitting your ballot.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      for (const [categoryId, trainer] of completedVotes) {
+        await onSubmitVote({
+          categoryId,
+          nomineeName: trainer,
+        });
       }
-    );
 
-    setBusy(false);
-
-    if (reviewError) {
-      setError(reviewError.message);
-      return;
+      setSelectedVotes({});
+      setNotice("Your ballot was submitted successfully.");
+    } catch (error) {
+      setNotice(
+        error instanceof Error
+          ? error.message
+          : "Your ballot could not be submitted. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setNotice(
-      decision === "approve"
-        ? "Winner approved."
-        : "Candidate denied; the next eligible candidate moves into review."
-    );
-
-    await load();
   }
 
-  async function loadAudit() {
-    const { data, error: auditError } = await supabase.rpc(
-      "admin_get_award_ballot_audit",
-      { p_category_id: auditCategory || null }
+  function renderNotice() {
+    if (!notice) return null;
+
+    return (
+      <div
+        className="awards-notice"
+        role="status"
+        aria-live="polite"
+      >
+        {notice}
+      </div>
     );
-
-    if (auditError) {
-      setError(auditError.message);
-      return;
-    }
-
-    setAudit(data || []);
   }
-
-  const active = categories.find((c) => c.id === categoryId);
 
   return (
     <main className="fate-awards-page">
-      <div className="awards-shade" />
-
       <div className="awards-shell">
-        <header className="awards-hero">
+        {/* HERO */}
+        <section className="awards-hero">
           <div className="awards-eyebrow">
-            ONE WISH. ONE FATÉ.
+            ✦ ONE YEAR. ONE TEAM. COUNTLESS MEMORIES. ✦
           </div>
 
           <h1>
-            TEAM FATÉ <span>AWARDS</span>
+            TEAM FATÉ
+            <span>ANNIVERSARY AWARDS</span>
           </h1>
 
-          <p>
-            Celebrating the trainers who make our community unforgettable.
+          <p className="awards-hero-description">
+            Celebrating the trainers, teammates, and unforgettable
+            moments that made our first year legendary.
           </p>
-        </header>
 
-        {(error || notice) && (
-          <div className={`awards-alert ${error ? "error" : "success"}`}>
-            {error || notice}
+          <div className="awards-hero-year">
+            <span className="awards-hero-year-line" />
+            <span>{AWARD_YEAR} · FIRST ANNIVERSARY</span>
+            <span className="awards-hero-year-line" />
+          </div>
+
+          <div className="awards-hero-actions">
             <button
+              type="button"
+              className="gold-button"
               onClick={() => {
-                setError("");
+                setActiveTab("nominate");
                 setNotice("");
               }}
             >
-              ×
+              Nominate a Trainer
+            </button>
+
+            <button
+              type="button"
+              className="outline-gold-button"
+              onClick={() => {
+                setActiveTab("vote");
+                setNotice("");
+              }}
+            >
+              Cast Your Vote
             </button>
           </div>
-        )}
+        </section>
 
-        <section className="awards-panel">
-          <div className="section-head">
-            <div>
-              <small>THE HONORS</small>
-              <h2>Award Categories</h2>
-            </div>
-          </div>
+        {/* NAVIGATION */}
+        <nav
+          className="awards-tabs"
+          aria-label="Anniversary awards sections"
+        >
+          <button
+            type="button"
+            className={activeTab === "overview" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("overview");
+              setNotice("");
+            }}
+          >
+            Overview
+          </button>
 
-          <div className="category-tabs">
-            {categories.map((c) => (
-              <button
-                key={c.id}
-                className={c.id === categoryId ? "active" : ""}
-                onClick={() => setCategoryId(c.id)}
-              >
-                {c.name}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            className={activeTab === "nominate" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("nominate");
+              setNotice("");
+            }}
+          >
+            Nominations
+          </button>
 
-          {active && (
-            <article className="category-content">
-              <div className="category-heading">
+          <button
+            type="button"
+            className={activeTab === "vote" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("vote");
+              setNotice("");
+            }}
+          >
+            Voting
+          </button>
+
+          <button
+            type="button"
+            className={activeTab === "hall-of-fame" ? "active" : ""}
+            onClick={() => {
+              setActiveTab("hall-of-fame");
+              setNotice("");
+            }}
+          >
+            Hall of Fame
+          </button>
+        </nav>
+
+        {renderNotice()}
+
+        {/* OVERVIEW */}
+        {activeTab === "overview" && (
+          <>
+            <section className="awards-panel important-dates">
+              <div className="section-head">
                 <div>
-                  <h3>{active.name}</h3>
-                  <p>{active.description}</p>
+                  <span className="section-kicker">THE ROAD TO THE REVEAL</span>
+                  <h2>Important Dates</h2>
                 </div>
 
-                <span className={active.voting_open ? "open" : "closed"}>
-                  {active.voting_open ? "Voting Open" : "Voting Closed"}
-                </span>
+                <span className="section-icon">⌛</span>
               </div>
 
-              {winners[active.id] && (
-                <div className="winner-banner">
-                  <span>♛ OFFICIAL WINNER</span>
-                  <strong>{winners[active.id].trainer_name}</strong>
+              <div className="date-grid">
+                {nominationDates.map((item) => (
+                  <article className="date-card" key={item.label}>
+                    <span className="date-card-label">{item.label}</span>
+                    <strong>{formatDate(item.date)}</strong>
+                    <p>{item.description}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="awards-countdown">
+                <div>
+                  <span className="countdown-label">
+                    COUNTDOWN TO NOMINATION CLOSE
+                  </span>
+                  <strong>{countdownLabel}</strong>
                 </div>
-              )}
+                <span className="countdown-icon">⏳</span>
+              </div>
+            </section>
 
-              <div className="nominee-grid">
-                {nominees
-                  .filter((n) => n.category_id === active.id)
-                  .map((n) => (
-                    <button
-                      key={n.id}
-                      className={`nominee ${
-                        choices[active.id] === n.id ||
-                        votes[active.id] === n.id
-                          ? "chosen"
-                          : ""
-                      }`}
-                      disabled={!active.voting_open || !!votes[active.id]}
-                      onClick={() =>
-                        setChoices((old) => ({
-                          ...old,
-                          [active.id]: n.id,
-                        }))
-                      }
-                    >
-                      <div className="avatar">
-                        {n.image_url ? (
-                          <img src={n.image_url} alt="" />
-                        ) : (
-                          n.trainer_name.slice(0, 1)
-                        )}
-                      </div>
-
-                      <strong>{n.trainer_name}</strong>
-
-                      {n.description && <small>{n.description}</small>}
-
-                      <em>
-                        {votes[active.id] === n.id
-                          ? "Your vote"
-                          : choices[active.id] === n.id
-                            ? "Selected"
-                            : "Select nominee"}
-                      </em>
-                    </button>
-                  ))}
+            <section className="awards-panel">
+              <div className="section-head">
+                <div>
+                  <span className="section-kicker">FOUR WAYS TO BE LEGENDARY</span>
+                  <h2>The Anniversary Awards</h2>
+                </div>
               </div>
 
-              {!nominees.some((n) => n.category_id === active.id) && (
-                <p className="empty">
-                  Nominees will appear here once added.
-                </p>
-              )}
-
-              {active.voting_open && !votes[active.id] && (
-                <div className="vote-row">
-                  <span>Private ballot · one vote per category</span>
-
-                  <button
-                    className="gold-button"
-                    disabled={busy || !choices[active.id]}
-                    onClick={() => void castVote()}
+              <div className="award-category-grid">
+                {AWARD_CATEGORIES.map((category) => (
+                  <article
+                    className="award-category-card"
+                    key={category.id}
                   >
-                    {busy ? "Submitting…" : "Submit Vote"}
-                  </button>
-                </div>
-              )}
+                    <div className="award-card-art" aria-hidden="true">
+                      <span>{category.icon}</span>
+                    </div>
 
-              {!!votes[active.id] && (
-                <p className="confirmed">
-                  ✓ Your vote has been recorded.
-                </p>
-              )}
-            </article>
-          )}
-        </section>
-
-        <section className="awards-panel">
-          <div className="section-head">
-            <div>
-              <small>THE LEGACY</small>
-              <h2>Hall of Winners</h2>
-            </div>
-          </div>
-
-          <div className="winner-grid">
-            {categories.map((c) => (
-              <div className="winner-card" key={c.id}>
-                <span>♛</span>
-                <small>{c.name}</small>
-                <strong>
-                  {winners[c.id]?.trainer_name || "Winner to be announced"}
-                </strong>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {(role === "staff" || role === "admin") && (
-          <section className="awards-panel">
-            <div className="section-head">
-              <div>
-                <small>RESTRICTED ACCESS</small>
-                <h2>Staff Review Queue</h2>
-              </div>
-
-              <span className="role-tag">No voter identities</span>
-            </div>
-
-            <p className="staff-note">
-              Staff can see weighted rankings and review candidates, but
-              cannot see who voted for whom.
-            </p>
-
-            {categories.map((c) => {
-              const rows = rankings[c.id] || [];
-              const current = rows.find((x) =>
-                ["pending", "queued"].includes(x.review_status)
-              );
-
-              return (
-                <div className="review-block" key={c.id}>
-                  <h3>{c.name}</h3>
-
-                  {rows.map((x) => (
-                    <div
-                      className={`rank-row ${
-                        x.nominee_id === current?.nominee_id
-                          ? "current"
-                          : ""
-                      }`}
-                      key={x.nominee_id}
-                    >
-                      <span>
-                        {nominees.find((n) => n.id === x.nominee_id)
-                          ?.trainer_name || "Nominee"}
+                    <div className="award-card-content">
+                      <span className="award-subtitle">
+                        {category.subtitle}
                       </span>
+                      <h3>{category.title}</h3>
+                      <p>{category.description}</p>
 
-                      <strong>{x.weighted_points} points</strong>
-                      <small>{x.review_status}</small>
-                    </div>
-                  ))}
-
-                  {current && (
-                    <div className="review-actions">
-                      <button
-                        className="gold-button"
-                        disabled={busy}
-                        onClick={() =>
-                          void review(c.id, current.nominee_id, "approve")
-                        }
-                      >
-                        Approve Winner
-                      </button>
+                      <details className="award-criteria">
+                        <summary>What this award recognizes</summary>
+                        <p>{category.criteria}</p>
+                      </details>
 
                       <button
-                        className="deny-button"
-                        disabled={busy}
-                        onClick={() =>
-                          void review(c.id, current.nominee_id, "deny")
-                        }
+                        type="button"
+                        className="outline-gold-button"
+                        onClick={() => {
+                          setSelectedNominationCategory(category.id);
+                          setActiveTab("nominate");
+                          setNotice("");
+                        }}
                       >
-                        Deny &amp; Advance Next
+                        Nominate
                       </button>
                     </div>
-                  )}
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="awards-panel awards-steps">
+              <div className="section-head">
+                <div>
+                  <span className="section-kicker">HOW IT WORKS</span>
+                  <h2>From Nomination to Legend</h2>
                 </div>
-              );
-            })}
-          </section>
+              </div>
+
+              <div className="awards-steps-grid">
+                <article>
+                  <span className="step-number">01</span>
+                  <h3>Nominate</h3>
+                  <p>
+                    Recognize a teammate and explain why they deserve
+                    the award.
+                  </p>
+                </article>
+
+                <article>
+                  <span className="step-number">02</span>
+                  <h3>Review</h3>
+                  <p>
+                    Staff review submissions and prepare the official
+                    ballot.
+                  </p>
+                </article>
+
+                <article>
+                  <span className="step-number">03</span>
+                  <h3>Vote</h3>
+                  <p>
+                    Eligible members vote for their choices in each
+                    category.
+                  </p>
+                </article>
+
+                <article>
+                  <span className="step-number">04</span>
+                  <h3>Celebrate</h3>
+                  <p>
+                    The winners are revealed and added to the
+                    permanent Hall of Fame.
+                  </p>
+                </article>
+              </div>
+            </section>
+
+            <section className="awards-panel winner-reveal-section">
+              <div className="section-head">
+                <div>
+                  <span className="section-kicker">THE LEGENDS WILL BE REMEMBERED</span>
+                  <h2>Winner Reveal</h2>
+                </div>
+              </div>
+
+              <p className="section-description">
+                The official winners will appear here once results
+                have been verified and released.
+              </p>
+
+              <div className="winner-grid">
+                {AWARD_CATEGORIES.map((category) => (
+                  <article
+                    className="winner-card winner-pending"
+                    key={category.id}
+                  >
+                    <div className="winner-medal">{category.icon}</div>
+                    <span className="winner-award-label">
+                      {category.subtitle}
+                    </span>
+                    <h3>{category.title}</h3>
+                    <div className="winner-placeholder">
+                      <span>?</span>
+                    </div>
+                    <p className="winner-name">Winner to be revealed</p>
+                    <p className="winner-message">
+                      The next name in Team FATÉ history has yet to be
+                      announced.
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="awards-panel hall-of-fame-preview">
+              <div className="section-head">
+                <div>
+                  <span className="section-kicker">A LEGACY THAT LASTS</span>
+                  <h2>Hall of Fame</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="outline-gold-button"
+                  onClick={() => setActiveTab("hall-of-fame")}
+                >
+                  View Hall of Fame
+                </button>
+              </div>
+
+              <p className="section-description">
+                Every anniversary adds another chapter to the history
+                of Team FATÉ. Award winners will remain here for future
+                members to remember.
+              </p>
+            </section>
+          </>
         )}
 
-        {role === "admin" && (
-          <section className="awards-panel">
+        {/* NOMINATIONS */}
+        {activeTab === "nominate" && (
+          <section className="awards-panel nomination-panel">
             <div className="section-head">
               <div>
-                <small>ADMIN ONLY</small>
-                <h2>Ballot Audit</h2>
+                <span className="section-kicker">GIVE A TEAMMATE THEIR MOMENT</span>
+                <h2>Submit a Nomination</h2>
               </div>
-
-              <span className="role-tag admin">Full audit access</span>
+              <span className="section-icon">✍️</span>
             </div>
 
-            <p className="staff-note">
-              This screen displays voter identities and individual selections.
+            <p className="section-description">
+              Choose an award, enter the trainer's name, and tell us
+              what makes them deserving of recognition.
             </p>
 
-            <div className="audit-controls">
+            <form
+              className="awards-form"
+              onSubmit={handleNominationSubmit}
+            >
+              <label htmlFor="nomination-category">
+                Award Category
+              </label>
+
               <select
-                value={auditCategory}
-                onChange={(e) => setAuditCategory(e.target.value)}
+                id="nomination-category"
+                value={selectedNominationCategory}
+                onChange={(event) =>
+                  setSelectedNominationCategory(event.target.value)
+                }
+                required
               >
-                <option value="">All categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
+                {AWARD_CATEGORIES.map((category) => (
+                  <option value={category.id} key={category.id}>
+                    {category.title}
                   </option>
                 ))}
               </select>
 
-              <button className="gold-button" onClick={() => void loadAudit()}>
-                Load Audit
+              <label htmlFor="nominee-name">
+                Trainer to Nominate
+              </label>
+
+              <input
+                id="nominee-name"
+                type="text"
+                value={nomineeName}
+                onChange={(event) => setNomineeName(event.target.value)}
+                placeholder="Enter their in-game trainer name"
+                maxLength={80}
+                required
+              />
+
+              <label htmlFor="nomination-reason">
+                Why do they deserve this award?
+              </label>
+
+              <textarea
+                id="nomination-reason"
+                value={nominationReason}
+                onChange={(event) =>
+                  setNominationReason(event.target.value)
+                }
+                placeholder="Share what they have done for Team FATÉ..."
+                rows={6}
+                maxLength={1500}
+                required
+              />
+
+              <p className="form-help">
+                Keep nominations respectful and specific. Staff may
+                review nominations before they appear on the ballot.
+              </p>
+
+              <button
+                type="submit"
+                className="gold-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit Nomination"}
               </button>
+            </form>
+          </section>
+        )}
+
+        {/* VOTING */}
+        {activeTab === "vote" && (
+          <section className="awards-panel voting-panel">
+            <div className="section-head">
+              <div>
+                <span className="section-kicker">YOUR VOICE. YOUR TEAM.</span>
+                <h2>Cast Your Ballot</h2>
+              </div>
+              <span className="section-icon">🗳️</span>
             </div>
 
-            {audit.length > 0 && (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Category</th>
-                      <th>Voter</th>
-                      <th>Voted for</th>
-                      <th>Weight</th>
-                    </tr>
-                  </thead>
+            <p className="section-description">
+              Select your choice in each award category. You can leave
+              a category blank if you do not wish to vote in it.
+            </p>
 
-                  <tbody>
-                    {audit.map((r, i) => (
-                      <tr key={i}>
-                        <td>{r.category_name}</td>
-                        <td>{r.voter_name}</td>
-                        <td>{r.nominee_name}</td>
-                        <td>{r.weight}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="staff-note">
+              <strong>Fair voting matters.</strong>
+              <p>
+                The official system should enforce one ballot per
+                eligible member per category. Individual votes and
+                live vote totals should not be shown publicly.
+              </p>
+            </div>
+
+            <form className="awards-form" onSubmit={handleVoteSubmit}>
+              {AWARD_CATEGORIES.map((category) => (
+                <div className="vote-category" key={category.id}>
+                  <label htmlFor={`vote-${category.id}`}>
+                    <span>{category.icon}</span>
+                    {category.title}
+                  </label>
+
+                  <input
+                    id={`vote-${category.id}`}
+                    type="text"
+                    value={selectedVotes[category.id] ?? ""}
+                    onChange={(event) =>
+                      setSelectedVotes((previous) => ({
+                        ...previous,
+                        [category.id]: event.target.value,
+                      }))
+                    }
+                    placeholder="Enter a verified ballot nominee"
+                    maxLength={80}
+                  />
+                </div>
+              ))}
+
+              <p className="form-help">
+                This form expects the backend to validate each nominee
+                against the official ballot. It does not load verified
+                nominees by itself.
+              </p>
+
+              <button
+                type="submit"
+                className="gold-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit Ballot"}
+              </button>
+            </form>
+          </section>
+        )}
+
+        {/* HALL OF FAME */}
+        {activeTab === "hall-of-fame" && (
+          <section className="awards-panel">
+            <div className="section-head">
+              <div>
+                <span className="section-kicker">TEAM FATÉ HISTORY</span>
+                <h2>Hall of Fame</h2>
+              </div>
+              <span className="section-icon">🏆</span>
+            </div>
+
+            <p className="section-description">
+              A permanent record of the trainers who have earned
+              anniversary honors throughout Team FATÉ's history.
+            </p>
+
+            {HALL_OF_FAME.length === 0 ? (
+              <div className="awards-empty-state">
+                <span className="empty-state-icon">🏆</span>
+                <h3>The Hall of Fame awaits its first legends</h3>
+                <p>
+                  Official winners will be added here after the
+                  anniversary awards are completed.
+                </p>
+                <button
+                  type="button"
+                  className="outline-gold-button"
+                  onClick={() => setActiveTab("overview")}
+                >
+                  Back to Awards
+                </button>
+              </div>
+            ) : (
+              <div className="winner-grid">
+                {HALL_OF_FAME.map((winner) => (
+                  <article
+                    className="winner-card"
+                    key={`${winner.year}-${winner.categoryId}-${winner.trainerName}`}
+                  >
+                    <span className="winner-award-label">
+                      {winner.year} ANNIVERSARY
+                    </span>
+
+                    {winner.spriteUrl ? (
+                      <img
+                        className="winner-avatar"
+                        src={winner.spriteUrl}
+                        alt={`${winner.trainerName}'s trainer sprite`}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="winner-placeholder">
+                        <span>🏆</span>
+                      </div>
+                    )}
+
+                    <h3>{winner.trainerName}</h3>
+                    <p className="winner-name">{winner.categoryTitle}</p>
+                    <p className="winner-message">{winner.message}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* STAFF REVIEW */}
+        {isStaff && (
+          <section className="awards-panel review-block">
+            <div className="section-head">
+              <div>
+                <span className="section-kicker">STAFF ACCESS</span>
+                <h2>Awards Review</h2>
+              </div>
+              <span className="section-icon">🛡️</span>
+            </div>
+
+            <p className="section-description">
+              Staff tools belong behind role checks and authenticated
+              backend endpoints. This section is a starting point for
+              the review workflow.
+            </p>
+
+            <div className="staff-note">
+              <strong>Recommended review workflow</strong>
+              <ul>
+                <li>Review incoming nominations.</li>
+                <li>Approve or reject nominations with a reason.</li>
+                <li>Publish the verified candidate list.</li>
+                <li>Close voting before verifying the final results.</li>
+                <li>Publish winners and archive the completed year.</li>
+              </ul>
+            </div>
+
+            <label htmlFor="staff-review-notes">
+              Internal review notes
+            </label>
+
+            <textarea
+              id="staff-review-notes"
+              value={staffNotes}
+              onChange={(event) => setStaffNotes(event.target.value)}
+              rows={4}
+              placeholder="Record internal review notes..."
+            />
+
+            <label htmlFor="review-nomination-id">
+              Nomination reference
+            </label>
+
+            <input
+              id="review-nomination-id"
+              type="text"
+              value={reviewedNomination}
+              onChange={(event) =>
+                setReviewedNomination(event.target.value)
+              }
+              placeholder="Enter a backend nomination ID"
+            />
+
+            <p className="form-help">
+              These fields do not save or approve nominations. Connect
+              them to staff-authorized backend actions before use.
+            </p>
+
+            {isAdmin && (
+              <div className="staff-note">
+                <strong>Administrator controls</strong>
+                <p>
+                  Reserve ballot audits, voter identity access, date
+                  configuration, and final result publishing for
+                  authorized administrators. Never expose ballot
+                  identities or private totals to ordinary members.
+                </p>
               </div>
             )}
           </section>
         )}
 
         <footer className="awards-footer">
-          <b>TEAM FATÉ</b>
-          <span>ONE WISH. ONE FATÉ.</span>
+          <span>TEAM FATÉ</span>
+          <p>One team. One legacy. Many legends.</p>
+          <span className="footer-year">
+            ANNIVERSARY AWARDS · {AWARD_YEAR}
+          </span>
         </footer>
       </div>
     </main>
