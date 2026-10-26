@@ -234,7 +234,9 @@ export default function AdminAwards() {
     const open = !category.voting_open;
 
     const confirmed = window.confirm(
-      `${open ? "Open" : "Close"} voting for "${category.name}"?`,
+      open
+        ? `Start a NEW ballot for "${category.name}"?\n\nThis will permanently delete all previous votes and reset this category's review statuses. The published Hall of Fame winner will remain unchanged.\n\nThis action cannot be undone.`
+        : `Close voting for "${category.name}"?\n\nVotes will be preserved for review.`,
     );
 
     if (!confirmed) return;
@@ -255,7 +257,9 @@ export default function AdminAwards() {
       if (rpcError) throw rpcError;
 
       setNotice(
-        `${category.name}: voting is now ${open ? "open" : "closed"}.`,
+        open
+          ? `${category.name}: a fresh ballot is open. Previous votes and review statuses were reset; the published winner was preserved.`
+          : `${category.name}: voting is closed. Votes have been preserved for review.`,
       );
 
       await load();
@@ -292,7 +296,7 @@ export default function AdminAwards() {
     if (
       decision === "approve" &&
       !window.confirm(
-        `Publish ${nominee?.trainer_name ?? "this trainer"} as winner of ${category?.name ?? "this award"}?`,
+        `${winners[categoryId] ? "Replace the currently published winner with" : "Publish"} ${nominee?.trainer_name ?? "this trainer"} as winner of ${category?.name ?? "this award"}?`,
       )
     ) {
       return;
@@ -317,7 +321,9 @@ export default function AdminAwards() {
 
       setNotice(
         decision === "approve"
-          ? "Winner approved and published."
+          ? (winners[categoryId]
+              ? "New winner approved and published. The previous winner was replaced for this category."
+              : "Winner approved and published.")
           : "Candidate denied. The next eligible candidate can be reviewed.",
       );
 
@@ -650,7 +656,7 @@ export default function AdminAwards() {
                             }`}
                           >
                             {winner
-                              ? "Winner Published"
+                              ? "Winner Published · Can Be Updated"
                               : category.voting_open
                                 ? "Voting Open"
                                 : "Awaiting Finalization"}
@@ -696,7 +702,6 @@ export default function AdminAwards() {
                               const isTop = Number(row.rank) === topRank;
 
                               const canApprove =
-                                !winner &&
                                 !category.voting_open &&
                                 !tiedTop &&
                                 isTop &&
@@ -751,7 +756,9 @@ export default function AdminAwards() {
                                         >
                                           {rowBusy
                                             ? "Saving…"
-                                            : "Publish Winner"}
+                                            : winner
+                                              ? "Replace Published Winner"
+                                              : "Publish Winner"}
                                         </button>
 
                                         <button
@@ -772,7 +779,6 @@ export default function AdminAwards() {
                                     )}
 
                                     {!canApprove &&
-                                      !winner &&
                                       isTop &&
                                       !tiedTop &&
                                       row.review_status !== "denied" && (

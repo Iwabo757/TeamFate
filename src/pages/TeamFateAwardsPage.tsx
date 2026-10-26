@@ -15,13 +15,36 @@ type Nominee = {
   trainer_name: string;
   description: string | null;
   image_url: string | null;
+  awarded_at?: string | null;
 };
 type WinnerRow = {
   category_id: string;
   nominee_id: string;
+  approved_at: string | null;
+  award_categories: { name: string } | { name: string }[] | null;
   award_nominees: Nominee | Nominee[] | null;
 };
 type VoteRow = { category_id: string; nominee_id: string };
+type WinnerHistoryRow = {
+  history_id: string;
+  category_id: string;
+  category_name: string;
+  nominee_id: string;
+  trainer_name: string;
+  description: string | null;
+  image_url: string | null;
+  awarded_at: string;
+};
+type HallOfFameEntry = {
+  key: string;
+  category_id: string;
+  category_name: string;
+  trainer_name: string;
+  description: string | null;
+  image_url: string | null;
+  awarded_at: string;
+  is_current: boolean;
+};
 
 const AWARD_ICONS = ["👑", "⚔️", "🤝", "🌟"];
 const AWARD_ARTWORK = [
@@ -71,6 +94,7 @@ export default function TeamFateAwardsPage() {
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [votes, setVotes] = useState<Record<string, string>>({});
   const [winners, setWinners] = useState<Record<string, Nominee>>({});
+  const [winnerHistory, setWinnerHistory] = useState<WinnerHistoryRow[]>([]);
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [search, setSearch] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"overview" | "vote" | "hall">("overview");
@@ -101,19 +125,23 @@ export default function TeamFateAwardsPage() {
         setNominees([]);
         setVotes({});
         setWinners({});
+        setWinnerHistory([]);
         return;
       }
 
-      const [categoryResult, nomineeResult, voteResult, winnerResult] = await Promise.all([
+      const [categoryResult, nomineeResult, voteResult, winnerResult, historyResult] = await Promise.all([
         supabase.from("award_categories").select("id,name,description,display_order,voting_open").order("display_order"),
         supabase.from("award_nominees").select("id,category_id,trainer_name,description,image_url").eq("approved_for_voting", true).order("trainer_name"),
         supabase.rpc("get_my_award_votes"),
-        supabase.from("award_winners").select("category_id,nominee_id,award_nominees(id,category_id,trainer_name,description,image_url)"),
+        supabase.from("award_winners").select("category_id,nominee_id,approved_at,award_categories(name),award_nominees(id,category_id,trainer_name,description,image_url)"),
+        supabase.from("award_winner_history").select("history_id,category_id,category_name,nominee_id,trainer_name,description,image_url,awarded_at").order("awarded_at", { ascending: false }),
       ]);
       if (categoryResult.error) throw categoryResult.error;
       if (nomineeResult.error) throw nomineeResult.error;
       if (voteResult.error) throw voteResult.error;
       if (winnerResult.error) throw winnerResult.error;
+      if (historyResult.error) throw historyResult.error;
+      setWinnerHistory((historyResult.data ?? []) as WinnerHistoryRow[]);
 
       setCategories(categoryResult.data ?? []);
       setNominees(nomineeResult.data ?? []);
@@ -123,7 +151,7 @@ export default function TeamFateAwardsPage() {
       const winnerMap: Record<string, Nominee> = {};
       ((winnerResult.data ?? []) as unknown as WinnerRow[]).forEach((row) => {
         const related = Array.isArray(row.award_nominees) ? row.award_nominees[0] : row.award_nominees;
-        if (related) winnerMap[row.category_id] = related;
+        if (related) winnerMap[row.category_id] = { ...related, awarded_at: row.approved_at };
       });
       setWinners(winnerMap);
     } catch (err) {
@@ -386,8 +414,39 @@ export default function TeamFateAwardsPage() {
               </section>
             )}
 
-            {activeTab === "hall" && <section className="awards-panel"><div className="section-head"><div><span className="section-kicker">TEAM FATÉ HISTORY</span><h2>Hall of Fame</h2></div><span className="section-icon">🏆</span></div>
-              {Object.keys(winners).length === 0 ? <div className="awards-empty-state"><span className="empty-state-icon">🏆</span><h3>The Hall of Fame awaits its first legends</h3><p>Official winners will appear here once staff approve the final results.</p></div> : <div className="winner-grid">{categories.filter((category) => winners[category.id]).map((category) => { const winner = winners[category.id]; return <article className="winner-card" key={category.id}><span className="winner-award-label">{category.name}</span>{winner.image_url ? <img className="winner-avatar" src={winner.image_url} alt={`${winner.trainer_name} avatar`} loading="lazy" /> : <div className="winner-placeholder"><span>🏆</span></div>}<h3>{winner.trainer_name}</h3><p className="winner-message">{winner.description ?? "An honored member of Team FATÉ."}</p></article>; })}</div>}
+            {activeTab === "hall" && <section className="awards-panel">
+              <div className="section-head"><div><span className="section-kicker">TEAM FATÉ HISTORY</span><h2>Hall of Fame</h2></div><span className="section-icon">🏆</span></div>
+              <p className="section-description">A permanent record of every published winner, the award they earned, and when they received it.</p>
+              {(() => {
+                const currentEntries: HallOfFameEntry[] = Object.entries(winners).map(([categoryId, winner]) => {
+                  const category = categories.find((item) => item.id === categoryId);
+                  return {
+                    key: `current-${categoryId}-${winner.id}`,
+                    category_id: categoryId,
+                    category_name: category?.name ?? "Team FATÉ Award",
+                    trainer_name: winner.trainer_name,
+                    description: winner.description,
+                    image_url: winner.image_url,
+                    awarded_at: winner.awarded_at ?? "",
+                    is_current: true,
+                  };
+                });
+                const archivedEntries: HallOfFameEntry[] = winnerHistory.map((entry) => ({ ...entry, key: entry.history_id, is_current: false }));
+                const allEntries = [...currentEntries, ...archivedEntries].sort((a, b) => {
+                  const aTime = a.awarded_at ? new Date(a.awarded_at).getTime() : 0;
+                  const bTime = b.awarded_at ? new Date(b.awarded_at).getTime() : 0;
+                  return bTime - aTime;
+                });
+                if (allEntries.length === 0) return <div className="awards-empty-state"><span className="empty-state-icon">🏆</span><h3>The Hall of Fame awaits its first legends</h3><p>Official winners will appear here once staff approve the final results.</p></div>;
+                return <div className="winner-grid">{allEntries.map((entry) => <article className="winner-card" key={entry.key}>
+                  <span className="winner-award-label">{entry.category_name}</span>
+                  {entry.image_url ? <img className="winner-avatar" src={entry.image_url} alt={`${entry.trainer_name} avatar`} loading="lazy" /> : <div className="winner-placeholder"><span>🏆</span></div>}
+                  <h3>{entry.trainer_name}</h3>
+                  <p className="winner-name">{entry.awarded_at ? new Date(entry.awarded_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : entry.is_current ? "Current published winner" : "Award date unavailable"}</p>
+                  <p className="winner-message">{entry.description ?? "An honored member of Team FATÉ."}</p>
+                  {entry.is_current && <span className="admin-status-pill is-winner">Current Winner</span>}
+                </article>)}</div>;
+              })()}
             </section>}
           </>
         )}
