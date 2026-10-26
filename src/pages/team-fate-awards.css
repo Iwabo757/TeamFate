@@ -1,39 +1,134 @@
 
 /* =========================================================
-   AWARDS — FULL-PAGE DARK & GOLD THEME
+   TEAM FATÉ AWARDS
+   Dark Navy & Gold Theme
 ========================================================= */
 
-.fate-awards-page {
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ---------------------------------------------------------
+   GLOBAL AWARDS THEME
+   Activated by TeamFateAwardsPage.tsx on document.body
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme {
+  --awards-gold: #f2cf79;
+  --awards-gold-light: #ffe9ad;
+  --awards-gold-dark: #9d742e;
+  --awards-blue: #55cfff;
+  --awards-text: #f5f0e4;
+  --awards-muted: #c0cad7;
+  --awards-border: rgba(226, 184, 94, 0.32);
+  --awards-panel: rgba(5, 14, 29, 0.88);
+
+  min-height: 100vh;
+  color: var(--awards-text);
+  background-color: #050b17;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(3, 9, 21, 0.25) 0%,
+      rgba(3, 9, 21, 0.45) 40%,
+      rgba(3, 9, 21, 0.8) 100%
+    ),
+    url("/images/team-fate-awards-background.png");
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* ---------------------------------------------------------
+   MAIN NAVIGATION
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .topbar {
+  background: linear-gradient(
+    180deg,
+    rgba(13, 27, 47, 0.98),
+    rgba(4, 11, 23, 0.98)
+  ) !important;
+  border-bottom: 1px solid var(--awards-border) !important;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.35);
+}
+
+body.team-fate-awards-theme .topbar a {
+  color: #f5f0e4;
+}
+
+body.team-fate-awards-theme .topbar a:hover,
+body.team-fate-awards-theme .topbar .nav-links a.active {
+  color: var(--awards-gold-light) !important;
+  background: rgba(190, 143, 48, 0.15);
+  border-color: rgba(242, 207, 121, 0.55);
+}
+
+/* ---------------------------------------------------------
+   SECONDARY NAVIGATION TOOLBAR
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .sub-nav {
+  background: rgba(4, 12, 25, 0.95) !important;
+  border-bottom: 1px solid var(--awards-border) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.24);
+}
+
+body.team-fate-awards-theme .sub-nav a {
+  color: #e7e0d1;
+}
+
+body.team-fate-awards-theme .sub-nav a:hover,
+body.team-fate-awards-theme .sub-nav a.active {
+  color: var(--awards-gold-light) !important;
+  border-color: var(--awards-gold);
+  background: rgba(190, 143, 48, 0.16);
+}
+
+/* ---------------------------------------------------------
+   SHARED SITE CONTENT WRAPPER
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .content {
+  max-width: none;
+  background: transparent !important;
+}
+
+/* ---------------------------------------------------------
+   AWARDS PAGE AND FULL-PAGE BACKGROUND
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .fate-awards-page {
   position: relative;
   isolation: isolate;
   width: 100%;
   max-width: none;
   min-height: 100vh;
   margin: 0;
-  padding: 24px 16px 48px;
+  padding: 0 16px 48px;
   overflow: clip;
 
-  color: #f5f0e4;
+  color: var(--awards-text);
   background: transparent !important;
+  font-family: Inter, system-ui, sans-serif;
 }
 
-/* Full-screen artwork behind the entire awards page */
-.fate-awards-page::before {
+/* The artwork stays behind all Awards content */
+body.team-fate-awards-theme .fate-awards-page::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -2;
   pointer-events: none;
 
-  background-color: #070d19;
   background-image: url("/images/team-fate-awards-background.png");
-  background-position: center center;
+  background-position: center top;
   background-size: cover;
   background-repeat: no-repeat;
+  background-color: #050b17;
 }
 
-/* Dark navy overlay for readability */
-.fate-awards-page::after {
+/* Dark overlay across the full page */
+body.team-fate-awards-theme .fate-awards-page::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -42,85 +137,580 @@
 
   background: linear-gradient(
     180deg,
-    rgba(3, 8, 20, 0.28) 0%,
-    rgba(3, 8, 20, 0.58) 35%,
-    rgba(3, 8, 20, 0.82) 70%,
-    rgba(3, 8, 20, 0.96) 100%
+    rgba(3, 9, 21, 0.22) 0%,
+    rgba(3, 9, 21, 0.55) 38%,
+    rgba(3, 9, 21, 0.86) 75%,
+    rgba(3, 9, 21, 0.96) 100%
   );
 }
 
-/* Keep content above the background layers */
-.fate-awards-page .awards-shell {
+/* Content above the background layers */
+body.team-fate-awards-theme .awards-shell {
   position: relative;
   z-index: 1;
-  width: min(1080px, 100%);
-  margin-inline: auto;
+  width: min(1500px, 100%);
+  margin: 0 auto;
 }
 
-/* Gold-accented award panels */
-.fate-awards-page .awards-panel {
-  border-color: rgba(222, 177, 79, 0.38);
+/* Existing shade element is not needed with the overlay above */
+body.team-fate-awards-theme .awards-shade {
+  display: none;
+}
+
+/* ---------------------------------------------------------
+   HERO
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .awards-hero {
+  padding: clamp(260px, 35vw, 480px) 12px 42px;
+  text-align: center;
+}
+
+body.team-fate-awards-theme .awards-eyebrow {
+  color: var(--awards-blue);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+}
+
+body.team-fate-awards-theme .awards-hero h1 {
+  margin: 14px 0;
+  color: #fff6df;
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: clamp(2.8rem, 8vw, 6rem);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-shadow: 0 5px 25px rgba(0, 0, 0, 0.85);
+}
+
+body.team-fate-awards-theme .awards-hero h1 span {
+  display: block;
+  margin-top: 10px;
+  color: var(--awards-gold);
+  letter-spacing: 0.2em;
+}
+
+body.team-fate-awards-theme .awards-hero p {
+  max-width: 720px;
+  margin: 16px auto 0;
+  color: #e1e7ef;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------
+   PANELS AND SECTION HEADINGS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .awards-panel {
+  margin: 24px 0;
+  padding: clamp(16px, 3vw, 28px);
+  border: 1px solid var(--awards-border);
+  border-radius: 16px;
+
+  background: linear-gradient(
+    140deg,
+    rgba(9, 20, 37, 0.92),
+    rgba(3, 10, 22, 0.95)
+  );
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.32),
+    inset 0 1px rgba(255, 232, 181, 0.04);
+
+  backdrop-filter: blur(10px);
+}
+
+body.team-fate-awards-theme .section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+body.team-fate-awards-theme .section-head small {
+  color: var(--awards-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+body.team-fate-awards-theme .section-head h2,
+body.team-fate-awards-theme .category-heading h3,
+body.team-fate-awards-theme .review-block h3 {
+  margin: 6px 0;
+  color: var(--awards-gold-light);
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+}
+
+/* ---------------------------------------------------------
+   CATEGORY TABS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .category-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+body.team-fate-awards-theme .category-tabs button {
+  padding: 11px 15px;
+  border: 1px solid var(--awards-border);
+  border-radius: 9px;
+  background: rgba(14, 27, 45, 0.94);
+  color: #e9e2d4;
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+body.team-fate-awards-theme .category-tabs button:hover {
+  border-color: var(--awards-gold);
+}
+
+body.team-fate-awards-theme .category-tabs button.active {
+  border-color: var(--awards-gold-light);
   background: linear-gradient(
     135deg,
-    rgba(10, 19, 35, 0.88),
-    rgba(6, 12, 24, 0.94)
+    #ffe9ad,
+    #c89a42
   );
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.35),
-    inset 0 1px rgba(255, 220, 145, 0.06);
-  backdrop-filter: blur(8px);
+  color: #201707;
+  font-weight: 800;
 }
 
-/* Gold section headings */
-.fate-awards-page .section-head h2,
-.fate-awards-page .category-heading h3,
-.fate-awards-page .review-block h3 {
-  color: #f5d58a;
+/* ---------------------------------------------------------
+   CATEGORY CONTENT AND VOTING STATUS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .category-content {
+  padding: clamp(14px, 3vw, 22px);
+  border: 1px solid rgba(226, 184, 94, 0.2);
+  border-radius: 12px;
+  background: rgba(2, 9, 20, 0.58);
 }
 
-/* Gold nominee borders and selection highlights */
-.fate-awards-page .nominee {
-  border-color: rgba(222, 177, 79, 0.24);
+body.team-fate-awards-theme .category-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+body.team-fate-awards-theme .category-heading p,
+body.team-fate-awards-theme .staff-note {
+  color: var(--awards-muted);
+  line-height: 1.65;
+}
+
+body.team-fate-awards-theme .open,
+body.team-fate-awards-theme .closed,
+body.team-fate-awards-theme .role-tag {
+  display: inline-block;
+  height: max-content;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+body.team-fate-awards-theme .open {
+  color: #a5f3c9;
+  background: rgba(32, 158, 103, 0.16);
+}
+
+body.team-fate-awards-theme .closed {
+  color: #b4c0ce;
+  background: rgba(100, 116, 139, 0.18);
+}
+
+body.team-fate-awards-theme .role-tag {
+  border: 1px solid var(--awards-border);
+  color: var(--awards-gold-light);
+  background: rgba(190, 143, 48, 0.1);
+}
+
+/* ---------------------------------------------------------
+   NOMINEE CARDS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .nominee-grid,
+body.team-fate-awards-theme .winner-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, 190px), 1fr)
+  );
+  gap: 14px;
+}
+
+body.team-fate-awards-theme .nominee {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 16px;
+
+  border: 1px solid rgba(226, 184, 94, 0.25);
+  border-radius: 12px;
   background: linear-gradient(
     145deg,
-    rgba(17, 29, 48, 0.94),
-    rgba(5, 11, 22, 0.96)
+    rgba(18, 32, 51, 0.96),
+    rgba(5, 12, 24, 0.96)
   );
+
+  color: var(--awards-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.fate-awards-page .nominee:hover:not(:disabled) {
-  border-color: #e5bd65;
+body.team-fate-awards-theme .nominee:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--awards-gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-.fate-awards-page .nominee.chosen {
-  border-color: #f2c96b;
-  box-shadow: 0 0 18px rgba(242, 201, 107, 0.18);
+body.team-fate-awards-theme .nominee:disabled {
+  cursor: default;
 }
 
-/* Gold winner cards */
-.fate-awards-page .winner-card,
-.fate-awards-page .winner-banner {
-  border-color: rgba(242, 201, 107, 0.48);
+body.team-fate-awards-theme .nominee.chosen {
+  border-color: var(--awards-gold-light);
+  box-shadow: 0 0 18px rgba(226, 184, 94, 0.18);
+}
+
+body.team-fate-awards-theme .avatar {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  overflow: hidden;
+
+  border: 1px solid var(--awards-gold);
+  border-radius: 50%;
+  background: #091326;
+  color: var(--awards-gold-light);
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+body.team-fate-awards-theme .avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+body.team-fate-awards-theme .nominee small {
+  color: var(--awards-muted);
+  line-height: 1.5;
+}
+
+body.team-fate-awards-theme .nominee em {
+  color: var(--awards-gold-light);
+  font-size: 0.75rem;
+  font-style: normal;
+}
+
+body.team-fate-awards-theme .empty {
+  color: var(--awards-muted);
+}
+
+/* ---------------------------------------------------------
+   BUTTONS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .gold-button {
+  padding: 11px 17px;
+  border: 1px solid #ffe4a0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ffe9ad, #c89a42);
+  color: #201707;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+body.team-fate-awards-theme .gold-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fff3cd, #e2ba61);
+}
+
+body.team-fate-awards-theme .gold-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+body.team-fate-awards-theme .deny-button {
+  padding: 11px 15px;
+  border: 1px solid rgba(226, 115, 115, 0.45);
+  border-radius: 9px;
+  background: rgba(100, 29, 37, 0.24);
+  color: #ffd4d4;
+  font: inherit;
+  cursor: pointer;
+}
+
+body.team-fate-awards-theme .vote-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(226, 184, 94, 0.2);
+  color: var(--awards-muted);
+  font-size: 0.85rem;
+}
+
+body.team-fate-awards-theme .confirmed {
+  color: #a5f3c9;
+}
+
+/* ---------------------------------------------------------
+   OFFICIAL WINNERS
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .winner-banner,
+body.team-fate-awards-theme .winner-card {
+  padding: 16px;
+  border: 1px solid rgba(242, 201, 107, 0.44);
+  border-radius: 12px;
   background: linear-gradient(
     135deg,
-    rgba(93, 64, 19, 0.32),
-    rgba(5, 13, 26, 0.9)
+    rgba(108, 76, 27, 0.3),
+    rgba(5, 13, 25, 0.92)
   );
 }
 
-/* Keep the shared site content wrapper transparent on Awards only */
-.content:has(.fate-awards-page) {
-  background: transparent !important;
+body.team-fate-awards-theme .winner-banner {
+  margin-bottom: 16px;
 }
 
-/* Mobile */
+body.team-fate-awards-theme .winner-banner span,
+body.team-fate-awards-theme .winner-card small {
+  display: block;
+  color: var(--awards-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+body.team-fate-awards-theme .winner-banner strong,
+body.team-fate-awards-theme .winner-card strong {
+  display: block;
+  margin-top: 8px;
+  color: #fff4d6;
+}
+
+body.team-fate-awards-theme .winner-card > span {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--awards-gold);
+  font-size: 2rem;
+}
+
+/* ---------------------------------------------------------
+   STAFF REVIEW
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .review-block {
+  padding: 18px 0;
+  border-top: 1px solid rgba(226, 184, 94, 0.18);
+}
+
+body.team-fate-awards-theme .rank-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: rgba(12, 25, 42, 0.76);
+  color: #eee7d8;
+}
+
+body.team-fate-awards-theme .rank-row.current {
+  border-color: rgba(242, 201, 107, 0.52);
+}
+
+body.team-fate-awards-theme .rank-row strong {
+  color: var(--awards-gold-light);
+  white-space: nowrap;
+}
+
+body.team-fate-awards-theme .rank-row small {
+  color: var(--awards-muted);
+  text-transform: capitalize;
+}
+
+body.team-fate-awards-theme .review-actions,
+body.team-fate-awards-theme .audit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ---------------------------------------------------------
+   ADMIN AUDIT TABLE
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .audit-controls select {
+  min-width: 180px;
+  padding: 10px;
+  border: 1px solid var(--awards-border);
+  border-radius: 9px;
+  background: #081427;
+  color: var(--awards-text);
+  font: inherit;
+}
+
+body.team-fate-awards-theme .table-wrap {
+  overflow-x: auto;
+}
+
+body.team-fate-awards-theme table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+body.team-fate-awards-theme th,
+body.team-fate-awards-theme td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(226, 184, 94, 0.17);
+  text-align: left;
+}
+
+body.team-fate-awards-theme th {
+  color: var(--awards-gold);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+body.team-fate-awards-theme td {
+  color: #e6e1d7;
+}
+
+/* ---------------------------------------------------------
+   ALERTS AND FOOTER
+--------------------------------------------------------- */
+
+body.team-fate-awards-theme .awards-alert {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0;
+  padding: 13px 15px;
+  border: 1px solid var(--awards-border);
+  border-radius: 10px;
+  background: rgba(5, 14, 29, 0.95);
+}
+
+body.team-fate-awards-theme .awards-alert.error {
+  border-color: rgba(255, 105, 105, 0.5);
+  color: #ffc3c3;
+}
+
+body.team-fate-awards-theme .awards-alert.success {
+  border-color: rgba(77, 230, 166, 0.35);
+  color: #a9f5d0;
+}
+
+body.team-fate-awards-theme .awards-alert button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+body.team-fate-awards-theme .awards-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 4px;
+  border-top: 1px solid var(--awards-border);
+  color: var(--awards-muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+}
+
+body.team-fate-awards-theme .awards-footer b {
+  color: var(--awards-gold);
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  body.team-fate-awards-theme .awards-hero {
+    padding-top: 300px;
+  }
+}
+
 @media (max-width: 620px) {
-  .fate-awards-page {
-    padding: 16px 10px 32px;
+  body.team-fate-awards-theme {
+    background-attachment: scroll;
   }
 
-  .fate-awards-page::before {
+  body.team-fate-awards-theme .fate-awards-page::before {
     background-position: center top;
     background-size: auto 100vh;
+  }
+
+  body.team-fate-awards-theme .fate-awards-page {
+    padding: 0 10px 32px;
+  }
+
+  body.team-fate-awards-theme .awards-hero {
+    padding: 230px 6px 28px;
+  }
+
+  body.team-fate-awards-theme .awards-panel {
+    padding: 15px 12px;
+  }
+
+  body.team-fate-awards-theme .section-head,
+  body.team-fate-awards-theme .category-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body.team-fate-awards-theme .rank-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  body.team-fate-awards-theme .rank-row small {
+    grid-column: 1 / -1;
+  }
+
+  body.team-fate-awards-theme .awards-footer {
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.team-fate-awards-theme *,
+  body.team-fate-awards-theme *::before,
+  body.team-fate-awards-theme *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
   }
 }
