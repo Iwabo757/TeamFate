@@ -340,6 +340,41 @@ export default function TeamFateAwardsPage() {
     }
   }
 
+
+async function setVotingStatus(category: Category, open: boolean) {
+  setError("");
+  setNotice("");
+
+  if (!userId || !isStaff) {
+    setError("Staff access required.");
+    return;
+  }
+
+  setSubmittingCategory(category.id);
+
+  try {
+    const { error: rpcError } = await supabase.rpc(
+      "set_award_voting_status",
+      {
+        p_category_id: category.id,
+        p_voting_open: open,
+      }
+    );
+
+    if (rpcError) throw rpcError;
+
+    setNotice(
+      `${category.name}: voting ${open ? "opened" : "closed"}.`
+    );
+
+    await loadAwards();
+  } catch (statusError) {
+    setError(getErrorMessage(statusError));
+  } finally {
+    setSubmittingCategory(null);
+  }
+}
+
   function renderAlerts() {
     if (!error && !notice) return null;
 
@@ -466,7 +501,62 @@ export default function TeamFateAwardsPage() {
           <>
             <div className="awards-session-line">
               Signed in{userName ? ` as ${userName}` : ""}.
-              {isStaff && <span> Staff access</span>}
+              
+{isStaff && (
+  <section className="awards-panel review-block">
+    <div className="section-head">
+      <div>
+        <small>STAFF CONTROL PANEL</small>
+        <h2>Ballot Management</h2>
+      </div>
+    </div>
+
+    <p className="section-description">
+      Open or close voting independently for each anniversary award.
+      Changes take effect immediately.
+    </p>
+
+    {categories.map((category) => (
+      <article className="vote-category" key={category.id}>
+        <div className="category-heading">
+          <div>
+            <h3>{category.name}</h3>
+            <p>
+              Members {category.voting_open ? "can" : "cannot"} currently
+              submit votes for this category.
+            </p>
+          </div>
+
+          <span className={category.voting_open ? "open" : "closed"}>
+            {category.voting_open ? "Voting Open" : "Voting Closed"}
+          </span>
+        </div>
+
+        <div className="vote-row">
+          <button
+            type="button"
+            className={
+              category.voting_open
+                ? "outline-gold-button"
+                : "gold-button"
+            }
+            disabled={submittingCategory !== null}
+            onClick={() =>
+              void setVotingStatus(category, !category.voting_open)
+            }
+          >
+            {submittingCategory === category.id
+              ? "Updating..."
+              : category.voting_open
+                ? "Close Ballot"
+                : "Open Ballot"}
+          </button>
+        </div>
+      </article>
+    ))}
+  </section>
+)}
+
             </div>
 
             {activeTab === "overview" && (
