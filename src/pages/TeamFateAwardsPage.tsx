@@ -9,6 +9,12 @@ type Category = {
   display_order: number;
   voting_open: boolean;
 };
+type Member = {
+  id: string;
+  username: string;
+  nickname: string | null;
+  avatar_url: string | null;
+};
 type Nominee = {
   id: string;
   category_id: string;
@@ -92,6 +98,7 @@ export default function TeamFateAwardsPage() {
   const [headerSettings, setHeaderSettings] = useState<HeaderSettings>(DEFAULT_HEADER);
   const [categories, setCategories] = useState<Category[]>([]);
   const [nominees, setNominees] = useState<Nominee[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [votes, setVotes] = useState<Record<string, string>>({});
   const [winners, setWinners] = useState<Record<string, Nominee>>({});
   const [winnerHistory, setWinnerHistory] = useState<WinnerHistoryRow[]>([]);
@@ -123,21 +130,24 @@ export default function TeamFateAwardsPage() {
       if (!user) {
         setCategories([]);
         setNominees([]);
+        setMembers([]);
         setVotes({});
         setWinners({});
         setWinnerHistory([]);
         return;
       }
 
-      const [categoryResult, nomineeResult, voteResult, winnerResult, historyResult] = await Promise.all([
+      const [categoryResult, nomineeResult, memberResult, voteResult, winnerResult, historyResult] = await Promise.all([
         supabase.from("award_categories").select("id,name,description,display_order,voting_open").order("display_order"),
         supabase.from("award_nominees").select("id,category_id,trainer_name,description,image_url").eq("approved_for_voting", true).order("trainer_name"),
+        supabase.from("profiles").select("id,username,nickname,avatar_url").order("nickname", { ascending: true }),
         supabase.rpc("get_my_award_votes"),
         supabase.from("award_winners").select("category_id,nominee_id,approved_at,award_categories(name),award_nominees(id,category_id,trainer_name,description,image_url)"),
         supabase.from("award_winner_history").select("history_id,category_id,category_name,nominee_id,trainer_name,description,image_url,awarded_at").order("awarded_at", { ascending: false }),
       ]);
       if (categoryResult.error) throw categoryResult.error;
       if (nomineeResult.error) throw nomineeResult.error;
+      if (memberResult.error) throw memberResult.error;
       if (voteResult.error) throw voteResult.error;
       if (winnerResult.error) throw winnerResult.error;
       if (historyResult.error) throw historyResult.error;
@@ -145,6 +155,7 @@ export default function TeamFateAwardsPage() {
 
       setCategories(categoryResult.data ?? []);
       setNominees(nomineeResult.data ?? []);
+      setMembers((memberResult.data ?? []) as Member[]);
       const voteMap: Record<string, string> = {};
       ((voteResult.data ?? []) as VoteRow[]).forEach((vote) => { voteMap[vote.category_id] = vote.nominee_id; });
       setVotes(voteMap);
@@ -184,7 +195,7 @@ export default function TeamFateAwardsPage() {
       for (const category of pending) {
         const { error: voteError } = await supabase.rpc("cast_award_vote", {
           p_category_id: category.id,
-          p_nominee_id: choices[category.id],
+          p_profile_id: choices[category.id],
         });
         if (voteError) throw voteError;
       }
@@ -277,7 +288,7 @@ export default function TeamFateAwardsPage() {
                 </div>
 
                 <p className="section-description">
-                  Choose one trainer for each open award. Start typing a trainer's name
+                  Choose any TEAM FATÉ member for each open award. Start typing their name
                   and select them from the suggestions. You may leave a category blank.
                   Each member gets one vote per category.
                 </p>
@@ -289,16 +300,17 @@ export default function TeamFateAwardsPage() {
 
                 <form className="awards-form" onSubmit={(event) => void submitBallot(event)}>
                   {categories.map((category, index) => {
-                    const categoryNominees = nominees.filter(
-                      (nominee) => nominee.category_id === category.id,
-                    );
                     const alreadyVoted = Boolean(votes[category.id]);
                     const query = (search[category.id] ?? "").trim().toLowerCase();
-                    const selectedNominee = categoryNominees.find(
-                      (nominee) => nominee.id === choices[category.id],
+                    const selectedMember = members.find(
+                      (member) => member.id === choices[category.id],
                     );
-                    const filtered = categoryNominees
-                      .filter((nominee) => nominee.trainer_name.toLowerCase().includes(query))
+                    const filtered = members
+                      .filter((member) => {
+                        const displayName = (member.nickname || member.username || "").toLowerCase();
+                        const username = (member.username || "").toLowerCase();
+                        return displayName.includes(query) || username.includes(query);
+                      })
                       .slice(0, 8);
                     const categoryDescription = getCategoryDescription(category.name, category.description);
 
@@ -332,7 +344,7 @@ export default function TeamFateAwardsPage() {
                               value={search[category.id] ?? ""}
                               aria-label={`Search trainers for ${category.name}`}
                               aria-autocomplete="list"
-                              aria-expanded={Boolean(query && !selectedNominee && filtered.length)}
+                              aria-expanded={Boolean(query && !selectedMember && filtered.length)}
                               onChange={(event) => {
                                 const value = event.target.value;
                                 setSearch((prev) => ({ ...prev, [category.id]: value }));
@@ -340,10 +352,10 @@ export default function TeamFateAwardsPage() {
                               }}
                             />
 
-                            {selectedNominee && (
+                            {selectedMember && (
                               <div className="trainer-selected">
                                 <span>Selected:</span>
-                                <strong>{selectedNominee.trainer_name}</strong>
+                                <strong>{selectedMember.nickname || selectedMember.username}</strong>
                                 <button
                                   type="button"
                                   className="trainer-change-button"
@@ -357,29 +369,29 @@ export default function TeamFateAwardsPage() {
                               </div>
                             )}
 
-                            {!selectedNominee && query && (
+                            {!selectedMember && query && (
                               <div className="trainer-suggestions" role="listbox" aria-label={`Trainer suggestions for ${category.name}`}>
                                 {filtered.length ? (
-                                  filtered.map((nominee) => (
+                                  filtered.map((member) => (
                                     <button
-                                      key={nominee.id}
+                                      key={member.id}
                                       type="button"
                                       className="trainer-suggestion"
                                       role="option"
                                       aria-selected={false}
                                       onClick={() => {
-                                        setChoices((prev) => ({ ...prev, [category.id]: nominee.id }));
-                                        setSearch((prev) => ({ ...prev, [category.id]: nominee.trainer_name }));
+                                        setChoices((prev) => ({ ...prev, [category.id]: member.id }));
+                                        setSearch((prev) => ({ ...prev, [category.id]: member.nickname || member.username }));
                                       }}
                                     >
-                                      {nominee.image_url ? (
-                                        <img src={nominee.image_url} alt="" loading="lazy" />
+                                      {member.avatar_url ? (
+                                        <img src={member.avatar_url} alt="" loading="lazy" />
                                       ) : (
                                         <span className="trainer-suggestion-avatar" aria-hidden="true">
-                                          {nominee.trainer_name.slice(0, 1).toUpperCase()}
+                                          {(member.nickname || member.username || "?").slice(0, 1).toUpperCase()}
                                         </span>
                                       )}
-                                      <span className="trainer-suggestion-name">{nominee.trainer_name}</span>
+                                      <span className="trainer-suggestion-name">{member.nickname || member.username}</span>
                                       <span className="trainer-suggestion-action">Select</span>
                                     </button>
                                   ))
@@ -389,7 +401,7 @@ export default function TeamFateAwardsPage() {
                               </div>
                             )}
 
-                            {!query && !selectedNominee && (
+                            {!query && !selectedMember && (
                               <p className="form-help">Type at least part of a trainer's name to see suggestions.</p>
                             )}
                           </div>
