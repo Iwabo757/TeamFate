@@ -97,7 +97,6 @@ export default function TeamFateAwardsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [headerSettings, setHeaderSettings] = useState<HeaderSettings>(DEFAULT_HEADER);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [nominees, setNominees] = useState<Nominee[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [votes, setVotes] = useState<Record<string, string>>({});
   const [winners, setWinners] = useState<Record<string, Nominee>>({});
@@ -129,7 +128,6 @@ export default function TeamFateAwardsPage() {
 
       if (!user) {
         setCategories([]);
-        setNominees([]);
         setMembers([]);
         setVotes({});
         setWinners({});
@@ -137,16 +135,14 @@ export default function TeamFateAwardsPage() {
         return;
       }
 
-      const [categoryResult, nomineeResult, memberResult, voteResult, winnerResult, historyResult] = await Promise.all([
+      const [categoryResult, memberResult, voteResult, winnerResult, historyResult] = await Promise.all([
         supabase.from("award_categories").select("id,name,description,display_order,voting_open").order("display_order"),
-        supabase.from("award_nominees").select("id,category_id,trainer_name,description,image_url").eq("approved_for_voting", true).order("trainer_name"),
         supabase.from("profiles").select("id,username,nickname,avatar_url").order("nickname", { ascending: true }),
         supabase.rpc("get_my_award_votes"),
         supabase.from("award_winners").select("category_id,nominee_id,approved_at,award_categories(name),award_nominees(id,category_id,trainer_name,description,image_url)"),
         supabase.from("award_winner_history").select("history_id,category_id,category_name,nominee_id,trainer_name,description,image_url,awarded_at").order("awarded_at", { ascending: false }),
       ]);
       if (categoryResult.error) throw categoryResult.error;
-      if (nomineeResult.error) throw nomineeResult.error;
       if (memberResult.error) throw memberResult.error;
       if (voteResult.error) throw voteResult.error;
       if (winnerResult.error) throw winnerResult.error;
@@ -154,7 +150,6 @@ export default function TeamFateAwardsPage() {
       setWinnerHistory((historyResult.data ?? []) as WinnerHistoryRow[]);
 
       setCategories(categoryResult.data ?? []);
-      setNominees(nomineeResult.data ?? []);
       setMembers((memberResult.data ?? []) as Member[]);
       const voteMap: Record<string, string> = {};
       ((voteResult.data ?? []) as VoteRow[]).forEach((vote) => { voteMap[vote.category_id] = vote.nominee_id; });
