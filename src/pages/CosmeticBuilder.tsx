@@ -106,6 +106,8 @@ const SLOT_IDS: CosmeticSlot[] = [
 ];
 
 const API_SLOT_TO_COSMETIC_SLOT: Record<number, CosmeticSlot> = {
+  // The builder has no separate forehead tab; show forehead accessories with hats.
+  1: "hat",
   2: "hat",
   3: "hair",
   4: "eyes",
@@ -121,6 +123,17 @@ const API_SLOT_TO_COSMETIC_SLOT: Record<number, CosmeticSlot> = {
 
 const COSMETIC_ICON_BASE =
   "https://www.pikammo.fr/Pokemmo/assets/img/vanity";
+
+function normalizeCosmeticName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\\s+/g, " ")
+    .trim();
+}
 
 /* =========================================================
    DEFAULT OUTFIT
@@ -375,7 +388,7 @@ export default function CosmeticBuilder() {
           continue;
         }
 
-        localByName.set(name.trim().toLowerCase(), {
+        localByName.set(normalizeCosmeticName(name), {
           name,
           slot: item.slot,
           id: item.id,
@@ -391,15 +404,18 @@ export default function CosmeticBuilder() {
       const merged: LocalCosmetic[] = [];
 
       for (const item of catalog) {
-        const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+        const local =
+          localByName.get(normalizeCosmeticName(item.name));
 
-        // Slot 1 (Forehead) is not a supported Fiereu URL slot.
+        // The extracted game assets carry the actual in-game slot. Prefer
+        // that over external catalog guesses, which can misclassify items.
+        const slot =
+          local?.slot ??
+          API_SLOT_TO_COSMETIC_SLOT[item.slot];
+
         if (!slot) {
           continue;
         }
-
-        const local =
-          localByName.get(item.name.trim().toLowerCase());
 
         merged.push({
           ...(local ?? {}),
@@ -444,10 +460,20 @@ export default function CosmeticBuilder() {
     };
 
     for (const item of catalog) {
-      const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+      const catalogSlot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+
+      const existingName =
+        Object.keys(mergedCosmetics).find(
+          (name) =>
+            normalizeCosmeticName(name) ===
+            normalizeCosmeticName(item.name)
+        );
+      const existing =
+        (existingName ? mergedCosmetics[existingName] : undefined) ??
+        mergedCosmetics[item.name];
+      const slot = existing?.slot ?? catalogSlot;
       if (!slot) continue;
 
-      const existing = mergedCosmetics[item.name];
       // Try the PokeMMO internal ID first. Older Fiereu cosmetics use that
       // namespace; the API/vanity ID is kept as a fallback.
       // Keep both namespaces, but do not declare the vanity ID as the
@@ -999,7 +1025,7 @@ export default function CosmeticBuilder() {
   />
 ) : item.icon_id ? (
   <img
-    src={`${COSMETIC_ICON_BASE}/${item.icon_id}.png`}
+    src={`${COSMETIC_ICON_BASE}/${item.item_id}.png`}
     alt=""
     loading="lazy"
   />

@@ -921,8 +921,9 @@ export default async function handler(
          * The current client icon is the safest icon
          * for the current item ID.
          */
+        // The client icon_id is a shared inventory icon, not a vanity image ID.
+        // The vanity endpoint expects the API/vanity ID; internal ID is fallback.
         icon_id:
-          sourceItem.iconId ||
           mappedApiId ||
           internalId,
 

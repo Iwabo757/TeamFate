@@ -802,11 +802,17 @@ function shouldUseLocalRenderer(
   manifest: RendererManifest,
   cosmetics: Partial<Record<CosmeticSlot, string>>
 ): boolean {
-  const selectedNames = Object.values(cosmetics).filter(Boolean) as string[];
-  return selectedNames.some((name) => {
+  // Use the extracted pak whenever at least one equipped item has real local
+  // frames. renderLocalView composes every available local layer and safely
+  // skips catalog-only items that have no extracted sprite.
+  return (Object.values(cosmetics).filter(Boolean) as string[]).some((name) => {
     const normalized = normalizeName(name);
-    const item = manifest.cosmetics?.[name];
-    return LOCAL_ONLY_RENDER_NAMES.has(normalized) && Boolean(item?.frames?.length);
+    const item =
+      manifest.cosmetics?.[name] ??
+      Object.entries(manifest.cosmetics ?? {}).find(
+        ([key]) => normalizeName(key) === normalized
+      )?.[1];
+    return Boolean(item?.frames?.length || item?.layer);
   });
 }
 
@@ -834,17 +840,23 @@ export async function renderCharacter(
           ? "side"
           : "front";
 
-  // Only use the extracted local compositor for cosmetics that are known to
-  // predate/escape the public Fiereu Clothes API. Everything else must use the
-  // Fiereu API first. A successful API response containing only the base
-  // character is not a reason to silently switch to local assets.
+  // Prefer the Clothes API for its full directional composition. If the API
+  // rejects an ID or is temporarily unavailable, fall back to extracted pak
+  // sprites for any equipped items that have local assets.
   try {
     return await renderApiView(manifest, cosmetics, scene, scale, _tints);
   } catch (apiError) {
-    // If Fiereu does not have a particular cosmetic, use the extracted pak
-    // frames when they exist. API remains the primary renderer for everything.
     if (shouldUseLocalRenderer(manifest, cosmetics)) {
-      return renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
+      try {
+        return await renderLocalView(manifest, cosmetics, scene, skin, scale, _tints);
+      } catch (localError) {
+        console.error("Both cosmetic renderers failed.", {
+          apiError,
+          localError,
+          scene,
+          cosmetics,
+        });
+      }
     }
     throw apiError;
   }
