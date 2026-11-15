@@ -293,11 +293,6 @@ const NAME_ALIASES: Record<string, string[]> = {
   scene: ["reverse scene"],
 };
 
-const LOCAL_ONLY_RENDER_NAMES = new Set([
-  "idol hairstyle",
-  "mermaid hair alt",
-]);
-
 async function resolveApiItemIds(
   cosmeticName: string,
   cosmetic: Cosmetic
