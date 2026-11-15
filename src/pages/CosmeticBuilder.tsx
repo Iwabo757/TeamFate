@@ -591,78 +591,43 @@ export default function CosmeticBuilder() {
     let cancelled = false;
 
     async function renderAllViews() {
-      try {
-        setPreviewError("");
+      setPreviewError("");
+      // Commit each direction independently. The slowest direction (usually
+      // Back) no longer blocks Front and Side from appearing.
+      const pending = VIEW_DEFINITIONS.map(async (view) => {
+        try {
+          const image = await renderCharacterToDataUrl({
+            manifest: renderManifest,
+            baseUrl: ASSET_ROOT,
+            skin,
+            frame: view.frame,
+            cosmetics: equipped,
+            tints: colors,
+            scale: 4,
+          });
 
-        const renderedViews =
-          await Promise.all(
-            VIEW_DEFINITIONS.map(
-              async (view) => {
-                const image =
-                  await renderCharacterToDataUrl(
-                    {
-                      manifest:
-                        renderManifest,
-
-                      baseUrl:
-                        ASSET_ROOT,
-
-                      skin,
-
-                      frame:
-                        view.frame,
-
-                      cosmetics:
-                        equipped,
-
-                      tints:
-                        colors,
-
-                      /*
-                       * Native sprite:
-                       * 57 x 56
-                       *
-                       * Render:
-                       * 228 x 224
-                       */
-                      scale: 4,
-                    }
-                  );
-
-                return {
-                  label:
-                    view.label,
-
-                  frame:
-                    view.frame,
-
-                  image,
-                };
-              }
-            )
-          );
-
-        if (!cancelled) {
-          setViews(
-            renderedViews
-          );
+          if (!cancelled) {
+            setViews((current) => {
+              const next = current.filter((entry) => entry.label !== view.label);
+              next.push({ label: view.label, frame: view.frame, image });
+              return VIEW_DEFINITIONS
+                .map((definition) => next.find((entry) => entry.label === definition.label))
+                .filter((entry): entry is ViewPreview => Boolean(entry));
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to render ${view.label} character view:`, error);
+          if (!cancelled) {
+            setPreviewError((current) => current || (
+              error instanceof Error
+                ? `${view.label}: ${error.message}`
+                : `${view.label} character view could not be rendered.`
+            ));
+          }
         }
-      } catch (error) {
-        console.error(
-          "Failed to render local character:",
-          error
-        );
+      });
 
-        if (!cancelled) {
-          setViews([]);
-
-          setPreviewError(
-            error instanceof Error
-              ? error.message
-              : "Character could not be rendered."
-          );
-        }
-      }
+      await Promise.all(pending);
     }
 
     renderAllViews();

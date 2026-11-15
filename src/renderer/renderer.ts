@@ -489,13 +489,27 @@ function buildApiUrl(
   return `/api/pokemmo-clothes?${params.toString()}`;
 }
 
+// Reuse decoded images between renders. Selecting a new cosmetic often
+// requests the same base/directional assets again; caching the in-flight
+// promise avoids duplicate network transfers and image decoding.
+const imagePromiseCache = new Map<string, Promise<HTMLImageElement>>();
+
 function loadImage(url: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  const cached = imagePromiseCache.get(url);
+  if (cached) return cached;
+
+  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+    image.onerror = () => {
+      imagePromiseCache.delete(url);
+      reject(new Error(`Failed to load image: ${url}`));
+    };
     image.src = url;
   });
+
+  imagePromiseCache.set(url, promise);
+  return promise;
 }
 
 function makeCanvas(width: number, height: number): HTMLCanvasElement {
