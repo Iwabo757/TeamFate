@@ -106,7 +106,7 @@ const SLOT_IDS: CosmeticSlot[] = [
 ];
 
 const API_SLOT_TO_COSMETIC_SLOT: Record<number, CosmeticSlot> = {
-  // Hairpins and similar forehead accessories are grouped with Hair in this builder.
+  // Forehead accessories (hairpins, clips, etc.) are grouped with Hair.
   1: "hair",
   2: "hat",
   3: "hair",
@@ -407,10 +407,9 @@ export default function CosmeticBuilder() {
         const local =
           localByName.get(normalizeCosmeticName(item.name));
 
-        // The API catalog is the single source of truth for category.
-        // Local manifest slots describe asset-layer metadata and may be stale
-        // or mapped differently; using them here caused items to appear in
-        // multiple incorrect tabs.
+        // The API catalog has already resolved the category using the
+        // corrected item-name rules. Local manifest slots are asset metadata
+        // and must not override the catalog category.
         const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
 
         if (!slot) {
@@ -471,9 +470,9 @@ export default function CosmeticBuilder() {
       const existing =
         (existingName ? mergedCosmetics[existingName] : undefined) ??
         mergedCosmetics[item.name];
-      // Keep renderer metadata attached, but never let an old manifest
-      // category override the authoritative API catalog category.
-      const slot = catalogSlot;
+      // Keep renderer slot composition aligned with the API's corrected
+      // category; local asset slot labels may be stale or misclassified.
+      const slot = catalogSlot ?? existing?.slot;
       if (!slot) continue;
 
       // Try the PokeMMO internal ID first. Older Fiereu cosmetics use that

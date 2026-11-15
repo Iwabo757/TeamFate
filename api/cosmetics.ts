@@ -882,27 +882,21 @@ export default async function handler(
           catalogEntry?.slot ?? 0
         );
 
+      // Prefer the cosmetic's name-based classification (including explicit
+      // corrections) over third-party slot metadata. The external metadata
+      // has known namespace/slot mismatches for several cosmetics.
+      const inferredSlot = inferSlot(name);
       const slot =
-        metadataSlot > 0
+        inferredSlot > 0
+          ? inferredSlot
+          : metadataSlot > 0
           ? metadataSlot
-          : catalogSlot > 0
-          ? catalogSlot
-          : inferSlot(name);
+          : catalogSlot;
 
-      /*
-       * Ignore anything we cannot classify.
-       *
-       * This prevents random items from being put
-       * into the wrong clothing category.
-       */
-
-      // Do not silently classify unknown cosmetics as Hat. That fallback
-      // polluted the Hat tab and hid classification gaps in the catalog.
-      if (!(slot > 0 && SLOT_NAMES[slot])) {
-        console.warn("Skipping cosmetic with unknown slot:", name, internalId);
-        continue;
-      }
-      const resolvedSlot = slot;
+      // Never silently classify an unknown item as a Hat. That creates
+      // misleading entries in the Hat tab; omit it until its slot is known.
+      const resolvedSlot = slot > 0 && SLOT_NAMES[slot] ? slot : 0;
+      if (!resolvedSlot) continue;
 
       cosmetics.push({
         item_id: mappedApiId ?? internalId,
