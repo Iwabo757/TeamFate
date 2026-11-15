@@ -896,7 +896,13 @@ export default async function handler(
        * into the wrong clothing category.
        */
 
-      const resolvedSlot = slot > 0 && SLOT_NAMES[slot] ? slot : 2;
+      // Do not silently classify unknown cosmetics as Hat. That fallback
+      // polluted the Hat tab and hid classification gaps in the catalog.
+      if (!(slot > 0 && SLOT_NAMES[slot])) {
+        console.warn("Skipping cosmetic with unknown slot:", name, internalId);
+        continue;
+      }
+      const resolvedSlot = slot;
 
       cosmetics.push({
         item_id: mappedApiId ?? internalId,
