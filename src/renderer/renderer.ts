@@ -421,18 +421,9 @@ function buildCandidateSlotSets(
     }
   }
 
-  // If an item has incomplete slot metadata, try the same item in every
-  // otherwise-empty Clothes API slot. This mirrors the Hub behavior without
-  // requiring a hand-maintained slot list for every new cosmetic.
-  for (const position of ALL_API_SLOTS.map((slot) => API_SLOT[slot])) {
-    const value = selection.slots[position];
-    if (!value) continue;
-    for (const target of ALL_API_SLOTS.map((slot) => API_SLOT[slot])) {
-      if (target === position || selection.slots[target] !== 0) continue;
-      add({ ...selection.slots, [position]: 0, [target]: value });
-      if (result.length >= 32) return result;
-    }
-  }
+  // Never move an item into a different API slot as a fallback. The Fiereu
+  // endpoint expects strict slot order; trying a hat ID in Face (or any other
+  // mismatched slot) produces invalid renders and unnecessary HTTP 500s.
 
   // Then try combinations of the first alternate from up to three slots.
   const limit = Math.min(alternatePositions.length, 3);
