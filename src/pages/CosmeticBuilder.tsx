@@ -401,22 +401,21 @@ export default function CosmeticBuilder() {
         });
       }
 
-      const merged: LocalCosmetic[] = [];
+      const mergedByIdentity = new Map<string, LocalCosmetic>();
 
       for (const item of catalog) {
         const local =
           localByName.get(normalizeCosmeticName(item.name));
 
-        // The API catalog has already resolved the category using the
-        // corrected item-name rules. Local manifest slots are asset metadata
-        // and must not override the catalog category.
-        const slot = API_SLOT_TO_COSMETIC_SLOT[item.slot];
+        // The API's numeric slot is the sole category source. Local manifest
+        // slots are renderer metadata and are never used for list filtering.
+        const slot = API_SLOT_TO_COSMETIC_SLOT[Number(item.slot)];
+        if (!slot) continue;
 
-        if (!slot) {
-          continue;
-        }
+        const identity = `${Number(item.item_id)}:${normalizeCosmeticName(item.name)}`;
+        if (mergedByIdentity.has(identity)) continue;
 
-        merged.push({
+        mergedByIdentity.set(identity, {
           ...(local ?? {}),
           name: item.name,
           slot,
@@ -427,6 +426,8 @@ export default function CosmeticBuilder() {
           colorable: item.colorable === true,
         });
       }
+
+      const merged = Array.from(mergedByIdentity.values());
 
       // Do not append local-only manifest entries to the PokeMMO catalog.
       // The catalog above is the complete cosmetic list; local assets are only
@@ -472,7 +473,7 @@ export default function CosmeticBuilder() {
         mergedCosmetics[item.name];
       // Keep renderer slot composition aligned with the API's corrected
       // category; local asset slot labels may be stale or misclassified.
-      const slot = catalogSlot ?? existing?.slot;
+      const slot = catalogSlot;
       if (!slot) continue;
 
       // Try the PokeMMO internal ID first. Older Fiereu cosmetics use that

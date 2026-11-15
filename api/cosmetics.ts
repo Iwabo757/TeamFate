@@ -967,14 +967,16 @@ export default async function handler(
      * ---------------------------------------------------------
      */
 
-    // Every client cosmetic is a distinct catalog entry. API/dex IDs can
-    // collide with other namespaces, so never dedupe the catalog by item_id.
-    // Dedupe only repeated internal client IDs.
-    const unique = new Map<number, CosmeticResult>();
+    // A vanity/API item can appear more than once in the client dump under
+    // different internal IDs. Those rows represent the same cosmetic and
+    // must not leak into multiple categories. Keep one row per vanity ID +
+    // normalized display name; name inference is deterministic for duplicates.
+    const unique = new Map<string, CosmeticResult>();
 
     for (const cosmetic of cosmetics) {
-      const key = Number(cosmetic.internal_id ?? cosmetic.item_id);
-      if (!unique.has(key)) {
+      const key = `${Number(cosmetic.item_id)}:${normalizeName(cosmetic.name)}`;
+      const previous = unique.get(key);
+      if (!previous || (previous.slot === 0 && cosmetic.slot > 0)) {
         unique.set(key, cosmetic);
       }
     }
@@ -1007,7 +1009,7 @@ export default async function handler(
 
     res.setHeader(
       "Cache-Control",
-      "public, s-maxage=3600, stale-while-revalidate=86400"
+      "public, s-maxage=0, stale-while-revalidate=0"
     );
 
     /*
